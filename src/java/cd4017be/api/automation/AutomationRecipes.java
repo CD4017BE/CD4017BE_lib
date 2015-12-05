@@ -1,0 +1,631 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package cd4017be.api.automation;
+
+import cd4017be.lib.templates.Inventory;
+import cd4017be.lib.templates.TankContainer;
+import cd4017be.lib.util.Obj2;
+import cd4017be.lib.util.Utils;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+
+import net.minecraft.init.Blocks;
+import net.minecraft.init.Items;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
+import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.oredict.OreDictionary;
+
+/**
+ *
+ * @author CD4017BE
+ */
+public class AutomationRecipes
+{
+    public static float LFEmult = 1F;
+    public static float CoolEmult = 1F;
+    public static float ElEmult = 1F;
+	
+    public static class LFRecipe
+    {
+        public FluidStack Linput;
+        public Object[] Iinput;
+        public FluidStack Loutput;
+        public ItemStack[] Ioutput;
+        public float energy;
+        
+        public LFRecipe(FluidStack Linput, Object[] Iinput, FluidStack Loutput, ItemStack[] Ioutput, float energy)
+        {
+            this.Linput = Linput;
+            this.Iinput = Iinput;
+            if (Iinput != null)
+	            for (int i = 0; i < Iinput.length; i++)
+	            	if (Iinput[i] instanceof String)
+	            		Iinput[i] = getOreDictionaryStack((String)Iinput[i]);
+            this.Loutput = Loutput;
+            this.Ioutput = Ioutput;
+            this.energy = energy * LFEmult;
+        }
+        
+        private LFRecipe() {}
+        
+        public boolean matches(FluidStack liquid, ItemStack[] items)
+        {
+            if (Linput != null && (liquid == null || !liquid.containsFluid(Linput))) return false;
+            else if (Iinput != null)
+            {
+                if (items == null) return false;
+                for (Object item : Iinput)
+                {
+                    if (item == null) continue;
+                    int n = getStacksize(item);
+                    for (ItemStack i : items)
+                    	if (isItemEqual(i, item)) n -= i.stackSize;
+                    if (n > 0) return false;
+                }
+            }
+            return true;
+        }
+        
+        public LFRecipe copy()
+        {
+            LFRecipe recipe = new LFRecipe();
+            recipe.Linput = Linput == null ? null : Linput.copy();
+            recipe.Loutput = Loutput == null ? null : Loutput.copy();
+            if (Iinput == null) recipe.Iinput = null;
+            else 
+            {
+                recipe.Iinput = new Object[Iinput.length];
+                for (int i = 0; i < Iinput.length; i++)
+                {
+                    recipe.Iinput[i] = Iinput[i] == null ? null : Iinput[i] instanceof ItemStack ? ((ItemStack)Iinput[i]).copy() : ((Obj2<Short, Integer>)Iinput[i]).copy();
+                }
+            }
+            if (Ioutput == null) recipe.Ioutput = null;
+            else
+            {
+                recipe.Ioutput = new ItemStack[Ioutput.length];
+                for (int i = 0; i < Ioutput.length; i++)
+                {
+                    recipe.Ioutput[i] = Ioutput[i] == null ? null : Ioutput[i].copy();
+                }
+            }
+            recipe.energy = energy;
+            return recipe;
+        }
+        
+    }
+    
+    private static List<LFRecipe> lfRecipes = new ArrayList<LFRecipe>();
+    
+    public static List<LFRecipe> getAdvancedFurnaceRecipes()
+    {
+        return lfRecipes;
+    }
+    
+    public static void addRecipe(LFRecipe recipe)
+    {
+        lfRecipes.add(recipe);
+    }
+    
+    public static LFRecipe getRecipeFor(FluidStack liquid, ItemStack[] items)
+    {
+        Iterator<LFRecipe> iterator = lfRecipes.iterator();
+        while(iterator.hasNext())
+        {
+            LFRecipe recipe = iterator.next();
+            if (recipe.matches(liquid, items)) return recipe.copy();
+        }
+        return null;
+    }
+    
+    public static LFRecipe readFromNBT(NBTTagCompound nbt)
+    {
+        NBTTagList list = nbt.getTagList("Items", 10);
+        ItemStack[] items = new ItemStack[list.tagCount()];
+        for (int id = 0; id < items.length; ++id)
+        {
+            NBTTagCompound tag = list.getCompoundTagAt(id);
+            items[id] = ItemStack.loadItemStackFromNBT(tag);
+        }
+        FluidStack liquid = FluidStack.loadFluidStackFromNBT(nbt);
+        float energy = nbt.getFloat("Energy");
+        return new LFRecipe(null, null, liquid, items, energy);
+    }
+    
+    public static NBTTagCompound writeToNBT(LFRecipe recipe)
+    {
+        NBTTagCompound nbt = new NBTTagCompound();
+        if (recipe.Ioutput != null)
+        {
+            NBTTagList list = new NBTTagList();
+            for (int i = 0; i < recipe.Ioutput.length; ++i)
+            {
+                if (recipe.Ioutput[i] != null)
+                {
+                    NBTTagCompound tag = new NBTTagCompound();
+                    recipe.Ioutput[i].writeToNBT(tag);
+                    list.appendTag(tag);
+                }
+            }
+            nbt.setTag("Items", list);
+        }
+        if (recipe.Loutput != null)
+        {
+            recipe.Loutput.writeToNBT(nbt);
+        }
+        nbt.setFloat("Energy", recipe.energy);
+        return nbt;
+    }
+    
+    public static Obj2<Short, Integer> getOreDictionaryStack(String s) 
+    {
+    	int p = s.indexOf('*');
+    	short n = 1;
+    	if (p > 0) {
+    		try {n = Short.parseShort(s.substring(0, p));} catch (NumberFormatException e){}
+    		s = s.substring(p + 1);
+    		if (n <= 0) n = 1;
+    	}
+    	if (s.isEmpty()) return null;
+		int id = OreDictionary.getOreID(s);
+		return new Obj2<Short, Integer>(Short.valueOf(n), Integer.valueOf(id));
+    }
+    
+    public static boolean isItemEqual(ItemStack item, Object obj)
+    {
+    	if (obj == null && item == null) return true;
+    	if (obj instanceof ItemStack) return Utils.itemsEqual(item, (ItemStack)obj);
+    	if (obj instanceof Obj2)
+	    	for (int id : OreDictionary.getOreIDs(item)) {
+	    		if (id == ((Obj2<Short, Integer>)obj).objB) return true;
+	    	} 
+    	return false;
+    }
+    
+    public static int getStacksize(Object obj)
+    {
+    	if (obj == null) return 0;
+    	if (obj instanceof ItemStack) return ((ItemStack)obj).stackSize;
+    	if (obj instanceof Obj2) return ((Obj2<Short, Integer>)obj).objA;
+    	return 0;
+    }
+    
+    public static class CmpRecipe
+    {
+        public Object[] input;
+        public ItemStack output;
+        
+        public CmpRecipe(Object[] in, ItemStack out)
+        {
+            input = in;
+            for (int i = 0; i < input.length; i++)
+            	if (input[i] instanceof String)
+            		input[i] = getOreDictionaryStack((String)input[i]);
+            output = out;
+        }
+        
+        public boolean matches(ItemStack[] inventory, int s, int e)
+        {
+            if (e - s < input.length) return false;
+            for (int i = 0; i < input.length; i++) {
+                if (input[i] == null) {
+                	if (inventory[s + i] != null) return false;
+                	else continue;
+                } else if (input[i] instanceof ItemStack) {
+                	if (!Utils.itemsEqual((ItemStack)input[i], inventory[s + i]) || inventory[s + i].stackSize < ((ItemStack)input[i]).stackSize) return false;
+                	else continue;
+                } else if (input[i] instanceof Obj2) {
+                	Obj2<Short, Integer> obj = (Obj2<Short, Integer>)input[i];
+                	if (inventory[s + i] == null || inventory[s + i].stackSize < obj.objA || !isItemEqual(inventory[s + i], obj)) return false;
+                }
+            }
+            return true;
+        }
+    }
+    
+    private static List<CmpRecipe> cmpRecipes = new ArrayList<CmpRecipe>();
+    
+    public static List<CmpRecipe> getCompressorRecipes()
+    {
+        return cmpRecipes;
+    }
+    
+    public static void addRecipe(CmpRecipe recipe)
+    {
+        cmpRecipes.add(recipe);
+    }
+    
+    public static void addCmpRecipe(ItemStack out, Object... in)
+    {
+        cmpRecipes.add(new CmpRecipe(in, out));
+    }
+    
+    public static CmpRecipe getRecipeFor(ItemStack[] inventory, int s, int e)
+    {
+        Iterator<CmpRecipe> iterator = cmpRecipes.iterator();
+        while(iterator.hasNext())
+        {
+            CmpRecipe recipe = iterator.next();
+            if (recipe.matches(inventory, s, e)) return recipe;
+        }
+        return null;
+    }
+    
+    public static class CoolRecipe 
+    {
+        public Object in0;
+        public Object out0;
+        public Object in1;
+        public Object out1;
+        public float energy;
+        
+        public CoolRecipe(Object in0, Object out0, Object in1, Object out1, float energy)
+        {
+            this.in0 = in0;
+            this.out0 = out0;
+            this.in1 = in1;
+            this.out1 = out1;
+            this.energy = energy * CoolEmult;
+        }
+        
+        public boolean matches(ItemStack[] inv, int s, FluidStack in0, FluidStack in1)
+        {
+            if (this.in0 instanceof FluidStack && in0 != null) {
+                if (!in0.containsFluid((FluidStack)this.in0)) return false;
+            } else if (this.in0 instanceof ItemStack && in0 == null && inv[s] != null) {
+                if (!inv[s].isItemEqual((ItemStack)this.in0) || inv[s].stackSize < ((ItemStack)this.in0).stackSize) return false;
+            } else return false;
+            if (this.in1 instanceof FluidStack && in1 != null) {
+                if (!in1.containsFluid((FluidStack)this.in1)) return false;
+            } else if (this.in1 instanceof ItemStack && in1 == null && inv[s + 1] != null) {
+                if (!inv[s + 1].isItemEqual((ItemStack)this.in1) || inv[s + 1].stackSize < ((ItemStack)this.in1).stackSize) return false;
+            } else return false;
+            return true;
+        }
+        
+        public void useRes(Inventory inv, int s0, int s1, TankContainer tanks, int t0, int t1)
+        {
+            if (this.in0 instanceof FluidStack) tanks.drain(t0, ((FluidStack)this.in0).amount, true);
+            else if (this.in0 instanceof ItemStack){
+                if (inv.items[s0].stackSize > ((ItemStack)this.in0).stackSize) inv.items[s0].stackSize -= ((ItemStack)this.in0).stackSize;
+                else inv.items[s0] = null;
+            }
+            if (this.in1 instanceof FluidStack) tanks.drain(t1, ((FluidStack)this.in1).amount, true);
+            else if (this.in1 instanceof ItemStack){
+                if (inv.items[s1].stackSize > ((ItemStack)this.in1).stackSize) inv.items[s1].stackSize -= ((ItemStack)this.in1).stackSize;
+                else inv.items[s1] = null;
+            }
+            this.in0 = null;
+            this.in1 = null;
+        }
+        
+        public boolean output(Inventory inv, int s0, int s1, TankContainer tanks, int t0, int t1)
+        {
+            if (this.out0 instanceof FluidStack) {
+                ((FluidStack)this.out0).amount -= tanks.fill(t0, (FluidStack)this.out0, true);
+                if (((FluidStack)this.out0).amount <= 0) this.out0 = null;
+            } else if (this.out0 instanceof ItemStack) {
+                if (inv.items[s0] == null){
+                    inv.items[s0] = (ItemStack)this.out0;
+                    this.out0 = null;
+                } else if (inv.items[s0].isItemEqual((ItemStack)this.out0)) {
+                    int n = inv.items[s0].getMaxStackSize() - inv.items[s0].stackSize;
+                    if (n > ((ItemStack)this.out0).stackSize) {
+                        inv.items[s0].stackSize += ((ItemStack)this.out0).stackSize;
+                        this.out0 = null;
+                    } else {
+                        inv.items[s0].stackSize += n;
+                        ((ItemStack)this.out0).stackSize -= n;
+                    }
+                }
+            }
+            if (this.out1 instanceof FluidStack) {
+                ((FluidStack)this.out1).amount -= tanks.fill(t1, (FluidStack)this.out1, true);
+                if (((FluidStack)this.out1).amount <= 0) this.out1 = null;
+            } else if (this.out1 instanceof ItemStack) {
+                if (inv.items[s1] == null){
+                    inv.items[s1] = (ItemStack)this.out1;
+                    this.out1 = null;
+                } else if (inv.items[s1].isItemEqual((ItemStack)this.out1)) {
+                    int n = inv.items[s1].getMaxStackSize() - inv.items[s1].stackSize;
+                    if (n > ((ItemStack)this.out1).stackSize) {
+                        inv.items[s1].stackSize += ((ItemStack)this.out1).stackSize;
+                        this.out1 = null;
+                    } else {
+                        inv.items[s1].stackSize += n;
+                        ((ItemStack)this.out1).stackSize -= n;
+                    }
+                }
+            }
+            return this.out0 == null && this.out1 == null;
+        }
+        
+        public CoolRecipe copy()
+        {
+            Object in0 = this.in0 instanceof ItemStack ? ((ItemStack)this.in0).copy() : this.in0 instanceof FluidStack ? ((FluidStack)this.in0).copy() : null;
+            Object in1 = this.in1 instanceof ItemStack ? ((ItemStack)this.in1).copy() : this.in1 instanceof FluidStack ? ((FluidStack)this.in1).copy() : null;
+            Object out0 = this.out0 instanceof ItemStack ? ((ItemStack)this.out0).copy() : this.out0 instanceof FluidStack ? ((FluidStack)this.out0).copy() : null;
+            Object out1 = this.out1 instanceof ItemStack ? ((ItemStack)this.out1).copy() : this.out1 instanceof FluidStack ? ((FluidStack)this.out1).copy() : null;
+            return new CoolRecipe(in0, out0, in1, out1, energy);
+        }
+        
+    }
+    
+    public static CoolRecipe readCoolRecipeFromNBT(NBTTagCompound nbt)
+    {
+        float energy = nbt.getFloat("Energy");
+        Object out0 = null;
+        Object out1 = null;
+        if (nbt.hasKey("out0")) {
+            NBTTagCompound tag = nbt.getCompoundTag("out0");
+            if (tag.hasKey("FluidName")) out0 = FluidStack.loadFluidStackFromNBT(tag);
+            else if (tag.hasKey("id")) out0 = ItemStack.loadItemStackFromNBT(tag);
+        }
+        if (nbt.hasKey("out1")) {
+            NBTTagCompound tag = nbt.getCompoundTag("out1");
+            if (tag.hasKey("FluidName")) out1 = FluidStack.loadFluidStackFromNBT(tag);
+            else if (tag.hasKey("id")) out1 = ItemStack.loadItemStackFromNBT(tag);
+        }
+        return new CoolRecipe(null, out0, null, out1, energy);
+    }
+    
+    public static NBTTagCompound writeCoolRecipeToNBT(CoolRecipe rcp)
+    {
+        NBTTagCompound nbt = new NBTTagCompound();
+        nbt.setFloat("Energy", rcp.energy);
+        if (rcp.out0 != null) {
+            NBTTagCompound tag = new NBTTagCompound();
+            if (rcp.out0 instanceof FluidStack) ((FluidStack)rcp.out0).writeToNBT(tag);
+            else if (rcp.out0 instanceof ItemStack) ((ItemStack)rcp.out0).writeToNBT(tag);
+            nbt.setTag("out0", tag);
+        }
+        if (rcp.out1 != null) {
+            NBTTagCompound tag = new NBTTagCompound();
+            if (rcp.out1 instanceof FluidStack) ((FluidStack)rcp.out1).writeToNBT(tag);
+            else if (rcp.out1 instanceof ItemStack) ((ItemStack)rcp.out1).writeToNBT(tag);
+            nbt.setTag("out1", tag);
+        }
+        return nbt;
+    }
+    
+    private static List<CoolRecipe> coolRecipes = new ArrayList<CoolRecipe>();
+    
+    public static List<CoolRecipe> getCoolerRecipes()
+    {
+        return coolRecipes;
+    }
+    
+    public static void addRecipe(CoolRecipe recipe)
+    {
+        coolRecipes.add(recipe);
+    }
+    
+    public static CoolRecipe getRecipeFor(ItemStack[] inv, int s, FluidStack in0, FluidStack in1) 
+    {
+        Iterator<CoolRecipe> iterator = coolRecipes.iterator();
+        while(iterator.hasNext())
+        {
+            CoolRecipe recipe = iterator.next();
+            if (recipe.matches(inv, s, in0, in1)) return recipe.copy();
+        }
+        return null;
+    }
+    
+    public static class ElRecipe
+    {
+    	public Object in;
+    	public Object out0;
+    	public Object out1;
+    	public float energy;
+    	
+    	public ElRecipe(Object in, Object out0, Object out1, float e)
+    	{
+    		this.in = in;
+    		this.out0 = out0;
+    		this.out1 = out1;
+    		this.energy = e * ElEmult;
+    	}
+    	
+    	public boolean matches(ItemStack[] inv, int s, FluidStack in)
+        {
+            if (this.in instanceof FluidStack && in != null) {
+                if (!in.containsFluid((FluidStack)this.in)) return false;
+            } else if (this.in instanceof ItemStack && in == null && inv[s] != null) {
+                if (!inv[s].isItemEqual((ItemStack)this.in) || inv[s].stackSize < ((ItemStack)this.in).stackSize) return false;
+            } else return false;
+            return true;
+        }
+    	
+    	public void useRes(Inventory inv, int s0, TankContainer tanks, int t0)
+        {
+            if (this.in instanceof FluidStack) tanks.drain(t0, ((FluidStack)this.in).amount, true);
+            else if (this.in instanceof ItemStack){
+                if (inv.items[s0].stackSize > ((ItemStack)this.in).stackSize) inv.items[s0].stackSize -= ((ItemStack)this.in).stackSize;
+                else inv.items[s0] = null;
+            }
+            this.in = null;
+        }
+    	
+    	public boolean output(Inventory inv, int s0, int s1, TankContainer tanks, int t0, int t1)
+        {
+            if (this.out0 instanceof FluidStack) {
+                ((FluidStack)this.out0).amount -= tanks.fill(t0, (FluidStack)this.out0, true);
+                if (((FluidStack)this.out0).amount <= 0) this.out0 = null;
+            } else if (this.out0 instanceof ItemStack) {
+                if (inv.items[s0] == null){
+                    inv.items[s0] = (ItemStack)this.out0;
+                    this.out0 = null;
+                } else if (inv.items[s0].isItemEqual((ItemStack)this.out0)) {
+                    int n = inv.items[s0].getMaxStackSize() - inv.items[s0].stackSize;
+                    if (n > ((ItemStack)this.out0).stackSize) {
+                        inv.items[s0].stackSize += ((ItemStack)this.out0).stackSize;
+                        this.out0 = null;
+                    } else {
+                        inv.items[s0].stackSize += n;
+                        ((ItemStack)this.out0).stackSize -= n;
+                    }
+                }
+            }
+            if (this.out1 instanceof FluidStack) {
+                ((FluidStack)this.out1).amount -= tanks.fill(t1, (FluidStack)this.out1, true);
+                if (((FluidStack)this.out1).amount <= 0) this.out1 = null;
+            } else if (this.out1 instanceof ItemStack) {
+                if (inv.items[s1] == null){
+                    inv.items[s1] = (ItemStack)this.out1;
+                    this.out1 = null;
+                } else if (inv.items[s1].isItemEqual((ItemStack)this.out1)) {
+                    int n = inv.items[s1].getMaxStackSize() - inv.items[s1].stackSize;
+                    if (n > ((ItemStack)this.out1).stackSize) {
+                        inv.items[s1].stackSize += ((ItemStack)this.out1).stackSize;
+                        this.out1 = null;
+                    } else {
+                        inv.items[s1].stackSize += n;
+                        ((ItemStack)this.out1).stackSize -= n;
+                    }
+                }
+            }
+            return this.out0 == null && this.out1 == null;
+        }
+        
+        public ElRecipe copy()
+        {
+            Object in = this.in instanceof ItemStack ? ((ItemStack)this.in).copy() : this.in instanceof FluidStack ? ((FluidStack)this.in).copy() : null;
+            Object out0 = this.out0 instanceof ItemStack ? ((ItemStack)this.out0).copy() : this.out0 instanceof FluidStack ? ((FluidStack)this.out0).copy() : null;
+            Object out1 = this.out1 instanceof ItemStack ? ((ItemStack)this.out1).copy() : this.out1 instanceof FluidStack ? ((FluidStack)this.out1).copy() : null;
+            return new ElRecipe(in, out0, out1, energy);
+        }
+    	
+    }
+    
+    public static ElRecipe readElRecipeFromNBT(NBTTagCompound nbt)
+    {
+        float energy = nbt.getFloat("Energy");
+        Object out0 = null;
+        Object out1 = null;
+        if (nbt.hasKey("out0")) {
+            NBTTagCompound tag = nbt.getCompoundTag("out0");
+            if (tag.hasKey("FluidName")) out0 = FluidStack.loadFluidStackFromNBT(tag);
+            else if (tag.hasKey("id")) out0 = ItemStack.loadItemStackFromNBT(tag);
+        }
+        if (nbt.hasKey("out1")) {
+            NBTTagCompound tag = nbt.getCompoundTag("out1");
+            if (tag.hasKey("FluidName")) out1 = FluidStack.loadFluidStackFromNBT(tag);
+            else if (tag.hasKey("id")) out1 = ItemStack.loadItemStackFromNBT(tag);
+        }
+        return new ElRecipe(null, out0, out1, energy);
+    }
+    
+    public static NBTTagCompound writeElRecipeToNBT(ElRecipe rcp)
+    {
+        NBTTagCompound nbt = new NBTTagCompound();
+        nbt.setFloat("Energy", rcp.energy);
+        if (rcp.out0 != null) {
+            NBTTagCompound tag = new NBTTagCompound();
+            if (rcp.out0 instanceof FluidStack) ((FluidStack)rcp.out0).writeToNBT(tag);
+            else if (rcp.out0 instanceof ItemStack) ((ItemStack)rcp.out0).writeToNBT(tag);
+            nbt.setTag("out0", tag);
+        }
+        if (rcp.out1 != null) {
+            NBTTagCompound tag = new NBTTagCompound();
+            if (rcp.out1 instanceof FluidStack) ((FluidStack)rcp.out1).writeToNBT(tag);
+            else if (rcp.out1 instanceof ItemStack) ((ItemStack)rcp.out1).writeToNBT(tag);
+            nbt.setTag("out1", tag);
+        }
+        return nbt;
+    }
+    
+    private static List<ElRecipe> elRecipes = new ArrayList<ElRecipe>();
+    
+    public static List<ElRecipe> getElectrolyserRecipes()
+    {
+        return elRecipes;
+    }
+    
+    public static void addRecipe(ElRecipe recipe)
+    {
+        elRecipes.add(recipe);
+    }
+    
+    public static ElRecipe getRecipeFor(ItemStack[] inv, int s, FluidStack in) 
+    {
+        Iterator<ElRecipe> iterator = elRecipes.iterator();
+        while(iterator.hasNext())
+        {
+            ElRecipe recipe = iterator.next();
+            if (recipe.matches(inv, s, in)) return recipe.copy();
+        }
+        return null;
+    }
+    
+    public static class GCRecipe 
+    {
+    	public final ItemStack input;
+    	public final ItemStack output;
+    	public final int matter;
+    	
+    	public GCRecipe(ItemStack out, ItemStack in, int m) 
+    	{
+    		this.input = in;
+    		this.output = out;
+    		this.matter = m;
+    	}
+    	
+    	public boolean matches(ItemStack in)
+    	{
+    		return Utils.oresEqual(in, input) && in.stackSize >= input.stackSize;
+    	}
+    }
+    
+    private static List<GCRecipe> gcRecipes = new ArrayList<GCRecipe>();
+    
+    public static List<GCRecipe> getGraviCondRecipes()
+    {
+        return gcRecipes;
+    }
+    
+    public static void addRecipe(GCRecipe recipe)
+    {
+        gcRecipes.add(recipe);
+    }
+    
+    public static GCRecipe getRecipeFor(ItemStack input) 
+    {
+        Iterator<GCRecipe> iterator = gcRecipes.iterator();
+        while(iterator.hasNext())
+        {
+            GCRecipe recipe = iterator.next();
+            if (recipe.matches(input)) return recipe;
+        }
+        return null;
+    }
+	
+	public static void addItemCrushingRecipes(String oreType)
+	{
+		String[] names = OreDictionary.getOreNames();
+        HashMap<String, String> dusts = new HashMap<String, String>();
+        ArrayList<String> items = new ArrayList<String>();
+        for (String name : names) {
+        	if (name.startsWith("dust")) {
+        		dusts.put(oreType + name.substring(4), name);
+        	} else if (name.startsWith(oreType)) {
+        		items.add(name);
+        	}
+        }
+        ArrayList<ItemStack> list;
+        for (String item : items) {
+        	String dust = dusts.get(item);
+        	if (dust != null) {
+        		list = OreDictionary.getOres(dust);
+        		if (!list.isEmpty()) AutomationRecipes.addCmpRecipe(list.get(0), item);
+        	}
+        }
+	}
+    
+}
