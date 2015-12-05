@@ -1,0 +1,15 @@
+This mod library contains full or patial copies of api-code from the following mods.
+This is necessary to ensure mods depending on this library to interact with these mods
+if installed, but not requiring them to be installed to run at all.
+
+package "cofh.api." copied from CoFHLib by CoFH
+-https://github.com/CoFH/CoFHLib
+
+package "li.cil.oc.api." copied from OpenComputers by MightyPirates
+-https://github.com/MightyPirates/OpenComputers
+
+package "dan200.computercraft.api." copied from Computercraft by dan200
+-http://www.computercraft.info/
+
+package "ic2.api." copied from IndustrialCraft2 by Alblaka (and a few others...)
+-http://www.industrial-craft.net
