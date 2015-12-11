@@ -49,7 +49,6 @@ public class BlockSuperfluid extends BlockFluidClassic
         super(fluid, fluid.isGaseous() ? fluid.getTemperature() > 350 ? Material.fire : materialGas : Material.water);
         this.setBlockName(id);
         BlockItemRegistry.registerBlock(this, id, ItemBlock.class);
-        BlockItemRegistry.registerName(this, fluid.getLocalizedName());
         this.setBlockTextureName(BlockItemRegistry.currentMod.concat(":liquids/").concat(fluid.getTexName()));
     }
 
@@ -130,8 +129,8 @@ public class BlockSuperfluid extends BlockFluidClassic
         } else return false;
     }
     
-    public static HashMap<Fluid, Fluid> reactConversions = new HashMap();
-    public static HashMap<Fluid, PotionEffect[]> effects = new HashMap();
+    public static HashMap<Fluid, Fluid> reactConversions = new HashMap<Fluid, Fluid>();
+    public static HashMap<Fluid, PotionEffect[]> effects = new HashMap<Fluid, PotionEffect[]>();
     
     public boolean tryReplace(World world, int x, int y, int z)
     {
@@ -201,5 +200,11 @@ public class BlockSuperfluid extends BlockFluidClassic
             entity.setFire((t - 300) / 50);
         }
     }
+
+	@Override
+	public String getLocalizedName() 
+	{
+		return FluidRegistry.getFluid(fluidName).getLocalizedName();
+	}
     
 }

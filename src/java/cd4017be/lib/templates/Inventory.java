@@ -26,7 +26,7 @@ public class Inventory implements ISidedInventory
     private ModTileEntity tile;
     public ItemStack[] items;
     public final Component[] componets;
-    public String invName = "";
+    public String invName;
     
     public static class Component
     {

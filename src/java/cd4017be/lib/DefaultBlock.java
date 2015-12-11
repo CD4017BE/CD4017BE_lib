@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.util.IIcon;
+import net.minecraft.util.StatCollector;
 
 /**
  *
@@ -53,5 +54,11 @@ public class DefaultBlock extends Block
             this.addTextures[i] = register.registerIcon(this.addTexNames[i]);
         }
     }
+
+	@Override
+	public String getLocalizedName() 
+	{
+		return StatCollector.translateToLocal(this.getUnlocalizedName().replaceFirst("tile.", "tile.cd4017be.") + ".name");
+	}
     
 }

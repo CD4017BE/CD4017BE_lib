@@ -28,6 +28,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.StatCollector;
 
 /**
  *
@@ -289,6 +290,11 @@ public class ModTileEntity extends TileEntity
     public byte getOrientation()
     {
         return (byte)(worldObj.getBlockMetadata(xCoord, yCoord, zCoord) % 6);
+    }
+    
+    public String getInventoryName() 
+    {
+    	return StatCollector.translateToLocal(this.getBlockType().getUnlocalizedName().replaceFirst("tile.", "gui.cd4017be."));
     }
     
 }

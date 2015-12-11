@@ -5,6 +5,7 @@
 package cd4017be.lib;
 
 import net.minecraft.util.IIcon;
+import net.minecraft.util.StatCollector;
 import net.minecraftforge.fluids.Fluid;
 
 /**
@@ -14,18 +15,15 @@ import net.minecraftforge.fluids.Fluid;
 public class ModFluid extends Fluid
 {
     
-    private String locName;
-    
-    public ModFluid(String name, String locname)
+    public ModFluid(String name)
     {
         super(name);
-        this.locName = locname;
     }
 
     @Override
-    public String getLocalizedName() 
+    public String getLocalizedName()
     {
-        return this.locName;
+        return StatCollector.translateToLocal("fluid." + this.unlocalizedName + ".name");
     }
     
     @Override

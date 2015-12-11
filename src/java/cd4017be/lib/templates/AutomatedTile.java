@@ -196,14 +196,13 @@ public class AutomatedTile extends ModTileEntity implements ISidedInventory
 
 	@Override
 	public String getInventoryName() {
-		if (inventory == null) return "";
+		if (inventory == null || inventory.getInventoryName() == null) return super.getInventoryName();
         return inventory.getInventoryName();
 	}
 
 	@Override
 	public boolean hasCustomInventoryName() {
-		if (inventory == null) return true;
-        return inventory.hasCustomInventoryName();
+		return true;
 	}
 
 	@Override

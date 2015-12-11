@@ -9,12 +9,14 @@ package cd4017be.lib;
 import cpw.mods.fml.common.FMLLog;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.IResource;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.StatCollector;
 
 import org.apache.commons.io.IOUtils;
 
@@ -27,7 +29,7 @@ import cd4017be.lib.util.Utils;
 public class TooltipInfo 
 {
     
-    private static HashMap<String, String> toolTips = new HashMap();
+    private static HashMap<String, String> toolTips = new HashMap<String, String>();
     
     /**
      * @param name
@@ -73,6 +75,7 @@ public class TooltipInfo
     
     public static void replaceReferences(ConfigurationFile cfg)
     {
+    	configurations.add(cfg);
     	int p, q;
     	String id, repl;
     	for (Entry<String, String> e : toolTips.entrySet()) {
@@ -116,6 +119,28 @@ public class TooltipInfo
         	else if (id.startsWith("T.")) return cfg.getString(k, "");
     	}
     	return "";
+    }
+    
+    private static final ArrayList<ConfigurationFile> configurations = new ArrayList<ConfigurationFile>();
+    
+    public static String getLocFormat(String s)
+    {
+    	s = StatCollector.translateToLocal(s).trim().replace("\\n", "\n");
+    	int p = 0, q, x;
+    	String id, repl;
+		while ((q = s.indexOf("\\<", p)) >= p && (p = s.indexOf(">", q)) > q) {
+			id = s.substring(q + 2, p);
+			x = id.indexOf(":");
+			repl = x <= 0 ? id : id.substring(0, x);
+			for (ConfigurationFile cfg : configurations)
+				if (cfg.getObject(repl) != null) {
+					repl = formatReference(id, cfg);
+					break;
+				}
+			s = s.replace("\\<" + id + ">", repl);
+			p = q + repl.length();
+		}
+		return s;
     }
     
 }

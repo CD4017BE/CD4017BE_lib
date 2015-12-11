@@ -6,7 +6,6 @@ package cd4017be.lib;
 
 import cpw.mods.fml.common.FMLLog;
 import cpw.mods.fml.common.registry.GameRegistry;
-import cpw.mods.fml.common.registry.LanguageRegistry;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 
@@ -35,7 +34,7 @@ public class TileBlockRegistry
         }
     }
     
-    private static HashMap<Block, TileBlockEntry> registry = new HashMap();
+    private static HashMap<Block, TileBlockEntry> registry = new HashMap<Block, TileBlockEntry>();
     
     @SideOnly(Side.CLIENT)
     /**
@@ -53,19 +52,17 @@ public class TileBlockRegistry
     }
     
     /**
-     * Registers a Block with given TileEntity, Container and display name
+     * Registers a Block with given TileEntity, Container and display name.
      * @param block
      * @param tileEntity
      * @param container
-     * @param dspName
      */
-    public static void register(TileBlock block, Class<? extends ModTileEntity> tileEntity, Class<? extends TileContainer> container, String dspName)
+    public static void register(TileBlock block, Class<? extends ModTileEntity> tileEntity, Class<? extends TileContainer> container)
     {
         TileBlockEntry entry = new TileBlockEntry(block);
         entry.tileEntity = tileEntity;
         GameRegistry.registerTileEntity(tileEntity, block.getUnlocalizedName());
         entry.container = container;
-        LanguageRegistry.addName(block, dspName);
         registry.put(block, entry);
     }
     
