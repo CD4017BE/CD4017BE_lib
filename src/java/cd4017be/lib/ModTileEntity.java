@@ -294,7 +294,7 @@ public class ModTileEntity extends TileEntity
     
     public String getInventoryName() 
     {
-    	return StatCollector.translateToLocal(this.getBlockType().getUnlocalizedName().replaceFirst("tile.", "gui.cd4017be."));
+    	return StatCollector.translateToLocal(this.getBlockType().getUnlocalizedName().replaceFirst("tile.", "gui.cd4017be.") + ".name");
     }
     
 }

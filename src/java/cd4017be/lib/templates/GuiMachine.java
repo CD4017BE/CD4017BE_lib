@@ -114,7 +114,7 @@ public abstract class GuiMachine extends GuiContainer
     {
         if (this.func_146978_c(x, y, w, h, mouseX, mouseY)) {
             if (text.length == 2 && text[0].equals("\\i")) {
-                String s = TooltipInfo.getInfo(text[1]);
+                String s = TooltipInfo.getLocFormat("gui.cd4017be." + text[1]);
                 if (s == null) return;
                 text = s.split("\n");
             }

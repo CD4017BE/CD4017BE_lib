@@ -6,19 +6,8 @@
 
 package cd4017be.lib;
 
-import cpw.mods.fml.common.FMLLog;
-
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map.Entry;
-
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.resources.IResource;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.StatCollector;
-
-import org.apache.commons.io.IOUtils;
 
 import cd4017be.lib.util.Utils;
 
@@ -29,66 +18,9 @@ import cd4017be.lib.util.Utils;
 public class TooltipInfo 
 {
     
-    private static HashMap<String, String> toolTips = new HashMap<String, String>();
-    
-    /**
-     * @param name
-     * @return the tooltip registered with given name.
-     */
-    public static String getInfo(String name)
-    {
-        return toolTips.get(name);
-    }
-    
-    /**
-     * Registers a tooltip for given name.
-     * @param name
-     * @param info
-     */
-    public static void addInfo(String name, String info)
-    {
-        toolTips.put(name, info);
-    }
-    
-    /**
-     * Loads tooltips from a file.
-     * @param resource
-     */
-    public static void loadInfoFile(ResourceLocation resource)
-    {
-        try {
-            IResource r = Minecraft.getMinecraft().getResourceManager().getResource(resource);
-            String k, v;
-            int p;
-            for (String s : IOUtils.readLines(r.getInputStream())) {
-                if (!s.isEmpty() && s.charAt(0) != '#' && (p = s.indexOf('=')) > 0 && p < s.length() - 1) {
-                    k = s.substring(0, p).trim();
-                    v = s.substring(p + 1).trim().replace("\\n", "\n");
-                    toolTips.put(k, v);
-                }
-            }
-        } catch (IOException e) 
-        {
-            FMLLog.getLogger().warn("Failed to load Tool-tip-file of Mod " + resource.getResourceDomain(), e);
-        }
-    }
-    
-    public static void replaceReferences(ConfigurationFile cfg)
+    public static void addConfigReference(ConfigurationFile cfg)
     {
     	configurations.add(cfg);
-    	int p, q;
-    	String id, repl;
-    	for (Entry<String, String> e : toolTips.entrySet()) {
-    		String s = e.getValue();
-    		p = 0;
-    		while ((q = s.indexOf("\\<", p)) >= p && (p = s.indexOf(">", q)) > q) {
-    			id = s.substring(q + 2, p);
-    			repl = formatReference(id, cfg);
-    			s = s.replace("\\<" + id + ">", repl);
-    			p = q + repl.length();
-    		}
-    		e.setValue(s);
-    	}
     }
     
     private static String formatReference(String id, ConfigurationFile cfg)
