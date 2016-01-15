@@ -91,7 +91,7 @@ public class ComputerAPI implements IPeripheralProvider
     
     public static Object newOCnode(TileEntity tile, String name, boolean power)
     {
-    	return tile instanceof Environment && API.network == null ? null : power ? API.network.newNode((Environment)tile, Visibility.Network).withComponent(name).withConnector().create() : API.network.newNode((Environment)tile, Visibility.Network).withComponent(name).create();
+    	return tile instanceof Environment && API.network != null ? power ? API.network.newNode((Environment)tile, Visibility.Network).withComponent(name).withConnector().create() : API.network.newNode((Environment)tile, Visibility.Network).withComponent(name).create() : null;
     }
     
     public static double update(TileEntity tile, Object node, double energy)
