@@ -64,6 +64,15 @@ public abstract class GuiMachine extends GuiContainer
     {
         this.fontRendererObj.drawString(s, x - this.fontRendererObj.getStringWidth(s) / 2, y, c);
     }
+    
+    public void drawLocString(int x, int y, int h, int c, String s, Object... args)
+    {
+    	String[] text = TooltipInfo.format("gui.cd4017be." + s, args).split("\n");
+    	for (String l : text) {
+    		this.fontRendererObj.drawString(l, x, y, c);
+    		y += h;
+    	}
+    }
 
     @Override
     protected void drawGuiContainerForegroundLayer(int mx, int my) 
@@ -119,6 +128,13 @@ public abstract class GuiMachine extends GuiContainer
                 text = s.split("\n");
             }
             this.drawHoveringText(Arrays.asList(text), mouseX - this.guiLeft, mouseY - this.guiTop, fontRendererObj);
+        }
+    }
+    
+    public void drawFormatInfo(int x, int y, int w, int h, String key, Object... args)
+    {
+    	if (this.func_146978_c(x, y, w, h, mouseX, mouseY)) {
+            this.drawHoveringText(Arrays.asList(TooltipInfo.format("gui.cd4017be." + key, args).split("\n")), mouseX - this.guiLeft, mouseY - this.guiTop, fontRendererObj);
         }
     }
     

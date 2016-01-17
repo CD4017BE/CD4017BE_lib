@@ -5,6 +5,7 @@
 package cd4017be.api.automation;
 
 import cd4017be.lib.ModTileEntity;
+import cd4017be.lib.TooltipInfo;
 import cd4017be.lib.util.Utils;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
@@ -99,7 +100,8 @@ public class PipeEnergy
     {
     	float I = (U1 - U0) / R;
     	float P = (U1 + U0) * I;
-    	return new String[]{"Power:", String.format("%.1f kW", P / 1000F), String.format("@ %.0f A", I)};
+    	return TooltipInfo.format("gui.cd4017be.energyFlow", P / 1000F, I).split("\n");
+    	//return new String[]{"Power:", String.format("%.1f kW", P / 1000F), String.format("@ %.0f A", I)};
     }
     
 }

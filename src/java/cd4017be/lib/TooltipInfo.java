@@ -7,8 +7,9 @@
 package cd4017be.lib;
 
 import java.util.ArrayList;
-import net.minecraft.util.StatCollector;
+import java.util.IllegalFormatException;
 
+import net.minecraft.util.StatCollector;
 import cd4017be.lib.util.Utils;
 
 /**
@@ -73,6 +74,16 @@ public class TooltipInfo
 			p = q + repl.length();
 		}
 		return s;
+    }
+    
+    public static String format(String s, Object... args)
+    {
+    	s = StatCollector.translateToLocal(s).trim().replace("\\n", "\n");
+    	try {
+    		return String.format(s, args);
+    	} catch (IllegalFormatException e) {
+    		return s;
+    	}
     }
     
 }
