@@ -77,17 +77,17 @@ public class NBTRecipe extends ShapedOreRecipe
         if (type == 0){
             if (!nbt.hasKey(var)) nbt.setTag(var, tag);
         } else if (tag instanceof NBTTagByte) {
-            nbt.setByte(var, (byte)this.applyValue(nbt.getByte(var), ((NBTTagByte)tag).func_150290_f(), type, stacksize));
+            nbt.setByte(var, (byte)this.applyValue(nbt.getByte(var), ((NBTTagByte)tag).getByte(), type, stacksize));
         } else if (tag instanceof NBTTagShort) {
-            nbt.setShort(var, (short)this.applyValue(nbt.getShort(var), ((NBTTagShort)tag).func_150289_e(), type, stacksize));
+            nbt.setShort(var, (short)this.applyValue(nbt.getShort(var), ((NBTTagShort)tag).getShort(), type, stacksize));
         } else if (tag instanceof NBTTagInt) {
-            nbt.setInteger(var, (int)this.applyValue(nbt.getInteger(var), ((NBTTagInt)tag).func_150287_d(), type, stacksize));
+            nbt.setInteger(var, (int)this.applyValue(nbt.getInteger(var), ((NBTTagInt)tag).getInt(), type, stacksize));
         } else if (tag instanceof NBTTagLong) {
-            nbt.setLong(var, (long)this.applyValue(nbt.getInteger(var), ((NBTTagLong)tag).func_150291_c(), type, stacksize));
+            nbt.setLong(var, (long)this.applyValue(nbt.getLong(var), ((NBTTagLong)tag).getLong(), type, stacksize));
         } else if (tag instanceof NBTTagFloat) {
-            nbt.setFloat(var, (float)this.applyValue(nbt.getFloat(var), ((NBTTagFloat)tag).func_150288_h(), type, stacksize));
+            nbt.setFloat(var, (float)this.applyValue(nbt.getFloat(var), ((NBTTagFloat)tag).getFloat(), type, stacksize));
         } else if (tag instanceof NBTTagDouble) {
-            nbt.setDouble(var, this.applyValue(nbt.getDouble(var), ((NBTTagDouble)tag).func_150286_g(), type, stacksize));
+            nbt.setDouble(var, this.applyValue(nbt.getDouble(var), ((NBTTagDouble)tag).getDouble(), type, stacksize));
         } else nbt.setTag(var, tag);
     }
     

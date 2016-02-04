@@ -13,6 +13,9 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.ISidedInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.IChatComponent;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 
@@ -132,7 +135,7 @@ public class Inventory implements ISidedInventory
     public static int[] getSlots(IInventory inv, int s)
     {
         if (inv instanceof ISidedInventory) {
-            return ((ISidedInventory)inv).getAccessibleSlotsFromSide(s);
+            return ((ISidedInventory)inv).getSlotsForFace(EnumFacing.VALUES[s]);
         } else {
             int[] array = new int[inv.getSizeInventory()];
             for (int i = 0; i < array.length; i++) array[i] = i;
@@ -147,7 +150,7 @@ public class Inventory implements ISidedInventory
         int i = 0;
         for (int slot : slots) {
             ItemStack stack = inv.getStackInSlot(slot);
-            if (stack != null && (type == null || Utils.itemsEqual(stack, type)) && (!sided || ((ISidedInventory)inv).canExtractItem(slot, stack, s))) {
+            if (stack != null && (type == null || Utils.itemsEqual(stack, type)) && (!sided || ((ISidedInventory)inv).canExtractItem(slot, stack, EnumFacing.VALUES[s]))) {
                 array[i++] = slot;
                 if (type == null) type = stack;
                 if ((n -= stack.stackSize) <= 0) break;
@@ -169,7 +172,7 @@ public class Inventory implements ISidedInventory
         int i = 0;
         for (int slot : slots) {
             ItemStack stack = inv.getStackInSlot(slot);
-            if (stack != null && Utils.itemsEqual(stack, item) && (!sided || ((ISidedInventory)inv).canInsertItem(slot, item, s))){
+            if (stack != null && Utils.itemsEqual(stack, item) && (!sided || ((ISidedInventory)inv).canInsertItem(slot, item, EnumFacing.VALUES[s]))){
                 int m = Math.min(inv.getInventoryStackLimit(), stack.getMaxStackSize()) - stack.stackSize;
                 if (m <= 0) continue;
                 array[i++] = slot;
@@ -179,7 +182,7 @@ public class Inventory implements ISidedInventory
         if (hasnull && n > 0)
         for (int slot : slots) {
             ItemStack stack = inv.getStackInSlot(slot);
-            if (stack == null && (!sided || ((ISidedInventory)inv).canInsertItem(slot, item, s))) {
+            if (stack == null && (!sided || ((ISidedInventory)inv).canInsertItem(slot, item, EnumFacing.VALUES[s]))) {
                 array[i++] = slot;
                 if ((n -= inv.getInventoryStackLimit()) <= 0) break; 
             }
@@ -260,12 +263,12 @@ public class Inventory implements ISidedInventory
     public boolean isUseableByPlayer(EntityPlayer entityplayer) {return true;}
     
     @Override
-    public int[] getAccessibleSlotsFromSide(int s) 
+    public int[] getSlotsForFace(EnumFacing side) 
     {
         int[] array = new int[items.length];
         int n = 0;
         for (int i = 0; i < this.componets.length; i++) {
-            byte m = this.getConfig(tile.netData.longs[netIdxLong], s, i);
+            byte m = this.getConfig(tile.netData.longs[netIdxLong], side.getIndex(), i);
             if (m != 0)
             for (int j = this.componets[i].s; j < this.componets[i].e; j++)
             array[n++] = j;
@@ -276,11 +279,11 @@ public class Inventory implements ISidedInventory
     }
 
     @Override
-    public boolean canInsertItem(int i, ItemStack itemstack, int s) 
+    public boolean canInsertItem(int i, ItemStack itemstack, EnumFacing s) 
     {
         for (int j = 0; j < this.componets.length; j++) {
             if (i >= this.componets[j].s && i < this.componets[j].e) {
-                byte m = this.getConfig(tile.netData.longs[netIdxLong], s, j);
+                byte m = this.getConfig(tile.netData.longs[netIdxLong], s.getIndex(), j);
                 return m == 1 || m == 2 && (tile instanceof IAutomatedInv ? ((IAutomatedInv)tile).canInsert(itemstack, j, i) : true);
             }
         }
@@ -288,11 +291,11 @@ public class Inventory implements ISidedInventory
     }
 
     @Override
-    public boolean canExtractItem(int i, ItemStack itemstack, int s) 
+    public boolean canExtractItem(int i, ItemStack itemstack, EnumFacing s) 
     {
         for (int j = 0; j < this.componets.length; j++) {
             if (i >= this.componets[j].s && i < this.componets[j].e) {
-                byte m = this.getConfig(tile.netData.longs[netIdxLong], s, j);
+                byte m = this.getConfig(tile.netData.longs[netIdxLong], s.getIndex(), j);
                 return m == 1 || m == 3 && (tile instanceof IAutomatedInv ? ((IAutomatedInv)tile).canExtract(itemstack, j, i) : true);
             }
         }
@@ -326,7 +329,7 @@ public class Inventory implements ISidedInventory
     }
 
     @Override
-    public ItemStack getStackInSlotOnClosing(int i) 
+    public ItemStack removeStackFromSlot(int i) 
     {
         ItemStack item = items[i];
         items[i] = null;
@@ -334,12 +337,12 @@ public class Inventory implements ISidedInventory
     }
 
 	@Override
-	public String getInventoryName() {
+	public String getName() {
 		return invName;
 	}
 
 	@Override
-	public boolean hasCustomInventoryName() {
+	public boolean hasCustomName() {
 		return true;
 	}
 
@@ -347,9 +350,33 @@ public class Inventory implements ISidedInventory
 	public void markDirty() {}
 
 	@Override
-	public void openInventory() {}
+	public void openInventory(EntityPlayer player) {}
 
 	@Override
-	public void closeInventory() {}
+	public void closeInventory(EntityPlayer player) {}
+
+	@Override
+	public int getField(int id) {
+		return 0;
+	}
+
+	@Override
+	public void setField(int id, int value) {}
+
+	@Override
+	public int getFieldCount() {
+		return 0;
+	}
+
+	@Override
+	public void clear() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public IChatComponent getDisplayName() {
+		return new ChatComponentText(this.getName());
+	}
     
 }

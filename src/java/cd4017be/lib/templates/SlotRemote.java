@@ -5,17 +5,18 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.ISidedInventory;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumFacing;
 
 public class SlotRemote extends Slot 
 {
 	
-	public final int accessSide;
+	public final EnumFacing accessSide;
 	public boolean dirty;
 	
 	public SlotRemote(IInventory inv, int s, int acs, int x, int y) 
 	{
 		super(inv, s, x, y);
-		this.accessSide = acs;
+		this.accessSide = EnumFacing.VALUES[acs];
 	}
 
 	@Override

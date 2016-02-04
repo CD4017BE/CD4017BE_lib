@@ -6,9 +6,6 @@ package cd4017be.lib;
 
 import cd4017be.lib.templates.SlotHolo;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.BitSet;
 
@@ -19,6 +16,7 @@ import net.minecraft.inventory.Container;
 import net.minecraft.inventory.ICrafting;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.PacketBuffer;
 
 /**
  *
@@ -78,13 +76,12 @@ public class TileContainer extends Container
     {
         return super.mergeItemStack(item, ss, se, d);
     }
-
+    
     @Override
-    public void addCraftingToCrafters(ICrafting crafting) 
-    {
-        super.addCraftingToCrafters(crafting);
-        tileEntity.addCraftingToCrafters(this, crafting);
-    }
+	public void onCraftGuiOpened(ICrafting crafting) {
+		super.onCraftGuiOpened(crafting);
+		tileEntity.addCraftingToCrafters(this, crafting);
+	}
 
     @Override
     public void updateProgressBar(int var, int val) 
@@ -92,7 +89,7 @@ public class TileContainer extends Container
         tileEntity.updateProgressBar(var, val);
     }
     
-    public void onDataUpdate(DataInputStream dis) throws IOException
+    public void onDataUpdate(PacketBuffer dis) throws IOException
     {
         tileEntity.updateNetData(dis, this);
     }
@@ -101,19 +98,18 @@ public class TileContainer extends Container
     public void detectAndSendChanges() 
     {
         try {
-            ByteArrayOutputStream bos = this.tileEntity.getPacketTargetData();
-            DataOutputStream dos = new DataOutputStream(bos);
+            PacketBuffer data = this.tileEntity.getPacketTargetData();
             boolean send = false;
             if (tileEntity.netData != null) {
                 if (refData == null) refData = new TileEntityData(tileEntity.netData);
                 BitSet chng = tileEntity.netData.detectChanges(refData);
-                tileEntity.netData.writeData(dos, chng);
+                tileEntity.netData.writeData(data, chng);
                 send = !chng.isEmpty();
             }
-            send |= tileEntity.detectAndSendChanges(this, crafters, dos);
+            send |= tileEntity.detectAndSendChanges(this, crafters, data);
             if (send) for (int i = 0; i < this.crafters.size(); i++) {
                 EntityPlayerMP crafter = (EntityPlayerMP)this.crafters.get(i);
-                BlockGuiHandler.sendPacketToPlayer(crafter, bos);
+                BlockGuiHandler.sendPacketToPlayer(crafter, data);
             }
         } catch (IOException e) {e.printStackTrace();}
         super.detectAndSendChanges();

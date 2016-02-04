@@ -11,7 +11,7 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.EnumFacing;
 import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidTankInfo;
@@ -82,27 +82,25 @@ public class TankContainer implements IFluidHandler
                     {
                         TileEntity te = Utils.getTileOnSide(tile, (byte)s);
                         if (!(te instanceof IFluidHandler)) continue;
-                        ForgeDirection dir = ForgeDirection.getOrientation(s ^ 1);
                         IFluidHandler handler = (IFluidHandler)te;
-                        this.drain(id, handler.fill(dir, this.getFluid(id), true), true);
+                        this.drain(id, handler.fill(EnumFacing.VALUES[s ^ 1], this.getFluid(id), true), true);
                     } else if (tanks[id].dir < 0 && cfg == 2 && this.getSpace(id) > 0)
                     {
                         TileEntity te = Utils.getTileOnSide(tile, (byte)s);
                         if (!(te instanceof IFluidHandler)) continue;
-                        ForgeDirection dir = ForgeDirection.getOrientation(s ^ 1);
                         IFluidHandler handler = (IFluidHandler)te;
                         int am = this.getSpace(id);
                         FluidStack stack = null;
                         if (this.getFluid(id) != null) stack = new FluidStack(this.getFluid(id), am);
                         else if (tanks[id].types.length > 0) {
                             for (Fluid type : tanks[id].types)
-                                if (handler.canDrain(dir, type)) {
+                                if (handler.canDrain(EnumFacing.VALUES[s ^ 1], type)) {
                                     stack = new FluidStack(type, am);
                                     break;
                                 }
                             if (stack == null) continue;
                         }
-                        this.fill(id, stack == null ? handler.drain(dir, am, true) : handler.drain(dir, stack, true), true);
+                        this.fill(id, stack == null ? handler.drain(EnumFacing.VALUES[s ^ 1], am, true) : handler.drain(EnumFacing.VALUES[s ^ 1], stack, true), true);
                     }
                 }
         if (tile instanceof IInventory)
@@ -222,7 +220,7 @@ public class TankContainer implements IFluidHandler
     }
     
     @Override
-    public int fill(ForgeDirection from, FluidStack resource, boolean doFill) 
+    public int fill(EnumFacing from, FluidStack resource, boolean doFill) 
     {
         int ref = -1;
         for (int id = 0; id < tanks.length; id++)
@@ -233,7 +231,7 @@ public class TankContainer implements IFluidHandler
     }
 
     @Override
-    public FluidStack drain(ForgeDirection from, FluidStack resource, boolean doDrain) 
+    public FluidStack drain(EnumFacing from, FluidStack resource, boolean doDrain) 
     {
         int ref = -1;
         for (int id = 0; id < tanks.length; id++)
@@ -244,7 +242,7 @@ public class TankContainer implements IFluidHandler
     }
 
     @Override
-    public FluidStack drain(ForgeDirection from, int maxDrain, boolean doDrain) 
+    public FluidStack drain(EnumFacing from, int maxDrain, boolean doDrain) 
     {
         int ref = -1;
         for (int id = 0; id < tanks.length; id++)
@@ -255,7 +253,7 @@ public class TankContainer implements IFluidHandler
     }
 
     @Override
-    public boolean canFill(ForgeDirection from, Fluid fluid) 
+    public boolean canFill(EnumFacing from, Fluid fluid) 
     {
         for (int id = 0; id < tanks.length; id++)
             if (this.canFillTank(from.ordinal(), fluid, id)) return true;
@@ -263,7 +261,7 @@ public class TankContainer implements IFluidHandler
     }
 
     @Override
-    public boolean canDrain(ForgeDirection from, Fluid fluid) 
+    public boolean canDrain(EnumFacing from, Fluid fluid) 
     {
         for (int id = 0; id < tanks.length; id++)
             if (this.canDrainTank(from.ordinal(), fluid, id)) return true;
@@ -271,7 +269,7 @@ public class TankContainer implements IFluidHandler
     }
 
     @Override
-    public FluidTankInfo[] getTankInfo(ForgeDirection from) 
+    public FluidTankInfo[] getTankInfo(EnumFacing from) 
     {
         FluidTankInfo[] array = new FluidTankInfo[tanks.length];
         int n = 0;

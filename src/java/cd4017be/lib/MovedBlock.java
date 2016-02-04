@@ -6,16 +6,18 @@
 
 package cd4017be.lib;
 
-import cpw.mods.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 
 import java.lang.reflect.Method;
 import java.util.Iterator;
 
 import cd4017be.api.automation.IOperatingArea;
 import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.play.server.S07PacketRespawn;
 import net.minecraft.network.play.server.S1DPacketEntityEffect;
@@ -23,8 +25,11 @@ import net.minecraft.potion.PotionEffect;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.management.ServerConfigurationManager;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.BlockPos;
+import net.minecraft.world.EnumSkyBlock;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
+import net.minecraft.world.WorldType;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
 
@@ -35,24 +40,22 @@ import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
 public class MovedBlock 
 {
     public final NBTTagCompound nbt;
-    public final Block blockId;
-    public final byte metadata;
+    public final IBlockState block;
     
-    public MovedBlock(Block id, int m, NBTTagCompound tile) 
+    public MovedBlock(IBlockState block, NBTTagCompound tile) 
     {
-        this.blockId = id;
-        this.metadata = (byte)m;
+        this.block = block;
         this.nbt = tile;
     }
     
-    public boolean set(World world, int x, int y, int z)
+    public boolean set(World world, BlockPos pos)
     {
         TileEntity tile = null;
         boolean multipart = false;
         if (nbt != null) {
-            nbt.setInteger("x", x);
-            nbt.setInteger("y", y);
-            nbt.setInteger("z", z);
+            nbt.setInteger("x", pos.getX());
+            nbt.setInteger("y", pos.getY());
+            nbt.setInteger("z", pos.getZ());
             multipart = nbt.getString("id").equals("savedMultipart");
             if (multipart) {
                 try {
@@ -64,13 +67,13 @@ public class MovedBlock
                 tile = TileEntity.createAndLoadEntity(nbt);
                 if (tile instanceof IOperatingArea) {
                     int [] area = ((IOperatingArea)tile).getOperatingArea();
-                    area[0] += x; area[3] += x;
-                    area[1] += y; area[4] += y;
-                    area[2] += z; area[5] += z;
+                    area[0] += pos.getX(); area[3] += pos.getX();
+                    area[1] += pos.getY(); area[4] += pos.getY();
+                    area[2] += pos.getZ(); area[5] += pos.getZ();
                 }
             }
         }
-        boolean set = setBlock(world, x, y, z, blockId, metadata, tile);
+        boolean set = setBlock(world, pos, block, tile);
         if (multipart && set) {
             try {
                 Class multipartHelper = Class.forName("codechicken.multipart.MultipartHelper");
@@ -82,25 +85,25 @@ public class MovedBlock
         return set;
     }
     
-    public static MovedBlock get(World world, int x, int y, int z)
+    public static MovedBlock get(World world, BlockPos pos)
     {
-        Block id = world.getBlock(x, y, z);
-        int m = world.getBlockMetadata(x, y, z);
+        IBlockState id = world.getBlockState(pos);
         NBTTagCompound nbt = null;
-        TileEntity te = world.getTileEntity(x, y, z);
-        if (te != null) 
-        {
+        TileEntity te = world.getTileEntity(pos);
+        if (te != null) {
             if (te instanceof IOperatingArea) {
                 int[] area = ((IOperatingArea)te).getOperatingArea();
-                area[0] -= x; area[3] -= x;
-                area[1] -= y; area[4] -= y;
-                area[2] -= z; area[5] -= z;
+                area[0] -= pos.getX(); area[3] -= pos.getX();
+                area[1] -= pos.getY(); area[4] -= pos.getY();
+                area[2] -= pos.getZ(); area[5] -= pos.getZ();
             }
             nbt = new NBTTagCompound();
             te.writeToNBT(nbt);
         }
-        return new MovedBlock(id, m, nbt);
+        return new MovedBlock(id, nbt);
     }
+    
+    
     
     /**
      * Place a Block without notify anything
@@ -113,56 +116,65 @@ public class MovedBlock
      * @param tile block TileEntity
      * @return true if placed successfully
      */
-    public static boolean setBlock(World world, int x, int y, int z, Block id, int m, TileEntity tile)
+    public static boolean setBlock(World world, BlockPos pos, IBlockState state, TileEntity tile)
     {
-        if (x < -30000000 || z < -30000000 || x >= 30000000 || z >= 30000000 || y < 0 || y >= 256) return false;
-        Chunk chunk = world.getChunkFromBlockCoords(x, z);
-        world.removeTileEntity(x, y, z);
-        int cx = x & 0xf;
-        int cy = y & 15;
-        int cz = z & 0xf;
-        int j1 = cz << 4 | cx;
-        if (y >= chunk.precipitationHeightMap[j1] - 1)
-        {
-            chunk.precipitationHeightMap[j1] = -999;
+    	if (!world.isBlockLoaded(pos)) return false;
+        Chunk chunk = world.getChunkFromBlockCoords(pos);
+        IBlockState state0 = chunk.getBlockState(pos);
+        Block block = state.getBlock();
+        Block block0 = state0.getBlock();
+        int oldLight = block0.getLightValue(world, pos);
+
+        world.removeTileEntity(pos);
+        if (state0 == state) {
+        	world.setTileEntity(pos, tile);
+        	world.markBlockForUpdate(pos);
+        	return true;
         }
-        int k1 = chunk.heightMap[j1];
+
+        int bx = pos.getX() & 15;
+        int y = pos.getY();
+        int bz = pos.getZ() & 15;
+        int p = bz << 4 | bx;
+
+        if (y >= chunk.precipitationHeightMap[p] - 1) chunk.precipitationHeightMap[p] = -999;
+        int h = chunk.getHeightMap()[p];
+        
         ExtendedBlockStorage[] storageArrays = chunk.getBlockStorageArray();
         ExtendedBlockStorage extendedblockstorage = storageArrays[y >> 4];
         boolean flag = false;
-        if (extendedblockstorage == null)
-        {
-            if (id == null) return true;
-            extendedblockstorage = storageArrays[y >> 4] = new ExtendedBlockStorage(y >> 4 << 4, !world.provider.hasNoSky);
-            flag = y >= k1;
+        if (extendedblockstorage == null) {
+        	if (block == Blocks.air) return false;
+        	extendedblockstorage = storageArrays[y >> 4] = new ExtendedBlockStorage(y >> 4 << 4, !world.provider.getHasNoSky());
+            flag = y >= h;
         }
-        extendedblockstorage.func_150818_a(cx, cy, cz, id);
-        extendedblockstorage.setExtBlockMetadata(cx, cy, cz, m);
-        /*
-        if (flag)
-        {
-            chunk.generateSkylightMap();
-        }
-        else
-        {
-            if (chunk.getBlockLightOpacity(cx, y, cz) > 0)
-            {
-                if (y >= k1)
-                {
-                    chunk.relightBlock(cx, y + 1, cz);
-                }
+
+        extendedblockstorage.set(bx, y & 15, bz, state);
+        if (extendedblockstorage.getBlockByExtId(bx, y & 15, bz) != block) return false;
+        
+        if (flag) chunk.generateSkylightMap();
+        else {
+        	int l = block.getLightOpacity(world, pos);
+            int l0 = block0.getLightOpacity(world, pos);
+
+            if (l > 0) {
+            	if (y >= h) chunk.relightBlock(bx, y + 1, bz);
+            } else if (y == h - 1) chunk.relightBlock(bx, y, bz);
+
+            if (l != l0 && (l < l0 || chunk.getLightFor(EnumSkyBlock.SKY, pos) > 0 || chunk.getLightFor(EnumSkyBlock.BLOCK, pos) > 0)) {
+            	chunk.propagateSkylightOcclusion(bx, bz);
             }
-            else if (y == k1 - 1)
-            {
-                chunk.relightBlock(cx, y, cz);
-            }
-            chunk.propagateSkylightOcclusion(cx, cz);
         }
-        */
-        chunk.isModified = true;
-        world.setTileEntity(x, y, z, tile);
-        //world.updateAllLightTypes(x, y, z);
-        world.markBlockForUpdate(x, y, z);
+
+        world.setTileEntity(pos, tile);
+        chunk.setModified(true);
+
+        if (block.getLightOpacity() != block0.getLightOpacity() || block.getLightValue(world, pos) != oldLight) {
+          	world.theProfiler.startSection("checkLight");
+           	world.checkLight(pos);
+           	world.theProfiler.endSection();
+        }
+        world.markBlockForUpdate(pos);
         return true;
     }
     
@@ -176,7 +188,7 @@ public class MovedBlock
      */
     public static void moveEntity(Entity entity, int dim, double x, double y, double z)
     {
-        int dimO = entity.worldObj.provider.dimensionId;
+        int dimO = entity.worldObj.provider.getDimensionId();
         if (entity instanceof EntityPlayerMP) {
             if (dim != dimO) tpPlayerToDim((EntityPlayerMP)entity, dim, x, y, z);
             else ((EntityPlayerMP)entity).setPositionAndUpdate(x, y, z);
@@ -194,7 +206,7 @@ public class MovedBlock
             Entity var6 = EntityList.createEntityByName(EntityList.getEntityString(entity), worldN);
             if (var6 != null)
             {
-                var6.copyDataFrom(entity, true);
+                var6.copyDataFromOld(entity);
                 worldN.spawnEntityInWorld(var6);
             }
             entity.isDead = true;
@@ -216,7 +228,7 @@ public class MovedBlock
         WorldServer worldO = server.worldServerForDimension(player.dimension);
         player.dimension = dim;
         WorldServer worldN = server.worldServerForDimension(player.dimension);
-        player.playerNetServerHandler.sendPacket(new S07PacketRespawn(player.dimension, worldN.difficultySetting, worldN.getWorldInfo().getTerrainType(), player.theItemInWorldManager.getGameType()));
+        player.playerNetServerHandler.sendPacket(new S07PacketRespawn(player.dimension, worldN.getDifficulty(), worldN.getWorldInfo().getTerrainType(), player.theItemInWorldManager.getGameType()));
         worldO.removePlayerEntityDangerously(player);
         player.isDead = false;
         tpEntity(player, worldO, worldN, x, y, z);

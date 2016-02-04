@@ -251,6 +251,6 @@ public class Vec3 extends Vec2
     
     public net.minecraft.util.Vec3 toMinecraftVec()
     {
-    	return net.minecraft.util.Vec3.createVectorHelper(x, y, z);
+    	return new net.minecraft.util.Vec3(x, y, z);
     }
 }

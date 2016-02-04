@@ -6,13 +6,15 @@
 
 package cd4017be.lib;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
-import java.io.DataInputStream;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+
 import java.io.IOException;
+
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
+import net.minecraft.network.PacketBuffer;
 import net.minecraft.world.World;
 
 /**
@@ -46,8 +48,8 @@ public interface IGuiItem
      * Called on server after BlockGuiHandler.sendPacketToPlayer is called on client
      * @param world
      * @param player
-     * @param dis
+     * @param data
      * @throws IOException
      */
-    public void onPlayerCommand(World world, EntityPlayer player, DataInputStream dis) throws IOException;
+    public void onPlayerCommand(World world, EntityPlayer player, PacketBuffer data) throws IOException;
 }

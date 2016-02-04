@@ -5,21 +5,17 @@
 package cd4017be.lib;
 
 import cd4017be.lib.TileBlockRegistry.TileBlockEntry;
-import cpw.mods.fml.common.FMLLog;
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import cpw.mods.fml.common.network.FMLEventChannel;
-import cpw.mods.fml.common.network.FMLNetworkEvent;
-import cpw.mods.fml.common.network.IGuiHandler;
-import cpw.mods.fml.common.network.NetworkRegistry;
-import cpw.mods.fml.common.network.internal.FMLProxyPacket;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.common.FMLLog;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.network.FMLEventChannel;
+import net.minecraftforge.fml.common.network.FMLNetworkEvent;
+import net.minecraftforge.fml.common.network.IGuiHandler;
+import net.minecraftforge.fml.common.network.NetworkRegistry;
+import net.minecraftforge.fml.common.network.internal.FMLProxyPacket;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import io.netty.buffer.Unpooled;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 
@@ -31,7 +27,9 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.NetHandlerPlayServer;
+import net.minecraft.network.PacketBuffer;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.BlockPos;
 import net.minecraft.world.World;
 
 /**
@@ -95,9 +93,9 @@ public class BlockGuiHandler implements IGuiHandler
      * Sends a Gui command packet to the server. 
      * @param data
      */
-    public static void sendPacketToServer(ByteArrayOutputStream data)
+    public static void sendPacketToServer(PacketBuffer data)
     {
-        eventChannel.sendToServer(new FMLProxyPacket(Unpooled.wrappedBuffer(data.toByteArray()), guiChannel));
+        eventChannel.sendToServer(new FMLProxyPacket(data, guiChannel));
     }
     
     /**
@@ -105,9 +103,9 @@ public class BlockGuiHandler implements IGuiHandler
      * @param player
      * @param data
      */
-    public static void sendPacketToPlayer(EntityPlayerMP player, ByteArrayOutputStream data)
+    public static void sendPacketToPlayer(EntityPlayerMP player, PacketBuffer data)
     {
-        eventChannel.sendTo(new FMLProxyPacket(Unpooled.wrappedBuffer(data.toByteArray()), guiChannel), player);
+        eventChannel.sendTo(new FMLProxyPacket(data, guiChannel), player);
     }
     
     /**
@@ -118,14 +116,11 @@ public class BlockGuiHandler implements IGuiHandler
      * @return
      * @throws IOException
      */
-    public static ByteArrayOutputStream getPacketTargetData(int x, int y, int z) throws IOException
+    public static PacketBuffer getPacketTargetData(BlockPos pos) throws IOException
     {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        DataOutputStream dos = new DataOutputStream(bos);
-        dos.writeInt(x);
-        dos.writeInt(y);
-        dos.writeInt(z);
-        return bos;
+        PacketBuffer data = new PacketBuffer(Unpooled.buffer());
+    	data.writeBlockPos(pos);
+        return data;
     }
     
     @SideOnly(Side.CLIENT)
@@ -137,10 +132,9 @@ public class BlockGuiHandler implements IGuiHandler
     	Container container = Minecraft.getMinecraft().thePlayer.openContainer;
         if (container != null && container instanceof TileContainer) {
             try {
-                DataInputStream dis = new DataInputStream(new ByteArrayInputStream(packet.payload().array()));
+                PacketBuffer data = new PacketBuffer(packet.payload());
                 ModTileEntity te = ((TileContainer)container).tileEntity;
-                if (te.xCoord == dis.readInt() && te.yCoord == dis.readInt() && te.zCoord == dis.readInt()) ((TileContainer)container).onDataUpdate(dis);
-                dis.close();
+                if (te.getPos().equals(data.readBlockPos())) ((TileContainer)container).onDataUpdate(data);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -157,16 +151,15 @@ public class BlockGuiHandler implements IGuiHandler
     	}
     	EntityPlayerMP player = ((NetHandlerPlayServer)event.handler).playerEntity;
         try {
-            DataInputStream dis = new DataInputStream(new ByteArrayInputStream(packet.payload().array()));
-            int x = dis.readInt(), y = dis.readInt(), z = dis.readInt();
-            if (y < 0) {
+            PacketBuffer data = new PacketBuffer(packet.payload());
+            BlockPos pos = data.readBlockPos();
+            if (pos.getY() < 0) {
                 ItemStack item = player.getCurrentEquippedItem();
-                if (item != null && item.getItem() instanceof IGuiItem) ((IGuiItem)item.getItem()).onPlayerCommand(player.worldObj, player, dis);
+                if (item != null && item.getItem() instanceof IGuiItem) ((IGuiItem)item.getItem()).onPlayerCommand(player.worldObj, player, data);
             } else {
-                TileEntity te = player.worldObj.getTileEntity(x, y, z);
-                if (te != null && te instanceof ModTileEntity) ((ModTileEntity)te).onPlayerCommand(dis, player);
+                TileEntity te = player.worldObj.getTileEntity(pos);
+                if (te != null && te instanceof ModTileEntity) ((ModTileEntity)te).onPlayerCommand(data, player);
             }
-            dis.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -176,8 +169,9 @@ public class BlockGuiHandler implements IGuiHandler
     public Object getServerGuiElement(int ID, EntityPlayer player, World world, int x, int y, int z) 
     {
         if (ID == 0) {
-            TileBlockEntry entry = TileBlockRegistry.getBlockEntry(world.getBlock(x, y, z));
-            TileEntity te = world.getTileEntity(x, y, z);
+        	BlockPos pos = new BlockPos(x, y, z);
+            TileBlockEntry entry = TileBlockRegistry.getBlockEntry(world.getBlockState(pos).getBlock());
+            TileEntity te = world.getTileEntity(pos);
             if (entry != null && entry.container != null && te != null && entry.tileEntity.isInstance(te)) {
                 try {
                     return entry.container.getConstructor(ModTileEntity.class, EntityPlayer.class).newInstance((ModTileEntity)te, player);
@@ -206,8 +200,9 @@ public class BlockGuiHandler implements IGuiHandler
     public Object getClientGuiElement(int ID, EntityPlayer player, World world, int x, int y, int z) 
     {
         if (ID == 0) { //Block gui
-            TileBlockEntry entry = TileBlockRegistry.getBlockEntry(world.getBlock(x, y, z));
-            TileEntity te = world.getTileEntity(x, y, z);
+        	BlockPos pos = new BlockPos(x, y, z);
+            TileBlockEntry entry = TileBlockRegistry.getBlockEntry(world.getBlockState(pos).getBlock());
+            TileEntity te = world.getTileEntity(pos);
             if (entry != null && entry.gui != null && te != null && entry.tileEntity.isInstance(te)) {
                 try {
                     return entry.gui.getConstructor(entry.tileEntity, EntityPlayer.class).newInstance(entry.tileEntity.cast(te), player);

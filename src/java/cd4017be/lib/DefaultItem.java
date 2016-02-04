@@ -25,7 +25,7 @@ public class DefaultItem extends Item
     {
         super();
         this.setUnlocalizedName(id);
-        BlockItemRegistry.registerItem(this);
+        BlockItemRegistry.registerItem(this, id);
         this.init();
     }
     

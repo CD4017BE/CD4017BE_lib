@@ -15,9 +15,9 @@ public interface IRedstone1bit
     /**
      * Get the redstone state at given side
      * @param s side
-     * @return true if state is active
+     * @return 0-15
      */
-    public boolean getBitValue(int s);
+    public byte getBitValue(int s);
     
     /**
      * Get the signal direction at given side
@@ -29,9 +29,9 @@ public interface IRedstone1bit
     /**
      * Update the redstone state at given side
      * @param s side
-     * @param v new state
+     * @param state new state
      * @param recursion amount of Blocks the signal has travelled this tick
      */
-    public void setBitValue(int s, boolean v, int recursion);
+    public void setBitValue(int s, byte state, int recursion);
     
 }

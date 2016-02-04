@@ -3,6 +3,7 @@ package cd4017be.lib.templates;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.IChatComponent;
 
 public class BasicInventory implements IInventory 
 {
@@ -38,7 +39,7 @@ public class BasicInventory implements IInventory
 	}
 
 	@Override
-	public ItemStack getStackInSlotOnClosing(int s) 
+	public ItemStack removeStackFromSlot(int s) 
 	{
 		ItemStack item = items[s];
 		items[s] = null;
@@ -52,15 +53,9 @@ public class BasicInventory implements IInventory
 	}
 
 	@Override
-	public String getInventoryName() 
+	public IChatComponent getDisplayName() 
 	{
 		return null;
-	}
-
-	@Override
-	public boolean hasCustomInventoryName() 
-	{
-		return false;
 	}
 
 	@Override
@@ -79,15 +74,44 @@ public class BasicInventory implements IInventory
 	}
 
 	@Override
-	public void openInventory() {}
-
-	@Override
-	public void closeInventory() {}
-
-	@Override
 	public boolean isItemValidForSlot(int s, ItemStack item) 
 	{
 		return true;
+	}
+
+	@Override
+	public String getName() {
+		return null;
+	}
+
+	@Override
+	public boolean hasCustomName() {
+		return false;
+	}
+
+	@Override
+	public void openInventory(EntityPlayer player) {}
+
+	@Override
+	public void closeInventory(EntityPlayer player) {}
+
+	@Override
+	public int getField(int id) {
+		return 0;
+	}
+
+	@Override
+	public void setField(int id, int value) {
+	}
+
+	@Override
+	public int getFieldCount() {
+		return 0;
+	}
+
+	@Override
+	public void clear() {
+		
 	}
 
 }

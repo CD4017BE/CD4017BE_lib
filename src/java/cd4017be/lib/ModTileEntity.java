@@ -7,14 +7,12 @@ package cd4017be.lib;
 import cd4017be.lib.TileBlockRegistry.TileBlockEntry;
 import cd4017be.lib.util.Utils;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.item.EntityItem;
@@ -27,7 +25,11 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.network.PacketBuffer;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.BlockPos;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.StatCollector;
 
 /**
@@ -38,11 +40,11 @@ public class ModTileEntity extends TileEntity
 {
     public TileEntityData netData;
     
-    public boolean onActivated(EntityPlayer player, int s, float X, float Y, float Z)
+    public boolean onActivated(EntityPlayer player, EnumFacing s, float X, float Y, float Z)
     {
-        TileBlockEntry entry = TileBlockRegistry.getBlockEntry(this.worldObj.getBlock(this.xCoord, this.yCoord, this.zCoord));
+        TileBlockEntry entry = TileBlockRegistry.getBlockEntry(this.getBlockType());
         if (entry != null && entry.container != null && !player.isSneaking()) {
-            BlockGuiHandler.openGui(player, this.worldObj, this.xCoord, this.yCoord, this.zCoord);
+            BlockGuiHandler.openGui(player, this.worldObj, pos.getX(), pos.getY(), pos.getZ());
             return true;
         } else return false;
     }
@@ -51,7 +53,7 @@ public class ModTileEntity extends TileEntity
     
     public void onNeighborBlockChange(Block b) {}
     
-    public void onNeighborTileChange(int tx, int ty, int tz) {}
+    public void onNeighborTileChange(BlockPos pos) {}
     
     public void breakBlock()
     {
@@ -60,9 +62,9 @@ public class ModTileEntity extends TileEntity
             IInventory inv = (IInventory)this;
             for (int i = 0; i < inv.getSizeInventory(); i++)
             {
-                ItemStack item = inv.getStackInSlotOnClosing(i);
+                ItemStack item = inv.removeStackFromSlot(i);
                 if (item == null) continue;
-                EntityItem entity = new EntityItem(worldObj, xCoord + 0.5D, yCoord + 0.5D, zCoord + 0.5D, item);
+                EntityItem entity = new EntityItem(worldObj, (double)pos.getX() + 0.5D, (double)pos.getY() + 0.5D, (double)pos.getZ() + 0.5D, item);
                 worldObj.spawnEntityInWorld(entity);
             }
         }
@@ -77,20 +79,20 @@ public class ModTileEntity extends TileEntity
     
     public void onEntityCollided(Entity entity) {}
     
-    public ArrayList<ItemStack> dropItem(int m, int fortune)
+    public ArrayList<ItemStack> dropItem(IBlockState state, int fortune)
     {
-        return new ArrayList();
+        return new ArrayList<ItemStack>();
     }
     
-    public TileEntity getLoadedTile(int x, int y, int z)
+    public TileEntity getLoadedTile(BlockPos pos)
     {
-        if (!worldObj.blockExists(x, y, z)) return null;
-        else return worldObj.getTileEntity(x, y, z);
+        if (!worldObj.isBlockLoaded(pos)) return null;
+        else return worldObj.getTileEntity(pos);
     }
     
     public void markUpdate()
     {
-    	this.worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
+    	this.worldObj.markBlockForUpdate(pos);
     }
     
     public void writeItemsToNBT(NBTTagCompound nbt, String name, ItemStack[] items)
@@ -125,14 +127,14 @@ public class ModTileEntity extends TileEntity
         return items;
     }
     
-    public void onPlayerCommand(DataInputStream dis, EntityPlayerMP player) throws IOException
+    public void onPlayerCommand(PacketBuffer data, EntityPlayerMP player) throws IOException
     {
         
     }
     
-    public ByteArrayOutputStream getPacketTargetData() throws IOException
+    public PacketBuffer getPacketTargetData() throws IOException
     {
-        return BlockGuiHandler.getPacketTargetData(xCoord, yCoord, zCoord);
+        return BlockGuiHandler.getPacketTargetData(pos);
     }
     
     @Deprecated //use redstoneLevel(int s, boolean str) instead;
@@ -161,7 +163,7 @@ public class ModTileEntity extends TileEntity
         
     }
     
-    public void updateNetData(DataInputStream dis, TileContainer container) throws IOException
+    public void updateNetData(PacketBuffer dis, TileContainer container) throws IOException
     {
         if (this.netData != null) 
         {
@@ -173,7 +175,7 @@ public class ModTileEntity extends TileEntity
         }
     }
     
-    public boolean detectAndSendChanges(TileContainer container, List<ICrafting> crafters, DataOutputStream dos) throws IOException 
+    public boolean detectAndSendChanges(TileContainer container, List<ICrafting> crafters, PacketBuffer dos) throws IOException 
     {
         return false;
     }
@@ -235,7 +237,7 @@ public class ModTileEntity extends TileEntity
         boolean hasEmpty = false;
         for (int i : s)
         {
-            if (canCheck && !((ISidedInventory)inv).canInsertItem(i, item, bs)) continue;
+            if (canCheck && !((ISidedInventory)inv).canInsertItem(i, item, EnumFacing.VALUES[bs])) continue;
             ItemStack stack = inv.getStackInSlot(i);
             hasEmpty |= stack == null;
             if (stack != null && Utils.itemsEqual(stack, item))
@@ -258,7 +260,7 @@ public class ModTileEntity extends TileEntity
         for (int i : s)
         if (inv.getStackInSlot(i) == null)
         {
-            if (canCheck && !((ISidedInventory)inv).canInsertItem(i, item, bs)) continue;
+            if (canCheck && !((ISidedInventory)inv).canInsertItem(i, item, EnumFacing.VALUES[bs])) continue;
             if (item.stackSize <= mss)
             {
                 inv.setInventorySlotContents(i, item);
@@ -289,12 +291,17 @@ public class ModTileEntity extends TileEntity
     
     public byte getOrientation()
     {
-        return (byte)(worldObj.getBlockMetadata(xCoord, yCoord, zCoord) % 6);
+        return (byte)(this.getBlockMetadata() % 6);
     }
     
-    public String getInventoryName() 
+    public String getName() 
     {
     	return StatCollector.translateToLocal(this.getBlockType().getUnlocalizedName().replaceFirst("tile.", "gui.cd4017be.") + ".name");
     }
+
+	@Override
+	public AxisAlignedBB getRenderBoundingBox() {
+		return new AxisAlignedBB(pos.getX(), pos.getY(), pos.getZ(), pos.getX() + 1, pos.getY() + 1, pos.getZ() + 1);
+	}
     
 }

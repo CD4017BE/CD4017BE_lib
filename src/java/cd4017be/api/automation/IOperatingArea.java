@@ -75,12 +75,12 @@ public interface IOperatingArea extends IInventory
     		int sx = area[3] - area[0] - maxS[0];
     		int sy = area[4] - area[1] - maxS[1];
     		int sz = area[5] - area[2] - maxS[2];
-    		int dx0 = area[0] - te.xCoord - 1;
-    		int dy0 = area[1] - te.yCoord - 1;
-    		int dz0 = area[2] - te.zCoord - 1;
-    		int dx1 = te.xCoord - area[3];
-    		int dy1 = te.yCoord - area[4];
-    		int dz1 = te.zCoord - area[5];
+    		int dx0 = area[0] - te.getPos().getX() - 1;
+    		int dy0 = area[1] - te.getPos().getY() - 1;
+    		int dz0 = area[2] - te.getPos().getZ() - 1;
+    		int dx1 = te.getPos().getX() - area[3];
+    		int dy1 = te.getPos().getY() - area[4];
+    		int dz1 = te.getPos().getZ() - area[5];
     		if (sx <= 0 && sy <= 0 && sz <= 0 && dx0 <= maxD && dy0 <= maxD && dz0 <= maxD && dx1 <= maxD && dy1 <= maxD && dz1 <= maxD) {
     			tile.updateArea(area);
     			return true;

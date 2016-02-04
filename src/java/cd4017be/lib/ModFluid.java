@@ -4,9 +4,10 @@
  */
 package cd4017be.lib;
 
-import net.minecraft.util.IIcon;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.StatCollector;
 import net.minecraftforge.fluids.Fluid;
+import net.minecraftforge.fluids.FluidStack;
 
 /**
  *
@@ -15,26 +16,15 @@ import net.minecraftforge.fluids.Fluid;
 public class ModFluid extends Fluid
 {
     
-    public ModFluid(String name)
+    public ModFluid(String name, String tex)
     {
-        super(name);
+        super(name, new ResourceLocation(BlockItemRegistry.currentMod, tex), new ResourceLocation(BlockItemRegistry.currentMod, tex));
     }
 
     @Override
-    public String getLocalizedName()
+    public String getLocalizedName(FluidStack stack)
     {
-        return StatCollector.translateToLocal("fluid." + this.unlocalizedName + ".name");
-    }
-    
-    @Override
-    public IIcon getStillIcon() 
-    {
-        return this.getBlock().getIcon(0, 0);
-    }
-    
-    public String getTexName()
-    {
-        return this.unlocalizedName;
+        return StatCollector.translateToLocal(this.getUnlocalizedName() + ".name");
     }
     
 }

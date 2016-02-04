@@ -6,15 +6,17 @@ package cd4017be.api.automation;
 
 import org.lwjgl.opengl.GL11;
 
+import cd4017be.lib.ModTileEntity;
 import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
-import net.minecraft.tileentity.TileEntity;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 
 /**
  *
  * @author CD4017BE
  */
-public class SelectionRenderer extends TileEntitySpecialRenderer 
+public class SelectionRenderer extends TileEntitySpecialRenderer<ModTileEntity>
 {
     
     private void renderSelection(int[] area, double ofsX, double ofsY, double ofsZ)
@@ -28,48 +30,51 @@ public class SelectionRenderer extends TileEntitySpecialRenderer
         GL11.glDepthMask(false);
         GL11.glColor4f(1, 1, 1, 1);
         int density = 0x40;
-        Tessellator t = Tessellator.instance;
+        WorldRenderer t = Tessellator.getInstance().getWorldRenderer();
+        t.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
         t.setTranslation(ofsX, ofsY, ofsZ);
-        t.startDrawingQuads();
-        t.setColorRGBA(0xff, 0x00, 0x00, density);
-        t.addVertex(area[0], area[1], area[2]);
-        t.addVertex(area[3], area[1], area[2]);
-        t.addVertex(area[3], area[1], area[5]);
-        t.addVertex(area[0], area[1], area[5]);
-        t.addVertex(area[0], area[4], area[2]);
-        t.addVertex(area[3], area[4], area[2]);
-        t.addVertex(area[3], area[4], area[5]);
-        t.addVertex(area[0], area[4], area[5]);
-        t.setColorRGBA(0x00, 0xff, 0x00, density);
-        t.addVertex(area[0], area[1], area[2]);
-        t.addVertex(area[3], area[1], area[2]);
-        t.addVertex(area[3], area[4], area[2]);
-        t.addVertex(area[0], area[4], area[2]);
-        t.addVertex(area[0], area[1], area[5]);
-        t.addVertex(area[3], area[1], area[5]);
-        t.addVertex(area[3], area[4], area[5]);
-        t.addVertex(area[0], area[4], area[5]);
-        t.setColorRGBA(0x00, 0x00, 0xff, density);
-        t.addVertex(area[0], area[1], area[2]);
-        t.addVertex(area[0], area[4], area[2]);
-        t.addVertex(area[0], area[4], area[5]);
-        t.addVertex(area[0], area[1], area[5]);
-        t.addVertex(area[3], area[1], area[2]);
-        t.addVertex(area[3], area[4], area[2]);
-        t.addVertex(area[3], area[4], area[5]);
-        t.addVertex(area[3], area[1], area[5]);
-        t.draw();
+        //Bottom
+        t.pos(area[0], area[1], area[2]).color(0xff, 0x00, 0x00, density);
+        t.pos(area[3], area[1], area[2]).color(0xff, 0x00, 0x00, density);
+        t.pos(area[3], area[1], area[5]).color(0xff, 0x00, 0x00, density);
+        t.pos(area[0], area[1], area[5]).color(0xff, 0x00, 0x00, density);
+        //Top
+        t.pos(area[0], area[4], area[2]).color(0xff, 0x00, 0x00, density);
+        t.pos(area[3], area[4], area[2]).color(0xff, 0x00, 0x00, density);
+        t.pos(area[3], area[4], area[5]).color(0xff, 0x00, 0x00, density);
+        t.pos(area[0], area[4], area[5]).color(0xff, 0x00, 0x00, density);
+        //North
+        t.pos(area[0], area[1], area[2]).color(0x00, 0xff, 0x00, density);
+        t.pos(area[3], area[1], area[2]).color(0x00, 0xff, 0x00, density);
+        t.pos(area[3], area[4], area[2]).color(0x00, 0xff, 0x00, density);
+        t.pos(area[0], area[4], area[2]).color(0x00, 0xff, 0x00, density);
+        //South
+        t.pos(area[0], area[1], area[5]).color(0x00, 0xff, 0x00, density);
+        t.pos(area[3], area[1], area[5]).color(0x00, 0xff, 0x00, density);
+        t.pos(area[3], area[4], area[5]).color(0x00, 0xff, 0x00, density);
+        t.pos(area[0], area[4], area[5]).color(0x00, 0xff, 0x00, density);
+        //East
+        t.pos(area[0], area[1], area[2]).color(0x00, 0x00, 0xff, density);
+        t.pos(area[0], area[4], area[2]).color(0x00, 0x00, 0xff, density);
+        t.pos(area[0], area[4], area[5]).color(0x00, 0x00, 0xff, density);
+        t.pos(area[0], area[1], area[5]).color(0x00, 0x00, 0xff, density);
+        //West
+        t.pos(area[3], area[1], area[2]).color(0x00, 0x00, 0xff, density);
+        t.pos(area[3], area[4], area[2]).color(0x00, 0x00, 0xff, density);
+        t.pos(area[3], area[4], area[5]).color(0x00, 0x00, 0xff, density);
+        t.pos(area[3], area[1], area[5]).color(0x00, 0x00, 0xff, density);
+        //done
         t.setTranslation(0, 0, 0);
+        Tessellator.getInstance().draw();
         GL11.glDepthMask(true);
         GL11.glEnable(GL11.GL_LIGHTING);
         GL11.glEnable(GL11.GL_ALPHA_TEST);
     }
-    
-    @Override
-    public void renderTileEntityAt(TileEntity te, double d0, double d1, double d2, float f) 
-    {
-        if (te instanceof IOperatingArea && IOperatingArea.Handler.renderArea((IOperatingArea)te))
-            this.renderSelection(((IOperatingArea)te).getOperatingArea(), d0 - te.xCoord, d1 - te.yCoord, d2 - te.zCoord);
-    }
+
+	@Override
+	public void renderTileEntityAt(ModTileEntity te, double x, double y, double z, float partialTicks, int destroyStage) {
+		if (te instanceof IOperatingArea && IOperatingArea.Handler.renderArea((IOperatingArea)te))
+            this.renderSelection(((IOperatingArea)te).getOperatingArea(), x - (double)te.getPos().getX(), y - (double)te.getPos().getY(), z - (double)te.getPos().getZ());
+	}
     
 }

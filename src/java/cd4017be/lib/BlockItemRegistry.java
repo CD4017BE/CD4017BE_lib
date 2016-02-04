@@ -4,13 +4,22 @@
  */
 package cd4017be.lib;
 
-import cpw.mods.fml.common.registry.GameRegistry;
+import net.minecraftforge.fml.common.registry.GameRegistry;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+
 import java.util.HashMap;
 
+import cd4017be.lib.render.SingleTextureDefinition;
 import net.minecraft.block.Block;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.ItemMeshDefinition;
+import net.minecraft.client.resources.model.ModelBakery;
+import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.ResourceLocation;
 
 /**
  *
@@ -48,8 +57,8 @@ public class BlockItemRegistry
      */
     public static void registerBlock(Block block, String id, Class<? extends ItemBlock> item, Object... par)
     {
-        blocks.put(block.getUnlocalizedName(), block);
-        GameRegistry.registerBlock(block, item, block.getUnlocalizedName(), par);
+        blocks.put(id /*block.getUnlocalizedName()*/, block);
+        GameRegistry.registerBlock(block, item, id /*block.getUnlocalizedName()*/, par);
         if (item.equals(ItemBlock.class)) registerItemStack(new ItemStack(block), block.getUnlocalizedName());
     }
     
@@ -57,11 +66,68 @@ public class BlockItemRegistry
      * Registers an Item
      * @param item
      */
-    public static void registerItem(Item item)
+    public static void registerItem(Item item, String id)
     {
-        items.put(item.getUnlocalizedName(), item);
-        GameRegistry.registerItem(item, item.getUnlocalizedName());
+        items.put(id /*item.getUnlocalizedName()*/, item);
+        GameRegistry.registerItem(item, id /*item.getUnlocalizedName()*/);
         if (!item.getHasSubtypes()) registerItemStack(new ItemStack(item), item.getUnlocalizedName());
+    }
+    
+    /**
+     * registers the .json model for the Item or optionally a specific meta type of it.
+     * @param id name or "name:meta"
+     */
+    @SideOnly(Side.CLIENT)
+    public static void registerItemRender(String id) {
+    	int p = id.indexOf(':');
+    	if (p <= 0) {
+    		registerItemRender(id, new SingleTextureDefinition(texPath() + id));
+    		return;
+    	}
+    	int m;
+    	try {m = Integer.parseInt(id.substring(p + 1));} catch (NumberFormatException e) {m = 0;}
+    	id = id.substring(0, p);
+    	Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(getItem(id), m, new ModelResourceLocation(texPath() + id, "inventory" + (m != 0 ? "_" + m : "")));
+    }
+    
+    @SideOnly(Side.CLIENT)
+    public static void registerItemRender(String id, ItemMeshDefinition def) {
+    	Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(getItem(id), def);
+    }
+    
+    /**
+     * registers the .json model for the Block or optionally a specific meta type of it.
+     * @param id name or "name:meta"
+     */
+    @SideOnly(Side.CLIENT)
+    public static void registerBlockRender(String id)
+    {
+    	int p = id.indexOf(':');
+    	if (p <= 0) {
+    		registerBlockRender(id, new SingleTextureDefinition(texPath() + id));
+    		return;
+    	}
+    	int m;
+    	try {m = Integer.parseInt(id.substring(p + 1));} catch (NumberFormatException e) {m = 0;}
+    	id = id.substring(0, p);
+    	Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(Item.getItemFromBlock(getBlock(id)), m, new ModelResourceLocation(texPath() + id + (m != 0 ? "_" + m : ""), "inventory"));
+    }
+    
+    @SideOnly(Side.CLIENT)
+    public static void registerBlockRender(String id, ItemMeshDefinition def)
+    {
+    	Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(Item.getItemFromBlock(getBlock(id)), def);
+    }
+    
+    @SideOnly(Side.CLIENT)
+    public static void registerModels(String id, String... models) {
+    	ResourceLocation[] locs = new ResourceLocation[models.length];
+    	for (int i = 0; i < locs.length; i++) {
+    		locs[i] = new ResourceLocation(currentMod, models[i]);
+    	}
+    	Item item = itemId(id);
+    	if (item == null) item = Item.getItemFromBlock(blockId(id));
+    	ModelBakery.registerItemVariants(item, locs);
     }
     
     /**

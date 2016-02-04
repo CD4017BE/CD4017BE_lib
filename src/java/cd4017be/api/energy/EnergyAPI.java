@@ -18,8 +18,8 @@ public class EnergyAPI
     
     static {
         registerAccess(EnergyAutomation.class);
-        registerAccess(EnergyThermalExpansion.class);
-        registerAccess(EnergyIndustrialCraft.class);
+        //registerAccess(EnergyThermalExpansion.class); //TODO reimplement
+        //registerAccess(EnergyIndustrialCraft.class); //TODO reimplement
     }
     
     public static IEnergyAccess getAccess(TileEntity te)

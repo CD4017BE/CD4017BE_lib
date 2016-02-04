@@ -8,6 +8,8 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.IChatComponent;
 
 public class InventoryItemHandler 
 {
@@ -205,9 +207,11 @@ public class InventoryItemHandler
 		}
 
 		@Override
-		public ItemStack getStackInSlotOnClosing(int s) 
+		public ItemStack removeStackFromSlot(int s) 
 		{
-			return null;
+			ItemStack item = items[s];
+			items[s] = null;
+			return item;
 		}
 
 		@Override
@@ -217,13 +221,13 @@ public class InventoryItemHandler
 		}
 
 		@Override
-		public String getInventoryName() 
+		public String getName() 
 		{
 			return ref.getDisplayName();
 		}
 
 		@Override
-		public boolean hasCustomInventoryName() 
+		public boolean hasCustomName() 
 		{
 			return true;
 		}
@@ -244,15 +248,39 @@ public class InventoryItemHandler
 		}
 
 		@Override
-		public void openInventory() {}
-
-		@Override
-		public void closeInventory() {}
-
-		@Override
 		public boolean isItemValidForSlot(int s, ItemStack stack) 
 		{
 			return true;
+		}
+
+		@Override
+		public IChatComponent getDisplayName() {
+			return new ChatComponentText(this.getName());
+		}
+
+		@Override
+		public void openInventory(EntityPlayer player) {}
+
+		@Override
+		public void closeInventory(EntityPlayer player) {}
+
+		@Override
+		public int getField(int id) {
+			return 0;
+		}
+
+		@Override
+		public void setField(int id, int value) {
+		}
+
+		@Override
+		public int getFieldCount() {
+			return 0;
+		}
+
+		@Override
+		public void clear() {
+			
 		}
 		
 	}

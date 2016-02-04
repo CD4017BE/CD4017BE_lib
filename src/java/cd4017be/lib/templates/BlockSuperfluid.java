@@ -16,13 +16,14 @@ import net.minecraft.block.Block;
 import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.material.MaterialTransparent;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.potion.PotionEffect;
+import net.minecraft.util.BlockPos;
 import net.minecraft.util.Vec3;
 import net.minecraft.world.World;
-import net.minecraftforge.common.util.ForgeDirection;
 import net.minecraftforge.fluids.BlockFluidBase;
 import net.minecraftforge.fluids.BlockFluidClassic;
 import net.minecraftforge.fluids.Fluid;
@@ -47,16 +48,16 @@ public class BlockSuperfluid extends BlockFluidClassic
     public BlockSuperfluid(String id, ModFluid fluid)
     {
         super(fluid, fluid.isGaseous() ? fluid.getTemperature() > 350 ? Material.fire : materialGas : Material.water);
-        this.setBlockName(id);
+        this.setUnlocalizedName(id);
         BlockItemRegistry.registerBlock(this, id, ItemBlock.class);
-        this.setBlockTextureName(BlockItemRegistry.currentMod.concat(":liquids/").concat(fluid.getTexName()));
+        //this.setBlockTextureName(BlockItemRegistry.currentMod.concat(":liquids/").concat(fluid.getTexName()));
     }
 
     @Override
-    public void updateTick(World world, int x, int y, int z, Random rand) 
+    public void updateTick(World world, BlockPos pos, IBlockState state, Random rand) 
     {
-        int m = world.getBlockMetadata(x, y, z);
-        if (m == 0) {
+        int m = this.getMetaFromState(state);
+    	if (m == 0) {
             //Move source vertically if possible
             if (tryReplace(world, x, y + densityDir, z)) {
                 this.moveSourceTo(world, x, y, z, x, y + densityDir, z);
@@ -76,26 +77,26 @@ public class BlockSuperfluid extends BlockFluidClassic
             }
         } else if (m <= 4 && this.canDisplace(world, x, y + densityDir, z)) {
             int[] p = this.findSource(world, x, y, z);
-            if (p != null) world.scheduleBlockUpdate(p[0], p[1], p[2], this, tickRate);
+            if (p != null) world.scheduleBlockUpdate(new BlockPos(p[0], p[1], p[2]), this, tickRate, 0);
         }
-        super.updateTick(world, x, y, z, rand);
+        super.updateTick(world, pos, state, rand);
     }
 
     @Override
-    public void onNeighborBlockChange(World world, int x, int y, int z, Block blockId) 
+    public void onNeighborBlockChange(World world, BlockPos pos, IBlockState state, Block blockId) 
     {
-        if (!this.checkFluidReaction(world, x, y, z))
-        super.onNeighborBlockChange(world, x, y, z, blockId);
+        if (!this.checkFluidReaction(world, pos))
+        super.onNeighborBlockChange(world, pos, state, blockId);
     }
 
     @Override
-    public void onBlockAdded(World world, int x, int y, int z) 
+    public void onBlockAdded(World world, BlockPos pos, IBlockState state) 
     {
-        if (!this.checkFluidReaction(world, x, y, z))
-        super.onBlockAdded(world, x, y, z);
+        if (!this.checkFluidReaction(world, pos))
+        super.onBlockAdded(world, pos, state);
     }
     
-    private boolean checkFluidReaction(World world, int x, int y, int z)
+    private boolean checkFluidReaction(World world, BlockPos pos)
     {
         if (this.densityDir > 0) return false;
         Fluid fluid = reactConversions.get(this.getFluid());
@@ -132,7 +133,7 @@ public class BlockSuperfluid extends BlockFluidClassic
     public static HashMap<Fluid, Fluid> reactConversions = new HashMap<Fluid, Fluid>();
     public static HashMap<Fluid, PotionEffect[]> effects = new HashMap<Fluid, PotionEffect[]>();
     
-    public boolean tryReplace(World world, int x, int y, int z)
+    public boolean tryReplace(World world, BlockPos pos)
     {
         if (world.isAirBlock(x, y, z)) return true;
 

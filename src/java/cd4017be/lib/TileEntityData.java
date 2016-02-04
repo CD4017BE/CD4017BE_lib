@@ -6,13 +6,11 @@ package cd4017be.lib;
 
 import cd4017be.lib.util.Utils;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.BitSet;
 
-import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fluids.FluidStack;
 
 /**
@@ -73,7 +71,7 @@ public class TileEntityData
         return reg;
     }
     
-    public void writeData(DataOutputStream dos, BitSet reg) throws IOException
+    public void writeData(PacketBuffer dos, BitSet reg) throws IOException
     {
         writeBitsToStream(reg, variables, dos);
         int var = 0;
@@ -88,40 +86,40 @@ public class TileEntityData
                 NBTTagCompound nbt = new NBTTagCompound();
                 if (fluids[i] != null) fluids[i].writeToNBT(nbt);
                 else nbt.setString("FluidName", "null");
-                CompressedStreamTools.write(nbt, dos);
+                dos.writeNBTTagCompoundToBuffer(nbt);
             }
     }
     
-    public void readData(DataInputStream dis) throws IOException
+    public void readData(PacketBuffer data) throws IOException
     {
         BitSet reg = new BitSet();
-        readBitsFromStream(reg, variables, dis);
+        readBitsFromStream(reg, variables, data);
         int var = 0;
         for (int i = 0; i < longs.length; i++, var++)
-            if (reg.get(var)) longs[i] = dis.readLong();
+            if (reg.get(var)) longs[i] = data.readLong();
         for (int i = 0; i < ints.length; i++, var++)
-            if (reg.get(var)) ints[i] = dis.readInt();
+            if (reg.get(var)) ints[i] = data.readInt();
         for (int i = 0; i < floats.length; i++, var++)
-            if (reg.get(var)) floats[i] = dis.readFloat();
+            if (reg.get(var)) floats[i] = data.readFloat();
         for (int i = 0; i < fluids.length; i++, var++)
             if (reg.get(var)) {
-                fluids[i] = FluidStack.loadFluidStackFromNBT(CompressedStreamTools.read(dis));
+                fluids[i] = FluidStack.loadFluidStackFromNBT(data.readNBTTagCompoundFromBuffer());
             }
     }
     
-    public static void writeBitsToStream(BitSet set, int l, DataOutputStream dos) throws IOException
+    public static void writeBitsToStream(BitSet set, int l, PacketBuffer dos) throws IOException
     {
         byte[] data = new byte[(l + 7) / 8];
         for (int i = 0; i < data.length; i++)
         for (int j = 0; j < 8; j++)
         if (set.get(i * 8 + j)) data[i] |= 1 << j;
-        dos.write(data);
+        dos.writeBytes(data);
     }
     
-    public static void readBitsFromStream(BitSet set, int l, DataInputStream dis) throws IOException
+    public static void readBitsFromStream(BitSet set, int l, PacketBuffer dis) throws IOException
     {
         byte[] data = new byte[(l + 7) / 8];
-        dis.read(data);
+        dis.readBytes(data);
         for (int i = 0; i < data.length; i++)
         for (int j = 0; j < 8; j++)
         if ((data[i] & 1 << j) != 0) set.set(i * 8 + j);

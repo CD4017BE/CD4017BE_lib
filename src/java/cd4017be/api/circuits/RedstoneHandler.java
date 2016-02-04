@@ -7,7 +7,8 @@
 package cd4017be.api.circuits;
 
 import net.minecraft.tileentity.TileEntity;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.BlockPos;
+import net.minecraft.util.EnumFacing;
 
 /**
  *
@@ -21,19 +22,20 @@ public class RedstoneHandler
      * @param useRst if true standart redstone will be also checked
      * @return power state
      */
-    public static boolean get1bitState(TileEntity te, boolean useRst)
+    public static byte get1bitState(TileEntity te, boolean useRst)
     {
-        if (te == null || !(te instanceof IRedstone1bit)) return false;
+        if (te == null || !(te instanceof IRedstone1bit)) return 0;
         IRedstone1bit rs = (IRedstone1bit)te;
-        ForgeDirection d;
+        BlockPos p;
+        byte state = 0, state1;
         for (int i = 0; i < 6; i++) {
             if (rs.getBitDirection(i) >= 0) continue;
-            d = ForgeDirection.getOrientation(i);
-            TileEntity tile = te.getWorldObj().getTileEntity(te.xCoord + d.offsetX, te.yCoord + d.offsetY, te.zCoord + d.offsetZ);
-            if (tile != null && tile instanceof IRedstone1bit && ((IRedstone1bit)tile).getBitDirection(i^1) > 0 && ((IRedstone1bit)tile).getBitValue(i^1)) return true;
-            else if (useRst && te.getWorldObj().getIndirectPowerOutput(te.xCoord + d.offsetX, te.yCoord + d.offsetY, te.zCoord + d.offsetZ, i)) return true;
+            p = te.getPos().offset(EnumFacing.VALUES[i]);
+            TileEntity tile = te.getWorld().getTileEntity(p);
+            if (tile != null && tile instanceof IRedstone1bit && ((IRedstone1bit)tile).getBitDirection(i^1) > 0 && (state1 = ((IRedstone1bit)tile).getBitValue(i^1)) > state) state = state1;
+            else if (useRst && (state1 = (byte)te.getWorld().getRedstonePower(p, EnumFacing.VALUES[i])) > state) state = state1;
         }
-        return false;
+        return state;
     }
     
     /**
@@ -45,12 +47,12 @@ public class RedstoneHandler
     {
         if (te == null || !(te instanceof IRedstone8bit)) return 0;
         IRedstone8bit rs = (IRedstone8bit)te;
-        ForgeDirection d;
+        BlockPos p;
         byte state = 0;
         for (int i = 0; i < 6 && state != -1; i++) {
             if (rs.getDirection(i) >= 0) continue;
-            d = ForgeDirection.getOrientation(i);
-            TileEntity tile = te.getWorldObj().getTileEntity(te.xCoord + d.offsetX, te.yCoord + d.offsetY, te.zCoord + d.offsetZ);
+            p = te.getPos().offset(EnumFacing.VALUES[i]);
+            TileEntity tile = te.getWorld().getTileEntity(p);
             if (tile != null && tile instanceof IRedstone8bit && ((IRedstone8bit)tile).getDirection(i^1) > 0) state |= ((IRedstone8bit)tile).getValue(i^1);
         }
         return state;
@@ -67,15 +69,15 @@ public class RedstoneHandler
     {
         if (te == null || !(te instanceof IRedstone1bit)) return;
         IRedstone1bit rs = (IRedstone1bit)te;
-        ForgeDirection d;
+        BlockPos p;
         for (int i = 0; i < 6; i++) {
             if (rs.getBitDirection(i) <= 0) continue;
-            d = ForgeDirection.getOrientation(i);
-            TileEntity tile = te.getWorldObj().getTileEntity(te.xCoord + d.offsetX, te.yCoord + d.offsetY, te.zCoord + d.offsetZ);
+            p = te.getPos().offset(EnumFacing.VALUES[i]);
+            TileEntity tile = te.getWorld().getTileEntity(p);
             if (tile != null && tile instanceof IRedstone1bit && ((IRedstone1bit)tile).getBitDirection(i^1) < 0) ((IRedstone1bit)tile).setBitValue(i^1, s, rec);
             else if (useRst) {
-                te.getWorldObj().notifyBlockOfNeighborChange(te.xCoord + d.offsetX, te.yCoord + d.offsetY, te.zCoord + d.offsetZ, te.getBlockType());
-                te.getWorldObj().notifyBlocksOfNeighborChange(te.xCoord + d.offsetX, te.yCoord + d.offsetY, te.zCoord + d.offsetZ, te.getBlockType());
+                te.getWorld().notifyNeighborsOfStateExcept(p, te.getBlockType(), EnumFacing.VALUES[i^1]);
+                te.getWorld().notifyNeighborsOfStateExcept(p, te.getBlockType(), EnumFacing.VALUES[i^1]);
             }
         }
     }
@@ -90,11 +92,11 @@ public class RedstoneHandler
     {
         if (te == null || !(te instanceof IRedstone8bit)) return;
         IRedstone8bit rs = (IRedstone8bit)te;
-        ForgeDirection d;
+        BlockPos p;
         for (int i = 0; i < 6; i++) {
             if (rs.getDirection(i) <= 0) continue;
-            d = ForgeDirection.getOrientation(i);
-            TileEntity tile = te.getWorldObj().getTileEntity(te.xCoord + d.offsetX, te.yCoord + d.offsetY, te.zCoord + d.offsetZ);
+            p = te.getPos().offset(EnumFacing.VALUES[i]);
+            TileEntity tile = te.getWorld().getTileEntity(p);
             if (tile != null && tile instanceof IRedstone8bit && ((IRedstone8bit)tile).getDirection(i^1) < 0) ((IRedstone8bit)tile).setValue(i^1, s, rec);
         }
     }

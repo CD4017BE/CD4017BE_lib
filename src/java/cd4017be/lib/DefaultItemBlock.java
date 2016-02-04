@@ -44,7 +44,7 @@ public class DefaultItemBlock extends ItemBlock
     @Override
 	public String getUnlocalizedName(ItemStack item) 
 	{
-		String s = this.field_150939_a.getUnlocalizedName().replaceFirst("tile.", "tile.cd4017be.");
+		String s = this.block.getUnlocalizedName().replaceFirst("tile.", "tile.cd4017be.");
     	if (this.hasSubtypes) s += ":" + item.getItemDamage();
 		return s;
 	}

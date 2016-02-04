@@ -4,7 +4,7 @@
  */
 package cd4017be.lib.templates;
 
-import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -20,20 +20,18 @@ public interface IPipe
     
     public static class Cover {
         public ItemStack item;
-        public Block blockId;
-        public int meta;
-        public Cover(Block id, int m)
+        public IBlockState block;
+        
+        public Cover(IBlockState block)
         {
-            blockId = id;
-            meta = m;
+            this.block = block;
         }
         
         public static Cover create(ItemStack item) {
             if (item == null || !(item.getItem() instanceof ItemBlock)) return null;
             ItemBlock ib = (ItemBlock)item.getItem();
-            Cover cover = new Cover(ib.field_150939_a, ib.getMetadata(item.getItemDamage()));
-            Block block = cover.blockId;
-            if (block == null || block instanceof BlockPipe || !block.isOpaqueCube()) return null;
+            Cover cover = new Cover(ib.block.getStateFromMeta(ib.getMetadata(item.getMetadata())));
+            if (cover.block == null || cover.block.getBlock() instanceof BlockPipe || !cover.block.getBlock().isFullBlock()) return null;
             cover.item = item.copy();
             cover.item.stackSize = 1;
             return cover;
@@ -55,4 +53,5 @@ public interface IPipe
         }
         
     }
+    
 }

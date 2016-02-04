@@ -6,10 +6,8 @@ package cd4017be.lib;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
-import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.ItemBlock;
-import net.minecraft.util.IIcon;
 import net.minecraft.util.StatCollector;
 
 /**
@@ -18,15 +16,16 @@ import net.minecraft.util.StatCollector;
  */
 public class DefaultBlock extends Block
 {
-    protected IIcon[] addTextures = null;
+    //protected IIcon[] addTextures = null;
     protected String[] addTexNames = null;
     
     public DefaultBlock(String id, Material m, Class<? extends ItemBlock> item, String... tex)
     {
         super(m);
         this.setCreativeTab(CreativeTabs.tabBlock);
-        this.setBlockName(id);
+        this.setUnlocalizedName(id);
         BlockItemRegistry.registerBlock(this, id, item);
+        /*
         if (tex != null && tex.length > 0) {
             this.setBlockTextureName(BlockItemRegistry.currentMod.concat(":").concat(tex[0]));
             if (tex.length > 1) {
@@ -36,8 +35,10 @@ public class DefaultBlock extends Block
         } else {
             this.setBlockTextureName(BlockItemRegistry.currentMod.concat(":").concat(id));
         }
+        */
     }
     
+    /*
     public IIcon getIconN(int n)
     {
         if (addTextures == null || n <= 0 || n > addTextures.length) return this.blockIcon;
@@ -54,6 +55,7 @@ public class DefaultBlock extends Block
             this.addTextures[i] = register.registerIcon(this.addTexNames[i]);
         }
     }
+    */
 
 	@Override
 	public String getLocalizedName() 

@@ -8,20 +8,21 @@ import cd4017be.lib.BlockGuiHandler;
 import cd4017be.lib.TileContainer;
 import cd4017be.lib.TooltipInfo;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import net.minecraft.block.Block;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.WorldRenderer;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureMap;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.IIcon;
+import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.ResourceLocation;
 
 import org.lwjgl.opengl.GL11;
@@ -89,13 +90,10 @@ public abstract class GuiMachine extends GuiContainer
         y += this.guiTop;
         this.drawTexturedModalRect(x - 1, y - 1, s?74:56, 0, s?36:18, 52);
         this.drawTexturedModalRect(x - 1, y + 51, s?74:56, 52 + 2 * (id & 3), s?36:18, 2);
-        IIcon tex = null;
+        TextureAtlasSprite tex = null;
         if (tanks.getFluid(id) != null) {
-            tex = tanks.getFluid(id).getFluid().getIcon(tanks.getFluid(id));
-            if (tex == null){
-                Block block = tanks.getFluid(id).getFluid().getBlock();
-                if (block != null) tex = block.getBlockTextureFromSide(1);
-            }
+            ResourceLocation res = tanks.getFluid(id).getFluid().getStill();
+        	if (res != null) tex = Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(res.toString());
         }
         if (tex != null) {
             this.mc.renderEngine.bindTexture(TextureMap.locationBlocksTexture);
@@ -104,24 +102,24 @@ public abstract class GuiMachine extends GuiContainer
             float v = tex.getMinV();
             float u1 = tex.getMaxU();
             float v1 = tex.getMaxV();
-            Tessellator var9 = Tessellator.instance;
-            var9.startDrawingQuads();
-            var9.addVertexWithUV(x, y + 50, this.zLevel, u, v1);
-            var9.addVertexWithUV(x + (s?34:16), y + 50, this.zLevel, u1, v1);
-            var9.addVertexWithUV(x + (s?34:16), y + n, this.zLevel, u1, v);
-            var9.addVertexWithUV(x, y + n, this.zLevel, u, v);
-            var9.draw();
+            WorldRenderer r = Tessellator.getInstance().getWorldRenderer();
+            r.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+            r.pos(x, y + 50, this.zLevel).tex(u, v1).endVertex();
+            r.pos(x + (s?34:16), y + 50, this.zLevel).tex(u1, v1).endVertex();
+            r.pos(x + (s?34:16), y + n, this.zLevel).tex(u1, v).endVertex();
+            r.pos(x, y + n, this.zLevel).tex(u, v).endVertex();
+            r.finishDrawing();
         }
         this.mc.renderEngine.bindTexture(new ResourceLocation("lib", "textures/icons.png"));
         this.drawTexturedModalRect(x + (s?17:-1), y - 1, 110, 0, 18, 52);
-        if (this.func_146978_c(x - guiLeft, y - guiTop, s?34:16, 50, mouseX, mouseY)){
+        if (this.isPointInRegion(x - guiLeft, y - guiTop, s?34:16, 50, mouseX, mouseY)){
             selTank = id;
         }
     }
     
     public void drawInfo(int x, int y, int w, int h, String... text)
     {
-        if (this.func_146978_c(x, y, w, h, mouseX, mouseY)) {
+        if (this.isPointInRegion(x, y, w, h, mouseX, mouseY)) {
             if (text.length == 2 && text[0].equals("\\i")) {
                 String s = TooltipInfo.getLocFormat("gui.cd4017be." + text[1]);
                 if (s == null) return;
@@ -133,7 +131,7 @@ public abstract class GuiMachine extends GuiContainer
     
     public void drawFormatInfo(int x, int y, int w, int h, String key, Object... args)
     {
-    	if (this.func_146978_c(x, y, w, h, mouseX, mouseY)) {
+    	if (this.isPointInRegion(x, y, w, h, mouseX, mouseY)) {
             this.drawHoveringText(Arrays.asList(TooltipInfo.format("gui.cd4017be." + key, args).split("\n")), mouseX - this.guiLeft, mouseY - this.guiTop, fontRendererObj);
         }
     }
@@ -142,7 +140,7 @@ public abstract class GuiMachine extends GuiContainer
     {
         TankContainer tank = ((AutomatedTile)((TileContainer)this.inventorySlots).tileEntity).tanks;
         ArrayList<String> info = new ArrayList<String>();
-        if (tank.getFluid(id) != null) info.add(tank.getFluid(id).getFluid().getLocalizedName());
+        if (tank.getFluid(id) != null) info.add(tank.getFluid(id).getLocalizedName());
         else info.add("Empty");
         info.add(tank.getAmount(id) + "/" + tank.tanks[id].cap + "L");
         this.drawHoveringText(info, x, y, fontRendererObj);
@@ -210,12 +208,11 @@ public abstract class GuiMachine extends GuiContainer
             else if (y == 7) cmd = 2;
             long cfg = tile.netData.longs[tile.tanks.netIdxLong] & ~(3L << (2 * y + 16 * x)) | ((long)d << (2 * y + 16 * x));
             try {
-                ByteArrayOutputStream bos = tile.getPacketTargetData();
-                DataOutputStream dos = new DataOutputStream(bos);
+                PacketBuffer dos = tile.getPacketTargetData();
                 dos.writeByte(cmd);
                 if (cmd == 1) dos.writeLong(cfg);
                 else if (cmd == 2) dos.writeByte(x);
-                BlockGuiHandler.sendPacketToServer(bos);
+                BlockGuiHandler.sendPacketToServer(dos);
             } catch (IOException e) {}
         }
     }
@@ -230,11 +227,10 @@ public abstract class GuiMachine extends GuiContainer
             d = (byte)(d + 1 & 3);
             long cfg = tile.netData.longs[tile.inventory.netIdxLong] & ~(3L << (2 * y + 12 * x)) | ((long)d << (2 * y + 12 * x));
             try {
-                ByteArrayOutputStream bos = tile.getPacketTargetData();
-                DataOutputStream dos = new DataOutputStream(bos);
+            	PacketBuffer dos = tile.getPacketTargetData();
                 dos.writeByte(0);
                 dos.writeLong(cfg);
-                BlockGuiHandler.sendPacketToServer(bos);
+                BlockGuiHandler.sendPacketToServer(dos);
             } catch (IOException e) {}
         }
     }
@@ -247,11 +243,10 @@ public abstract class GuiMachine extends GuiContainer
         if (x >= 0 && y >= 0) {
             tile.energy.con ^= 1 << y;
             try {
-                ByteArrayOutputStream bos = tile.getPacketTargetData();
-                DataOutputStream dos = new DataOutputStream(bos);
+            	PacketBuffer dos = tile.getPacketTargetData();
                 dos.writeByte(3);
                 dos.writeByte(tile.energy.con);
-                BlockGuiHandler.sendPacketToServer(bos);
+                BlockGuiHandler.sendPacketToServer(dos);
             } catch (IOException e) {}
         }
     }
@@ -260,7 +255,7 @@ public abstract class GuiMachine extends GuiContainer
     {
         for (int k = 0; k < this.inventorySlots.inventorySlots.size(); ++k) {
             Slot slot = (Slot)this.inventorySlots.inventorySlots.get(k);
-            if (this.func_146978_c(slot.xDisplayPosition, slot.yDisplayPosition, 16, 16, x, y)) return slot;
+            if (this.isPointInRegion(slot.xDisplayPosition, slot.yDisplayPosition, 16, 16, x, y)) return slot;
         }
         return null;
     }
@@ -280,10 +275,9 @@ public abstract class GuiMachine extends GuiContainer
 	}
 
 	@Override
-	protected void mouseMovedOrUp(int x, int y, int b) 
-	{
-		super.mouseMovedOrUp(x, y, b);
-		if (b == -1) lastClickSlot = null;
+	protected void mouseReleased(int mouseX, int mouseY, int state) {
+		super.mouseReleased(mouseX, mouseY, state);
+		lastClickSlot = null;
 	}
     
 }

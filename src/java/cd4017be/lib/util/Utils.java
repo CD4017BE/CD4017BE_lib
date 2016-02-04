@@ -5,14 +5,19 @@
 package cd4017be.lib.util;
 
 import java.text.DecimalFormatSymbols;
+import java.util.HashSet;
+import java.util.Set;
+
 import cd4017be.lib.ModTileEntity;
-import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.init.Blocks;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.ISidedInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.BlockPos;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.MathHelper;
 import net.minecraft.world.World;
 import net.minecraftforge.fluids.FluidContainerRegistry;
@@ -47,9 +52,10 @@ public class Utils
         if (itemsEqual(item0, item1)) return true;
         else
         {
-            int id = OreDictionary.getOreID(item0);
-            if (id < 0) return false;
-            else return id == OreDictionary.getOreID(item1);
+            int[] ids = OreDictionary.getOreIDs(item0);
+            for (int id1 : OreDictionary.getOreIDs(item1))
+            	for (int id0 : ids) if (id0 == id1) return true;
+            return false;
         }
     }
     
@@ -69,7 +75,7 @@ public class Utils
      */
     public static int[] accessibleSlots(IInventory inv, int side) {
         if (inv instanceof ISidedInventory) {
-            return ((ISidedInventory) inv).getAccessibleSlotsFromSide(side);
+            return ((ISidedInventory) inv).getSlotsForFace(EnumFacing.VALUES[side]);
         } else {
             int[] s = new int[inv.getSizeInventory()];
             for (int i = 0; i < s.length; i++) {
@@ -97,7 +103,7 @@ public class Utils
                 if (pn < 0) {
                     pn = i;
                 }
-            } else if (si == null || si.canInsertItem(s[i], stack, side)) {
+            } else if (si == null || si.canInsertItem(s[i], stack, EnumFacing.VALUES[side])) {
                 stack = stack.copy();
                 boolean f = false;
                 int m = Math.min(stack.getMaxStackSize(), inv.getInventoryStackLimit());
@@ -127,7 +133,7 @@ public class Utils
         for (int i = 0; i < items.length; i++) {
         	int m = items[i] == null ? 0 : Math.min(items[i].getMaxStackSize(), inv.getInventoryStackLimit());
             while (items[i] != null && pn < s.length) {
-                if (inv.getStackInSlot(s[pn]) == null && (si == null || si.canInsertItem(s[pn], items[i], side))) {
+                if (inv.getStackInSlot(s[pn]) == null && (si == null || si.canInsertItem(s[pn], items[i], EnumFacing.VALUES[side]))) {
                     if (items[i].stackSize <= m) {
                     	inv.setInventorySlotContents(s[pn], items[i]);
                     	items[i] = null;
@@ -162,7 +168,7 @@ public class Utils
                 if (pn < 0) {
                     pn = i;
                 }
-            } else if (stack.stackSize < m && stack.isItemEqual(item) && (si == null || si.canInsertItem(s[i], item, side))) {
+            } else if (stack.stackSize < m && stack.isItemEqual(item) && (si == null || si.canInsertItem(s[i], item, EnumFacing.VALUES[side]))) {
                 if (item.stackSize <= m - stack.stackSize) {
                 	stack.stackSize += item.stackSize;
                 	item = null;
@@ -178,7 +184,7 @@ public class Utils
             pn = s.length;
         }
         while (item != null && pn < s.length) {
-        	if (inv.getStackInSlot(s[pn]) == null && (si == null || si.canInsertItem(s[pn], item, side))) {
+        	if (inv.getStackInSlot(s[pn]) == null && (si == null || si.canInsertItem(s[pn], item, EnumFacing.VALUES[side]))) {
         		if (item.stackSize <= m) {
                   	inv.setInventorySlotContents(s[pn], item);
                    	item = null;
@@ -202,7 +208,7 @@ public class Utils
     	ItemStack item;
     	for (int s : slots) {
     		item = inv.getStackInSlot(s);
-    		if (item != null && (!fill || item.stackSize < item.getMaxStackSize()) && (invS == null || (fill ? invS.canExtractItem(s, item, side) : invS.canInsertItem(s, item, side)))) {
+    		if (item != null && (!fill || item.stackSize < item.getMaxStackSize()) && (invS == null || (fill ? invS.canExtractItem(s, item, EnumFacing.VALUES[side]) : invS.canInsertItem(s, item, EnumFacing.VALUES[side])))) {
     			outS[n] = s; 
     			outI[n++] = item;
     		}
@@ -220,7 +226,7 @@ public class Utils
     	ItemStack item;
     	for (int s : slots) {
     		item = inv.getStackInSlot(s);
-    		if (item == null && (invS == null || invS.canInsertItem(s, item, side))) return s;
+    		if (item == null && (invS == null || invS.canInsertItem(s, item, EnumFacing.VALUES[side]))) return s;
     	}
     	return -1;
     }
@@ -241,13 +247,13 @@ public class Utils
         boolean done;
         for (int i : sS) {
             ItemStack curItem = src.getStackInSlot(i);
-            if (curItem != null && type.matches(curItem) && (srcS == null || srcS.canExtractItem(i, curItem, sideS))) {
+            if (curItem != null && type.matches(curItem) && (srcS == null || srcS.canExtractItem(i, curItem, EnumFacing.VALUES[sideS]))) {
                 int m = Math.min(curItem.getMaxStackSize(), dst.getInventoryStackLimit());
                 int p = -1;
                 done = false;
                 for (int j : sD) {
                     ItemStack stack = dst.getStackInSlot(j);
-                    if (stack == null && p == -1 && (dstS == null || dstS.canInsertItem(j, curItem, sideD))) p = j;
+                    if (stack == null && p == -1 && (dstS == null || dstS.canInsertItem(j, curItem, EnumFacing.VALUES[sideD]))) p = j;
                     else if (Utils.itemsEqual(curItem, stack) && stack.stackSize < m) {
                     	done = true;
                     	int n = m - stack.stackSize;
@@ -288,7 +294,7 @@ public class Utils
         int pos = -1;
         for (int i = 0; i < s.length; i++) {
             ItemStack stack = inv.getStackInSlot(s[i]);
-            if (stack != null && type.matches(stack) && (si == null || si.canExtractItem(s[i], stack, side) && stack.stackSize > max)) {
+            if (stack != null && type.matches(stack) && (si == null || si.canExtractItem(s[i], stack, EnumFacing.VALUES[side]) && stack.stackSize > max)) {
                 pos = s[i];
                 max = stack.stackSize;
             }
@@ -317,7 +323,7 @@ public class Utils
         int n = 0;
         for (int i : s) {
             ItemStack stack = inv.getStackInSlot(i);
-            if (type.matches(stack) && (si == null || si.canExtractItem(i, stack, side))) {
+            if (type.matches(stack) && (si == null || si.canExtractItem(i, stack, EnumFacing.VALUES[side]))) {
                 ItemStack item = inv.decrStackSize(i, am);
                 am -= item.stackSize;
                 for (int j = 0; j < array.length; j++) {
@@ -346,9 +352,9 @@ public class Utils
         if (tileEntity == null) {
             return null;
         }
-        int x = tileEntity.xCoord;
-        int y = tileEntity.yCoord;
-        int z = tileEntity.zCoord;
+        int x = tileEntity.getPos().getX();
+        int y = tileEntity.getPos().getY();
+        int z = tileEntity.getPos().getZ();
         if (s == 0) {
             y--;
         } else if (s == 1) {
@@ -362,7 +368,7 @@ public class Utils
         } else if (s == 5) {
             x++;
         }
-        return tileEntity.getLoadedTile(x, y, z);
+        return tileEntity.getLoadedTile(new BlockPos(x, y, z));
     }
     
     public static class ItemType {
@@ -404,9 +410,13 @@ public class Utils
             this.meta = meta;
             this.nbt = nbt;
             if (ore) {
-                this.ores = new int[types.length];
-                for (int i = 0; i < types.length; i++) 
-                    this.ores[i] = OreDictionary.getOreID(types[i]);
+                Set<Integer> list = new HashSet<Integer>();
+                for (int i = 0; i < types.length; i++)
+                	for (int j : OreDictionary.getOreIDs(types[i])) 
+                		list.add(j);
+                ores = new int[list.size()];
+                int n = 0;
+                for (int i : list) ores[n++] = i;
             } else ores = null;
         }
         
@@ -418,13 +428,12 @@ public class Utils
                 if (type == null) continue;
                 if (item.getItem() == type.getItem() && 
                     (!meta || item.getItemDamage() == type.getItemDamage()) &&
-                    (!nbt || (item.stackTagCompound == null && type.stackTagCompound == null) || 
-                    (item.stackTagCompound != null && type.stackTagCompound != null && item.stackTagCompound.equals(type.stackTagCompound))))
+                    (!nbt || ItemStack.areItemStackTagsEqual(item, type)))
                     return true;
             }
-            int o = ores == null ? -1 : OreDictionary.getOreID(item);
-            if (o >= 0)
-                for (int i : ores)
+            if (ores == null) return false;
+            for (int o : OreDictionary.getOreIDs(item))
+            	for (int i : ores)
                     if (i == o) return true;
             return false;
         }
@@ -438,12 +447,11 @@ public class Utils
                 if (type == null) continue;
                 if (item.getItem() == type.getItem() && 
                     (!meta || item.getItemDamage() == type.getItemDamage()) &&
-                    (!nbt || (item.stackTagCompound == null && type.stackTagCompound == null) || 
-                    (item.stackTagCompound != null && type.stackTagCompound != null && item.stackTagCompound.equals(type.stackTagCompound))))
+                    (!nbt || ItemStack.areItemStackTagsEqual(item, type)))
                     return i;
             }
-            int o = ores == null ? -1 : OreDictionary.getOreID(item);
-            if (o >= 0)
+            if (ores == null) return -1;
+            for (int o : OreDictionary.getOreIDs(item))
                 for (int i = 0; i < ores.length; i++)
                     if (ores[i] == o) return i;
             return -1;
@@ -482,13 +490,14 @@ public class Utils
     
     public static FluidStack getFluid(World world, int x, int y, int z, boolean sourceOnly)
     {
-        Block block = world.getBlock(x, y, z);
-        boolean source = world.getBlockMetadata(x, y, z) == 0;
+    	BlockPos pos = new BlockPos(x, y, z);
+        IBlockState block = world.getBlockState(pos);
+        boolean source = block.getBlock().getMetaFromState(block) == 0;
         if (block == Blocks.air) return null;
         else if (block == Blocks.water || block == Blocks.flowing_water) return source || !sourceOnly ? new FluidStack(FluidRegistry.WATER, source ? 1000 : 0) : null;
         else if (block == Blocks.lava || block == Blocks.flowing_lava) return source || !sourceOnly ? new FluidStack(FluidRegistry.LAVA, source ? 1000 : 0) : null;
         else if (block instanceof IFluidBlock) {
-            FluidStack fluid = ((IFluidBlock)block).drain(world, x, y, z, false);
+            FluidStack fluid = ((IFluidBlock)block).drain(world, pos, false);
             if (!sourceOnly && fluid == null) return new FluidStack(((IFluidBlock)block).getFluid(), 0);
             else return fluid;
         } else return null;

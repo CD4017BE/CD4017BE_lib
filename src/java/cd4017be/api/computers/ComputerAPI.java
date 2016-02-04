@@ -18,11 +18,12 @@ import li.cil.oc.api.network.Visibility;
 
 import org.apache.logging.log4j.Level;
 
-import cpw.mods.fml.common.FMLLog;
-import cpw.mods.fml.common.Optional;
+import net.minecraftforge.fml.common.FMLLog;
+import net.minecraftforge.fml.common.Optional;
 import dan200.computercraft.api.peripheral.IPeripheral;
 import dan200.computercraft.api.peripheral.IPeripheralProvider;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.BlockPos;
 import net.minecraft.world.World;
 
 /**
@@ -108,10 +109,10 @@ public class ComputerAPI implements IPeripheralProvider
     }
     
     @Optional.Method(modid = "ComputerCraft")
-    @Override
-    public IPeripheral getPeripheral(World world, int x, int y, int z, int s) 
+    //@Override
+    public IPeripheral getPeripheral(World world, BlockPos pos, int s) 
     {
-        TileEntity te = world.getTileEntity(x, y, z);
+        TileEntity te = world.getTileEntity(pos);
         if (te != null && te instanceof IPeripheral) return (IPeripheral)te;
         else return null;
     }
