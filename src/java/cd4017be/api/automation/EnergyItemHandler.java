@@ -34,7 +34,7 @@ public class EnergyItemHandler
             IEnergyItem ei = (IEnergyItem)item.getItem();
             String tag = ei.getEnergyTag(item);
             createNBT(item, tag);
-            return item.stackTagCompound.getInteger(tag);
+            return item.getTagCompound().getInteger(tag);
         } else return 0;
     }
     
@@ -50,7 +50,7 @@ public class EnergyItemHandler
                 if (n > max) n = max;
                 else if (n < -max) n = -max;
             }
-            int e = item.stackTagCompound.getInteger(tag) + n;
+            int e = item.getTagCompound().getInteger(tag) + n;
             int r;
             int s;
             if (e < 0)
@@ -67,7 +67,7 @@ public class EnergyItemHandler
                 s = e;
                 r = n;
             }
-            item.stackTagCompound.setInteger(tag, s);
+            item.getTagCompound().setInteger(tag, s);
             int d = item.getMaxDamage();
             item.setItemDamage(d - s * d / cap);
             return r;
@@ -81,7 +81,7 @@ public class EnergyItemHandler
     
     private static void createNBT(ItemStack item, String tag)
     {
-        if (item.stackTagCompound == null) item.stackTagCompound = new NBTTagCompound();
-        if (!item.stackTagCompound.hasKey(tag)) item.stackTagCompound.setInteger(tag, 0);
+        if (item.getTagCompound() == null) item.setTagCompound(new NBTTagCompound());
+        if (!item.getTagCompound().hasKey(tag)) item.getTagCompound().setInteger(tag, 0);
     }
 }

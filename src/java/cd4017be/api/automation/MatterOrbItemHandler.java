@@ -39,7 +39,7 @@ public class MatterOrbItemHandler
             IMatterOrb orb = (IMatterOrb)item.getItem();
             String tag = orb.getMatterTag(item);
             createNBT(item, tag);
-            return item.stackTagCompound.getTagList(tag, 10).tagCount();
+            return item.getTagCompound().getTagList(tag, 10).tagCount();
         } else return 0;
     }
     
@@ -49,11 +49,11 @@ public class MatterOrbItemHandler
         IMatterOrb orb = (IMatterOrb)item.getItem();
         String tag = orb.getMatterTag(item);
         createNBT(item, tag);
-        NBTTagList list = item.stackTagCompound.getTagList(tag, 10);
+        NBTTagList list = item.getTagCompound().getTagList(tag, 10);
         if (list.tagCount() <= s) return null;
         NBTTagCompound nbt = list.getCompoundTagAt(s);
         ItemStack stack = new ItemStack(Item.getItemById(nbt.getShort("i")), nbt.getInteger("n"), nbt.getShort("d"));
-        if (nbt.hasKey("t")) stack.stackTagCompound = nbt.getCompoundTag("t");
+        if (nbt.hasKey("t")) stack.setTagCompound(nbt.getCompoundTag("t"));
         return stack;
     }
     
@@ -63,12 +63,12 @@ public class MatterOrbItemHandler
         IMatterOrb orb = (IMatterOrb)item.getItem();
         String tag = orb.getMatterTag(item);
         createNBT(item, tag);
-        NBTTagList list = item.stackTagCompound.getTagList(tag, 10);
+        NBTTagList list = item.getTagCompound().getTagList(tag, 10);
         ItemStack[] cont = new ItemStack[list.tagCount()];
         for (int i = 0; i < list.tagCount(); i++) {
             NBTTagCompound nbt = list.getCompoundTagAt(i);
             cont[i] = new ItemStack(Item.getItemById(nbt.getShort("i")), nbt.getInteger("n"), nbt.getShort("d"));
-            if (nbt.hasKey("t")) cont[i].stackTagCompound = nbt.getCompoundTag("t");
+            if (nbt.hasKey("t")) cont[i].setTagCompound(nbt.getCompoundTag("t"));
         }
         return cont;
     }
@@ -79,11 +79,11 @@ public class MatterOrbItemHandler
         IMatterOrb orb = (IMatterOrb)item.getItem();
         String tag = orb.getMatterTag(item);
         createNBT(item, tag);
-        NBTTagList list = item.stackTagCompound.getTagList(tag, 10);
+        NBTTagList list = item.getTagCompound().getTagList(tag, 10);
         if (list.tagCount() <= s) return null;
         NBTTagCompound nbt = list.getCompoundTagAt(s);
         ItemStack stack = new ItemStack(Item.getItemById(nbt.getShort("i")), nbt.getInteger("n"), nbt.getShort("d"));
-        if (nbt.hasKey("t")) stack.stackTagCompound = nbt.getCompoundTag("t");
+        if (nbt.hasKey("t")) stack.setTagCompound(nbt.getCompoundTag("t"));
         if (n >= stack.stackSize) {
             list.removeTag(s);
             return stack;
@@ -101,13 +101,13 @@ public class MatterOrbItemHandler
         IMatterOrb orb = (IMatterOrb)item.getItem();
         String tag = orb.getMatterTag(item);
         createNBT(item, tag);
-        NBTTagList list = item.stackTagCompound.getTagList(tag, 10);
+        NBTTagList list = item.getTagCompound().getTagList(tag, 10);
         int l = list.tagCount() + stacks.length, max = orb.getMaxTypes(item);
         for (int i = 0; i < stacks.length && l - i > max; i++) {
             boolean miss = true;
             for (int j = 0; j < l; j++) {
                 NBTTagCompound nbt = list.getCompoundTagAt(j);
-                if (nbt.getShort("i") == Item.getIdFromItem(stacks[i].getItem()) && nbt.getShort("d") == stacks[i].getItemDamage() && ((!nbt.hasKey("t") && stacks[i].stackTagCompound == null) || (stacks[i].stackTagCompound != null && stacks[i].stackTagCompound.equals(nbt.getTag("t"))))) {
+                if (nbt.getShort("i") == Item.getIdFromItem(stacks[i].getItem()) && nbt.getShort("d") == stacks[i].getItemDamage() && ((!nbt.hasKey("t") && stacks[i].getTagCompound() == null) || (stacks[i].getTagCompound() != null && stacks[i].getTagCompound().equals(nbt.getTag("t"))))) {
                     miss = false;
                     break;
                 }
@@ -124,7 +124,7 @@ public class MatterOrbItemHandler
         IMatterOrb orb = (IMatterOrb)item.getItem();
         String tag = orb.getMatterTag(item);
         createNBT(item, tag);
-        NBTTagList list = item.stackTagCompound.getTagList(tag, 10);
+        NBTTagList list = item.getTagCompound().getTagList(tag, 10);
         int max = orb.getMaxTypes(item);
         int n = stacks.length + list.tagCount() - max;
         ItemStack[] remain = new ItemStack[n < 0 ? 0 : n];
@@ -132,7 +132,7 @@ public class MatterOrbItemHandler
         for (ItemStack stack : stacks) {
             for (int i = 0; i < list.tagCount(); i++) {
                 NBTTagCompound nbt = list.getCompoundTagAt(i);
-                if (nbt.getShort("i") == Item.getIdFromItem(stack.getItem()) && nbt.getShort("d") == stack.getItemDamage() && ((!nbt.hasKey("t") && stack.stackTagCompound == null) || (stack.stackTagCompound != null && stack.stackTagCompound.equals(nbt.getTag("t"))))) {
+                if (nbt.getShort("i") == Item.getIdFromItem(stack.getItem()) && nbt.getShort("d") == stack.getItemDamage() && ((!nbt.hasKey("t") && stack.getTagCompound() == null) || (stack.getTagCompound() != null && stack.getTagCompound().equals(nbt.getTag("t"))))) {
                     nbt.setInteger("n", nbt.getInteger("n") + stack.stackSize);
                     stack.stackSize = 0;
                     break;
@@ -143,7 +143,7 @@ public class MatterOrbItemHandler
                 nbt.setShort("i", (short)Item.getIdFromItem(stack.getItem()));
                 nbt.setInteger("n", stack.stackSize);
                 nbt.setShort("d", (short)stack.getItemDamage());
-                if (stack.stackTagCompound != null) nbt.setTag("t", stack.stackTagCompound);
+                if (stack.getTagCompound() != null) nbt.setTag("t", stack.getTagCompound());
                 list.appendTag(nbt);
             } else if (stack.stackSize > 0) {
                 remain[n++] = stack;
@@ -159,8 +159,8 @@ public class MatterOrbItemHandler
     
     public static void createNBT(ItemStack item, String tag)
     {
-        if (item.stackTagCompound == null) item.stackTagCompound = new NBTTagCompound();
-        if (!item.stackTagCompound.hasKey(tag)) item.stackTagCompound.setTag(tag, new NBTTagList());
+        if (item.getTagCompound() == null) item.setTagCompound(new NBTTagCompound());
+        if (!item.getTagCompound().hasKey(tag)) item.getTagCompound().setTag(tag, new NBTTagList());
     }
     
 }

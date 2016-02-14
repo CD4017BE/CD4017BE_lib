@@ -34,7 +34,7 @@ public class AntimatterItemHandler
             IAntimatterItem ei = (IAntimatterItem)item.getItem();
             String tag = ei.getAntimatterTag(item);
             createNBT(item, tag);
-            return item.stackTagCompound.getInteger(tag);
+            return item.getTagCompound().getInteger(tag);
         } else return 0;
     }
     
@@ -44,7 +44,7 @@ public class AntimatterItemHandler
             IAntimatterItem ei = (IAntimatterItem)item.getItem();
             String tag = ei.getAntimatterTag(item);
             createNBT(item, tag);
-            int cap = ei.getAmCapacity(item), e = item.stackTagCompound.getInteger(tag) + n, r, s;
+            int cap = ei.getAmCapacity(item), e = item.getTagCompound().getInteger(tag) + n, r, s;
             if (e < 0) {
                 s = 0;
                 r = n - e;
@@ -55,7 +55,7 @@ public class AntimatterItemHandler
                 s = e;
                 r = n;
             }
-            item.stackTagCompound.setInteger(tag, s);
+            item.getTagCompound().setInteger(tag, s);
             return r;
         } else return 0;
     }
@@ -67,7 +67,7 @@ public class AntimatterItemHandler
     
     private static void createNBT(ItemStack item, String tag)
     {
-        if (item.stackTagCompound == null) item.stackTagCompound = new NBTTagCompound();
-        if (!item.stackTagCompound.hasKey(tag)) item.stackTagCompound.setInteger(tag, 0);
+        if (item.getTagCompound() == null) item.setTagCompound(new NBTTagCompound());
+        if (!item.getTagCompound().hasKey(tag)) item.getTagCompound().setInteger(tag, 0);
     }
 }

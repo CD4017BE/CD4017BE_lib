@@ -178,7 +178,7 @@ public class BlockItemRegistry
     }
     
     /**
-     * @param name Item-name with "item." prefix.
+     * @param name Item-name.
      * @return the Item registered for the given name.
      */
     public static Item itemId(String name)

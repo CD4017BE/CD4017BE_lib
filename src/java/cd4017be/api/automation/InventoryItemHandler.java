@@ -23,8 +23,8 @@ public class InventoryItemHandler
         if (isInventoryItem(item)) {
         	IItemStorage inv = (IItemStorage)item.getItem();
         	int n = 0;
-            if (item.stackTagCompound != null) {
-            	n = item.stackTagCompound.getTagList(inv.getInventoryTag(), 10).tagCount();
+            if (item.getTagCompound() != null) {
+            	n = item.getTagCompound().getTagList(inv.getInventoryTag(), 10).tagCount();
             }
         	list.add(String.format("Slots: %d / %d used", n, inv.getSizeInventory(item)));
         }
@@ -35,8 +35,8 @@ public class InventoryItemHandler
 		if (!isInventoryItem(item) || stack == null) return stack;
 		stack = stack.copy();
 		IItemStorage inv = (IItemStorage)item.getItem();
-		if (item.stackTagCompound == null) item.stackTagCompound = new NBTTagCompound();
-		NBTTagList list = item.stackTagCompound.getTagList(inv.getInventoryTag(), 10);
+		if (item.getTagCompound() == null) item.setTagCompound(new NBTTagCompound());
+		NBTTagList list = item.getTagCompound().getTagList(inv.getInventoryTag(), 10);
 		boolean[] emptyS = new boolean[inv.getSizeInventory(item)];
 		NBTTagCompound tag;
 		int s;
@@ -70,9 +70,9 @@ public class InventoryItemHandler
 	}
 	
 	public static ItemStack[] getItemList(ItemStack item) {
-		if (!isInventoryItem(item) || item.stackTagCompound == null) return new ItemStack[0];
+		if (!isInventoryItem(item) || item.getTagCompound() == null) return new ItemStack[0];
 		IItemStorage inv = (IItemStorage)item.getItem();
-		NBTTagList list = item.stackTagCompound.getTagList(inv.getInventoryTag(), 10);
+		NBTTagList list = item.getTagCompound().getTagList(inv.getInventoryTag(), 10);
 		ItemStack[] buff = new ItemStack[list.tagCount()];
 		int n = 0;
 		NBTTagCompound tag;
@@ -95,16 +95,16 @@ public class InventoryItemHandler
 	public static boolean hasEmptySlot(ItemStack item)
 	{
 		if (!isInventoryItem(item)) return false;
-		else if (item.stackTagCompound == null) return true;
+		else if (item.getTagCompound() == null) return true;
 		IItemStorage inv = (IItemStorage)item.getItem();
-		return inv.getSizeInventory(item) > item.stackTagCompound.getTagList(inv.getInventoryTag(), 10).tagCount();
+		return inv.getSizeInventory(item) > item.getTagCompound().getTagList(inv.getInventoryTag(), 10).tagCount();
 	}
 	
 	public static int extractItemStack(ItemStack item, ItemStack stack)
 	{
-		if (!isInventoryItem(item) || item.stackTagCompound == null || stack == null) return 0;
+		if (!isInventoryItem(item) || item.getTagCompound() == null || stack == null) return 0;
 		IItemStorage inv = (IItemStorage)item.getItem();
-		NBTTagList list = item.stackTagCompound.getTagList(inv.getInventoryTag(), 10);
+		NBTTagList list = item.getTagCompound().getTagList(inv.getInventoryTag(), 10);
 		int n = stack.stackSize;
 		NBTTagCompound tag;
 		ItemStack it;
@@ -153,9 +153,9 @@ public class InventoryItemHandler
 		{
 			this.ref = item;
 			items = new ItemStack[size];
-			if (item.stackTagCompound == null) return;
+			if (item.getTagCompound() == null) return;
 			IItemStorage inv = (IItemStorage)item.getItem();
-			NBTTagList list = item.stackTagCompound.getTagList(inv.getInventoryTag(), 10);
+			NBTTagList list = item.getTagCompound().getTagList(inv.getInventoryTag(), 10);
 			NBTTagCompound tag;
 			for (int i = 0; i < list.tagCount(); i++) {
 				tag = list.getCompoundTagAt(i);
@@ -167,7 +167,7 @@ public class InventoryItemHandler
 		public void save(ItemStack item)
 		{
 			if (!InventoryItemHandler.isInventoryItem(item)) return;
-			if (item.stackTagCompound == null) item.stackTagCompound = new NBTTagCompound();
+			if (item.getTagCompound() == null) item.setTagCompound(new NBTTagCompound());
 			IItemStorage inv = (IItemStorage)item.getItem();
 			NBTTagList list = new NBTTagList();
 			NBTTagCompound tag;
@@ -179,7 +179,7 @@ public class InventoryItemHandler
 					list.appendTag(tag);
 				}
 			}
-			item.stackTagCompound.setTag(inv.getInventoryTag(), list);
+			item.getTagCompound().setTag(inv.getInventoryTag(), list);
 		}
 		
 		@Override
