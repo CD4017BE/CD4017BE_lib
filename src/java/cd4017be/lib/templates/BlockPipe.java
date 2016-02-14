@@ -112,7 +112,7 @@ public class BlockPipe extends TileBlock
 		if (pos1 != null && (pos0 == null || pos0.hitVec.squareDistanceTo(v0) > pos1.hitVec.squareDistanceTo(v0))) pos0 = pos1;
 		this.minY = d0; this.maxY = d1; this.minZ = z0; this.maxZ = z1;
 		pos1 = super.collisionRayTrace(world, pos, v0, v1);
-		keepBB = false;} catch (Throwable e) {keepBB = false; throw e;}
+		keepBB = false;} catch (RuntimeException e) {keepBB = false; throw e;}
 		return pos1 != null && (pos0 == null || pos0.hitVec.squareDistanceTo(v0) > pos1.hitVec.squareDistanceTo(v0)) ? pos1 : pos0;
 	}
 
