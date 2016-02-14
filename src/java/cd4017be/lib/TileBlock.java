@@ -75,6 +75,12 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
 	}
 	
 	protected static int tmpType;
+	/**
+     * @param type 0xf = {0 = none; 1 = NSWE; 2 = BTNSWE; 3 = NSWE + BT rotated}; 
+     * 0x10 = redstoneOut 
+     * 0x20 = nonOpaque
+     * 0x40 = differentDrops
+     */
 	public static TileBlock create(String id, Material m, Class<? extends ItemBlock> item, int type) {
 		tmpType = (type & 15) % Orientations.length;
 		TileBlock block = new TileBlock(id, m, item, type);
@@ -207,7 +213,7 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
     		if (orient.type == 0 && (s == EnumFacing.DOWN || s == EnumFacing.UP)) return this.blockState.getBaseState().withProperty(orient, Z + X > 1F ? (Z > X ? 5 : 7) : (Z < X ? 4 : 6));
         	if (orient.type >= 2 && s == EnumFacing.DOWN) return this.blockState.getBaseState().withProperty(orient, Z + X > 1F ? (Z > X ? 1 : 3) : (Z < X ? 0 : 2));
         	if (orient.type >= 2 && s == EnumFacing.UP) return this.blockState.getBaseState().withProperty(orient, Z + X > 1F ? (Z > X ? 9 : 11) : (Z < X ? 8 : 10));
-        	return this.blockState.getBaseState().withProperty(orient, s.getIndex()^1 + 2);
+        	return this.blockState.getBaseState().withProperty(orient, (s.getIndex()^1) + 2);
     	}
     	int h = placer.rotationPitch > 40 ? 1 : placer.rotationPitch < -35 ? -1 : 0;
     	if (orient.type == 1 && h != 0) return this.blockState.getBaseState().withProperty(orient, h < 0 ? 2 : 3);

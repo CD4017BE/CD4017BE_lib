@@ -165,14 +165,7 @@ public class ModTileEntity extends TileEntity
     
     public void updateNetData(PacketBuffer dis, TileContainer container) throws IOException
     {
-        if (this.netData != null) 
-        {
-        	if (container.refData == null) {
-        		container.refData = new TileEntityData(this.netData);
-        		this.netData = container.refData;
-        	}
-        	container.refData.readData(dis);
-        }
+        if (this.netData != null) this.netData.readData(dis);
     }
     
     public boolean detectAndSendChanges(TileContainer container, List<ICrafting> crafters, PacketBuffer dos) throws IOException 

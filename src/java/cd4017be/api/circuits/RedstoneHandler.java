@@ -65,7 +65,7 @@ public class RedstoneHandler
      * @param rec the amount of blocks this signal has travelled this tick
      * @param useRst if true standart Blocks will also be notified
      */
-    public static void notify1bitNeighbors(TileEntity te, boolean s, int rec, boolean useRst)
+    public static void notify1bitNeighbors(TileEntity te, byte s, int rec, boolean useRst)
     {
         if (te == null || !(te instanceof IRedstone1bit)) return;
         IRedstone1bit rs = (IRedstone1bit)te;

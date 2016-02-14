@@ -53,6 +53,7 @@ public class BlockSuperfluid extends BlockFluidClassic
         //this.setBlockTextureName(BlockItemRegistry.currentMod.concat(":liquids/").concat(fluid.getTexName()));
     }
 
+    /*
     @Override
     public void updateTick(World world, BlockPos pos, IBlockState state, Random rand) 
     {
@@ -208,4 +209,5 @@ public class BlockSuperfluid extends BlockFluidClassic
 		return FluidRegistry.getFluid(fluidName).getLocalizedName();
 	}
     
+    */
 }

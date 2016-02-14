@@ -110,9 +110,10 @@ public class TileEntityData
     public static void writeBitsToStream(BitSet set, int l, PacketBuffer dos) throws IOException
     {
         byte[] data = new byte[(l + 7) / 8];
+        int n = 0;
         for (int i = 0; i < data.length; i++)
-        for (int j = 0; j < 8; j++)
-        if (set.get(i * 8 + j)) data[i] |= 1 << j;
+        	for (int j = 1; j < 256; j <<= 1, n++)
+        		if (set.get(n)) data[i] |= j;
         dos.writeBytes(data);
     }
     
@@ -120,9 +121,10 @@ public class TileEntityData
     {
         byte[] data = new byte[(l + 7) / 8];
         dis.readBytes(data);
+        int n = 0;
         for (int i = 0; i < data.length; i++)
-        for (int j = 0; j < 8; j++)
-        if ((data[i] & 1 << j) != 0) set.set(i * 8 + j);
+        	for (int j = 1; j < 256; j <<= 1, n++)
+        		if ((data[i] & j) != 0) set.set(n);
     }
     
 }

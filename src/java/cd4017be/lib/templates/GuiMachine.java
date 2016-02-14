@@ -23,8 +23,10 @@ import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.ChatAllowedCharacters;
 import net.minecraft.util.ResourceLocation;
 
+import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 
 /**
@@ -33,6 +35,59 @@ import org.lwjgl.opengl.GL11;
  */
 public abstract class GuiMachine extends GuiContainer
 {
+	
+	public class TextField {
+		public final int maxL;
+		public String text;
+		public int cur;
+		public TextField(String text, int max) {
+			this.maxL = max;
+			this.text = text;
+			this.cur = text.length();
+		}
+		/**
+		 * Draws text and cursor
+		 * @param x screen x coord
+		 * @param y screen y coord
+		 * @param ct text color
+		 * @param cc cursor color
+		 */
+		public void draw(int x, int y, int ct, int cc) {
+			GuiMachine.this.drawVerticalLine(x - 1 + GuiMachine.this.fontRendererObj.getStringWidth(text.substring(0, cur)), y, y + 7, cc);
+			GuiMachine.this.fontRendererObj.drawString(text, x, y, ct);
+		}
+		/**
+		 * Call this to type text in
+		 * @param c the char typed
+		 * @param k the pressed key id
+		 * @return -1 = continue, 0 = exit to previous, 1 = exit normal 2 = exit to next 
+		 */
+		public byte keyTyped(char c, int k) {
+			try {
+				if (k == Keyboard.KEY_LEFT && cur > 0) cur--;
+				else if (k == Keyboard.KEY_RIGHT && cur < text.length()) cur++;
+				else if (k == Keyboard.KEY_DELETE && cur < text.length()){
+					text = text.substring(0, cur).concat(text.substring(cur + 1));
+				} else if (k == Keyboard.KEY_BACK && cur > 0) {
+					cur--;
+					text = text.substring(0, cur).concat(text.substring(cur + 1));
+				} else if (k == Keyboard.KEY_RETURN) {
+					return 1;
+				} else if (k == Keyboard.KEY_UP) {
+					return 0;
+				} else if (k == Keyboard.KEY_DOWN) {
+					return 2;
+				} else if (ChatAllowedCharacters.isAllowedCharacter(c) && cur < maxL){
+					text = text.substring(0, cur).concat("" + c).concat(text.substring(cur, Math.min(text.length(), maxL)));
+					cur++;
+				}
+			} catch (IndexOutOfBoundsException e) {
+				if (cur < 0) cur = 0;
+				if (cur > text.length()) cur = text.length();
+			}
+			return -1;
+		}
+	}
     
     public GuiMachine(Container container)
     {
