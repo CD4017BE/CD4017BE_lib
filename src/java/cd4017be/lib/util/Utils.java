@@ -488,9 +488,8 @@ public class Utils
         return tex;
     }
     
-    public static FluidStack getFluid(World world, int x, int y, int z, boolean sourceOnly)
+    public static FluidStack getFluid(World world, BlockPos pos, boolean sourceOnly)
     {
-    	BlockPos pos = new BlockPos(x, y, z);
         IBlockState block = world.getBlockState(pos);
         boolean source = block.getBlock().getMetaFromState(block) == 0;
         if (block == Blocks.air) return null;

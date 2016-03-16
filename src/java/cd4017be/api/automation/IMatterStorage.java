@@ -7,6 +7,8 @@
 package cd4017be.api.automation;
 
 import java.util.ArrayList;
+import java.util.List;
+
 import net.minecraft.item.ItemStack;
 
 /**
@@ -18,5 +20,5 @@ public interface IMatterStorage
     public ItemStack getFirstItem();
     public ArrayList<ItemStack> getAllItems();
     public ItemStack removeItems(int n);
-    public ArrayList<ItemStack> addItems(ArrayList<ItemStack> items);
+    public ArrayList<ItemStack> addItems(List<ItemStack> items);
 }

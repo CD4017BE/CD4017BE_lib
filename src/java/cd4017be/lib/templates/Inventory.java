@@ -370,8 +370,7 @@ public class Inventory implements ISidedInventory
 
 	@Override
 	public void clear() {
-		// TODO Auto-generated method stub
-		
+		for (int i = 0; i < items.length; i++) items[i] = null;
 	}
 
 	@Override

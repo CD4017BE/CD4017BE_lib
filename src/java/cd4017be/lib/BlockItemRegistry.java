@@ -81,7 +81,7 @@ public class BlockItemRegistry
     public static void registerItemRender(String id) {
     	int p = id.indexOf(':');
     	if (p <= 0) {
-    		registerItemRender(id, new SingleTextureDefinition(texPath() + id));
+    		registerItemRender(getItem(id), new SingleTextureDefinition(texPath() + id));
     		return;
     	}
     	int m;
@@ -91,8 +91,8 @@ public class BlockItemRegistry
     }
     
     @SideOnly(Side.CLIENT)
-    public static void registerItemRender(String id, ItemMeshDefinition def) {
-    	Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(getItem(id), def);
+    public static void registerItemRender(Item item, ItemMeshDefinition def) {
+    	Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(item, def);
     }
     
     /**
@@ -121,12 +121,22 @@ public class BlockItemRegistry
     
     @SideOnly(Side.CLIENT)
     public static void registerModels(String id, String... models) {
+    	Item item = itemId(id);
+    	if (item == null) item = Item.getItemFromBlock(blockId(id));
+    	registerModels(item, models);
+    }
+    
+    @SideOnly(Side.CLIENT)
+    public static void registerModels(Block block, String... models) {
+    	registerModels(Item.getItemFromBlock(block));
+    }
+    
+    @SideOnly(Side.CLIENT)
+    public static void registerModels(Item item, String... models) {
     	ResourceLocation[] locs = new ResourceLocation[models.length];
     	for (int i = 0; i < locs.length; i++) {
     		locs[i] = new ResourceLocation(currentMod, models[i]);
     	}
-    	Item item = itemId(id);
-    	if (item == null) item = Item.getItemFromBlock(blockId(id));
     	ModelBakery.registerItemVariants(item, locs);
     }
     

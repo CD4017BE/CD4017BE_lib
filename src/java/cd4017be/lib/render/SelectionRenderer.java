@@ -2,10 +2,11 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package cd4017be.api.automation;
+package cd4017be.lib.render;
 
 import org.lwjgl.opengl.GL11;
 
+import cd4017be.api.automation.IOperatingArea;
 import cd4017be.lib.ModTileEntity;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;

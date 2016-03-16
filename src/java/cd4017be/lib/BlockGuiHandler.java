@@ -116,7 +116,7 @@ public class BlockGuiHandler implements IGuiHandler
      * @return
      * @throws IOException
      */
-    public static PacketBuffer getPacketTargetData(BlockPos pos) throws IOException
+    public static PacketBuffer getPacketTargetData(BlockPos pos)
     {
         PacketBuffer data = new PacketBuffer(Unpooled.buffer());
     	data.writeBlockPos(pos);

@@ -132,7 +132,7 @@ public class ModTileEntity extends TileEntity
         
     }
     
-    public PacketBuffer getPacketTargetData() throws IOException
+    public PacketBuffer getPacketTargetData()
     {
         return BlockGuiHandler.getPacketTargetData(pos);
     }
@@ -282,9 +282,12 @@ public class ModTileEntity extends TileEntity
         return -1;
     }
     
+    /**
+     * @return BTNSWE orientation of TileBlock in range 0-5
+     */
     public byte getOrientation()
     {
-        return (byte)(this.getBlockMetadata() % 6);
+    	return (byte)((this.getBlockMetadata() - 2) % 6);
     }
     
     public String getName() 

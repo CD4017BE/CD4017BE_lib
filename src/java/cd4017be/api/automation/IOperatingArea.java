@@ -7,6 +7,7 @@ package cd4017be.api.automation;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.BlockPos;
 
 /**
  *
@@ -24,7 +25,7 @@ public interface IOperatingArea extends IInventory
     
     public void onUpgradeChange(int s);
     
-    public boolean remoteOperation(int x, int y, int z);
+	public boolean remoteOperation(BlockPos pos);
     
     public IOperatingArea getSlave();
     

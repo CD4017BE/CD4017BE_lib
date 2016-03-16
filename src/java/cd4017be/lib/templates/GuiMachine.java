@@ -8,7 +8,6 @@ import cd4017be.lib.BlockGuiHandler;
 import cd4017be.lib.TileContainer;
 import cd4017be.lib.TooltipInfo;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -262,13 +261,11 @@ public abstract class GuiMachine extends GuiContainer
             else if (y == 6) d ^= 1;
             else if (y == 7) cmd = 2;
             long cfg = tile.netData.longs[tile.tanks.netIdxLong] & ~(3L << (2 * y + 16 * x)) | ((long)d << (2 * y + 16 * x));
-            try {
                 PacketBuffer dos = tile.getPacketTargetData();
                 dos.writeByte(cmd);
                 if (cmd == 1) dos.writeLong(cfg);
                 else if (cmd == 2) dos.writeByte(x);
                 BlockGuiHandler.sendPacketToServer(dos);
-            } catch (IOException e) {}
         }
     }
     
@@ -281,12 +278,10 @@ public abstract class GuiMachine extends GuiContainer
             byte d = (byte)(tile.netData.longs[tile.inventory.netIdxLong] >> (2 * y + 12 * x) & 3);
             d = (byte)(d + 1 & 3);
             long cfg = tile.netData.longs[tile.inventory.netIdxLong] & ~(3L << (2 * y + 12 * x)) | ((long)d << (2 * y + 12 * x));
-            try {
             	PacketBuffer dos = tile.getPacketTargetData();
                 dos.writeByte(0);
                 dos.writeLong(cfg);
                 BlockGuiHandler.sendPacketToServer(dos);
-            } catch (IOException e) {}
         }
     }
     
@@ -297,12 +292,10 @@ public abstract class GuiMachine extends GuiContainer
         int y = ry / 9 - 1;
         if (x >= 0 && y >= 0) {
             tile.energy.con ^= 1 << y;
-            try {
             	PacketBuffer dos = tile.getPacketTargetData();
                 dos.writeByte(3);
                 dos.writeByte(tile.energy.con);
                 BlockGuiHandler.sendPacketToServer(dos);
-            } catch (IOException e) {}
         }
     }
 

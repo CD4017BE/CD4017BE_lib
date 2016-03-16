@@ -6,6 +6,7 @@ package cd4017be.api.energy;
 
 import java.util.ArrayList;
 
+import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 
 /**
@@ -14,56 +15,61 @@ import net.minecraft.tileentity.TileEntity;
  */
 public class EnergyAPI 
 {
-    private static ArrayList<Class<?extends IEnergyAccess>> list = new ArrayList<Class<? extends IEnergyAccess>>();
-    
-    static {
-        registerAccess(EnergyAutomation.class);
-        //registerAccess(EnergyThermalExpansion.class); //TODO reimplement
-        //registerAccess(EnergyIndustrialCraft.class); //TODO reimplement
-    }
-    
-    public static IEnergyAccess getAccess(TileEntity te)
-    {
-        for (Class<?extends IEnergyAccess> c : list) {
-            try {
-                IEnergyAccess e = c.newInstance();
-                if (e.create(te)) return e;
-            } catch (Exception e) {System.out.println(e);}
-        }
-        return new NullAccess();
-    }
-    
-    public static void registerAccess(Class<?extends IEnergyAccess> c) 
-    {
-        list.add(c);
-    }
-    
-    private static class NullAccess implements IEnergyAccess {
-
-        @Override
-        public float getStorage(int s) 
-        {
-            return 0;
-        }
-
-        @Override
-        public float getCapacity(int s) 
-        {
-            return 0;
-        }
-
-        @Override
-        public float addEnergy(float amount, int s) 
-        {
-            return 0;
-        }
-
-        @Override
-        public boolean create(TileEntity te) 
-        {
-            return true;
-        }
-        
-    }
-    
+	public static ArrayList<IEnergyHandler> handlers = new ArrayList<IEnergyHandler>();
+	
+	public static interface IEnergyAccess 
+	{
+		public double getStorage(int s);
+		public double getCapacity(int s);
+		public double addEnergy(double e, int s);
+	}
+	
+	public static interface IEnergyHandler
+	{
+		public IEnergyAccess create(TileEntity te);
+		public IEnergyAccess create(ItemStack item);
+	}
+	
+	static {
+		handlers.add(new EnergyAutomation());
+		//registerAccess(EnergyThermalExpansion.class); //TODO reimplement
+		//registerAccess(EnergyIndustrialCraft.class); //TODO reimplement
+	}
+	
+	public static IEnergyAccess get(TileEntity te) {
+		if (te instanceof IEnergyAccess) return (IEnergyAccess)te;
+		IEnergyAccess e;
+		for (IEnergyHandler c : handlers) {
+			e = c.create(te);
+			if (e != null) return e;
+		}
+		return new NullAccess();
+	}
+	
+	public static IEnergyAccess get(ItemStack item) {
+		IEnergyAccess e;
+		for (IEnergyHandler c : handlers) {
+			e = c.create(item);
+			if (e != null) return e;
+		}
+		return new NullAccess();
+	}
+	
+	private static class NullAccess implements IEnergyAccess {
+		
+		@Override
+		public double getStorage(int s) {
+			return 0;
+		}
+		
+		@Override
+		public double getCapacity(int s) {
+			return 0;
+		}
+		
+		@Override
+		public double addEnergy(double e, int s) {
+			return 0;
+		}
+	}
 }
