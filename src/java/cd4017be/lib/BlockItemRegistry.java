@@ -128,7 +128,7 @@ public class BlockItemRegistry
     
     @SideOnly(Side.CLIENT)
     public static void registerModels(Block block, String... models) {
-    	registerModels(Item.getItemFromBlock(block));
+    	registerModels(Item.getItemFromBlock(block), models);
     }
     
     @SideOnly(Side.CLIENT)

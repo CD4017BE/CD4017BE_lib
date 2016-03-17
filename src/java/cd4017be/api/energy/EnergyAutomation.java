@@ -29,32 +29,35 @@ public class EnergyAutomation implements IEnergyHandler
 	
 	public static class EnergyItem implements IEnergyAccess {
 		private final ItemStack stack;
-		private final IEnergyItem item;
+		public final IEnergyItem item;
+		/** [kJ] remaining fraction for use with precision mode
+		 */
+		public double fractal = 0;
+		
 		public EnergyItem(ItemStack stack, IEnergyItem item) {
 			this.stack = stack;
 			this.item = item;
+			if (!stack.hasTagCompound()) stack.setTagCompound(new NBTTagCompound());
 		}
 		
 		public void addInformation(List list) {
-			list.add(String.format("Energy: %d / %d kJ", this.getStorage(0), this.getCapacity(0)));
+			list.add(String.format("Energy: %d / %d kJ", this.getStorageI(), item.getEnergyCap(stack)));
 		}
-		
-		@Override
-		public double getStorage(int s) {
-			if (!stack.hasTagCompound()) stack.setTagCompound(new NBTTagCompound());
+		/**
+		 * Get Integer tag value
+		 * @return [kJ] stored energy
+		 */
+		public int getStorageI() {
 			return stack.getTagCompound().getInteger(item.getEnergyTag());
 		}
-		
-		@Override
-		public double getCapacity(int s) {
-			return item.getEnergyCap(stack);
-		}
-		
-		@Override
-		public double addEnergy(double E, int s) {
-			int n = E < 0 ? (int)Math.ceil(E) : (int)Math.floor(E);
+		/**
+		 * Add Energy directly to the Integer tag
+		 * @param n [kJ] amount
+		 * @param s "access side" -1 = unlimited, 0 = limited
+		 * @return [kJ] actually added energy
+		 */
+		public int addEnergyI(int n, int s) {
 			if (n == 0) return n;
-			if (!stack.hasTagCompound()) stack.setTagCompound(new NBTTagCompound());
 			int cap = item.getEnergyCap(stack);
 			if (s >= 0) {
 				int max = item.getChargeSpeed(stack);
@@ -71,6 +74,41 @@ public class EnergyAutomation implements IEnergyHandler
 			}
 			stack.getTagCompound().setInteger(item.getEnergyTag(), e);
 			return n;
+		}
+		/**
+		 * @param s "access side" -2 = precision using remain, else = default 
+		 * @return [J] stored energy
+		 */
+		@Override
+		public double getStorage(int s) {
+			if (s == -2) return ((double)this.getStorageI() + fractal) * 1000D;
+			else return (double)this.getStorageI() * 1000D;
+		}
+		/**
+		 * @param s will be ignored
+		 * @return [J] energy storage capacity
+		 */
+		@Override
+		public double getCapacity(int s) {
+			return item.getEnergyCap(stack) * 1000D;
+		}
+		/**
+		 * @param E [J] energy to add
+		 * @param s "access side" -1 = unlimited, 0 = limited, -2 = precision using remain 
+		 * @return [J] actually added energy
+		 */
+		@Override
+		public double addEnergy(double E, int s) {
+			E /= 1000D;
+			if (s == -2) {
+				fractal = E - this.addEnergyI((int)Math.floor(E + fractal), s); 
+				if (fractal < 0 || fractal >= 1) {
+					double d = Math.floor(fractal);
+					fractal -= d;
+					E -= d;
+				}
+				return E * 1000D;
+			} else return (double)this.addEnergyI(E < 0 ? (int)Math.ceil(E) : (int)Math.floor(E), s) * 1000D;
 		}
 	}
 	

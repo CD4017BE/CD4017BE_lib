@@ -25,9 +25,12 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumWorldBlockLayer;
 import net.minecraft.util.MathHelper;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 /**
  *
@@ -293,5 +296,18 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
         if (te != null && te instanceof ModTileEntity) return ((ModTileEntity)te).dropItem(state, fortune);
         else return super.getDrops(world, pos, state, fortune);
 	}
+	
+	@SideOnly(Side.CLIENT)
+	private EnumWorldBlockLayer blockLayer = EnumWorldBlockLayer.SOLID;
+	
+	@SideOnly(Side.CLIENT)
+	public void setBlockLayer(EnumWorldBlockLayer layer) {
+		this.blockLayer = layer;
+	}
+	
+    @SideOnly(Side.CLIENT)
+    public EnumWorldBlockLayer getBlockLayer() {
+        return this.blockLayer;
+    }
     
 }
