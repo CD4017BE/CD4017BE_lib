@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import cd4017be.lib.ModTileEntity;
+import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.init.Blocks;
@@ -490,16 +491,18 @@ public class Utils
     
     public static FluidStack getFluid(World world, BlockPos pos, boolean sourceOnly)
     {
-        IBlockState block = world.getBlockState(pos);
-        boolean source = block.getBlock().getMetaFromState(block) == 0;
+        IBlockState state = world.getBlockState(pos);
+        Block block = state.getBlock();
         if (block == Blocks.air) return null;
-        else if (block == Blocks.water || block == Blocks.flowing_water) return source || !sourceOnly ? new FluidStack(FluidRegistry.WATER, source ? 1000 : 0) : null;
-        else if (block == Blocks.lava || block == Blocks.flowing_lava) return source || !sourceOnly ? new FluidStack(FluidRegistry.LAVA, source ? 1000 : 0) : null;
         else if (block instanceof IFluidBlock) {
             FluidStack fluid = ((IFluidBlock)block).drain(world, pos, false);
             if (!sourceOnly && fluid == null) return new FluidStack(((IFluidBlock)block).getFluid(), 0);
             else return fluid;
-        } else return null;
+        }
+        boolean source = state == block.getDefaultState();
+        if (block == Blocks.water || block == Blocks.flowing_water) return source || !sourceOnly ? new FluidStack(FluidRegistry.WATER, source ? 1000 : 0) : null;
+        else if (block == Blocks.lava || block == Blocks.flowing_lava) return source || !sourceOnly ? new FluidStack(FluidRegistry.LAVA, source ? 1000 : 0) : null;
+        else return null;
     }
     
     public static FluidStack getFluid(ItemStack item)

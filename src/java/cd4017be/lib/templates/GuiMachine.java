@@ -139,6 +139,8 @@ public abstract class GuiMachine extends GuiContainer
     public void drawLiquidTank(TankContainer tanks, int id, int x, int y, boolean s) 
     {
         GL11.glColor4f(1, 1, 1, 1);
+        GL11.glDisable(GL11.GL_ALPHA_TEST);
+        GL11.glEnable(GL11.GL_BLEND);
         this.mc.renderEngine.bindTexture(new ResourceLocation("lib", "textures/icons.png"));
         x += this.guiLeft;
         y += this.guiTop;
@@ -162,7 +164,7 @@ public abstract class GuiMachine extends GuiContainer
             r.pos(x + (s?34:16), y + 50, this.zLevel).tex(u1, v1).endVertex();
             r.pos(x + (s?34:16), y + n, this.zLevel).tex(u1, v).endVertex();
             r.pos(x, y + n, this.zLevel).tex(u, v).endVertex();
-            r.finishDrawing();
+            Tessellator.getInstance().draw();
         }
         this.mc.renderEngine.bindTexture(new ResourceLocation("lib", "textures/icons.png"));
         this.drawTexturedModalRect(x + (s?17:-1), y - 1, 110, 0, 18, 52);
@@ -196,7 +198,7 @@ public abstract class GuiMachine extends GuiContainer
         ArrayList<String> info = new ArrayList<String>();
         if (tank.getFluid(id) != null) info.add(tank.getFluid(id).getLocalizedName());
         else info.add("Empty");
-        info.add(tank.getAmount(id) + "/" + tank.tanks[id].cap + "L");
+        info.add(String.format("%.3f/%d m³", (float)tank.getAmount(id) / 1000F, tank.tanks[id].cap / 1000));
         this.drawHoveringText(info, x, y, fontRendererObj);
     }
     

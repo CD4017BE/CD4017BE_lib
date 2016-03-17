@@ -196,13 +196,6 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
     {
         return redstone;
     }
-    
-    @Override
-	public boolean isNormalCube() {
-		if (opaque) return super.isNormalCube();
-		else if (!super.isNormalCube()) return false;
-		else return this.maxX == 1 && this.minX == 0 && this.maxY == 1 && this.minY == 0 && this.maxZ == 1 && this.minZ == 0;
-	}
 
 	@Override
 	public boolean isSideSolid(IBlockAccess world, BlockPos pos, EnumFacing side) {
@@ -262,7 +255,12 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
         return opaque;
     }
 
-    @Override
+	@Override
+	public boolean isFullCube() {
+		return this.maxX == 1 && this.minX == 0 && this.maxY == 1 && this.minY == 0 && this.maxZ == 1 && this.minZ == 0;
+	}
+
+	@Override
     public boolean canBeReplacedByLeaves(IBlockAccess world, BlockPos pos) 
     {
         return false;
