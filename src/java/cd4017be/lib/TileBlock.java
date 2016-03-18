@@ -300,15 +300,12 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
         else return super.getDrops(world, pos, state, fortune);
 	}
 	
-	@SideOnly(Side.CLIENT)
 	private EnumWorldBlockLayer blockLayer = EnumWorldBlockLayer.SOLID;
 	
-	@SideOnly(Side.CLIENT)
 	public void setBlockLayer(EnumWorldBlockLayer layer) {
 		this.blockLayer = layer;
 	}
 	
-    @SideOnly(Side.CLIENT)
     public EnumWorldBlockLayer getBlockLayer() {
         return this.blockLayer;
     }

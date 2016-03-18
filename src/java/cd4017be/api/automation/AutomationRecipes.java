@@ -6,7 +6,7 @@ package cd4017be.api.automation;
 
 import cd4017be.lib.templates.Inventory;
 import cd4017be.lib.templates.TankContainer;
-import cd4017be.lib.util.Obj2;
+import cd4017be.lib.util.OreDictStack;
 import cd4017be.lib.util.Utils;
 
 import java.util.ArrayList;
@@ -41,13 +41,15 @@ public class AutomationRecipes
         public LFRecipe(FluidStack Linput, Object[] Iinput, FluidStack Loutput, ItemStack[] Ioutput, float energy)
         {
             this.Linput = Linput;
-            this.Iinput = Iinput;
-            if (Iinput != null)
+            this.Loutput = Loutput;
+            if (Iinput != null) {
 	            for (int i = 0; i < Iinput.length; i++)
 	            	if (Iinput[i] instanceof String)
-	            		Iinput[i] = getOreDictionaryStack((String)Iinput[i]);
-            this.Loutput = Loutput;
-            this.Ioutput = Ioutput;
+	            		Iinput[i] = OreDictStack.deserialize((String)Iinput[i]);
+	            this.Iinput = Iinput;
+            } else this.Iinput = new Object[0];
+            if (Ioutput != null) this.Ioutput = Ioutput;
+            else this.Ioutput = new ItemStack[0];
             this.energy = energy * LFEmult;
         }
         
@@ -76,24 +78,12 @@ public class AutomationRecipes
             LFRecipe recipe = new LFRecipe();
             recipe.Linput = Linput == null ? null : Linput.copy();
             recipe.Loutput = Loutput == null ? null : Loutput.copy();
-            if (Iinput == null) recipe.Iinput = null;
-            else 
-            {
-                recipe.Iinput = new Object[Iinput.length];
-                for (int i = 0; i < Iinput.length; i++)
-                {
-                    recipe.Iinput[i] = Iinput[i] == null ? null : Iinput[i] instanceof ItemStack ? ((ItemStack)Iinput[i]).copy() : ((Obj2<Short, Integer>)Iinput[i]).copy();
-                }
-            }
-            if (Ioutput == null) recipe.Ioutput = null;
-            else
-            {
-                recipe.Ioutput = new ItemStack[Ioutput.length];
-                for (int i = 0; i < Ioutput.length; i++)
-                {
-                    recipe.Ioutput[i] = Ioutput[i] == null ? null : Ioutput[i].copy();
-                }
-            }
+            recipe.Iinput = new Object[Iinput.length];
+            for (int i = 0; i < Iinput.length; i++)
+            	recipe.Iinput[i] = Iinput[i] == null ? null : Iinput[i] instanceof ItemStack ? ((ItemStack)Iinput[i]).copy() : ((OreDictStack)Iinput[i]).copy();
+            recipe.Ioutput = new ItemStack[Ioutput.length];
+            for (int i = 0; i < Ioutput.length; i++)
+            	recipe.Ioutput[i] = Ioutput[i] == null ? null : Ioutput[i].copy();
             recipe.energy = energy;
             return recipe;
         }
@@ -162,28 +152,11 @@ public class AutomationRecipes
         return nbt;
     }
     
-    public static Obj2<Short, Integer> getOreDictionaryStack(String s) 
-    {
-    	int p = s.indexOf('*');
-    	short n = 1;
-    	if (p > 0) {
-    		try {n = Short.parseShort(s.substring(0, p));} catch (NumberFormatException e){}
-    		s = s.substring(p + 1);
-    		if (n <= 0) n = 1;
-    	}
-    	if (s.isEmpty()) return null;
-		int id = OreDictionary.getOreID(s);
-		return new Obj2<Short, Integer>(Short.valueOf(n), Integer.valueOf(id));
-    }
-    
     public static boolean isItemEqual(ItemStack item, Object obj)
     {
     	if (obj == null && item == null) return true;
     	if (obj instanceof ItemStack) return Utils.itemsEqual(item, (ItemStack)obj);
-    	if (obj instanceof Obj2)
-	    	for (int id : OreDictionary.getOreIDs(item)) {
-	    		if (id == ((Obj2<Short, Integer>)obj).objB) return true;
-	    	} 
+    	if (obj instanceof OreDictStack) return ((OreDictStack)obj).isEqual(item);
     	return false;
     }
     
@@ -191,7 +164,7 @@ public class AutomationRecipes
     {
     	if (obj == null) return 0;
     	if (obj instanceof ItemStack) return ((ItemStack)obj).stackSize;
-    	if (obj instanceof Obj2) return ((Obj2<Short, Integer>)obj).objA;
+    	if (obj instanceof OreDictStack) return ((OreDictStack)obj).stacksize;
     	return 0;
     }
     
@@ -205,7 +178,7 @@ public class AutomationRecipes
             input = in;
             for (int i = 0; i < input.length; i++)
             	if (input[i] instanceof String)
-            		input[i] = getOreDictionaryStack((String)input[i]);
+            		input[i] = OreDictStack.deserialize((String)input[i]);
             output = out;
         }
         
@@ -219,9 +192,9 @@ public class AutomationRecipes
                 } else if (input[i] instanceof ItemStack) {
                 	if (!Utils.itemsEqual((ItemStack)input[i], inventory[s + i]) || inventory[s + i].stackSize < ((ItemStack)input[i]).stackSize) return false;
                 	else continue;
-                } else if (input[i] instanceof Obj2) {
-                	Obj2<Short, Integer> obj = (Obj2<Short, Integer>)input[i];
-                	if (inventory[s + i] == null || inventory[s + i].stackSize < obj.objA || !isItemEqual(inventory[s + i], obj)) return false;
+                } else if (input[i] instanceof OreDictStack) {
+                	OreDictStack obj = (OreDictStack)input[i];
+                	if (inventory[s + i] == null || inventory[s + i].stackSize < obj.stacksize || !obj.isEqual(inventory[s + i])) return false;
                 }
             }
             return true;
