@@ -18,7 +18,7 @@ public class ModFluid extends Fluid
     
     public ModFluid(String name, String tex)
     {
-        super(name, new ResourceLocation(BlockItemRegistry.currentMod, tex), new ResourceLocation(BlockItemRegistry.currentMod, tex));
+        super(name, new ResourceLocation(tex), new ResourceLocation(tex));
     }
 
     @Override

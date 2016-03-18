@@ -6,28 +6,15 @@
 
 package cd4017be.lib.templates;
 
-import cd4017be.lib.BlockItemRegistry;
 import cd4017be.lib.ModFluid;
 
-import java.util.HashMap;
 import java.util.Random;
 
-import net.minecraft.block.Block;
 import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.material.MaterialTransparent;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.item.ItemBlock;
-import net.minecraft.potion.PotionEffect;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.Vec3;
-import net.minecraft.world.World;
-import net.minecraftforge.fluids.BlockFluidBase;
 import net.minecraftforge.fluids.BlockFluidClassic;
-import net.minecraftforge.fluids.Fluid;
-import net.minecraftforge.fluids.FluidRegistry;
+import net.minecraftforge.fml.common.registry.GameRegistry;
 
 /**
  *
@@ -49,8 +36,7 @@ public class BlockSuperfluid extends BlockFluidClassic
     {
         super(fluid, fluid.isGaseous() ? fluid.getTemperature() > 350 ? Material.fire : materialGas : Material.water);
         this.setUnlocalizedName(id);
-        BlockItemRegistry.registerBlock(this, id, ItemBlock.class);
-        //this.setBlockTextureName(BlockItemRegistry.currentMod.concat(":liquids/").concat(fluid.getTexName()));
+        GameRegistry.registerBlock(this, null, id);
     }
 
     /*
