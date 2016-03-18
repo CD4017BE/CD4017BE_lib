@@ -464,7 +464,6 @@ public class Utils
     private static final int ofsDecScale = 6;
     
     /**
-     * 
      * @param x number
      * @param w significant digits
      * @param c clip below exponent of 10
@@ -482,6 +481,21 @@ public class Utils
         x *= Math.pow(0.001, p - ofsDecScale);
         String tex = String.format("%." + n + "f", x) + DecScale[p];
         String ds = "" + DecimalFormatSymbols.getInstance().getDecimalSeparator();
+        if (tex.contains(ds)) {
+        	while(tex.endsWith("0")) tex = tex.substring(0, tex.length() - 1);
+        	if (tex.endsWith(ds)) tex = tex.substring(0, tex.length() - 1);
+        }
+        return tex;
+    }
+    
+    /**
+     * @param x number
+     * @param w max fractal digits
+     * @return formatted number
+     */
+    public static String formatNumber(double x, int w) {
+    	String tex = String.format("%." + w + "f", x);
+    	String ds = "" + DecimalFormatSymbols.getInstance().getDecimalSeparator();
         if (tex.contains(ds)) {
         	while(tex.endsWith("0")) tex = tex.substring(0, tex.length() - 1);
         	if (tex.endsWith(ds)) tex = tex.substring(0, tex.length() - 1);

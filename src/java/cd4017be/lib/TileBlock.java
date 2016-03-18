@@ -243,6 +243,11 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
 	}
 
 	@Override
+	public void onEntityCollidedWithBlock(World world, BlockPos pos, IBlockState state, Entity entity) {
+		this.onEntityCollidedWithBlock(world, pos, entity);
+	}
+
+	@Override
     public void onEntityCollidedWithBlock(World world, BlockPos pos, Entity entity) 
     {
         TileEntity te = world.getTileEntity(pos);

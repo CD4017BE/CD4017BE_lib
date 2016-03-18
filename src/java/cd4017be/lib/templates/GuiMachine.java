@@ -7,6 +7,7 @@ package cd4017be.lib.templates;
 import cd4017be.lib.BlockGuiHandler;
 import cd4017be.lib.TileContainer;
 import cd4017be.lib.TooltipInfo;
+import cd4017be.lib.util.Utils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -171,6 +172,8 @@ public abstract class GuiMachine extends GuiContainer
         if (this.isPointInRegion(x - guiLeft, y - guiTop, s?34:16, 50, mouseX, mouseY)){
             selTank = id;
         }
+        GL11.glEnable(GL11.GL_ALPHA_TEST);
+        GL11.glDisable(GL11.GL_BLEND);
     }
     
     public void drawInfo(int x, int y, int w, int h, String... text)
@@ -198,7 +201,7 @@ public abstract class GuiMachine extends GuiContainer
         ArrayList<String> info = new ArrayList<String>();
         if (tank.getFluid(id) != null) info.add(tank.getFluid(id).getLocalizedName());
         else info.add("Empty");
-        info.add(String.format("%.3f/%d m³", (float)tank.getAmount(id) / 1000F, tank.tanks[id].cap / 1000));
+        info.add(String.format("%s/%s m³", Utils.formatNumber((float)tank.getAmount(id) / 1000F, 3), Utils.formatNumber((float)tank.tanks[id].cap / 1000F, 3)));
         this.drawHoveringText(info, x, y, fontRendererObj);
     }
     
