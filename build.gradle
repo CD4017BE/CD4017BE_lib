@@ -19,7 +19,7 @@ plugins {
 }
 */
 
-version = "1.8.9-3.0.1"
+version = "${mc_version}-${lib_version}"
 group= "com.cd4017be.lib" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "CD4017BE_lib"
 
@@ -34,7 +34,7 @@ sourceSets {
 }
 
 minecraft {
-    version = "1.8.9-11.15.0.1710"
+    version = "${mc_version}-${forge_version}"
     runDir = "run"
     
     // the mappings can be changed at any time, and must be in the following format.
@@ -64,7 +64,7 @@ artifacts {
 }
 
 dependencies {
-	compile files('C:/Users/CD4017BE/Minecraft Modding/Mods-1.7.10/CD4017BE_lib/libs/OpenComputers-MC1.8.9-1.5.22.7-dev-api.jar')
+	compile files('C:/Users/CD4017BE/Minecraft Modding/Mods-1.7.10/CD4017BE_lib/libs/OpenComputers-MC${mc_version}-${oc_version}-dev-api.jar')
     //compile files('C:/Users/CD4017BE/Minecraft Modding/Mods-1.7.10/CD4017BE_lib/libs/ComputerCraft1.75.jar')
 }
 
