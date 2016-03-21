@@ -18,7 +18,43 @@ import cd4017be.lib.util.Utils;
  */
 public class TooltipInfo 
 {
+    private static String ShiftHint;
+    private static String FluidDispUnit;
+    private static String EnergyDispUnit;
+    private static String PowerDispUnit;
     
+    public static String getShiftHint() {
+    	if (ShiftHint == null){
+    		ShiftHint = StatCollector.translateToLocal("cd4017be.shiftHint");
+    		if (ShiftHint == "cd4017be.shiftHint") ShiftHint = "<SHIFT for info>";
+    	}
+    	return ShiftHint;
+    }
+    
+    public static String getFluidUnit() {
+    	if (FluidDispUnit == null){
+    		FluidDispUnit = StatCollector.translateToLocal("cd4017be.fluidUnit");
+    		if (FluidDispUnit == "cd4017be.fluidUnit") FluidDispUnit = "B";
+    	}
+    	return FluidDispUnit;
+    }
+    
+    public static String getEnergyUnit() {
+    	if (EnergyDispUnit == null){
+    		EnergyDispUnit = StatCollector.translateToLocal("cd4017be.energyUnit");
+    		if (EnergyDispUnit == "cd4017be.energyUnit") EnergyDispUnit = "kJ";
+    	}
+    	return EnergyDispUnit;
+    }
+    
+    public static String getPowerUnit() {
+    	if (PowerDispUnit == null){
+    		PowerDispUnit = StatCollector.translateToLocal("cd4017be.powerUnit");
+    		if (PowerDispUnit == "cd4017be.powerUnit") PowerDispUnit = "kW";
+    	}
+    	return PowerDispUnit;
+	}
+	
     public static void addConfigReference(ConfigurationFile cfg)
     {
     	configurations.add(cfg);

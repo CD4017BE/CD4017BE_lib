@@ -201,7 +201,7 @@ public abstract class GuiMachine extends GuiContainer
         ArrayList<String> info = new ArrayList<String>();
         if (tank.getFluid(id) != null) info.add(tank.getFluid(id).getLocalizedName());
         else info.add("Empty");
-        info.add(String.format("%s/%s m³", Utils.formatNumber((float)tank.getAmount(id) / 1000F, 3), Utils.formatNumber((float)tank.tanks[id].cap / 1000F, 3)));
+        info.add(String.format("%s/%s ", Utils.formatNumber((float)tank.getAmount(id) / 1000F, 3), Utils.formatNumber((float)tank.tanks[id].cap / 1000F, 3)) + TooltipInfo.getFluidUnit());
         this.drawHoveringText(info, x, y, fontRendererObj);
     }
     
