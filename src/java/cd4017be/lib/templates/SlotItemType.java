@@ -30,8 +30,8 @@ public class SlotItemType extends Slot
         if (item == null) return true;
         for (ItemStack comp : allowed)
         {
-            if (comp == null) continue;
-            else if (Utils.itemsEqual(comp, item)) return true;
+            if (comp == null || item == null) continue;
+            else if (comp.isItemEqual(item)) return true;
             else if (!item.getHasSubtypes() && item.getItem() == comp.getItem()) return true;
         }
         return false;

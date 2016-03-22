@@ -59,7 +59,7 @@ public class BlockItemRegistry
     {
         blocks.put(id /*block.getUnlocalizedName()*/, block);
         GameRegistry.registerBlock(block, item, id /*block.getUnlocalizedName()*/, par);
-        if (item.equals(ItemBlock.class)) registerItemStack(new ItemStack(block), block.getUnlocalizedName());
+        if (item != null && item.equals(ItemBlock.class)) registerItemStack(new ItemStack(block), block.getUnlocalizedName());
     }
     
     /**

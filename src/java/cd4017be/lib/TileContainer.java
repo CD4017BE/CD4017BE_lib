@@ -101,8 +101,10 @@ public class TileContainer extends Container
             PacketBuffer data = this.tileEntity.getPacketTargetData();
             boolean send = false;
             if (tileEntity.netData != null) {
-                if (refData == null) refData = new TileEntityData(tileEntity.netData);
-                BitSet chng = tileEntity.netData.detectChanges(refData);
+            	BitSet chng;
+            	if (refData == null) {
+            		chng = tileEntity.netData.detectChanges(refData = new TileEntityData(tileEntity.netData), true);
+            	} else chng = tileEntity.netData.detectChanges(refData, false);
                 tileEntity.netData.writeData(data, chng);
                 send = !chng.isEmpty();
             }

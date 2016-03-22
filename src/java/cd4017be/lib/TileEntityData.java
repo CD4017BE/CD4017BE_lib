@@ -52,7 +52,7 @@ public class TileEntityData
     public final float[] floats;
     public final FluidStack[] fluids;
     
-    public BitSet detectChanges(TileEntityData old)
+    public BitSet detectChanges(TileEntityData old, boolean setAll)
     {
         BitSet reg = new BitSet(variables);
         int var = 0;
@@ -68,6 +68,7 @@ public class TileEntityData
         for (int i = 0; i < fluids.length; i++, var++)
             if (!Utils.fluidsEqual(fluids[i], old.fluids[i], true)) 
             {reg.set(var); old.fluids[i] = fluids[i] == null ? null : fluids[i].copy();}
+        if (setAll) reg.set(0, variables);
         return reg;
     }
     
