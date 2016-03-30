@@ -373,10 +373,10 @@ public class Utils
     }
     
     public static class ItemType {
-        final ItemStack[] types;
-        final boolean meta;
-        final boolean nbt;
-        final int[] ores;
+        public final ItemStack[] types;
+        public final boolean meta;
+        public final boolean nbt;
+        public final int[] ores;
         /**
          * An ItemType that matches all items
          */

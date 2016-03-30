@@ -1,0 +1,46 @@
+The Lib
+
+################################# VERSIONS 1.8.9 #################################
+
+3.0.4 Changes: <-
+- required for Inductive Automation 4.0.3
+
+3.0.3 Changes:
+- required for Inductive Automation 4.0.2
+
+3.0.2 Changes:
+- fixed tool tip display bugs
+- fixed block collision handling
+- fixed rendering bugs
+- improved recipe API
+- added Fluid rendering
+
+################################# VERSIONS 1.7.10 #################################
+
+Changes 2.4.1:
+-fixed item transfer bugs
+Changes 2.4.2:
+-updated API for Automated Redstone 2.2.0
+Changes 2.4.3:
+-updated tesla-API for Inductive Automation 3.4.3
+Changes 2.5.0:
+-updated energy API for Inductive Automation 3.5.0
+-fixed crash when removing held item while its GUI is open.
+Changes 2.5.1:
+-fixed possible infinite loop caused during automatic import by portable machines.
+-bug fixes for Inductive Automation API 
+Changes 2.5.2:
+-bug fixes
+Changes 2.6.1:
+-Operating Area API extended
+Changes 2.6.2:
+-changed pipe block template for complex hitbox
+-some fixes in Inductive Automation recipe API
+Changes 2.6.3:
+-some changes in EnergyAPI
+Changes 2.7.1:
+-added chunkloading to Inductive Automation protection system API
+Changes 2.7.2:
+-improved Oredictionary compatibility in AutomationRecipes-API
+-fixed render problem in BlockPipe-template
+

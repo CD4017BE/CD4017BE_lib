@@ -4,7 +4,6 @@
  */
 package cd4017be.lib.templates;
 
-import cd4017be.lib.util.Utils;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
