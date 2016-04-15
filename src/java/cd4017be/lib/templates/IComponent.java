@@ -1,19 +1,25 @@
-package cd4017be.lib.objectNetworks;
+package cd4017be.lib.templates;
 
 import java.util.List;
 
 import cd4017be.lib.util.Obj2;
 
-public interface IComponent {
+/**
+ * This represents a component of a SharedNetwork.
+ * @author CD4017BE
+ * @param <C> This should be the class implementing this.
+ * @param <N> The implementation of SharedNetwork this should operate with.
+ */
+public interface IComponent<C extends IComponent<C, N>, N extends SharedNetwork<C, N>> {
 
 	/**
 	 * @param network the network this component should be bound to
 	 */
-	public <C extends IComponent, P extends IPhysics<C>> void setNetwork(SharedNetwork<C, P> network);
+	public void setNetwork(N network);
 	/**
 	 * @return the network this component is bound to
 	 */
-	public <C extends IComponent, P extends IPhysics<C>> SharedNetwork<C, P> getNetwork();
+	public N getNetwork();
 	/**
 	 * @return the unique identifier of this component. This should be calculated from it's coordinates and never change within one instance.
 	 */

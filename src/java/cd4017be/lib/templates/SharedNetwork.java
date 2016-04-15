@@ -1,62 +1,81 @@
-package cd4017be.lib.objectNetworks;
+package cd4017be.lib.templates;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map.Entry;
 
 import net.minecraft.util.BlockPos;
 import cd4017be.lib.util.Obj2;
 
-public class SharedNetwork<C extends IComponent, P extends IPhysics<C>> { 
+/**
+ * 
+ * @author CD4017BE
+ * @param <C> This is the type of components to use in this SharedNetwork.
+ * @param <N> This should be the class implementing this.
+ */
+@SuppressWarnings("unchecked")
+public abstract class SharedNetwork<C extends IComponent<C, N>, N extends SharedNetwork<C, N>> { 
 	
 	protected C core;
 	public final HashMap<Long, C> components;
-	public final P physics;
 	protected boolean update = false;
 	/**
-	 * creates a single component network out of the given component and physics
-	 * @param physics
+	 * creates a single component network out of the given component
 	 * @param core
 	 */
-	public SharedNetwork(P physics, C core) {
+	public SharedNetwork(C core) {
 		this.components = new HashMap<Long, C>();
 		this.components.put(core.getUID(), core);
-		this.physics = physics;
-		this.physics.setNetwork(this);
 		this.core = core;
-		this.core.setNetwork(this);
+		this.core.setNetwork((N)this);
 	}
 	
-	protected SharedNetwork(P oldPhysics, HashMap<Long, C> comps) {
-		physics = oldPhysics.onSplit(comps);
+	protected SharedNetwork(HashMap<Long, C> comps) {
 		components = comps;
-		physics.setNetwork(this);
 	}
+	
+	/**
+	 * when the SharedNetwork gets split this will be called for each recreated sub network
+	 * @param comps the components contained in that sub network
+	 * @return the new SharedNetwork instance
+	 */
+	public abstract N onSplit(HashMap<Long, C> comps);
+	
+	/**
+	 * called when the SharedNetwork is merged with another one. 
+	 * @param network the other network
+	 */
+	public void onMerged(N network) {
+		for (C c : network.components.values()) c.setNetwork((N)this);
+		components.putAll(network.components);
+	}
+	
 	/**
 	 * adds the component to this network and merges both networks together
 	 * @param comp
 	 */
 	public void add(C comp) {
-		SharedNetwork<C, P> network = comp.getNetwork();
+		N network = comp.getNetwork();
+		if (network == this) return;
 		if (components.size() >= network.components.size()) {
-			physics.onMerged(network);
-			for (C c : network.components.values()) c.setNetwork(this);
-			components.putAll(network.components);
+			onMerged(network);
 		} else {
-			network.physics.onMerged(this);
+			network.onMerged((N)this);
 			for (C c : components.values()) c.setNetwork(network);
 			network.components.putAll(components);
 		}
 	}
+	
 	/**
-	 * removes a component from this network. This method should be called on block removal and chunk unload.
-	 * @param comp
+	 * called when a component is removed (broken, chunk unload, etc.)
+	 * @param comp the component removed
 	 */
 	public void remove(C comp) {
-		physics.onRemove(comp);
 		components.remove(comp.getUID());
 		update = true;
 	}
+	
 	/**
 	 * removes the connection between two components.
 	 * @param comp the component that disconnected
@@ -65,19 +84,9 @@ public class SharedNetwork<C extends IComponent, P extends IPhysics<C>> {
 	 */
 	public void onDisconnect(C comp, byte side, long neighbor) {
 		C obj = components.get(neighbor);
-		if (obj == null) return;
-		for (Obj2<Long, Byte> e : obj.getConnections()) {
-			if (e.objB != side && components.containsKey(e.objA)) {
-				update = true;
-				return;
-			}
-		}
-		HashMap<Long, C> comps = new HashMap<Long, C>();
-		components.remove(obj.getUID());
-		comps.put(obj.getUID(), obj);
-		SharedNetwork<C, P> network = new SharedNetwork<C, P>(physics, comps);
-		obj.setNetwork(network);
+		if (obj != null && obj.canConnect(side)) update = true;
 	}
+	
 	/**
 	 * should be called by each component every tick
 	 * @param comp
@@ -85,12 +94,17 @@ public class SharedNetwork<C extends IComponent, P extends IPhysics<C>> {
 	public void updateTick(C comp) {
 		if (core == null) core = comp;
 		else if (comp != core) return;
-		physics.updateTick();
+		updatePhysics();
 		if (update) {
 			this.reassembleNetwork();
 			update = false;
 		}
 	}
+	
+	/**
+	 * called every tick
+	 */
+	protected void updatePhysics() {}
 
 	private void reassembleNetwork() {
 		ArrayList<C> queue = new ArrayList<C>();
@@ -102,12 +116,12 @@ public class SharedNetwork<C extends IComponent, P extends IPhysics<C>> {
 			while (!queue.isEmpty()) {
 				obj = queue.remove(queue.size() - 1);
 				comps.put(obj.getUID(), obj);
-				for (Obj2<Long, Byte> e : obj.getConnections()) 
+				for (Obj2<Long, Byte> e : (List<Obj2<Long, Byte>>)obj.getConnections()) 
 					if ((obj1 = components.get(e.objA)) != null && !comps.containsKey(e.objA) && obj1.canConnect(e.objB))
 						queue.add(obj1);
 			}
 			if (comps.size() == components.size()) return;
-			SharedNetwork<C, P> network = new SharedNetwork<C, P>(physics, comps);
+			N network = onSplit(comps);
 			for (Entry<Long, C> e : comps.entrySet()) {
 				e.getValue().setNetwork(network);
 				components.remove(e.getKey());
@@ -117,10 +131,12 @@ public class SharedNetwork<C extends IComponent, P extends IPhysics<C>> {
 	}
 	
 	private static final int spreader = 549568949; //just a random big number to create chaotic values
-	public static long ExtPosUID(BlockPos pos, int dimId, int side) {
+	public static long ExtPosUID(BlockPos pos, int dimId) {
 		dimId *= spreader;
-		side *= spreader;
-		return pos.toLong() ^ (long)dimId ^ (long)side << 32;
+		return pos.toLong() ^ (long)dimId << 32;
+	}
+	public static long SidedPosUID(long base, int side) {
+		return base ^ (long)(side * spreader);
 	}
 	
 }

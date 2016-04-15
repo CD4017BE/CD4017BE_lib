@@ -31,6 +31,7 @@ import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.StatCollector;
+import net.minecraft.world.World;
 
 /**
  *
@@ -39,6 +40,8 @@ import net.minecraft.util.StatCollector;
 public class ModTileEntity extends TileEntity
 {
     public TileEntityData netData;
+    
+    public int dimensionId;
     
     public boolean onActivated(EntityPlayer player, EnumFacing s, float X, float Y, float Z)
     {
@@ -49,6 +52,16 @@ public class ModTileEntity extends TileEntity
         } else return false;
     }
     
+    public EnumFacing getClickedSide(float X, float Y, float Z) {
+    	X -= 0.5F;
+        Y -= 0.5F;
+        Z -= 0.5F;
+        float dx = Math.abs(X);
+        float dy = Math.abs(Y);
+        float dz = Math.abs(Z);
+        return dy > dz && dy > dx ? Y < 0 ? EnumFacing.DOWN : EnumFacing.UP : dz > dx ? Z < 0 ? EnumFacing.NORTH : EnumFacing.SOUTH : X < 0 ? EnumFacing.WEST : EnumFacing.EAST;
+    }
+    
     public void onClicked(EntityPlayer player) {}
     
     public void onNeighborBlockChange(Block b) {}
@@ -57,15 +70,11 @@ public class ModTileEntity extends TileEntity
     
     public void breakBlock()
     {
-        if (this instanceof IInventory)
-        {
+        if (this instanceof IInventory) {
             IInventory inv = (IInventory)this;
-            for (int i = 0; i < inv.getSizeInventory(); i++)
-            {
+            for (int i = 0; i < inv.getSizeInventory(); i++) {
                 ItemStack item = inv.removeStackFromSlot(i);
-                if (item == null) continue;
-                EntityItem entity = new EntityItem(worldObj, (double)pos.getX() + 0.5D, (double)pos.getY() + 0.5D, (double)pos.getZ() + 0.5D, item);
-                worldObj.spawnEntityInWorld(entity);
+                if (item != null) this.dropStack(item);
             }
         }
     }
@@ -127,7 +136,13 @@ public class ModTileEntity extends TileEntity
         return items;
     }
     
-    public void onPlayerCommand(PacketBuffer data, EntityPlayerMP player) throws IOException
+    @Override
+	public void setWorldObj(World world) {
+		super.setWorldObj(world);
+		this.dimensionId = world.provider.getDimensionId();
+	}
+
+	public void onPlayerCommand(PacketBuffer data, EntityPlayerMP player) throws IOException
     {
         
     }
@@ -280,6 +295,11 @@ public class ModTileEntity extends TileEntity
             if (stack != null && (ore ? Utils.oresEqual(stack, item) : Utils.itemsEqual(stack, item))) return i;
         }
         return -1;
+    }
+    
+    public void dropStack(ItemStack stack) {
+    	EntityItem ei = new EntityItem(worldObj, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, stack);
+		worldObj.spawnEntityInWorld(ei);
     }
     
     /**
