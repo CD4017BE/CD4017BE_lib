@@ -4,11 +4,17 @@
  */
 package cd4017be.lib.templates;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import cd4017be.lib.TileBlock;
+import cd4017be.lib.templates.IPipe.Cover;
+import cd4017be.lib.util.PropertyBlock;
+import cd4017be.lib.util.PropertyByte;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
+import net.minecraft.block.properties.IProperty;
+import net.minecraft.block.state.BlockState;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemBlock;
@@ -21,20 +27,61 @@ import net.minecraft.util.Vec3;
 import net.minecraft.world.Explosion;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import net.minecraftforge.common.property.ExtendedBlockState;
+import net.minecraftforge.common.property.IExtendedBlockState;
+import net.minecraftforge.common.property.IUnlistedProperty;
 
 /**
  *
  * @author CD4017BE
  */
+@SuppressWarnings("rawtypes")
 public class BlockPipe extends TileBlock
 {
+	public static final PropertyByte[] CONS = new PropertyByte[6];
+	public static final PropertyByte CORE = new PropertyByte("core");
+	public static final PropertyBlock COVER = new PropertyBlock("cover");
+	public static final IUnlistedProperty[] RENDER_PROPS;
+	static {
+		ArrayList<IUnlistedProperty> list = new ArrayList<IUnlistedProperty>();
+		list.add(CORE);
+		for (int i = 0; i < 6; i++) {
+			CONS[i] = new PropertyByte("con" + i);
+			list.add(CONS[i]);
+		}
+		list.add(COVER);
+		RENDER_PROPS = list.toArray(new IUnlistedProperty[list.size()]);
+	}
+	
 	public float size = 0.25F;
 	
     public BlockPipe(String id, Material m, Class<? extends ItemBlock> item, int type)
     {
         super(id, m, item, type);
-        this.setRenderType(2);
     }
+
+	@Override
+	protected BlockState createBlockState() {
+		ArrayList<IProperty> main = new ArrayList<IProperty>();
+		this.addProperties(main);
+		return new ExtendedBlockState(this, main.toArray(new IProperty[main.size()]), RENDER_PROPS);
+	}
+
+	@Override
+	public IBlockState getExtendedState(IBlockState oldState, IBlockAccess world, BlockPos pos) {
+		IExtendedBlockState state = (IExtendedBlockState)oldState;
+		TileEntity te = world.getTileEntity(pos);
+		if (te != null && te instanceof IPipe) {
+			IPipe pipe = (IPipe)te;
+			state = state.withProperty(CORE, (byte)pipe.textureForSide((byte)-1));
+			for (byte i = 0; i < 6; i++) 
+				state = state.withProperty(CONS[i], (byte)pipe.textureForSide(i));
+			Cover cover = pipe.getCover();
+			if (cover != null)
+				state = state.withProperty(COVER, cover.block.getBlock().getExtendedState(cover.block, world, pos));
+			return state;
+		} else return state.withProperty(CORE, (byte)this.getMetaFromState(oldState));
+	}
 
 	private boolean keepBB = false;
     

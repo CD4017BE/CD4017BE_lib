@@ -27,6 +27,7 @@ import net.minecraft.world.IBlockAccess;
  *
  * @author CD4017BE
  */
+@Deprecated //use ModelPipe instead 
 public class PipeRenderer extends TileEntitySpecialRenderer<ModTileEntity>
 {   
 	

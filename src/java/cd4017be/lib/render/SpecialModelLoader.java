@@ -18,9 +18,9 @@ import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.client.model.ModelLoaderRegistry;
 import net.minecraftforge.fluids.Fluid;
 
-public class FluidLoader implements ICustomModelLoader {
+public class SpecialModelLoader implements ICustomModelLoader {
 
-	public static final FluidLoader instance = new FluidLoader();
+	public static final SpecialModelLoader instance = new SpecialModelLoader();
 	public static final StateMapper stateMapper = new StateMapper();
 	private static String mod = "";
 	
@@ -35,10 +35,16 @@ public class FluidLoader implements ICustomModelLoader {
 		ModelLoader.setCustomStateMapper(fluid.getBlock(), stateMapper);
 	}
 	
-	public HashMap<ResourceLocation, ModelFluid> models = new HashMap<ResourceLocation, ModelFluid>();
+	public static void registerBlockModel(Block block, IModel model) {
+		String[] name = block.getRegistryName().split(":");
+		instance.models.put(new ResourceLocation(name[0], "models/block/" + name[1]), model);
+		//ModelLoader.setCustomStateMapper(block, stateMapper);
+	}
+	
+	public HashMap<ResourceLocation, IModel> models = new HashMap<ResourceLocation, IModel>();
 	public HashSet<String> mods = new HashSet<String>();
 	
-	private FluidLoader() {
+	private SpecialModelLoader() {
 		ModelLoaderRegistry.registerLoader(this);
 	}
 	
@@ -47,8 +53,8 @@ public class FluidLoader implements ICustomModelLoader {
 
 	@Override
 	public boolean accepts(ResourceLocation modelLocation) {
-		if (!mods.contains(modelLocation.getResourceDomain())) return false;
-		return models.containsKey(modelLocation);
+		return mods.contains(modelLocation.getResourceDomain()) && 
+				models.containsKey(modelLocation);
 	}
 
 	@Override

@@ -26,6 +26,7 @@ public class CombinedModel implements IBakedModel {
 	{
 		this.origin = origin;
 		for (int i = 0; i < quads.length; i++) quads[i] = new ArrayList<BakedQuad>();
+		this.add(origin);
 	}
 	
 	public CombinedModel add(IBakedModel model) {
