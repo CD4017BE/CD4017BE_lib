@@ -73,6 +73,7 @@ public abstract class SharedNetwork<C extends IComponent<C, N>, N extends Shared
 	 */
 	public void remove(C comp) {
 		components.remove(comp.getUID());
+		if (core == comp) core = null;
 		update = true;
 	}
 	

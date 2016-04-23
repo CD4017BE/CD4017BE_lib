@@ -99,7 +99,7 @@ public class BlockPipe extends TileBlock
             if (cover != null) {
                 bb = new float[]{0, 1, 0, 1, 0, 1};
             } else for (byte s = 0; s < 6; s++)
-                if (pipe.textureForSide(s) >= 0) bb[s] = ((s & 1) == 0 ? 0F : 1F);
+                if (pipe.textureForSide(s) != -1) bb[s] = ((s & 1) == 0 ? 0F : 1F);
         }
         this.setBlockBounds(bb[4], bb[0], bb[2], bb[5], bb[1], bb[3]);
     }

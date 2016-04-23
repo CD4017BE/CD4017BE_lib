@@ -125,7 +125,7 @@ public class VecN
      */
     public VecN scale(double... x)
     {
-        VecN vec = new VecN();
+        VecN vec = new VecN(x.length);
         for (int i = 0; i < x.length; i++) vec.x[i] = this.x[i] * x[i];
         return vec;
     }

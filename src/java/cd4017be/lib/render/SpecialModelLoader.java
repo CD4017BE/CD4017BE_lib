@@ -1,9 +1,12 @@
 package cd4017be.lib.render;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+
+import org.apache.logging.log4j.Level;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
@@ -17,6 +20,7 @@ import net.minecraftforge.client.model.ModelFluid;
 import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.client.model.ModelLoaderRegistry;
 import net.minecraftforge.fluids.Fluid;
+import net.minecraftforge.fml.common.FMLLog;
 
 public class SpecialModelLoader implements ICustomModelLoader {
 
@@ -41,15 +45,48 @@ public class SpecialModelLoader implements ICustomModelLoader {
 		//ModelLoader.setCustomStateMapper(block, stateMapper);
 	}
 	
+	public static void registerTESRModel(String path) {
+		instance.tesrRegistry.add(path);
+	}
+	
 	public HashMap<ResourceLocation, IModel> models = new HashMap<ResourceLocation, IModel>();
 	public HashSet<String> mods = new HashSet<String>();
+	public HashSet<String> tesrRegistry = new HashSet<String>();
+	private HashMap<ResourceLocation, String> tesrModelCode = new HashMap<ResourceLocation, String>();
+	public HashMap<ResourceLocation, int[]> tesrModelData = new HashMap<ResourceLocation, int[]>();
+	private IResourceManager resourceManager;
 	
 	private SpecialModelLoader() {
 		ModelLoaderRegistry.registerLoader(this);
 	}
 	
+	public String loadTESRModelSourceCode(ResourceLocation res) throws IOException {
+		String code = tesrModelCode.get(res);
+		if (code != null) return code;
+		InputStreamReader isr = new InputStreamReader(resourceManager.getResource(res).getInputStream());
+		String s = "";
+		int n;
+		char[] buff = new char[256];
+		while((n = isr.read(buff)) > 0) s += String.valueOf(buff, 0, n);
+		tesrModelCode.put(res, s);
+		return s;
+	}
+	
 	@Override
-	public void onResourceManagerReload(IResourceManager resourceManager) {}
+	public void onResourceManagerReload(IResourceManager resourceManager) {
+		this.resourceManager = resourceManager;
+		tesrModelData.clear();
+		for (String s : tesrRegistry) {
+			try {
+				ResourceLocation res = new ResourceLocation(s + ".txt");
+				String code = this.loadTESRModelSourceCode(res);
+				tesrModelData.put(res, TESRModelParser.bake(code, res));
+			} catch (Exception e) {
+				FMLLog.log("cd4017be_lib", Level.ERROR, e, "unable to load TESR model %s :", s);
+			}
+		}
+		tesrModelCode.clear();
+	}
 
 	@Override
 	public boolean accepts(ResourceLocation modelLocation) {

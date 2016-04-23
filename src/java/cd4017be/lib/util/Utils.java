@@ -34,14 +34,11 @@ import net.minecraftforge.oredict.OreDictionary;
  */
 public class Utils 
 {
-    public static final byte S_HX = 5;
-    public static final byte S_HZ = 3;
-    public static final byte S_LX = 4;
-    public static final byte S_LZ = 2;
-    public static final byte S_Idev = -2;
-    public static final byte S_Null = -1;
-    public static final byte S_HY = 1;
-    public static final byte S_LY = 0;
+	public static EnumFacing[][] AXIS_Rad = {
+		{EnumFacing.DOWN, EnumFacing.UP, EnumFacing.NORTH, EnumFacing.SOUTH},
+		{EnumFacing.NORTH, EnumFacing.SOUTH, EnumFacing.WEST, EnumFacing.EAST},
+		{EnumFacing.WEST, EnumFacing.EAST, EnumFacing.DOWN, EnumFacing.UP}
+	};
     
     public static boolean itemsEqual(ItemStack item0, ItemStack item1)
     {

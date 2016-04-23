@@ -120,12 +120,16 @@ public class ModelPipe implements IModel {
 				}
 				ModelManager manager = Minecraft.getMinecraft().getBlockRendererDispatcher().getBlockModelShapes().getModelManager();
 				Byte type = exts.getValue(BlockPipe.CORE);
-				CombinedModel model = new CombinedModel(manager.getModel(new ModelResourceLocation(path, "core" + (type == null ? "0" : type.toString()))));
+				CombinedModel model = null;
+				if (type != null && type >= 0) model = new CombinedModel(manager.getModel(new ModelResourceLocation(path, "core" + type.toString())));
 				for (int i = 0; i < 6; i++) {
 					type = exts.getValue(BlockPipe.CONS[i]);
-					if (type != null && type >= 0) model.add(manager.getModel(new ModelResourceLocation(path, "con" + type.toString() + sides[i])));
+					if (type != null && type >= 0) {
+						if (model == null) model = new CombinedModel(manager.getModel(new ModelResourceLocation(path, "con" + type.toString() + sides[i])));
+						else model.add(manager.getModel(new ModelResourceLocation(path, "con" + type.toString() + sides[i])));
+					}
 				}
-				return model;
+				if (model != null) return model;
 			}
 			return this;
 		}
