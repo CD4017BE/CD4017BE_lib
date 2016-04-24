@@ -53,7 +53,7 @@ public class SpecialModelLoader implements ICustomModelLoader {
 	public HashSet<String> mods = new HashSet<String>();
 	public HashSet<String> tesrRegistry = new HashSet<String>();
 	private HashMap<ResourceLocation, String> tesrModelCode = new HashMap<ResourceLocation, String>();
-	public HashMap<ResourceLocation, int[]> tesrModelData = new HashMap<ResourceLocation, int[]>();
+	public HashMap<String, int[]> tesrModelData = new HashMap<String, int[]>();
 	private IResourceManager resourceManager;
 	
 	private SpecialModelLoader() {
@@ -78,9 +78,9 @@ public class SpecialModelLoader implements ICustomModelLoader {
 		tesrModelData.clear();
 		for (String s : tesrRegistry) {
 			try {
-				ResourceLocation res = new ResourceLocation(s + ".txt");
+				ResourceLocation res = new ResourceLocation(s + ".tesr");
 				String code = this.loadTESRModelSourceCode(res);
-				tesrModelData.put(res, TESRModelParser.bake(code, res));
+				tesrModelData.put(s, TESRModelParser.bake(code, res));
 			} catch (Exception e) {
 				FMLLog.log("cd4017be_lib", Level.ERROR, e, "unable to load TESR model %s :", s);
 			}

@@ -202,8 +202,9 @@ public class TESRModelParser {
 			return vec;
 		}
 		int p = s.indexOf(':');
+		int q;
 		String right = null;
-		if (p >= 0) {
+		if (p >= 0 && ((q = s.indexOf('(')) < 0 || p < q)) {
 			right = s.substring(p + 1);
 			s = s.substring(0, p);
 		}
@@ -216,11 +217,12 @@ public class TESRModelParser {
 		int[] k = this.enclosing(s, 0, '(', ')');
 		right = s.substring(k[0], k[1]);
 		if (s.startsWith("model")) {
-			ResourceLocation res = new ResourceLocation((String)this.parameter(right));
+			ResourceLocation res = new ResourceLocation((String)this.parameter(right) + ".tesr");
 			k = this.enclosing(s, k[1] + 1, '{', '}');
 			HashMap<String, Object> init = new HashMap<String, Object>();
 			for (String var : s.substring(k[0], k[1]).split(";")) {
 				p = var.indexOf('=');
+				if (p < 0) continue;
 				init.put(var.substring(0, p).trim(), this.parameter(var.substring(p + 1)));
 			}
 			TESRModelParser model = new TESRModelParser(SpecialModelLoader.instance.loadTESRModelSourceCode(res), init, states.get(states.size() - 1).copy(), res);
@@ -244,11 +246,13 @@ public class TESRModelParser {
 		}
 	}
 	
-	private Object function(String name, Object[] param) {
+	private static final boolean[][] rect = {{false, false, true, true}, {false, true, true, false}};
+	
+	private Object function(String name, Object[] param) throws CompileException {
 		switch(name) {
-		case "quad":
+		case "quad": {//create quad
 			Quad quad = new Quad();
-			String format = (String)variables.get("format");
+			String format = (String)param[4];
 			if (format == null) format = defaultFormat;
 			for (int i = 0; i < 4; i++) {
 				VecN vec = (VecN)param[i];
@@ -259,9 +263,82 @@ public class TESRModelParser {
 				}
 			}
 			return quad;
-		default://TODO more functions
-			return null;
+		} case "rect": {//create rectangle quad
+			Quad quad = new Quad();
+			VecN pos = (VecN)param[0], tex = (VecN)param[1];
+			String format = (String)param[2];
+			int t;
+			int tN = (t = format.indexOf('-')) < 0 ? format.indexOf('+') + 3 : t;
+			boolean inv = tN >= 3; tN %= 3;
+			int tU = (t = format.indexOf('u')) < 0 ? format.indexOf('U') + 3 : t;
+			int tV = (t = format.indexOf('v')) < 0 ? format.indexOf('V') + 3 : t;
+			for (int i = 0; i < 4; i++) {
+				VecN vert = defaultVertex.copy();
+				vert.x[0] = pos.x[(tN == 0 ? inv : rect[tN - 1][i]) ? 3 : 0];
+				vert.x[1] = pos.x[(tN == 1 ? inv : rect[(tN + 1) % 3][i]) ? 4 : 1];
+				vert.x[2] = pos.x[(tN == 2 ? inv : rect[tN][i]) ? 5 : 2];
+				vert.x[3] = tex.x[(tU >= 3 ^ rect[(5 - tU + tN) % 3][i]) ? 2 : 0];
+				vert.x[4] = tex.x[(tV >= 3 ^ rect[(5 - tV + tN) % 3][i]) ? 3 : 1];
+				quad.vertices[inv ? i : 3 - i] = vert;
+			}
+			return quad;
+		} case "-"://subtract or negate
+			if (param[0] instanceof Double) {
+				if (param.length == 1) return -(Double)param[0];
+				else return (Double)param[0] - (Double)param[1];
+			} else if (param[0] instanceof VecN) {
+				if (param.length == 1) return ((VecN)param[0]).neg();
+				else return ((VecN)param[0]).diff((VecN)param[1]);
+			} else break;
+		case "+"://sum
+			if (param[0] instanceof Double) {
+				double x = (Double)param[0];
+				for (int i = 1; i < param.length; i++) x += (Double)param[i];
+				return x;
+			} else if (param[0] instanceof VecN) {
+				VecN x = (VecN)param[0];
+				for (int i = 1; i < param.length; i++) x = x.add((VecN)param[i]);
+				return x;
+			} else break;
+		case "*"://product
+			if (param[0] instanceof Double) {
+				double x = (Double)param[0];
+				for (int i = 1; i < param.length; i++) x *= (Double)param[i];
+				return x;
+			} else if (param[0] instanceof VecN) {
+				VecN x = (VecN)param[0];
+				for (int i = 1; i < param.length; i++) x = x.scale(((VecN)param[i]).x);
+				return x;
+			} else break;
+		case "/"://division
+			if (param[0] instanceof Double) {
+				if (param.length == 1) return 1D / (Double)param[0];
+				else return (Double)param[0] / (Double)param[1];
+			} else if (param[0] instanceof VecN) {
+				VecN x = ((VecN)param[0]).copy();
+				if (param.length == 1) {
+					for (int i = 0; i < x.x.length; i++) x.x[i] = 1D / x.x[i];
+				} else {
+					VecN y = (VecN)param[1];
+					for (int i = 0; i < x.x.length; i++) x.x[i] /= y.x[i];
+				}
+				return x;
+			} else break;
+		case "x"://cross product for Vec3
+			VecN a = (VecN)param[0];
+			VecN b = (VecN)param[1];
+			return new VecN(a.x[1] * b.x[2] - a.x[2] * b.x[1],
+							a.x[2] * b.x[0] - a.x[0] * b.x[2],
+							a.x[0] * b.x[1] - a.x[1] * b.x[0]);
+		case "s"://scalar product for VecN
+			if (param[0] instanceof Double) return ((VecN)param[1]).scale((Double)param[0]);
+			else return ((VecN)param[0]).scale((VecN)param[1]);
+		case "n":
+			return ((VecN)param[0]).norm();
+		case "l":
+			return ((VecN)param[0]).l();
 		}
+		throw new CompileException("unknown method or invalid parameters (" + param.length + ")", name, line);
 	}
 	
 	private int[] find(String s, int p, String k) {
@@ -329,13 +406,18 @@ public class TESRModelParser {
 		return data;
 	}
 	
-	public static void renderWithOffset(WorldRenderer render, int[] data, float dx, float dy, float dz) {
+	public static void renderWithOffsetAndBrightness(WorldRenderer render, String model, float dx, float dy, float dz, int l) {
+		int[] data = SpecialModelLoader.instance.tesrModelData.get(model);
+		if (data == null) return;
 		int[] res = new int[data.length];
-		System.arraycopy(data, 0, res, 0, data.length);
-		for (int i = 0; i < data.length; i += 5) {
-			res[i] = Float.floatToIntBits(dx + Float.intBitsToFloat(data[i]));
-			res[++i] = Float.floatToIntBits(dy + Float.intBitsToFloat(data[i]));
-			res[++i] = Float.floatToIntBits(dz + Float.intBitsToFloat(data[i]));
+		for (int i = 0; i < data.length; ++i) {
+			res[i] = Float.floatToIntBits(dx + Float.intBitsToFloat(data[i]));	//X
+			res[++i] = Float.floatToIntBits(dy + Float.intBitsToFloat(data[i]));//Y
+			res[++i] = Float.floatToIntBits(dz + Float.intBitsToFloat(data[i]));//Z
+			res[++i] = data[i];	//C
+			res[++i] = data[i];	//U
+			res[++i] = data[i];	//V
+			res[++i] = l;		//L
 		}
 		render.addVertexData(res);
 	}
