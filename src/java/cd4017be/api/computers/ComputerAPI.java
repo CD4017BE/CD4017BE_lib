@@ -6,6 +6,7 @@
 
 package cd4017be.api.computers;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 import li.cil.oc.api.API;
@@ -18,6 +19,8 @@ import li.cil.oc.api.network.Visibility;
 
 import org.apache.logging.log4j.Level;
 
+import cd4017be.api.energy.EnergyAPI;
+import cd4017be.api.energy.EnergyAPI.IEnergyHandler;
 import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Optional;
@@ -28,17 +31,20 @@ import net.minecraft.tileentity.TileEntity;
  * @author CD4017BE
  */
 //@Optional.Interface(iface = "dan200.computercraft.api.peripheral.IPeripheralProvider", modid = "ComputerCraft")
+@SuppressWarnings("rawtypes")
 public class ComputerAPI //implements IPeripheralProvider //TODO reimplement
 {
     private static boolean registered = false;
     public static final ComputerAPI instance = new ComputerAPI();
-    public static Class CCcomp, CCapi, CCperProv;
-    public static Class OCcomp;
+	public static Class CCcomp, CCapi, CCperProv;
+    public static Class OCcomp, OCapi;
     public static Method CCevent;
     public static Method OCevent;
+    public static Field OCpower;
     private static boolean OCinstalled = false;
     
-    public static void register()
+    @SuppressWarnings("unchecked")
+	public static void register()
     {
     	if (registered) return;
         //ComputerCraft
@@ -64,6 +70,7 @@ public class ComputerAPI //implements IPeripheralProvider //TODO reimplement
         OCinstalled = Loader.isModLoaded("OpenComputers");
         try {
         	OCcomp = Class.forName("li.cil.oc.api.machine.Context");
+        	OCapi = Class.forName("li.cil.oc.api.API");
         	FMLLog.log("CD4017BE_lib", Level.INFO, "OpenComputers API found");
         } catch (ClassNotFoundException e) {
         	FMLLog.log("CD4017BE_lib", Level.INFO, "OpenComputers API not available!");
@@ -71,11 +78,19 @@ public class ComputerAPI //implements IPeripheralProvider //TODO reimplement
         if (OCcomp != null)
 			try {
 				OCevent = OCcomp.getMethod("signal", String.class, Object[].class);
+				OCpower = OCapi.getDeclaredField("isPowerEnabled");
 			} catch (Exception e) {
 				FMLLog.log("CD4017BE_lib", Level.ERROR, e, "can't get API methods:");
 			}
-        
+        postInit();
     	registered = true;
+    }
+    
+    public static void postInit() {
+    	if (OCpower != null) try {
+    		OCpower.setBoolean(null, true);
+    		EnergyAPI.handlers.add((IEnergyHandler)Class.forName("cd4017be.api.energy.EnergyOpenComputers").newInstance());
+    	} catch(Throwable e){ FMLLog.log("cd4017be.computerAPI", Level.ERROR, e, "failed to turn on power usage");}
     }
     
     public static boolean isOCinstalled() {
