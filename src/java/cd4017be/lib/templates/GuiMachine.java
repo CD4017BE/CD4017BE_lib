@@ -15,10 +15,11 @@ import java.util.Arrays;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.WorldRenderer;
+import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.inventory.ClickType;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
@@ -159,7 +160,7 @@ public abstract class GuiMachine extends GuiContainer
             float v = tex.getMinV();
             float u1 = tex.getMaxU();
             float v1 = tex.getMaxV();
-            WorldRenderer r = Tessellator.getInstance().getWorldRenderer();
+            VertexBuffer r = Tessellator.getInstance().getBuffer();
             r.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
             r.pos(x, y + 50, this.zLevel).tex(u, v1).endVertex();
             r.pos(x + (s?34:16), y + 50, this.zLevel).tex(u1, v1).endVertex();
@@ -322,7 +323,7 @@ public abstract class GuiMachine extends GuiContainer
         ItemStack itemstack = this.mc.thePlayer.inventory.getItemStack();
         if (slot instanceof SlotHolo && slot != lastClickSlot) {
 			if (itemstack == null || slot.getStack() == null || itemstack.isItemEqual(slot.getStack()))
-				this.handleMouseClick(slot, slot.slotNumber, b, 0);
+				this.handleMouseClick(slot, slot.slotNumber, b, ClickType.PICKUP_ALL);
 		} else super.mouseClickMove(x, y, b, t);
         lastClickSlot = slot;
 	}

@@ -18,6 +18,7 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.inventory.ClickType;
 import net.minecraft.inventory.ICrafting;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.ISidedInventory;
@@ -27,10 +28,11 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.BlockPos;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.StatCollector;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.World;
 
 /**
@@ -43,7 +45,7 @@ public class ModTileEntity extends TileEntity
     
     public int dimensionId;
     
-    public boolean onActivated(EntityPlayer player, EnumFacing s, float X, float Y, float Z)
+    public boolean onActivated(EntityPlayer player, EnumHand hand, ItemStack item, EnumFacing s, float X, float Y, float Z)
     {
         TileBlockEntry entry = TileBlockRegistry.getBlockEntry(this.getBlockType());
         if (entry != null && entry.container != null && !player.isSneaking()) {
@@ -101,7 +103,8 @@ public class ModTileEntity extends TileEntity
     
     public void markUpdate()
     {
-    	this.worldObj.markBlockForUpdate(pos);
+    	IBlockState state = worldObj.getBlockState(pos);
+    	this.worldObj.notifyBlockUpdate(pos, state, state, 3);
     }
     
     public void writeItemsToNBT(NBTTagCompound nbt, String name, ItemStack[] items)
@@ -139,7 +142,7 @@ public class ModTileEntity extends TileEntity
     @Override
 	public void setWorldObj(World world) {
 		super.setWorldObj(world);
-		this.dimensionId = world.provider.getDimensionId();
+		this.dimensionId = world.provider.getDimension();
 	}
 
 	public void onPlayerCommand(PacketBuffer data, EntityPlayerMP player) throws IOException
@@ -222,7 +225,7 @@ public class ModTileEntity extends TileEntity
         else return null;
     }
     
-    public ItemStack slotClick(TileContainer container, int s, int b, int m, EntityPlayer player) 
+    public ItemStack slotClick(TileContainer container, int s, int b, ClickType m, EntityPlayer player) 
     {
         return container.standartSlotClick(s, b, m, player);
     }
@@ -312,7 +315,7 @@ public class ModTileEntity extends TileEntity
     
     public String getName() 
     {
-    	return StatCollector.translateToLocal(this.getBlockType().getUnlocalizedName().replaceFirst("tile.", "gui.cd4017be.") + ".name");
+    	return I18n.translateToLocal(this.getBlockType().getUnlocalizedName().replaceFirst("tile.", "gui.cd4017be.") + ".name");
     }
 
 	@Override

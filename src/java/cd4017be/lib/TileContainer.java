@@ -12,6 +12,7 @@ import java.util.BitSet;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.inventory.ClickType;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.ICrafting;
 import net.minecraft.inventory.Slot;
@@ -124,12 +125,12 @@ public class TileContainer extends Container
     }
 
     @Override
-    public ItemStack slotClick(int s, int b, int m, EntityPlayer player) 
+    public ItemStack func_184996_a(int s, int b, ClickType m, EntityPlayer player) 
     {
         return tileEntity.slotClick(this, s, b, m, player);
     }
     
-    public ItemStack standartSlotClick(int s, int b, int m, EntityPlayer player)
+    public ItemStack standartSlotClick(int s, int b, ClickType m, EntityPlayer player)
     {
         Slot slot = null;
         if (s >= 0 && s < inventorySlots.size()) slot = getSlot(s);
@@ -141,11 +142,11 @@ public class TileContainer extends Container
             ItemStack var11;
             if (b == 0 || b == 1)
             {
-                if (m == 1 && slot.canTakeStack(player))
+                if (m == ClickType.PICKUP && slot.canTakeStack(player))
                 {
                     slot.decrStackSize(slot.getSlotStackLimit());
                 }
-                else if (m == 0)
+                else if (m == ClickType.PICKUP_ALL)
                 {
                     var8 = slot.getStack();
                     ItemStack var13 = var6.getItemStack();
@@ -189,7 +190,7 @@ public class TileContainer extends Container
             return null;
         } else
         {
-            return super.slotClick(s, b, m, player);
+            return super.func_184996_a(s, b, m, player);
         }
     }
 

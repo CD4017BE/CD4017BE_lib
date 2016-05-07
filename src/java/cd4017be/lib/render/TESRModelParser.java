@@ -9,9 +9,9 @@ import javax.vecmath.Matrix4d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
-import net.minecraft.client.renderer.WorldRenderer;
-import net.minecraft.util.MathHelper;
+import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.MathHelper;
 import cd4017be.lib.util.Vec2;
 import cd4017be.lib.util.VecN;
 
@@ -406,7 +406,7 @@ public class TESRModelParser {
 		return data;
 	}
 	
-	public static void renderWithOffsetAndBrightness(WorldRenderer render, String model, float dx, float dy, float dz, int l) {
+	public static void renderWithOffsetAndBrightness(VertexBuffer render, String model, float dx, float dy, float dz, int l) {
 		int[] data = SpecialModelLoader.instance.tesrModelData.get(model);
 		if (data == null) return;
 		int[] res = new int[data.length];

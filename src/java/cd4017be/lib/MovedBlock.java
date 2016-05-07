@@ -14,21 +14,22 @@ import java.util.Iterator;
 import cd4017be.api.automation.IOperatingArea;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.command.ICommandManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.network.play.server.S07PacketRespawn;
-import net.minecraft.network.play.server.S1DPacketEntityEffect;
+import net.minecraft.network.play.server.SPacketEntityEffect;
+import net.minecraft.network.play.server.SPacketRespawn;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.management.ServerConfigurationManager;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.BlockPos;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.EnumSkyBlock;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
+import net.minecraft.world.WorldType;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
 
@@ -63,7 +64,7 @@ public class MovedBlock
                     tile = (TileEntity)m.invoke(null, new Object[] { world, nbt });
                 } catch (Exception e) {e.printStackTrace();}
             } else {
-                tile = TileEntity.createAndLoadEntity(nbt);
+                tile = TileEntity.createTileEntity(((WorldServer)world).getMinecraftServer(), nbt);
                 if (tile instanceof IOperatingArea) {
                     int [] area = ((IOperatingArea)tile).getOperatingArea();
                     area[0] += pos.getX(); area[3] += pos.getX();
@@ -110,8 +111,7 @@ public class MovedBlock
      * @param x block x position
      * @param y block y position
      * @param z block z position
-     * @param id block id
-     * @param m block metadata
+     * @param state the block
      * @param tile block TileEntity
      * @return true if placed successfully
      */
@@ -122,15 +122,18 @@ public class MovedBlock
         IBlockState state0 = chunk.getBlockState(pos);
         Block block = state.getBlock();
         Block block0 = state0.getBlock();
-        int oldLight = block0.getLightValue(world, pos);
-
+        int oldLight = state0.getLightValue(world, pos);
+        int oldOpac = state0.getLightOpacity(world, pos);
+        
+        //Chunk.setBlockState() {
+        
         world.removeTileEntity(pos);
         if (state0 == state) {
         	world.setTileEntity(pos, tile);
-        	world.markBlockForUpdate(pos);
+        	world.notifyBlockUpdate(pos, state0, state, 3);
         	return true;
         }
-
+        
         int bx = pos.getX() & 15;
         int y = pos.getY();
         int bz = pos.getZ() & 15;
@@ -142,38 +145,40 @@ public class MovedBlock
         ExtendedBlockStorage[] storageArrays = chunk.getBlockStorageArray();
         ExtendedBlockStorage extendedblockstorage = storageArrays[y >> 4];
         boolean flag = false;
-        if (extendedblockstorage == null) {
+        if (extendedblockstorage == Chunk.NULL_BLOCK_STORAGE) {
         	if (block == Blocks.air) return false;
         	extendedblockstorage = storageArrays[y >> 4] = new ExtendedBlockStorage(y >> 4 << 4, !world.provider.getHasNoSky());
             flag = y >= h;
         }
 
         extendedblockstorage.set(bx, y & 15, bz, state);
-        if (extendedblockstorage.getBlockByExtId(bx, y & 15, bz) != block) return false;
+        if (extendedblockstorage.get(bx, y & 15, bz).getBlock() != block) return false;
         
         if (flag) chunk.generateSkylightMap();
         else {
-        	int l = block.getLightOpacity(world, pos);
-            int l0 = block0.getLightOpacity(world, pos);
+        	int opac = state.getLightOpacity(world, pos);
 
-            if (l > 0) {
+            if (opac > 0) {
             	if (y >= h) chunk.relightBlock(bx, y + 1, bz);
             } else if (y == h - 1) chunk.relightBlock(bx, y, bz);
-
-            if (l != l0 && (l < l0 || chunk.getLightFor(EnumSkyBlock.SKY, pos) > 0 || chunk.getLightFor(EnumSkyBlock.BLOCK, pos) > 0)) {
+            
+            if (opac != oldOpac && (opac < oldOpac || chunk.getLightFor(EnumSkyBlock.SKY, pos) > 0 || chunk.getLightFor(EnumSkyBlock.BLOCK, pos) > 0)) {
             	chunk.propagateSkylightOcclusion(bx, bz);
             }
         }
-
+        
         world.setTileEntity(pos, tile);
         chunk.setModified(true);
-
-        if (block.getLightOpacity() != block0.getLightOpacity() || block.getLightValue(world, pos) != oldLight) {
-          	world.theProfiler.startSection("checkLight");
+        
+        //}
+        
+        if (state.getLightOpacity(world, pos) != oldOpac || state.getLightValue(world, pos) != oldLight)
+        {
+        	world.theProfiler.startSection("checkLight");
            	world.checkLight(pos);
            	world.theProfiler.endSection();
         }
-        world.markBlockForUpdate(pos);
+        world.notifyBlockUpdate(pos, state0, state, 3);
         return true;
     }
     
@@ -187,76 +192,35 @@ public class MovedBlock
      */
     public static void moveEntity(Entity entity, int dim, double x, double y, double z)
     {
-        int dimO = entity.worldObj.provider.getDimensionId();
-        if (entity instanceof EntityPlayerMP) {
-            if (dim != dimO) tpPlayerToDim((EntityPlayerMP)entity, dim, x, y, z);
-            else ((EntityPlayerMP)entity).setPositionAndUpdate(x, y, z);
-        } else if (dim != dimO) {
-            entity.worldObj.theProfiler.startSection("changeDimension");
-            MinecraftServer server = MinecraftServer.getServer();
-            WorldServer worldO = server.worldServerForDimension(dimO);
+        int dimO = entity.worldObj.provider.getDimension();
+        if (dim != dimO) {
+        	MinecraftServer server = ((WorldServer)entity.worldObj).getMinecraftServer();
+        	WorldServer worldO = server.worldServerForDimension(dimO);
             WorldServer worldN = server.worldServerForDimension(dim);
-            entity.dimension = dim;
-            entity.worldObj.removeEntity(entity);
-            entity.isDead = false;
-            entity.worldObj.theProfiler.startSection("reposition");
-            tpEntity(entity, worldO, worldN, x, y, z);
-            entity.worldObj.theProfiler.endStartSection("reloading");
-            Entity var6 = EntityList.createEntityByName(EntityList.getEntityString(entity), worldN);
-            if (var6 != null)
-            {
-                var6.copyDataFromOld(entity);
-                worldN.spawnEntityInWorld(var6);
+            if (entity instanceof EntityPlayerMP) {
+                server.getPlayerList().transferPlayerToDimension((EntityPlayerMP)entity, dim, new Teleporter(worldN, x, y, z));
+            } else {
+            	entity.dimension = dim;
+                entity.worldObj.removeEntity(entity);
+                entity.isDead = false;
+                server.getPlayerList().transferEntityToWorld(entity, 0, worldO, worldN, new Teleporter(worldN, x, y, z));
             }
-            entity.isDead = true;
-            entity.worldObj.theProfiler.endSection();
-            worldO.resetUpdateEntityTick();
-            worldN.resetUpdateEntityTick();
-            entity.worldObj.theProfiler.endSection();
-        } else {
-            entity.setPosition(x, y, z);
-        }
+        } else if (entity instanceof EntityPlayerMP) {
+        	((EntityPlayerMP)entity).setPositionAndUpdate(x, y, z);
+        } else entity.setPosition(x, y, z);
     }
     
-    private static void tpPlayerToDim(EntityPlayerMP player, int dim, double x, double y, double z)
-    {
-        MinecraftServer server = MinecraftServer.getServer();
-        ServerConfigurationManager manager = server.getConfigurationManager();
-        
-        int j = player.dimension;
-        WorldServer worldO = server.worldServerForDimension(player.dimension);
-        player.dimension = dim;
-        WorldServer worldN = server.worldServerForDimension(player.dimension);
-        player.playerNetServerHandler.sendPacket(new S07PacketRespawn(player.dimension, worldN.getDifficulty(), worldN.getWorldInfo().getTerrainType(), player.theItemInWorldManager.getGameType()));
-        worldO.removePlayerEntityDangerously(player);
-        player.isDead = false;
-        tpEntity(player, worldO, worldN, x, y, z);
-        worldO.getPlayerManager().removePlayer(player);
-        worldN.getPlayerManager().addPlayer(player);
-        worldN.theChunkProviderServer.loadChunk((int)player.posX >> 4, (int)player.posZ >> 4);
-        player.playerNetServerHandler.setPlayerLocation(player.posX, player.posY, player.posZ, player.rotationYaw, player.rotationPitch);
-        player.theItemInWorldManager.setWorld(worldN);
-        manager.updateTimeAndWeatherForPlayer(player, worldN);
-        manager.syncPlayerInventory(player);
-        Iterator iterator = player.getActivePotionEffects().iterator();
-        while (iterator.hasNext()) {
-            PotionEffect potioneffect = (PotionEffect)iterator.next();
-            player.playerNetServerHandler.sendPacket(new S1DPacketEntityEffect(player.getEntityId(), potioneffect));
-        }
-        FMLCommonHandler.instance().firePlayerChangedDimensionEvent(player, j, dim);
-    }
-    
-    private static void tpEntity(Entity entity, WorldServer os, WorldServer ns, double x, double y, double z)
-    {
-        os.theProfiler.startSection("placing");
-        if (entity.isEntityAlive())
-        {
-            ns.spawnEntityInWorld(entity);
-            entity.setLocationAndAngles(x, y, z, entity.rotationYaw, entity.rotationPitch);
-            ns.updateEntityWithOptionalForce(entity, false);
-        }
-        os.theProfiler.endSection();
-        entity.setWorld(ns);
+    public static class Teleporter extends net.minecraft.world.Teleporter {
+    	private final double x, y, z;
+		public Teleporter(WorldServer worldIn, double x, double y, double z) {
+			super(worldIn);
+			this.x = x; this.y = y; this.z = z;
+		}
+		@Override
+		public void placeInPortal(Entity entity, float rot) {
+			entity.setLocationAndAngles(x, y, z, rot, entity.rotationPitch);
+		}
+    	
     }
     
 }

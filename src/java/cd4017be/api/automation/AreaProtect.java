@@ -10,13 +10,13 @@ import java.util.List;
 
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.EnumHand;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeChunkManager;
 import net.minecraftforge.common.ForgeChunkManager.Ticket;
 import net.minecraftforge.common.ForgeChunkManager.Type;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent.Action;
 
 /**
  *
@@ -44,13 +44,13 @@ public class AreaProtect implements ForgeChunkManager.LoadingCallback
     public void handlePlayerInteract(PlayerInteractEvent event)
     {
         if (permissions < 0) return;
-    	if (event.action == Action.RIGHT_CLICK_BLOCK || event.action == Action.LEFT_CLICK_BLOCK) {
-            ProtectLvl pl = this.getPlayerAccess(event.entityPlayer.getName(), event.entityPlayer.worldObj, event.pos.getX() >> 4, event.pos.getZ() >> 4);
-            if (pl != ProtectLvl.Free && !(pl == ProtectLvl.Protected && event.action == Action.RIGHT_CLICK_BLOCK && event.entityPlayer.getCurrentEquippedItem() == null)) {
+    	if (event.getHand() == EnumHand.MAIN_HAND || event.getHand() == EnumHand.OFF_HAND) {
+            ProtectLvl pl = this.getPlayerAccess(event.getEntityPlayer().getName(), event.getEntityPlayer().worldObj, event.getPos().getX() >> 4, event.getPos().getZ() >> 4);
+            if (pl != ProtectLvl.Free && !(pl == ProtectLvl.Protected && event.getHand() == EnumHand.MAIN_HAND && event.getEntityPlayer().getHeldItemMainhand() == null)) {
                 event.setCanceled(true);
             }
-        } else if (event.action == Action.RIGHT_CLICK_AIR) {
-            ProtectLvl pl = this.getPlayerAccess(event.entityPlayer.getName(), event.entityPlayer.worldObj, (int)Math.floor(event.entityPlayer.posX) >> 4, (int)Math.floor(event.entityPlayer.posZ) >> 4);
+        } else if (true) {//TODO fix
+            ProtectLvl pl = this.getPlayerAccess(event.getEntityPlayer().getName(), event.getEntityPlayer().worldObj, (int)Math.floor(event.getEntityPlayer().posX) >> 4, (int)Math.floor(event.getEntityPlayer().posZ) >> 4);
             if (pl != ProtectLvl.Free && pl != ProtectLvl.Protected) {
                 event.setCanceled(true);
             }
@@ -71,7 +71,7 @@ public class AreaProtect implements ForgeChunkManager.LoadingCallback
     {
     	if (permissions < 0) return ProtectLvl.Free;
     	int ac = 0;
-    	ArrayList<IAreaConfig> list = loadedSS.get(world.provider.getDimensionId());
+    	ArrayList<IAreaConfig> list = loadedSS.get(world.provider.getDimension());
     	if (list == null) return ProtectLvl.Free;
     	for (IAreaConfig cfg : list) {
             ac = Math.max(ac, cfg.getProtectLvlFor(name, chunkX, chunkZ));
@@ -82,7 +82,7 @@ public class AreaProtect implements ForgeChunkManager.LoadingCallback
     public boolean isOperationAllowed(String player, World world, int cx, int cz)
     {
     	if (permissions < 0) return true;
-    	ArrayList<IAreaConfig> list = loadedSS.get(world.provider.getDimensionId());
+    	ArrayList<IAreaConfig> list = loadedSS.get(world.provider.getDimension());
     	if (list == null) return true;
     	for (IAreaConfig cfg : list) {
             if (cfg.getProtectLvlFor(player, cx, cz) != 0) return false;
@@ -103,7 +103,7 @@ public class AreaProtect implements ForgeChunkManager.LoadingCallback
     public boolean isInteractingAllowed(String player, World world, int cx, int cz)
     {
     	if (permissions < 0) return true;
-    	ArrayList<IAreaConfig> list = loadedSS.get(world.provider.getDimensionId());
+    	ArrayList<IAreaConfig> list = loadedSS.get(world.provider.getDimension());
     	if (list == null) return true;
     	for (IAreaConfig cfg : list) {
             if (cfg.getProtectLvlFor(player, cx, cz) > 1) return false;
@@ -182,9 +182,9 @@ public class AreaProtect implements ForgeChunkManager.LoadingCallback
 	@Override
 	public void ticketsLoaded(List<Ticket> tickets, World world) 
 	{
-		ArrayList<Ticket> list = usedTickets.get(world.provider.getDimensionId());
+		ArrayList<Ticket> list = usedTickets.get(world.provider.getDimension());
         if (list == null) {
-        	usedTickets.put(world.provider.getDimensionId(), list = new ArrayList<Ticket>());
+        	usedTickets.put(world.provider.getDimension(), list = new ArrayList<Ticket>());
         }
         list.addAll(tickets);
 	}
