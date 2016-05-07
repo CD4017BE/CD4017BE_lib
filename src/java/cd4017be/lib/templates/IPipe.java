@@ -31,7 +31,7 @@ public interface IPipe
             if (item == null || !(item.getItem() instanceof ItemBlock)) return null;
             ItemBlock ib = (ItemBlock)item.getItem();
             Cover cover = new Cover(ib.block.getStateFromMeta(ib.getMetadata(item.getMetadata())));
-            if (cover.block == null || cover.block.getBlock() instanceof BlockPipe || !cover.block.getBlock().isFullBlock()) return null;
+            if (cover.block == null || cover.block.getBlock() instanceof BlockPipe || !cover.block.getBlock().isFullBlock(cover.block)) return null;
             cover.item = item.copy();
             cover.item.stackSize = 1;
             return cover;

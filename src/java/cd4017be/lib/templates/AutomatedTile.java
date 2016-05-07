@@ -20,11 +20,11 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketBuffer;
-import net.minecraft.network.play.server.S35PacketUpdateTileEntity;
-import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.ChatComponentText;
+import net.minecraft.network.play.server.SPacketUpdateTileEntity;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.IChatComponent;
 import net.minecraft.util.ITickable;
 import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidStack;
@@ -144,7 +144,7 @@ public class AutomatedTile extends ModTileEntity implements ISidedInventory, ITi
 	}
     
 	@Override
-    public void onDataPacket(NetworkManager net, S35PacketUpdateTileEntity pkt) 
+    public void onDataPacket(NetworkManager net, SPacketUpdateTileEntity pkt) 
     {
 		NBTTagCompound nbt = pkt.getNbtCompound();
 		boolean update = false;
@@ -174,7 +174,7 @@ public class AutomatedTile extends ModTileEntity implements ISidedInventory, ITi
         	nbt.setByte("con", energy.con);
         	send = true;
         }
-        if (send) return new S35PacketUpdateTileEntity(pos, -1, nbt);
+        if (send) return new SPacketUpdateTileEntity(pos, -1, nbt);
         else return null;
     }
 
@@ -245,8 +245,8 @@ public class AutomatedTile extends ModTileEntity implements ISidedInventory, ITi
 	}
 
 	@Override
-	public IChatComponent getDisplayName() {
-		return new ChatComponentText(this.getName());
+	public ITextComponent getDisplayName() {
+		return new TextComponentString(this.getName());
 	}
 
 	@Override

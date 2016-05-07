@@ -3,6 +3,7 @@ package cd4017be.lib;
 import cd4017be.lib.templates.SlotHolo;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.inventory.ClickType;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
@@ -15,7 +16,7 @@ public class ItemContainer extends Container
 	public ItemContainer(EntityPlayer player) 
 	{
 		this.player = player;
-		type = player.getCurrentEquippedItem();
+		type = player.getHeldItemMainhand();
 	}
 
 	protected void addPlayerInventory(int x, int y)
@@ -33,7 +34,7 @@ public class ItemContainer extends Container
 	@Override
     public boolean canInteractWith(EntityPlayer player) 
     {
-		ItemStack item = player.getCurrentEquippedItem();
+		ItemStack item = player.getHeldItemMainhand();
         return !player.isDead && type != null && item != null && item.getItem() == type.getItem();
     }
 
@@ -68,9 +69,9 @@ public class ItemContainer extends Container
     protected int[] stackTransferTarget(ItemStack item, int id) {
 		return null;
 	}
-    
-    @Override
-    public ItemStack slotClick(int s, int b, int m, EntityPlayer par4EntityPlayer)
+
+	@Override
+    public ItemStack func_184996_a(int s, int b, ClickType m, EntityPlayer par4EntityPlayer)
     {   
     	Slot slot = null;
         if (s >= 0 && s < inventorySlots.size()) slot = getSlot(s);
@@ -82,11 +83,11 @@ public class ItemContainer extends Container
             ItemStack var11;
             if (b == 0 || b == 1)
             {
-                if (m == 1 && slot.canTakeStack(player))
+                if (m == ClickType.PICKUP && slot.canTakeStack(player))
                 {
                     slot.decrStackSize(slot.getSlotStackLimit());
                 }
-                else if (m == 0)
+                else if (m == ClickType.PICKUP_ALL)
                 {
                     var8 = slot.getStack();
                     ItemStack var13 = var6.getItemStack();
@@ -129,7 +130,7 @@ public class ItemContainer extends Container
             }
             return null;
         } else {
-            return super.slotClick(s, b, m, player);
+            return super.func_184996_a(s, b, m, player);
         }
     }
     

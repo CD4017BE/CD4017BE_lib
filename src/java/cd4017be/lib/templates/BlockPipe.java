@@ -12,18 +12,20 @@ import cd4017be.lib.templates.IPipe.Cover;
 import cd4017be.lib.util.PropertyBlock;
 import cd4017be.lib.util.PropertyByte;
 import net.minecraft.block.Block;
+import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
-import net.minecraft.block.state.BlockState;
+import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.BlockPos;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.RayTraceResult.Type;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.MovingObjectPosition;
-import net.minecraft.util.Vec3;
 import net.minecraft.world.Explosion;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
@@ -55,13 +57,13 @@ public class BlockPipe extends TileBlock
 	
 	public float size = 0.25F;
 	
-    public BlockPipe(String id, Material m, Class<? extends ItemBlock> item, int type)
+    public BlockPipe(String id, Material m, SoundType sound, Class<? extends ItemBlock> item, int type)
     {
-        super(id, m, item, type);
+        super(id, m, sound, item, type);
     }
 
 	@Override
-	protected BlockState createBlockState() {
+	protected BlockStateContainer createBlockState() {
 		ArrayList<IProperty> main = new ArrayList<IProperty>();
 		this.addProperties(main);
 		return new ExtendedBlockState(this, main.toArray(new IProperty[main.size()]), RENDER_PROPS);
@@ -83,134 +85,106 @@ public class BlockPipe extends TileBlock
 		} else return state.withProperty(CORE, (byte)this.getMetaFromState(oldState));
 	}
 
-	private boolean keepBB = false;
-    
-    @Override
-    public void setBlockBoundsBasedOnState(IBlockAccess world, BlockPos pos) 
-    {
-    	if (keepBB) return;
-        TileEntity te = world.getTileEntity(pos);
-        float f1 = (1F - size) / 2, f2 = (1F + size) / 2;
-        float[] bb = new float[]{f1, f2, f1, f2, f1, f2};
-        if (te != null && te instanceof IPipe)
-        {
-            IPipe pipe = (IPipe)te;
-            IPipe.Cover cover = pipe.getCover();
-            if (cover != null) {
-                bb = new float[]{0, 1, 0, 1, 0, 1};
-            } else for (byte s = 0; s < 6; s++)
-                if (pipe.textureForSide(s) != -1) bb[s] = ((s & 1) == 0 ? 0F : 1F);
-        }
-        this.setBlockBounds(bb[4], bb[0], bb[2], bb[5], bb[1], bb[3]);
-    }
-    
-    @Override
-    public AxisAlignedBB getCollisionBoundingBox(World world, BlockPos pos, IBlockState state) 
-    {
-        this.setBlockBoundsBasedOnState(world, pos);
-        return super.getCollisionBoundingBox(world, pos, state);
-    }
-
-    @Override
-    public AxisAlignedBB getSelectedBoundingBox(World world, BlockPos pos) 
-    {
-        return this.getCollisionBoundingBox(world, pos, world.getBlockState(pos));
-    }
-
-    @Override
-	public void addCollisionBoxesToList(World world, BlockPos pos, IBlockState state, AxisAlignedBB area, List<AxisAlignedBB> list, Entity entity) 
-    {
+	@Override
+	public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess world, BlockPos pos) {
 		TileEntity te = world.getTileEntity(pos);
-		AxisAlignedBB box;
-		int x = pos.getX(), y = pos.getY(), z = pos.getZ();
-		if (te != null && te instanceof IPipe && ((IPipe)te).getCover() != null) {
-			box = new AxisAlignedBB((double)x, (double)y, (double)z, (double)x + 1D, (double)y + 1D, (double)z + 1D);
+		if (te != null && te instanceof IPipe && ((IPipe)te).getCover() == null)
+            return this.outerBox((IPipe)te);
+		else return FULL_BLOCK_AABB;
+	}
+	
+	private AxisAlignedBB outerBox(IPipe pipe) {
+		final double f1 = (1D - (double)size) / 2D, f2 = (1D + (double)size) / 2D;
+    	double[] bb = new double[]{f1, f2, f1, f2, f1, f2};
+    	for (byte s = 0; s < 6; s++)
+    		if (pipe.textureForSide(s) != -1) 
+    			bb[s] = ((s & 1) == 0 ? 0D : 1D);
+    	return new AxisAlignedBB(bb[0], bb[2], bb[4], bb[1], bb[3], bb[5]);
+	}
+
+    @Override
+	public void addCollisionBoxToList(IBlockState state, World world, BlockPos pos, AxisAlignedBB area, List<AxisAlignedBB> list, Entity entity) 
+    {
+    	AxisAlignedBB box;
+    	TileEntity te = world.getTileEntity(pos);
+    	if (te == null || !(te instanceof IPipe) || ((IPipe)te).getCover() != null) {
+    		box = FULL_BLOCK_AABB.offset(pos);
 			if (area.intersectsWith(box))list.add(box);
 			return;
-        }
-		this.setBlockBoundsBasedOnState(world, pos);
-		double d0 = (double)((1F - size) / 2F), d1 = (double)((1F + size) / 2F);
-    	box = new AxisAlignedBB((double)x + this.minX, (double)y + d0, (double)z + d0, (double)x + this.maxX, (double)y + d1, (double)z + d1);
+    	}
+    	AxisAlignedBB box0 = this.outerBox((IPipe)te);
+		double x = pos.getX(), y = pos.getY(), z = pos.getZ();
+		final double d0 = (double)((1F - size) / 2F), d1 = (double)((1F + size) / 2F);
+    	box = new AxisAlignedBB(x + box0.minX, y + d0, z + d0, x + box0.maxX, y + d1, z + d1);
     	if (box.intersectsWith(area)) list.add(box);
-    	if (this.minY < d0 || this.maxY > d1) {
-    		box = new AxisAlignedBB((double)x + d0, (double)y + this.minY, (double)z + d0, (double)x + d1, (double)y + this.maxY, (double)z + d1);
+    	if (box0.minY < d0 || box0.maxY > d1) {
+    		box = new AxisAlignedBB(x + d0, y + box0.minY, z + d0, x + d1, y + box0.maxY, z + d1);
     		if (box.intersectsWith(area)) list.add(box);
     	}
-    	if (this.minZ < d0 || this.maxZ > d1) {
-    		box = new AxisAlignedBB((double)x + d0, (double)y + d0, (double)z + this.minZ, (double)x + d1, (double)y + d1, (double)z + this.maxZ);
+    	if (box0.minZ < d0 || box0.maxZ > d1) {
+    		box = new AxisAlignedBB(x + d0, y + d0, z + box0.minZ, x + d1, y + d1, z + box0.maxZ);
     		if (box.intersectsWith(area)) list.add(box);
     	}
 	}
 
 	@Override
-	public MovingObjectPosition collisionRayTrace(World world, BlockPos pos, Vec3 v0, Vec3 v1) 
+	public RayTraceResult collisionRayTrace(IBlockState state, World world, BlockPos pos, Vec3d v0, Vec3d v1) 
 	{
-		TileEntity te = world.getTileEntity(pos);
-		if (te != null && te instanceof IPipe && ((IPipe)te).getCover() != null) return super.collisionRayTrace(world, pos, v0, v1);
-		this.setBlockBoundsBasedOnState(world, pos);
-		MovingObjectPosition pos0, pos1;
-		try {keepBB = true;
-		double d0 = (double)((1F - size) / 2F), d1 = (double)((1F + size) / 2F);
-		double y0 = this.minY, y1 = this.maxY, z0 = this.minZ, z1 = this.maxZ;
-		this.minY = d0; this.maxY = d1; this.minZ = d0; this.maxZ = d1;
-		pos0 = super.collisionRayTrace(world, pos, v0, v1);
-		this.minX = d0; this.maxX = d1; this.minY = y0; this.maxY = y1;
-		pos1 = super.collisionRayTrace(world, pos, v0, v1);
-		if (pos1 != null && (pos0 == null || pos0.hitVec.squareDistanceTo(v0) > pos1.hitVec.squareDistanceTo(v0))) pos0 = pos1;
-		this.minY = d0; this.maxY = d1; this.minZ = z0; this.maxZ = z1;
-		pos1 = super.collisionRayTrace(world, pos, v0, v1);
-		keepBB = false;} catch (RuntimeException e) {keepBB = false; throw e;}
-		return pos1 != null && (pos0 == null || pos0.hitVec.squareDistanceTo(v0) > pos1.hitVec.squareDistanceTo(v0)) ? pos1 : pos0;
+		ArrayList<AxisAlignedBB> boxes = new ArrayList<AxisAlignedBB>();
+		this.addCollisionBoxToList(state, world, pos, FULL_BLOCK_AABB.offset(pos), boxes, null);
+		RayTraceResult rayTrace = null;
+		for (AxisAlignedBB box : boxes) {
+			rayTrace = box.calculateIntercept(v0, v1);
+			if (rayTrace != null) return new RayTraceResult(rayTrace.hitVec, rayTrace.sideHit, pos);
+		}
+		return null;
 	}
 
 	@Override
-	public boolean isNormalCube(IBlockAccess world, BlockPos pos) 
+	public boolean isNormalCube(IBlockState state, IBlockAccess world, BlockPos pos) 
     {
     	TileEntity te = world.getTileEntity(pos);
         return te != null && te instanceof IPipe && ((IPipe)te).getCover() != null;
 	}
 
     @Override
-	public boolean isSideSolid(IBlockAccess world, BlockPos pos, EnumFacing side) {
-        return this.isNormalCube(world, pos);
+	public boolean isSideSolid(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing side) {
+        return this.isNormalCube(state, world, pos);
 	}
 
 	@Override
-	public boolean isFullCube() {
+	public boolean isFullCube(IBlockState state) {
 		return false;
 	}
 
 	@Override
 	public boolean isBlockSolid(IBlockAccess world, BlockPos pos, EnumFacing side) {
-		return this.isNormalCube(world, pos);
+		return this.isNormalCube(world.getBlockState(pos), world, pos);
 	}
 
 	@Override
-	public boolean doesSideBlockRendering(IBlockAccess world, BlockPos pos, EnumFacing face) {
+	public boolean doesSideBlockRendering(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing face) {
 		TileEntity te = world.getTileEntity(pos);
         if (te != null && te instanceof IPipe) {
             IPipe.Cover cover = ((IPipe)te).getCover();
             if (cover != null) {
-            	return cover.block.getBlock().isOpaqueCube();
+            	return cover.block.getBlock().isOpaqueCube(state);
             }
         }
         return false;
 	}
 
 	@Override
-    public float getBlockHardness(World world, BlockPos pos) 
+    public float getBlockHardness(IBlockState state, World world, BlockPos pos) 
     {
         float h = this.blockHardness;
         TileEntity te = world.getTileEntity(pos);
         if (te != null && te instanceof IPipe) {
             IPipe.Cover cover = ((IPipe)te).getCover();
             if (cover != null) {
-                Block block = cover.block.getBlock();
-                if (block != null) {
-                    float h1 = block.getBlockHardness(world, new BlockPos(0, -1, 0));
-                	if (h1 < 0) h = -1;
-                    else h += h1;
-                }
+            	float h1 = cover.block.getBlockHardness(world, new BlockPos(0, -1, 0));
+                if (h1 < 0) h = -1;
+                else h += h1;
             }
         }
         return h;
@@ -232,14 +206,14 @@ public class BlockPipe extends TileBlock
     }
 
 	@Override
-	public float getAmbientOcclusionLightValue() {
+	public float getAmbientOcclusionLightValue(IBlockState state) {
 		return 1.0F;
 	}
 
 	@Override
-	public int getLightOpacity(IBlockAccess world, BlockPos pos) 
+	public int getLightOpacity(IBlockState state, IBlockAccess world, BlockPos pos) 
 	{
-		return this.isNormalCube(world, pos) ? 255 : 0;
+		return this.isNormalCube(state, world, pos) ? 255 : 0;
 	}
     
 }

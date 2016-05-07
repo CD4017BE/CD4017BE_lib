@@ -13,7 +13,7 @@ import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.StatCollector;
+import net.minecraft.util.text.translation.I18n;
 
 import org.lwjgl.input.Keyboard;
 
@@ -54,7 +54,7 @@ public class DefaultItemBlock extends ItemBlock
 	@Override
 	public String getItemStackDisplayName(ItemStack item) 
 	{
-		return StatCollector.translateToLocal(this.getUnlocalizedName(item) + ".name");
+		return I18n.translateToLocal(this.getUnlocalizedName(item) + ".name");
 	}
     
 }

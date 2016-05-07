@@ -10,11 +10,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import com.google.common.base.Optional;
+
 import net.minecraft.block.Block;
 import net.minecraft.block.ITileEntityProvider;
+import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
-import net.minecraft.block.state.BlockState;
+import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
@@ -23,10 +26,12 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.BlockPos;
+import net.minecraft.util.BlockRenderLayer;
+import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumWorldBlockLayer;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
@@ -41,9 +46,9 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
     	for(byte i = 0; i < Orientations.length - 1; i++) Orientations[i + 1] = new Orientation(i);
     }
 	public static class Orientation implements IProperty<Integer>{
-		public static final String[] namesAll = {"BN", "BS", "BW", "BE", "N", "S", "W", "E", "TN", "TS", "TW", "TE"};
-		public static final String[] namesHor = {"--", "--", "--", "--", "N", "S", "W", "E", "--", "--", "--", "--"};
-		public static final String[] namesVert = {"--", "--", "B", "T", "N", "S", "W", "E", "--", "--", "--", "--"};
+		public static final String[] namesAll = {"bn", "bs", "bw", "be", "n", "s", "w", "e", "tn", "ts", "tw", "te"};
+		public static final String[] namesHor = {"--", "--", "--", "--", "n", "s", "w", "e", "--", "--", "--", "--"};
+		public static final String[] namesVert = {"--", "--", "b", "t", "n", "s", "w", "e", "--", "--", "--", "--"};
 		public final byte type;
 		public final ArrayList<Integer> values;
 		private Orientation(byte type) {
@@ -73,6 +78,13 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
 		{
 			return type == 0 ? i >= 4 && i < 8 : type == 1 ? i >= 2 && i < 8 : i >= 0 && i < 8;
 		}
+		@Override
+		public Optional<Integer> parseValue(String value) {
+			String[] array = type == 0 ? namesHor : type == 1 ? namesVert : namesAll; 
+			for (int i = 0; i < array.length; i++) 
+				if (array[i].equals(value)) return Optional.of(i);
+			return Optional.absent();
+		}
 	}
 	
 	protected static int tmpType;
@@ -82,9 +94,9 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
      * 0x20 = nonOpaque
      * 0x40 = differentDrops
      */
-	public static TileBlock create(String id, Material m, Class<? extends ItemBlock> item, int type) {
+	public static TileBlock create(String id, Material m, SoundType sound, Class<? extends ItemBlock> item, int type) {
 		tmpType = (type & 15) % Orientations.length;
-		TileBlock block = new TileBlock(id, m, item, type);
+		TileBlock block = new TileBlock(id, m, sound, item, type);
 		tmpType = 0;
 		return block;
 	}
@@ -94,16 +106,19 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
      * 0x10 = redstoneOut 
      * 0x20 = nonOpaque
      * 0x40 = differentDrops
+     * 0x80 = fullBlock
      */
-    protected TileBlock(String id, Material m, Class<? extends ItemBlock> item, int type)
+    protected TileBlock(String id, Material m, SoundType sound, Class<? extends ItemBlock> item, int type)
     {
         super(id, m, item);
         this.setCreativeTab(CreativeTabs.tabDecorations);
+        this.setStepSound(sound);
         this.orient = Orientations[tmpType];
         this.redstone = (type & 16) != 0;
         this.opaque = (type & 32) == 0;
         this.drop = (type & 64) == 0;
-        this.renderType = 3;
+        this.fullBlock = (type & 128) == 0;
+        this.renderType = EnumBlockRenderType.MODEL;
         if (orient != null) this.setDefaultState(this.blockState.getBaseState().withProperty(this.orient, orient.values.get(0)));
     }
 
@@ -125,10 +140,10 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
     }
 	
 	@Override
-	protected BlockState createBlockState() {
+	protected BlockStateContainer createBlockState() {
 		ArrayList<IProperty> main = new ArrayList<IProperty>();
 		this.addProperties(main);
-		return new BlockState(this, main.toArray(new IProperty[main.size()]));
+		return new BlockStateContainer(this, main.toArray(new IProperty[main.size()]));
 	}
 
 	@Override
@@ -153,13 +168,13 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
     public final Orientation orient;
     private boolean redstone;
     private boolean opaque;
-    private int renderType;
+    private EnumBlockRenderType renderType;
     private boolean drop;
 
 	@Override
-	public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumFacing s, float X, float Y, float Z) {
+	public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumHand hand, ItemStack item, EnumFacing s, float X, float Y, float Z) {
 		TileEntity te = world.getTileEntity(pos);
-        if (te != null && te instanceof ModTileEntity) return ((ModTileEntity)te).onActivated(player, s, X, Y, Z);
+        if (te != null && te instanceof ModTileEntity) return ((ModTileEntity)te).onActivated(player, hand, item, s, X, Y, Z);
         else return false;
 	}
 
@@ -190,14 +205,14 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
 	}
 
 	@Override
-    public boolean canProvidePower() 
+    public boolean canProvidePower(IBlockState state) 
     {
         return redstone;
     }
 
 	@Override
-	public boolean isSideSolid(IBlockAccess world, BlockPos pos, EnumFacing side) {
-		return super.isNormalCube(world, pos);
+	public boolean isSideSolid(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing side) {
+		return super.isNormalCube(state, world, pos);
 	}
 
     @Override
@@ -219,7 +234,7 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
 	}
 
 	@Override
-	public int getWeakPower(IBlockAccess world, BlockPos pos, IBlockState state, EnumFacing s) {
+	public int getWeakPower(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing s) {
 		if (!redstone) return 0;
         TileEntity te = world.getTileEntity(pos);
         if (te != null && te instanceof ModTileEntity) return ((ModTileEntity)te).redstoneLevel(s.getIndex() ^ 1, false);
@@ -227,7 +242,7 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
 	}
 
 	@Override
-	public int getStrongPower(IBlockAccess world, BlockPos pos, IBlockState state, EnumFacing s) {
+	public int getStrongPower(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing s) {
 		if (!redstone) return 0;
         TileEntity te = world.getTileEntity(pos);
         if (te != null && te instanceof ModTileEntity) return ((ModTileEntity)te).redstoneLevel(s.getIndex() ^ 1, true);
@@ -253,41 +268,36 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
     }
 
     @Override
-    public boolean isOpaqueCube() 
+    public boolean isOpaqueCube(IBlockState state) 
     {
         return opaque;
     }
 
 	@Override
-	public boolean isFullCube() {
-		return this.maxX == 1 && this.minX == 0 && this.maxY == 1 && this.minY == 0 && this.maxZ == 1 && this.minZ == 0;
-	}
-
-	@Override
-    public boolean canBeReplacedByLeaves(IBlockAccess world, BlockPos pos) 
+    public boolean canBeReplacedByLeaves(IBlockState state, IBlockAccess world, BlockPos pos) 
     {
         return false;
     }
     
-    public void setRenderType(int t)
+    public void setRenderType(EnumBlockRenderType t)
     {
         renderType = t;
     }
     
     @Override
-    public int getRenderType() 
+    public EnumBlockRenderType getRenderType(IBlockState state) 
     {
         return renderType;
     }
 
 	@Override
-	public void harvestBlock(World world, EntityPlayer player, BlockPos pos, IBlockState state, TileEntity te) {
-		if (drop) super.harvestBlock(world, player, pos, state, te);
+	public void harvestBlock(World world, EntityPlayer player, BlockPos pos, IBlockState state, TileEntity te, ItemStack stack) {
+		if (drop) super.harvestBlock(world, player, pos, state, te, stack);
 	}
 
 	@Override
 	public void onBlockHarvested(World world, BlockPos pos, IBlockState state, EntityPlayer player) {
-		if (!drop) super.harvestBlock(world, player, pos, state, null);
+		if (!drop) super.harvestBlock(world, player, pos, state, null, player.getHeldItemMainhand());
 	}
 
 	@Override
@@ -298,13 +308,13 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
         else return super.getDrops(world, pos, state, fortune);
 	}
 	
-	private EnumWorldBlockLayer blockLayer = EnumWorldBlockLayer.SOLID;
+	private BlockRenderLayer blockLayer = BlockRenderLayer.SOLID;
 	
-	public void setBlockLayer(EnumWorldBlockLayer layer) {
+	public void setBlockLayer(BlockRenderLayer layer) {
 		this.blockLayer = layer;
 	}
 	
-    public EnumWorldBlockLayer getBlockLayer() {
+    public BlockRenderLayer getBlockLayer() {
         return this.blockLayer;
     }
     
