@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
-import net.minecraft.util.BlockPos;
+import net.minecraft.util.math.BlockPos;
 import cd4017be.lib.util.Obj2;
 
 /**

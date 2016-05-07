@@ -8,7 +8,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.ItemBlock;
-import net.minecraft.util.StatCollector;
+import net.minecraft.util.text.translation.I18n;
 
 /**
  *
@@ -28,7 +28,7 @@ public class DefaultBlock extends Block
 	@Override
 	public String getLocalizedName() 
 	{
-		return StatCollector.translateToLocal(this.getUnlocalizedName().replaceFirst("tile.", "tile.cd4017be.") + ".name");
+		return I18n.translateToLocal(this.getUnlocalizedName().replaceFirst("tile.", "tile.cd4017be.") + ".name");
 	}
     
 }

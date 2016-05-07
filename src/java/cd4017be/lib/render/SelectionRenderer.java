@@ -10,7 +10,7 @@ import cd4017be.api.automation.IOperatingArea;
 import cd4017be.lib.ModTileEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.WorldRenderer;
+import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 
@@ -40,7 +40,7 @@ public class SelectionRenderer extends TileEntitySpecialRenderer<ModTileEntity>
         GL11.glColor4f(1, 1, 1, 1);
         //render
         int density = 0x40;
-        WorldRenderer t = Tessellator.getInstance().getWorldRenderer();
+        VertexBuffer t = Tessellator.getInstance().getBuffer();
         t.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
         t.setTranslation(ofsX, ofsY, ofsZ);
         //Bottom

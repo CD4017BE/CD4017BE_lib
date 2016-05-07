@@ -26,9 +26,9 @@ public class ClientInputHandler
 	public void handleMouseInput(MouseEvent e)
 	{
 		if (mc.thePlayer != null && mc.gameSettings != null && mc.thePlayer.isSneaking()) {
-			ItemStack item = mc.thePlayer.getCurrentEquippedItem();
-	    	if (item != null && item.getItem() instanceof IScrollHandlerItem && (e.dwheel != 0 || (e.button > 1 && e.buttonstate))) {
-	    		((IScrollHandlerItem)item.getItem()).onSneakScroll(item, mc.thePlayer, e.dwheel);
+			ItemStack item = mc.thePlayer.getHeldItemMainhand();
+	    	if (item != null && item.getItem() instanceof IScrollHandlerItem && (e.getDwheel() != 0 || (e.getButton() > 1 && e.isButtonstate()))) {
+	    		((IScrollHandlerItem)item.getItem()).onSneakScroll(item, mc.thePlayer, e.getDwheel());
 	    		e.setCanceled(true);
 	    	}
 		}

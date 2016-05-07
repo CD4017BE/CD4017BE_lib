@@ -9,7 +9,7 @@ package cd4017be.lib;
 import java.util.ArrayList;
 import java.util.IllegalFormatException;
 
-import net.minecraft.util.StatCollector;
+import net.minecraft.util.text.translation.I18n;
 import cd4017be.lib.util.Utils;
 
 /**
@@ -25,7 +25,7 @@ public class TooltipInfo
     
     public static String getShiftHint() {
     	if (ShiftHint == null){
-    		ShiftHint = StatCollector.translateToLocal("cd4017be.shiftHint");
+    		ShiftHint = I18n.translateToLocal("cd4017be.shiftHint");
     		if (ShiftHint == "cd4017be.shiftHint") ShiftHint = "<SHIFT for info>";
     	}
     	return ShiftHint;
@@ -33,7 +33,7 @@ public class TooltipInfo
     
     public static String getFluidUnit() {
     	if (FluidDispUnit == null){
-    		FluidDispUnit = StatCollector.translateToLocal("cd4017be.fluidUnit");
+    		FluidDispUnit = I18n.translateToLocal("cd4017be.fluidUnit");
     		if (FluidDispUnit == "cd4017be.fluidUnit") FluidDispUnit = "B";
     	}
     	return FluidDispUnit;
@@ -41,7 +41,7 @@ public class TooltipInfo
     
     public static String getEnergyUnit() {
     	if (EnergyDispUnit == null){
-    		EnergyDispUnit = StatCollector.translateToLocal("cd4017be.energyUnit");
+    		EnergyDispUnit = I18n.translateToLocal("cd4017be.energyUnit");
     		if (EnergyDispUnit == "cd4017be.energyUnit") EnergyDispUnit = "kJ";
     	}
     	return EnergyDispUnit;
@@ -49,7 +49,7 @@ public class TooltipInfo
     
     public static String getPowerUnit() {
     	if (PowerDispUnit == null){
-    		PowerDispUnit = StatCollector.translateToLocal("cd4017be.powerUnit");
+    		PowerDispUnit = I18n.translateToLocal("cd4017be.powerUnit");
     		if (PowerDispUnit == "cd4017be.powerUnit") PowerDispUnit = "kW";
     	}
     	return PowerDispUnit;
@@ -94,7 +94,7 @@ public class TooltipInfo
     
     public static String getLocFormat(String s)
     {
-    	s = StatCollector.translateToLocal(s).trim().replace("\\n", "\n");
+    	s = I18n.translateToLocal(s).trim().replace("\\n", "\n");
     	int p = 0, q, x;
     	String id, repl;
 		while ((q = s.indexOf("\\<", p)) >= p && (p = s.indexOf(">", q)) > q) {
@@ -114,7 +114,7 @@ public class TooltipInfo
     
     public static String format(String s, Object... args)
     {
-    	s = StatCollector.translateToLocal(s).trim().replace("\\n", "\n");
+    	s = I18n.translateToLocal(s).trim().replace("\\n", "\n");
     	try {
     		return String.format(s, args);
     	} catch (IllegalFormatException e) {

@@ -249,8 +249,8 @@ public class Vec3 extends Vec2
         return a.scale(Math.cos(cos)).add(c.scale(Math.sin(sin))).add(b);
     }
     
-    public net.minecraft.util.Vec3 toMinecraftVec()
+    public net.minecraft.util.math.Vec3d toMinecraftVec()
     {
-    	return new net.minecraft.util.Vec3(x, y, z);
+    	return new net.minecraft.util.math.Vec3d(x, y, z);
     }
 }

@@ -10,9 +10,9 @@ import org.apache.logging.log4j.Level;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.client.renderer.block.statemap.IStateMapper;
 import net.minecraft.client.resources.IResourceManager;
-import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.model.ICustomModelLoader;
 import net.minecraftforge.client.model.IModel;
@@ -40,7 +40,7 @@ public class SpecialModelLoader implements ICustomModelLoader {
 	}
 	
 	public static void registerBlockModel(Block block, IModel model) {
-		String[] name = block.getRegistryName().split(":");
+		String[] name = block.getRegistryName().toString().split(":");
 		instance.models.put(new ResourceLocation(name[0], "models/block/" + name[1]), model);
 		//ModelLoader.setCustomStateMapper(block, stateMapper);
 	}
@@ -103,7 +103,7 @@ public class SpecialModelLoader implements ICustomModelLoader {
 		@Override
 		public Map<IBlockState, ModelResourceLocation> putStateModelLocations(Block block) {
 			HashMap<IBlockState, ModelResourceLocation> map = new HashMap<IBlockState, ModelResourceLocation>();
-			ModelResourceLocation loc = new ModelResourceLocation(block.getRegistryName());
+			ModelResourceLocation loc = new ModelResourceLocation(block.getRegistryName(), "normal");
 			for (IBlockState state : block.getBlockState().getValidStates()) map.put(state, loc);
 			return map;
 		}

@@ -5,7 +5,7 @@
 package cd4017be.lib;
 
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.StatCollector;
+import net.minecraft.util.text.translation.I18n;
 import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidStack;
 
@@ -24,7 +24,7 @@ public class ModFluid extends Fluid
     @Override
     public String getLocalizedName(FluidStack stack)
     {
-        return StatCollector.translateToLocal(this.getUnlocalizedName() + ".name");
+        return I18n.translateToLocal(this.getUnlocalizedName() + ".name");
     }
     
 }

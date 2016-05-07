@@ -10,7 +10,7 @@ import java.util.List;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.StatCollector;
+import net.minecraft.util.text.translation.I18n;
 
 import org.lwjgl.input.Keyboard;
 
@@ -58,7 +58,7 @@ public class DefaultItem extends Item
 	@Override
 	public String getItemStackDisplayName(ItemStack item) 
 	{
-		return StatCollector.translateToLocal(this.getUnlocalizedName(item) + ".name");
+		return I18n.translateToLocal(this.getUnlocalizedName(item) + ".name");
 	}
     
 }

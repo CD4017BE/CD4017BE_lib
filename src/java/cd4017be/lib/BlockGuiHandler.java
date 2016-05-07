@@ -29,7 +29,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.network.NetHandlerPlayServer;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.BlockPos;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 /**
@@ -127,7 +127,7 @@ public class BlockGuiHandler implements IGuiHandler
     @SubscribeEvent
     public void onServerPacketReceived(FMLNetworkEvent.ClientCustomPacketEvent event)
     {
-    	FMLProxyPacket packet = event.packet;
+    	FMLProxyPacket packet = event.getPacket();
     	if (!packet.channel().equals(guiChannel)) return;
     	Container container = Minecraft.getMinecraft().thePlayer.openContainer;
         if (container != null && container instanceof TileContainer) {
@@ -144,17 +144,17 @@ public class BlockGuiHandler implements IGuiHandler
     @SubscribeEvent
     public void onPlayerPacketReceived(FMLNetworkEvent.ServerCustomPacketEvent event)
     {
-    	FMLProxyPacket packet = event.packet;
+    	FMLProxyPacket packet = event.getPacket();
     	if (!packet.channel().equals(guiChannel)) return;
-    	if (!(event.handler instanceof NetHandlerPlayServer)) {
+    	if (!(event.getHandler() instanceof NetHandlerPlayServer)) {
     		FMLLog.log(Level.WARN, "NetHandler not instanceof NetHandlerPlayServer!");
     	}
-    	EntityPlayerMP player = ((NetHandlerPlayServer)event.handler).playerEntity;
+    	EntityPlayerMP player = ((NetHandlerPlayServer)event.getHandler()).playerEntity;
         try {
             PacketBuffer data = new PacketBuffer(packet.payload());
             BlockPos pos = data.readBlockPos();
             if (pos.getY() < 0) {
-                ItemStack item = player.getCurrentEquippedItem();
+                ItemStack item = player.getHeldItemMainhand();
                 if (item != null && item.getItem() instanceof IGuiItem) ((IGuiItem)item.getItem()).onPlayerCommand(player.worldObj, player, data);
             } else {
                 TileEntity te = player.worldObj.getTileEntity(pos);
@@ -190,7 +190,7 @@ public class BlockGuiHandler implements IGuiHandler
                 }
             } else return null;
         } else if (ID == 1) {
-            ItemStack item = player.getCurrentEquippedItem();
+            ItemStack item = player.getHeldItemMainhand();
             if (item != null && item.getItem() instanceof IGuiItem) return ((IGuiItem)item.getItem()).getContainer(world, player, x, y, z);
             else return null;
         } else return null;
@@ -221,7 +221,7 @@ public class BlockGuiHandler implements IGuiHandler
                 }
             } else return null;
         } else if (ID == 1) { //Item gui
-            ItemStack item = player.getCurrentEquippedItem();
+            ItemStack item = player.getHeldItemMainhand();
             if (item != null && item.getItem() instanceof IGuiItem) return ((IGuiItem)item.getItem()).getGui(world, player, x, y, z);
             else return null;
         } else return null;
