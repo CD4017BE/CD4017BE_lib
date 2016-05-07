@@ -48,7 +48,7 @@ public class TileBlockRegistry
         if (entry != null) {
             if (entry.gui != null) FMLLog.warning("CD4017BE-modlib: GuiContainer %1$s overrrides already registered GuiContainer %2$s for Block-ID %3$d !", gui.getName(), entry.gui.getName(), id);
             entry.gui = gui;
-        } else FMLLog.warning("CD4017BE-modlib: Failed to register GuiContainer %1$s because Block-ID %2$d is not registered!", gui.getName(), id);
+        } else FMLLog.warning("CD4017BE-modlib: Failed to register GuiContainer %1$s because Block-ID %2$s is not registered!", gui.getName(), id);
     }
     
     /**
