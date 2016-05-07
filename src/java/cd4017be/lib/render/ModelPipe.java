@@ -12,24 +12,23 @@ import com.google.common.base.Function;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
+import net.minecraft.client.renderer.block.model.ItemOverrideList;
+import net.minecraft.client.renderer.block.model.ModelManager;
+import net.minecraft.client.renderer.block.model.ModelResourceLocation;
+import net.minecraft.client.renderer.block.model.ModelRotation;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.client.resources.model.IBakedModel;
-import net.minecraft.client.resources.model.ModelManager;
-import net.minecraft.client.resources.model.ModelResourceLocation;
-import net.minecraft.client.resources.model.ModelRotation;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.client.model.IFlexibleBakedModel;
 import net.minecraftforge.client.model.IModel;
-import net.minecraftforge.client.model.IModelState;
-import net.minecraftforge.client.model.ISmartBlockModel;
+import net.minecraftforge.common.model.IModelState;
 import net.minecraftforge.common.property.IExtendedBlockState;
 
 public class ModelPipe implements IModel {
 
-	public static final String[] sides = {"B", "T", "N", "S", "W", "E"};
+	public static final String[] sides = {"b", "t", "n", "s", "w", "e"};
 	
 	public final ArrayList<ResourceLocation> dependencies;
 	public final String path;
@@ -54,8 +53,8 @@ public class ModelPipe implements IModel {
 	}
 
 	@Override
-	public IFlexibleBakedModel bake(IModelState state, VertexFormat format, Function<ResourceLocation, TextureAtlasSprite> bakedTextureGetter) {
-		return new BakedPipe(format, path);
+	public IBakedModel bake(IModelState state, VertexFormat format, Function<ResourceLocation, TextureAtlasSprite> bakedTextureGetter) {
+		return new BakedPipe(path);
 	}
 
 	@Override
@@ -63,24 +62,12 @@ public class ModelPipe implements IModel {
 		return ModelRotation.X0_Y0;
 	}
 	
-	public static class BakedPipe implements ISmartBlockModel, IFlexibleBakedModel {
+	public static class BakedPipe implements IBakedModel {
 
-		private final VertexFormat format;
 		private final String path;
 		
-		public BakedPipe(VertexFormat format, String path) {
-			this.format = format;
+		public BakedPipe(String path) {
 			this.path = path;
-		}
-		
-		@Override
-		public List<BakedQuad> getFaceQuads(EnumFacing p_177551_1_) {
-			return Collections.emptyList();
-		}
-
-		@Override
-		public List<BakedQuad> getGeneralQuads() {
-			return Collections.emptyList();
 		}
 
 		@Override
@@ -109,34 +96,31 @@ public class ModelPipe implements IModel {
 		}
 
 		@Override
-		public IBakedModel handleBlockState(IBlockState state) {
+		public List<BakedQuad> getQuads(IBlockState state, EnumFacing side, long rand) {
 			if (state instanceof IExtendedBlockState) {
 				IExtendedBlockState exts = (IExtendedBlockState)state;
 				IBlockState block = exts.getValue(BlockPipe.COVER);
+				IBakedModel model;
 				if (block != null) {
-					IBakedModel model = Minecraft.getMinecraft().getBlockRendererDispatcher().getBlockModelShapes().getModelForState(block);
-					if (model instanceof ISmartBlockModel) model = ((ISmartBlockModel)model).handleBlockState(block);
-					return model;
+					model = Minecraft.getMinecraft().getBlockRendererDispatcher().getBlockModelShapes().getModelForState(block);
+					return model.getQuads(block, side, rand);
 				}
 				ModelManager manager = Minecraft.getMinecraft().getBlockRendererDispatcher().getBlockModelShapes().getModelManager();
 				Byte type = exts.getValue(BlockPipe.CORE);
-				CombinedModel model = null;
-				if (type != null && type >= 0) model = new CombinedModel(manager.getModel(new ModelResourceLocation(path, "core" + type.toString())));
+				ArrayList<BakedQuad> quads = new ArrayList<BakedQuad>();
+				if (type != null && type >= 0) quads.addAll(manager.getModel(new ModelResourceLocation(path, "core" + type.toString())).getQuads(state, side, rand));
 				for (int i = 0; i < 6; i++) {
 					type = exts.getValue(BlockPipe.CONS[i]);
-					if (type != null && type >= 0) {
-						if (model == null) model = new CombinedModel(manager.getModel(new ModelResourceLocation(path, "con" + type.toString() + sides[i])));
-						else model.add(manager.getModel(new ModelResourceLocation(path, "con" + type.toString() + sides[i])));
-					}
+					if (type != null && type >= 0) quads.addAll(manager.getModel(new ModelResourceLocation(path, "con" + type.toString() + sides[i])).getQuads(state, side, rand));
 				}
-				if (model != null) return model;
+				return quads;
 			}
-			return this;
+			return Collections.emptyList();
 		}
 
 		@Override
-		public VertexFormat getFormat() {
-			return format;
+		public ItemOverrideList getOverrides() {
+			return ItemOverrideList.NONE;
 		}
 		
 	}

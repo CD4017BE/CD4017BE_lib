@@ -12,13 +12,13 @@ import com.mojang.authlib.GameProfile;
 
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.EnumHand;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeChunkManager;
 import net.minecraftforge.common.ForgeChunkManager.Ticket;
 import net.minecraftforge.common.ForgeChunkManager.Type;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent.Action;
 
 /**
  *
@@ -105,7 +105,7 @@ public class AreaProtect implements ForgeChunkManager.LoadingCallback, IProtecti
     public ProtectLvl getPlayerAccess(GameProfile player, World world, int chunkX, int chunkZ)
     {
     	int ac = 0;
-    	ArrayList<IAreaConfig> list = loadedSS.get(world.provider.getDimensionId());
+    	ArrayList<IAreaConfig> list = loadedSS.get(world.provider.getDimension());
     	if (list == null) return ProtectLvl.Free;
     	for (IAreaConfig cfg : list) {
             ac = Math.max(ac, cfg.getProtectLvlFor(player.getName(), chunkX, chunkZ));
@@ -116,7 +116,7 @@ public class AreaProtect implements ForgeChunkManager.LoadingCallback, IProtecti
     @Override
     public boolean isOperationAllowed(GameProfile player, World world, int cx, int cz)
     {
-    	ArrayList<IAreaConfig> list = loadedSS.get(world.provider.getDimensionId());
+    	ArrayList<IAreaConfig> list = loadedSS.get(world.provider.getDimension());
     	if (list == null) return true;
     	for (IAreaConfig cfg : list) {
             if (cfg.getProtectLvlFor(player.getName(), cx, cz) != 0) return false;
@@ -138,7 +138,7 @@ public class AreaProtect implements ForgeChunkManager.LoadingCallback, IProtecti
     @Override
     public boolean isInteractingAllowed(GameProfile player, World world, int cx, int cz)
     {
-    	ArrayList<IAreaConfig> list = loadedSS.get(world.provider.getDimensionId());
+    	ArrayList<IAreaConfig> list = loadedSS.get(world.provider.getDimension());
     	if (list == null) return true;
     	for (IAreaConfig cfg : list) {
             if (cfg.getProtectLvlFor(player.getName(), cx, cz) > 1) return false;
@@ -218,9 +218,9 @@ public class AreaProtect implements ForgeChunkManager.LoadingCallback, IProtecti
 	@Override
 	public void ticketsLoaded(List<Ticket> tickets, World world) 
 	{
-		ArrayList<Ticket> list = usedTickets.get(world.provider.getDimensionId());
+		ArrayList<Ticket> list = usedTickets.get(world.provider.getDimension());
         if (list == null) {
-        	usedTickets.put(world.provider.getDimensionId(), list = new ArrayList<Ticket>());
+        	usedTickets.put(world.provider.getDimension(), list = new ArrayList<Ticket>());
         }
         list.addAll(tickets);
 	}
