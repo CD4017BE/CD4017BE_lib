@@ -23,7 +23,6 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.RayTraceResult.Type;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.world.Explosion;
@@ -99,7 +98,7 @@ public class BlockPipe extends TileBlock
     	for (byte s = 0; s < 6; s++)
     		if (pipe.textureForSide(s) != -1) 
     			bb[s] = ((s & 1) == 0 ? 0D : 1D);
-    	return new AxisAlignedBB(bb[0], bb[2], bb[4], bb[1], bb[3], bb[5]);
+    	return new AxisAlignedBB(bb[4], bb[0], bb[2], bb[5], bb[1], bb[3]);
 	}
 
     @Override
