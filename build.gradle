@@ -34,7 +34,7 @@ sourceSets {
 }
 
 minecraft {
-    version = "${mc_version}-${forge_version}"
+    version = "${mc_version}-${forge_version}-${mc_version}"
     runDir = "run"
     
     // the mappings can be changed at any time, and must be in the following format.
@@ -64,8 +64,8 @@ artifacts {
 }
 
 dependencies {
-	compile files('C:/Users/CD4017BE/Minecraft Modding/Mods-1.7.10/CD4017BE_lib/libs/OpenComputers-MC${mc_version}-${oc_version}-dev-api.jar')
-    //compile files('C:/Users/CD4017BE/Minecraft Modding/Mods-1.7.10/CD4017BE_lib/libs/ComputerCraft1.75.jar')
+	compile files('./libs/OpenComputers-MC${mc_version}-${oc_version}-dev-api.jar')
+    //compile files('./libs/ComputerCraft1.75.jar')
 }
 
 processResources
