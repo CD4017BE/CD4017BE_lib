@@ -30,6 +30,7 @@ import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.IBlockAccess;
@@ -88,6 +89,7 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
 	}
 	
 	protected static int tmpType;
+	protected AxisAlignedBB boundingBox;
 	/**
      * @param type 0xf = {0 = none; 1 = NSWE; 2 = BTNSWE; 3 = NSWE + BT rotated}; 
      * 0x10 = redstoneOut 
@@ -119,6 +121,7 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
         this.drop = (type & 64) == 0;
         this.fullBlock = (type & 128) == 0;
         this.renderType = EnumBlockRenderType.MODEL;
+        this.boundingBox = FULL_BLOCK_AABB;
         if (orient != null) this.setDefaultState(this.blockState.getBaseState().withProperty(this.orient, orient.values.get(0)));
     }
 
@@ -211,8 +214,27 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
     }
 
 	@Override
+	public boolean isNormalCube(IBlockState state) {
+		return boundingBox == FULL_BLOCK_AABB;
+	}
+
+	@Override
+	public boolean isNormalCube(IBlockState state, IBlockAccess world, BlockPos pos) {
+		return boundingBox == FULL_BLOCK_AABB;
+	}
+
+	@Override
 	public boolean isSideSolid(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing side) {
-		return super.isNormalCube(state, world, pos);
+		if (boundingBox == FULL_BLOCK_AABB) return true;
+		switch (side) {
+		case DOWN: return boundingBox.minY == FULL_BLOCK_AABB.minY;
+		case UP: return boundingBox.maxY == FULL_BLOCK_AABB.maxY;
+		case NORTH: return boundingBox.minZ == FULL_BLOCK_AABB.minZ;
+		case SOUTH: return boundingBox.maxZ == FULL_BLOCK_AABB.maxZ;
+		case WEST: return boundingBox.minX == FULL_BLOCK_AABB.minX;
+		case EAST: return boundingBox.maxX == FULL_BLOCK_AABB.maxX;
+		default: return true;
+		}
 	}
 
     @Override
@@ -317,5 +339,15 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
     public BlockRenderLayer getBlockLayer() {
         return this.blockLayer;
     }
+
+    public TileBlock setBlockBounds(AxisAlignedBB box) {
+    	this.boundingBox = box;
+    	return this;
+    }
+    
+	@Override
+	public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess source, BlockPos pos) {
+		return boundingBox;
+	}
     
 }
