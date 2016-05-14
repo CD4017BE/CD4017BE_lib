@@ -13,14 +13,18 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.client.renderer.block.statemap.IStateMapper;
 import net.minecraft.client.resources.IResourceManager;
+import net.minecraft.item.Item;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.client.event.ModelBakeEvent;
 import net.minecraftforge.client.model.ICustomModelLoader;
 import net.minecraftforge.client.model.IModel;
 import net.minecraftforge.client.model.ModelFluid;
 import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.client.model.ModelLoaderRegistry;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fml.common.FMLLog;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public class SpecialModelLoader implements ICustomModelLoader {
 
@@ -45,6 +49,11 @@ public class SpecialModelLoader implements ICustomModelLoader {
 		//ModelLoader.setCustomStateMapper(block, stateMapper);
 	}
 	
+	public static void registerItemModel(Item item, IModel model) {
+		String[] name = item.getRegistryName().toString().split(":");
+		instance.models.put(new ResourceLocation(name[0], "models/item/" + name[1]), model);
+	}
+	
 	public static void registerTESRModel(String path) {
 		instance.tesrRegistry.add(path);
 	}
@@ -58,6 +67,7 @@ public class SpecialModelLoader implements ICustomModelLoader {
 	
 	private SpecialModelLoader() {
 		ModelLoaderRegistry.registerLoader(this);
+		MinecraftForge.EVENT_BUS.register(this);
 	}
 	
 	public String loadTESRModelSourceCode(ResourceLocation res) throws IOException {
@@ -72,9 +82,8 @@ public class SpecialModelLoader implements ICustomModelLoader {
 		return s;
 	}
 	
-	@Override
-	public void onResourceManagerReload(IResourceManager resourceManager) {
-		this.resourceManager = resourceManager;
+	@SubscribeEvent
+    public void bakeModels(ModelBakeEvent event) {
 		tesrModelData.clear();
 		for (String s : tesrRegistry) {
 			try {
@@ -86,6 +95,11 @@ public class SpecialModelLoader implements ICustomModelLoader {
 			}
 		}
 		tesrModelCode.clear();
+    }
+	
+	@Override
+	public void onResourceManagerReload(IResourceManager resourceManager) {
+		this.resourceManager = resourceManager;
 	}
 
 	@Override
