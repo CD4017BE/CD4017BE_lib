@@ -10,6 +10,7 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
 import net.minecraft.client.renderer.VertexBuffer;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
 import cd4017be.lib.util.Vec2;
@@ -401,6 +402,7 @@ public class TESRModelParser {
 				data[p + 3] = a << 24 | r << 16 | g << 8 | b;
 				data[p + 4] = Float.floatToIntBits((float)quad.vertices[j].x[3]);
 				data[p + 5] = Float.floatToIntBits((float)quad.vertices[j].x[4]);
+				data[p + 6] = 0x00f000f0;
 			}
 		}
 		return data;
@@ -418,6 +420,22 @@ public class TESRModelParser {
 			res[++i] = data[i];	//U
 			res[++i] = data[i];	//V
 			res[++i] = l;		//L
+		}
+		render.addVertexData(res);
+	}
+	
+	public static void renderWithTOCB(VertexBuffer render, String model, TextureAtlasSprite tex, float dx, float dy, float dz, int c, int l) {
+		int[] data = SpecialModelLoader.instance.tesrModelData.get(model);
+		if (data == null) return;
+		int[] res = new int[data.length];
+		for (int i = 0; i < data.length; ++i) {
+			res[i] = Float.floatToIntBits(dx + Float.intBitsToFloat(data[i]));	//X
+			res[++i] = Float.floatToIntBits(dy + Float.intBitsToFloat(data[i]));//Y
+			res[++i] = Float.floatToIntBits(dz + Float.intBitsToFloat(data[i]));//Z
+			res[++i] = c;	//C
+			res[++i] = Float.floatToIntBits(tex.getInterpolatedU(Float.intBitsToFloat(data[i])));	//U
+			res[++i] = Float.floatToIntBits(tex.getInterpolatedV(Float.intBitsToFloat(data[i])));	//V
+			res[++i] = l;	//L
 		}
 		render.addVertexData(res);
 	}
