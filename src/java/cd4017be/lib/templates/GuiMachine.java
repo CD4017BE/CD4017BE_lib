@@ -438,7 +438,7 @@ public abstract class GuiMachine extends GuiContainer
         ItemStack itemstack = this.mc.thePlayer.inventory.getItemStack();
         if (slot instanceof SlotHolo && slot != lastClickSlot) {
 			if (itemstack == null || slot.getStack() == null || itemstack.isItemEqual(slot.getStack()))
-				this.handleMouseClick(slot, slot.slotNumber, b, ClickType.PICKUP_ALL);
+				this.handleMouseClick(slot, slot.slotNumber, b, ClickType.PICKUP);
 		} else super.mouseClickMove(x, y, b, t);
         lastClickSlot = slot;
 	}

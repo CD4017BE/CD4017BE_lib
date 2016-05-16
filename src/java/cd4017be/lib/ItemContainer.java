@@ -2,7 +2,6 @@ package cd4017be.lib;
 
 import cd4017be.lib.templates.SlotHolo;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.ClickType;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
@@ -73,65 +72,29 @@ public class ItemContainer extends Container
 	@Override
     public ItemStack func_184996_a(int s, int b, ClickType m, EntityPlayer par4EntityPlayer)
     {   
-    	Slot slot = null;
+		Slot slot = null;
         if (s >= 0 && s < inventorySlots.size()) slot = getSlot(s);
-		if (slot != null && slot.inventory instanceof InventoryPlayer && slot.getSlotIndex() == par4EntityPlayer.inventory.currentItem) return null;
-		else if (slot != null && slot instanceof SlotHolo) {
-            InventoryPlayer var6 = player.inventory;
-            ItemStack var8;
-            int var10;
-            ItemStack var11;
-            if (b == 0 || b == 1)
-            {
-                if (m == ClickType.PICKUP && slot.canTakeStack(player))
-                {
-                    slot.decrStackSize(slot.getSlotStackLimit());
-                }
-                else if (m == ClickType.PICKUP_ALL)
-                {
-                    var8 = slot.getStack();
-                    ItemStack var13 = var6.getItemStack();
-                    if (var8 == null)
-                    {
-                        if (var13 != null && slot.isItemValid(var13))
-                        {
-                            var10 = b == 0 ? var13.stackSize : 1;
-                            if (var10 > slot.getSlotStackLimit()) var10 = slot.getSlotStackLimit();
-                            var11 = var13.copy();
-                            var11.stackSize = var10;
-                            slot.putStack(var11);
-                        }
-                    }
-                    else if (slot.canTakeStack(player))
-                    {
-                        if (var13 == null)
-                        {
-                            var10 = b == 0 ? var8.stackSize : 1;
-                            slot.decrStackSize(var10);
-                        }
-                        else if (slot.isItemValid(var13))
-                        {
-                            if (var8.getItem() == var13.getItem() && var8.getItemDamage() == var13.getItemDamage() && ItemStack.areItemStackTagsEqual(var8, var13))
-                            {
-                                var10 = b == 0 ? var13.stackSize : 1;
-                                if (var10 > slot.getSlotStackLimit() - var8.stackSize) var10 = slot.getSlotStackLimit() - var8.stackSize;
-                                var8.stackSize += var10;
-                            }
-                            else
-                            {
-                                ItemStack var14 = var13.copy();
-                                if (var14.stackSize > slot.getSlotStackLimit()) var14.stackSize = slot.getSlotStackLimit();
-                                slot.putStack(var14);
-                            }
-                        }
-                    }
-                    slot.onSlotChanged();
-                }
+        if (slot != null && slot instanceof SlotHolo) {
+            if (m == ClickType.PICKUP) {
+            	ItemStack item = slot.getStack();
+            	ItemStack curItem = player.inventory.getItemStack();
+            	if (curItem != null && slot.isItemValid(curItem)) {
+            		if (item != null && item.isItemEqual(curItem)) {
+            			item.stackSize += b == 1 ? 1 : curItem.stackSize;
+            		} else {
+            			curItem = curItem.copy();
+                		if (b == 1) curItem.stackSize = 1;
+                		slot.putStack(curItem);
+            		}
+            	} else if (curItem == null && item != null && slot.canTakeStack(player)){
+            		slot.decrStackSize(b == 0 ? slot.getSlotStackLimit() : 1);
+            	} else {
+            		return null;
+            	}
+                slot.onSlotChanged();
             }
             return null;
-        } else {
-            return super.func_184996_a(s, b, m, player);
-        }
+        } else return super.func_184996_a(s, b, m, player);
     }
     
     @Override //prevents client crash IndexOutOfBoundsException sometimes caused by incorrect netdata
