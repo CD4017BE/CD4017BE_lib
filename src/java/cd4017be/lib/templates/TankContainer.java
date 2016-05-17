@@ -187,7 +187,7 @@ public class TankContainer implements IFluidHandler
         return ret;
     }
     
-    private byte getConfig(int s, int id)
+    public byte getConfig(int s, int id)
     {
         return (byte)(tile.netData.longs[netIdxLong] >> (2 * s + 16 * id) & 3);
     }

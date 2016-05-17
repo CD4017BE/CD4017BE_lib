@@ -5,8 +5,10 @@
 package cd4017be.lib;
 
 import cd4017be.lib.templates.SlotHolo;
+import cd4017be.lib.templates.TankContainer;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.BitSet;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -30,6 +32,20 @@ public class TileContainer extends Container
     protected int invPlayerPos = 0;
     protected int invPlayerSize = 0;
     public TileEntityData refData;
+    public ArrayList<TankSlot> tankSlots = new ArrayList<TankSlot>();
+    
+    public static class TankSlot {
+    	public final int xDisplayPosition, yDisplayPosition, tankNumber;
+    	public final boolean bigSize;
+    	public final TankContainer inventory;
+    	public TankSlot(TankContainer inv, int id, int x, int y, boolean big) {
+    		this.inventory = inv;
+    		this.tankNumber = id;
+    		this.xDisplayPosition = x;
+    		this.yDisplayPosition = y;
+    		this.bigSize = big;
+    	}
+    }
     
     public TileContainer(ModTileEntity tileEntity, EntityPlayer player)
     {
@@ -69,6 +85,10 @@ public class TileContainer extends Container
     public Slot addEntitySlot(Slot slot)
     {
         return this.addSlotToContainer(slot);
+    }
+    
+    public void addTankSlot(TankSlot slot) {
+    	this.tankSlots.add(slot);
     }
     
     @Override

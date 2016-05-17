@@ -6,9 +6,12 @@ package cd4017be.lib.templates;
 
 import cd4017be.lib.BlockGuiHandler;
 import cd4017be.lib.TileContainer;
+import cd4017be.lib.TileContainer.TankSlot;
 import cd4017be.lib.TooltipInfo;
 import cd4017be.lib.util.Utils;
+import cd4017be.lib.util.Vec3;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -19,6 +22,7 @@ import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
@@ -92,8 +96,12 @@ public abstract class GuiMachine extends GuiContainer
     public GuiMachine(Container container)
     {
         super(container);
+        if (inventorySlots instanceof TileContainer && ((TileContainer)inventorySlots).tileEntity instanceof AutomatedTile) 
+        	this.tile = (AutomatedTile)((TileContainer)inventorySlots).tileEntity;
+        else this.tile = null;
     }
     
+    protected final AutomatedTile tile;
     protected int mouseX;
     protected int mouseY;
     protected int selTank = -1;
@@ -135,9 +143,118 @@ public abstract class GuiMachine extends GuiContainer
     {
         if (selTank >= 0) drawTankInfo(selTank, mx - this.guiLeft, my - this.guiTop);
         selTank = -1;
+        if (tile != null && this.isPointInRegion(tabsX, tabsY, 0 - tabsX, 81, mx, my)) {
+        	GL11.glColor4f(1, 1, 1, 1);
+            GL11.glDisable(GL11.GL_DEPTH_TEST);
+            GL11.glDisable(GL11.GL_ALPHA_TEST);
+            GL11.glEnable(GL11.GL_BLEND);
+        	int s = (my - this.guiTop - tabsY - 9) / 9;
+			mx -= this.guiLeft;
+			if (s < 0 || mx >= 0) {
+				GL11.glEnable(GL11.GL_DEPTH_TEST);
+				return;
+			}
+			this.mc.renderEngine.bindTexture(new ResourceLocation("lib", "textures/icons.png"));
+			byte dir = 0;
+			int id;
+			if (FtabX <= mx) {
+				id = mx - FtabX - 9;
+				if (id >= 0) {
+					id /= 9;
+					dir = s < 6 ? tile.tanks.getConfig(s, id) : s != 6 ? (byte)4 : tile.tanks.isLocked(id) ? (byte)5 : (byte)6; 
+					for (TankSlot slot : ((TileContainer)this.inventorySlots).tankSlots)
+						if (slot.tankNumber == id)
+							this.drawTexturedModalRect(slot.xDisplayPosition + (slot.bigSize ? 9 : 0), slot.yDisplayPosition + (s<6?44:36), 144 + dir * 16, 16, 16, s<6?8:16);
+				}
+			} else if (s < 6 && ItabX <= mx) {
+				id = mx - ItabX - 9;
+				if (id >= 0) {
+					id /= 9;
+					dir = tile.inventory.getConfig(tile.netData.longs[tile.inventory.netIdxLong], s, id);
+					int i0 = tile.inventory.componets[id].s, i1 = tile.inventory.componets[id].e;
+					for (Slot slot : this.inventorySlots.inventorySlots)
+						if (slot.inventory == tile && slot.getSlotIndex() >= i0 && slot.getSlotIndex() < i1)
+							this.drawTexturedModalRect(slot.xDisplayPosition, slot.yDisplayPosition, 144 + dir * 16, 0, 16, 16);
+				}
+			} else if (s < 6 && EtabX + 9 <= mx) {
+				dir = (byte)(~tile.energy.con >> s & 1);
+			}
+			GL11.glEnable(GL11.GL_DEPTH_TEST);
+			if(s < 6) {
+				this.drawGradientRect(-64, tabsY + 63, 0, tabsY + 127, 0xff000000, 0xff000000);
+				this.mc.renderEngine.bindTexture(TextureMap.locationBlocksTexture);
+				this.drawSideCube(-32, tabsY + 95, s, dir);
+			}
+		}
     }
     
-    public void drawLiquidTank(TankContainer tanks, int id, int x, int y, boolean s) 
+    private void drawSideCube(int x, int y, int s, byte dir) {
+    	GL11.glPushMatrix();
+    	GL11.glTranslatef(x, y, this.zLevel + 32);
+    	GL11.glScalef(16F, -16F, 16F);
+    	EntityPlayer player = ((TileContainer)this.inventorySlots).player;
+    	GL11.glRotatef(player.rotationPitch, 1, 0, 0);
+    	GL11.glRotatef(player.rotationYaw + 90, 0, 1, 0);
+    	GL11.glTranslatef(-0.5F, -0.5F, 0.5F);
+    	this.mc.getBlockRendererDispatcher().renderBlockBrightness(tile.getWorld().getBlockState(tile.getPos()), 1);
+    	//GL11.glRotatef(-90, 0, 1, 0);
+    	this.mc.renderEngine.bindTexture(new ResourceLocation("lib", "textures/icons.png"));
+    	Vec3 p = Vec3.Def(0.5, 0.5, 0.5), a, b;
+    	switch(s) {
+    	case 0: a = Vec3.Def(0, -1, 0); break;
+    	case 1: a = Vec3.Def(0, 1, 0); break;
+    	case 2: a = Vec3.Def(0, 0, -1); break;
+    	case 3: a = Vec3.Def(0, 0, 1); break;
+    	case 4: a = Vec3.Def(-1, 0, 0); break;
+    	default: a = Vec3.Def(1, 0, 0);
+    	}
+    	net.minecraft.util.Vec3 look = player.getLookVec();
+    	b = Vec3.Def(look.xCoord, look.yCoord, look.zCoord).mult(a).norm();
+    	p = p.add(a.scale(0.5)).add(b.scale(-0.5));
+    	a = a.scale(1.5);
+    	final float tx = (float)(144 + 16 * dir) / 256F, dtx = 16F / 256F, ty = 24F / 256F, dty = 8F / 256F;
+    	
+    	WorldRenderer t = Tessellator.getInstance().getWorldRenderer();
+    	t.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+    	t.pos(p.x + b.x, p.y + b.y, p.z + b.z).tex(tx, ty + dty).endVertex();
+    	t.pos(p.x + a.x + b.x, p.y + a.y + b.y, p.z + a.z + b.z).tex(tx + dtx, ty + dty).endVertex();
+    	t.pos(p.x + a.x, p.y + a.y, p.z + a.z).tex(tx + dtx, ty).endVertex();
+    	t.pos(p.x, p.y, p.z).tex(tx, ty).endVertex();
+    	Tessellator.getInstance().draw();
+    	GL11.glPopMatrix();
+    }
+    
+    protected int tabsY = 7, EtabX = 0, FtabX = 0, ItabX = 0, tabsX = 0;
+    
+    @Override
+	public void initGui() {
+		super.initGui();
+		if (tile == null) return;
+		tabsX = 0;
+		if (tile.tanks != null && tile.tanks.tanks.length > 0) FtabX = (tabsX -= 9 + tile.tanks.tanks.length * 9);
+		if (tile.inventory != null && tile.inventory.componets.length > 0) ItabX = (tabsX -= 9 + tile.inventory.componets.length * 9);
+		if (tile.energy != null) EtabX = (tabsX -= 18);
+	}
+
+	@Override
+	protected void drawGuiContainerBackgroundLayer(float partialTicks, int mouseX, int mouseY) {
+		if (this.inventorySlots instanceof TileContainer)
+			for (TankSlot slot : ((TileContainer)this.inventorySlots).tankSlots)
+				this.drawLiquidTank(slot.inventory, slot.tankNumber, slot.xDisplayPosition, slot.yDisplayPosition, slot.bigSize);
+		if (FtabX < 0) this.drawLiquidConfig(tile, FtabX, tabsY);
+		if (ItabX < 0) this.drawItemConfig(tile, ItabX, tabsY);
+		if (EtabX < 0) this.drawEnergyConfig(tile, EtabX, tabsY);
+	}
+
+	@Override
+	protected void mouseClicked(int x, int y, int b) throws IOException {
+		if (FtabX < 0) this.clickLiquidConfig(tile, x - guiLeft - FtabX, y - guiTop - tabsY);
+		if (ItabX < 0) this.clickItemConfig(tile, x - guiLeft - ItabX, y - guiTop - tabsY);
+		if (EtabX < 0) this.clickEnergyConfig(tile, x - guiLeft - EtabX, y - guiTop - tabsY);
+		super.mouseClicked(x, y, b);
+	}
+
+	public void drawLiquidTank(TankContainer tanks, int id, int x, int y, boolean s) 
     {
         GL11.glColor4f(1, 1, 1, 1);
         GL11.glDisable(GL11.GL_ALPHA_TEST);
