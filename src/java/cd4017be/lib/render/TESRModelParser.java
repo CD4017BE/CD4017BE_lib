@@ -109,12 +109,7 @@ public class TESRModelParser {
 				if (k == null) break;
 				line++;
 				left = code.substring(p, k[0]).trim();
-				if (k[1] == 0) {
-					if (left.equals("push") && states.size() < maxStates) states.add(states.get(states.size() - 1).copy());
-					else if (left.equals("pop") && states.size() > 1) states.remove(states.size() - 1);
-					p = k[0] + 1;
-					break;
-				} else if (k[1] == 1) {
+				if (k[1] == 1) {
 					int[] k1 = this.enclosing(code, k[0], '(', ')');
 					right = code.substring(k1[0], k1[1]);
 					if (left.equals("for")) {
@@ -130,7 +125,13 @@ public class TESRModelParser {
 						p = k1[1] + 1;
 						break;
 					}
-					if (left.equals("rotate")) {
+					if (left.equals("push")) {
+						if (states.size() >= maxStates) throw new CompileException("max state depth reached", left, line);
+						states.add(states.get(states.size() - 1).copy());
+					} else if (left.equals("pop")) {
+						if (states.size() <= 1) throw new CompileException("already at origin state", left, line);
+						states.remove(states.size() - 1);
+					} else if (left.equals("rotate")) {
 						VecN vec = (VecN)this.parameter(right);
 						State state = states.get(states.size() - 1);
 						vec.x[3] = Math.toRadians(vec.x[3]);
@@ -164,8 +165,11 @@ public class TESRModelParser {
 						State state = states.get(states.size() - 1);
 						for (int i = 0; i < vec.x.length; i++) state.color.x[i] = vec.x[i];
 					} else if (left.equals("draw")) {
-						Quad quad = (Quad)this.parameter(right);
-						quads.add(quad.transform(states.get(states.size() - 1)));
+						Object o = this.parameter(right);
+						State state = states.get(states.size() - 1);
+						if (o instanceof Quad) quads.add(((Quad)o).transform(state));
+						else if (o instanceof TESRModelParser)
+							for (Quad quad : ((TESRModelParser)o).quads) quads.add(quad.transform(state));
 					}
 					p = code.indexOf(';', k1[1]) + 1;
 				} else if (k[1] == 2) {
@@ -217,17 +221,26 @@ public class TESRModelParser {
 		int[] k = this.enclosing(s, 0, '(', ')');
 		right = s.substring(k[0], k[1]);
 		if (s.startsWith("model")) {
-			ResourceLocation res = new ResourceLocation((String)this.parameter(right) + ".tesr");
 			k = this.enclosing(s, k[1] + 1, '{', '}');
-			HashMap<String, Object> init = new HashMap<String, Object>();
-			for (String var : s.substring(k[0], k[1]).split(";")) {
-				p = var.indexOf('=');
-				if (p < 0) continue;
-				init.put(var.substring(0, p).trim(), this.parameter(var.substring(p + 1)));
+			State state = new State();
+			state.matrix = new Matrix4d();
+			state.matrix.setIdentity();
+			state.uvOffset = Vec2.Def(0, 0);
+			state.uvScale = Vec2.Def(1, 1);
+			state.color = new VecN(1, 1, 1, 1);
+			TESRModelParser model;
+			if (right.trim().isEmpty()) {
+				model = new TESRModelParser(s.substring(k[0], k[1]), variables, state, new ResourceLocation("internal function line " + line));
+			} else {
+				ResourceLocation res = new ResourceLocation((String)this.parameter(right) + ".tesr");
+				HashMap<String, Object> init = new HashMap<String, Object>();
+				for (String var : s.substring(k[0], k[1]).split(";")) {
+					p = var.indexOf('=');
+					if (p < 0) continue;
+					init.put(var.substring(0, p).trim(), this.parameter(var.substring(p + 1)));
+				}
+				model = new TESRModelParser(SpecialModelLoader.instance.loadTESRModelSourceCode(res), init, state, res);
 			}
-			TESRModelParser model = new TESRModelParser(SpecialModelLoader.instance.loadTESRModelSourceCode(res), init, states.get(states.size() - 1).copy(), res);
-			this.quads.addAll(model.quads);
-			model.quads.clear();
 			model.states.clear();
 			return model;
 		}
