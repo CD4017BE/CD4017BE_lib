@@ -6,7 +6,6 @@
 
 package cd4017be.api.computers;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 import li.cil.oc.api.API;
@@ -20,7 +19,7 @@ import li.cil.oc.api.network.Visibility;
 import org.apache.logging.log4j.Level;
 
 import cd4017be.api.energy.EnergyAPI;
-import cd4017be.api.energy.EnergyAPI.IEnergyHandler;
+import cd4017be.api.energy.EnergyOpenComputers;
 import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Optional;
@@ -40,7 +39,6 @@ public class ComputerAPI //implements IPeripheralProvider //TODO reimplement
     public static Class OCcomp, OCapi;
     public static Method CCevent;
     public static Method OCevent;
-    public static Field OCpower;
     private static boolean OCinstalled = false;
     
     @SuppressWarnings("unchecked")
@@ -78,19 +76,11 @@ public class ComputerAPI //implements IPeripheralProvider //TODO reimplement
         if (OCcomp != null)
 			try {
 				OCevent = OCcomp.getMethod("signal", String.class, Object[].class);
-				OCpower = OCapi.getDeclaredField("isPowerEnabled");
+				EnergyAPI.handlers.add(1, new EnergyOpenComputers());//insert just after main to ensure it's called before RF.
 			} catch (Exception e) {
 				FMLLog.log("CD4017BE_lib", Level.ERROR, e, "can't get API methods:");
 			}
-        postInit();
     	registered = true;
-    }
-    
-    public static void postInit() {
-    	if (OCpower != null) try {
-    		OCpower.setBoolean(null, true);
-    		EnergyAPI.handlers.add((IEnergyHandler)Class.forName("cd4017be.api.energy.EnergyOpenComputers").newInstance());
-    	} catch(Throwable e){ FMLLog.log("cd4017be.computerAPI", Level.ERROR, e, "failed to turn on power usage");}
     }
     
     public static boolean isOCinstalled() {

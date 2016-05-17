@@ -6,6 +6,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import cd4017be.api.energy.EnergyAPI.IEnergyAccess;
 import cd4017be.api.energy.EnergyAPI.IEnergyHandler;
+import static cd4017be.api.energy.EnergyAPI.OC_value;
 
 public class EnergyOpenComputers implements IEnergyHandler {
 
@@ -18,18 +19,18 @@ public class EnergyOpenComputers implements IEnergyHandler {
 		
 		@Override
 		public double getStorage(int s) {
-			return energy.globalBuffer() * 1000D;
+			return energy.globalBuffer() * OC_value;
 		}
 
 		@Override
 		public double getCapacity(int s) {
-			return energy.globalBufferSize() * 1000D;
+			return energy.globalBufferSize() * OC_value;
 		}
 
 		@Override
 		public double addEnergy(double e, int s) {
 			if (e <= 0) return 0;
-			else return e - energy.changeBuffer(e * 0.001D) * 1000D;
+			else return e - energy.changeBuffer(e / OC_value) * OC_value;
 		}
 		
 	}
