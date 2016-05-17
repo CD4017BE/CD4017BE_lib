@@ -2,6 +2,12 @@ The Lib
 
 ################################# VERSIONS 1.8.9 #################################
 
+3.1.1 Changes:
+- reimplemented RedstoneFlux
+- added EnergyAPI for OpenComputers
+- improved side-config
+- bug fixes
+
 3.1.0 Changes:
 - improved pipe rendering performance (only effective when updating mods too)
 - added my own model loader for use in TESRs
