@@ -17,6 +17,7 @@ import java.util.Arrays;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.inventory.GuiContainer;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -144,16 +145,13 @@ public abstract class GuiMachine extends GuiContainer
         if (selTank >= 0) drawTankInfo(selTank, mx - this.guiLeft, my - this.guiTop);
         selTank = -1;
         if (tile != null && this.isPointInRegion(tabsX, tabsY, 0 - tabsX, 81, mx, my)) {
-        	GL11.glColor4f(1, 1, 1, 1);
-            GL11.glDisable(GL11.GL_DEPTH_TEST);
-            GL11.glDisable(GL11.GL_ALPHA_TEST);
-            GL11.glEnable(GL11.GL_BLEND);
+            GlStateManager.color(1, 1, 1, 1);
+        	GlStateManager.disableDepth();
+            GlStateManager.disableAlpha();
+            GlStateManager.enableBlend();
         	int s = (my - this.guiTop - tabsY - 9) / 9;
 			mx -= this.guiLeft;
-			if (s < 0 || mx >= 0) {
-				GL11.glEnable(GL11.GL_DEPTH_TEST);
-				return;
-			}
+			if (s < 0 || mx >= 0) return;
 			this.mc.renderEngine.bindTexture(new ResourceLocation("lib", "textures/icons.png"));
 			byte dir = 0;
 			int id;
@@ -179,8 +177,8 @@ public abstract class GuiMachine extends GuiContainer
 			} else if (s < 6 && EtabX + 9 <= mx) {
 				dir = (byte)(~tile.energy.con >> s & 1);
 			}
-			GL11.glEnable(GL11.GL_DEPTH_TEST);
 			if(s < 6) {
+				GL11.glEnable(GL11.GL_DEPTH_TEST);
 				this.drawGradientRect(-64, tabsY + 63, 0, tabsY + 127, 0xff000000, 0xff000000);
 				this.mc.renderEngine.bindTexture(TextureMap.locationBlocksTexture);
 				this.drawSideCube(-32, tabsY + 95, s, dir);
@@ -256,9 +254,9 @@ public abstract class GuiMachine extends GuiContainer
 
 	public void drawLiquidTank(TankContainer tanks, int id, int x, int y, boolean s) 
     {
-        GL11.glColor4f(1, 1, 1, 1);
-        GL11.glDisable(GL11.GL_ALPHA_TEST);
-        GL11.glEnable(GL11.GL_BLEND);
+		GlStateManager.color(1, 1, 1, 1);
+        GlStateManager.disableAlpha();
+        GlStateManager.enableBlend();
         this.mc.renderEngine.bindTexture(new ResourceLocation("lib", "textures/icons.png"));
         x += this.guiLeft;
         y += this.guiTop;
@@ -289,8 +287,8 @@ public abstract class GuiMachine extends GuiContainer
         if (this.isPointInRegion(x - guiLeft, y - guiTop, s?34:16, 50, mouseX, mouseY)){
             selTank = id;
         }
-        GL11.glEnable(GL11.GL_ALPHA_TEST);
-        GL11.glDisable(GL11.GL_BLEND);
+        GlStateManager.disableBlend();
+        GlStateManager.enableAlpha();
     }
     
     public void drawInfo(int x, int y, int w, int h, String... text)
@@ -325,7 +323,7 @@ public abstract class GuiMachine extends GuiContainer
     public void drawLiquidConfig(AutomatedTile tile, int x, int y)
     {
         int s = tile.tanks.tanks.length;
-        GL11.glColor4f(1, 1, 1, 1);
+        GlStateManager.color(1, 1, 1, 1);
         this.mc.renderEngine.bindTexture(new ResourceLocation("lib", "textures/icons.png"));
         this.drawTexturedModalRect(this.guiLeft + x, this.guiTop + y, 0, 0, 9 + s * 9, 81);
         this.drawTexturedModalRect(this.guiLeft + x, this.guiTop + y, 0, 81, 9, 9);
@@ -344,7 +342,7 @@ public abstract class GuiMachine extends GuiContainer
     public void drawItemConfig(AutomatedTile tile, int x, int y)
     {
         int s = tile.inventory.componets.length;
-        GL11.glColor4f(1, 1, 1, 1);
+        GlStateManager.color(1, 1, 1, 1);
         this.mc.renderEngine.bindTexture(new ResourceLocation("lib", "textures/icons.png"));
         this.drawTexturedModalRect(this.guiLeft + x, this.guiTop + y, 0, 0, 9 + s * 9, 63);
         this.drawTexturedModalRect(this.guiLeft + x, this.guiTop + y, 0, 90, 9, 9);
@@ -360,7 +358,7 @@ public abstract class GuiMachine extends GuiContainer
     
     public void drawEnergyConfig(AutomatedTile tile, int x, int y)
     {
-    	GL11.glColor4f(1, 1, 1, 1);
+    	GlStateManager.color(1, 1, 1, 1);
         this.mc.renderEngine.bindTexture(new ResourceLocation("lib", "textures/icons.png"));
         this.drawTexturedModalRect(this.guiLeft + x, this.guiTop + y, 0, 0, 18, 63);
         this.drawTexturedModalRect(this.guiLeft + x, this.guiTop + y, 0, 99, 9, 9);
