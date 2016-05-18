@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import com.mojang.authlib.GameProfile;
+
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
@@ -49,19 +51,19 @@ public class AreaProtect implements ForgeChunkManager.LoadingCallback, IProtecti
     {
         if (permissions < 0) return;
     	if (event.action == Action.RIGHT_CLICK_BLOCK || event.action == Action.LEFT_CLICK_BLOCK) {
-            ProtectLvl pl = this.getPlayerAccess(event.entityPlayer.getName(), event.entityPlayer.worldObj, event.pos.getX() >> 4, event.pos.getZ() >> 4);
+            ProtectLvl pl = this.getPlayerAccess(event.entityPlayer.getGameProfile(), event.entityPlayer.worldObj, event.pos.getX() >> 4, event.pos.getZ() >> 4);
             if (pl != ProtectLvl.Free && !(pl == ProtectLvl.Protected && event.action == Action.RIGHT_CLICK_BLOCK && event.entityPlayer.getCurrentEquippedItem() == null)) {
                 event.setCanceled(true);
             }
         } else if (event.action == Action.RIGHT_CLICK_AIR) {
-            ProtectLvl pl = this.getPlayerAccess(event.entityPlayer.getName(), event.entityPlayer.worldObj, (int)Math.floor(event.entityPlayer.posX) >> 4, (int)Math.floor(event.entityPlayer.posZ) >> 4);
+            ProtectLvl pl = this.getPlayerAccess(event.entityPlayer.getGameProfile(), event.entityPlayer.worldObj, (int)Math.floor(event.entityPlayer.posX) >> 4, (int)Math.floor(event.entityPlayer.posZ) >> 4);
             if (pl != ProtectLvl.Free && pl != ProtectLvl.Protected) {
                 event.setCanceled(true);
             }
         }
     }
     
-	public static ProtectLvl playerAccess(String name, World world, int chunkX, int chunkZ) {
+	public static ProtectLvl playerAccess(GameProfile name, World world, int chunkX, int chunkZ) {
 		ProtectLvl lvl = ProtectLvl.Free;
 		for (IProtectionHandler handler : handlers) {
 			ProtectLvl tmp = handler.getPlayerAccess(name, world, chunkX, chunkZ);
@@ -71,19 +73,19 @@ public class AreaProtect implements ForgeChunkManager.LoadingCallback, IProtecti
 		return lvl;
 	}
 	
-	public static boolean operationAllowed(String player, World world, int cx, int cz) {
+	public static boolean operationAllowed(GameProfile player, World world, int cx, int cz) {
 		for (IProtectionHandler handler : handlers)
 			if (!handler.isOperationAllowed(player, world, cx, cz)) return false;
 		return true;
 	}
 	
-	public static boolean operationAllowed(String player, World world, int x0, int x1, int z0, int z1) {
+	public static boolean operationAllowed(GameProfile player, World world, int x0, int x1, int z0, int z1) {
 		for (IProtectionHandler handler : handlers)
 			if (!handler.isOperationAllowed(player, world, x0, x1, z0, z1)) return false;
 		return true;
 	}
 	
-	public static boolean interactingAllowed(String player, World world, int cx, int cz) {
+	public static boolean interactingAllowed(GameProfile player, World world, int cx, int cz) {
 		for (IProtectionHandler handler : handlers)
 			if (!handler.isInteractingAllowed(player, world, cx, cz)) return false;
 		return true;
@@ -100,45 +102,46 @@ public class AreaProtect implements ForgeChunkManager.LoadingCallback, IProtecti
      * @return the restriction level for given username at given position.
      */
     @Override
-    public ProtectLvl getPlayerAccess(String name, World world, int chunkX, int chunkZ)
+    public ProtectLvl getPlayerAccess(GameProfile player, World world, int chunkX, int chunkZ)
     {
     	int ac = 0;
     	ArrayList<IAreaConfig> list = loadedSS.get(world.provider.getDimensionId());
     	if (list == null) return ProtectLvl.Free;
     	for (IAreaConfig cfg : list) {
-            ac = Math.max(ac, cfg.getProtectLvlFor(name, chunkX, chunkZ));
+            ac = Math.max(ac, cfg.getProtectLvlFor(player.getName(), chunkX, chunkZ));
         }
         return ProtectLvl.getLvl(ac);
     }
     
     @Override
-    public boolean isOperationAllowed(String player, World world, int cx, int cz)
+    public boolean isOperationAllowed(GameProfile player, World world, int cx, int cz)
     {
     	ArrayList<IAreaConfig> list = loadedSS.get(world.provider.getDimensionId());
     	if (list == null) return true;
     	for (IAreaConfig cfg : list) {
-            if (cfg.getProtectLvlFor(player, cx, cz) != 0) return false;
+            if (cfg.getProtectLvlFor(player.getName(), cx, cz) != 0) return false;
         }
         return true;
     }
     
     @Override
-    public boolean isOperationAllowed(String player, World world, int x0, int x1, int z0, int z1)
+    public boolean isOperationAllowed(GameProfile player, World world, int x0, int x1, int z0, int z1)
     {
-    	for (int cx = x0 >> 4; cx < x1 >> 4; cx++)
-    		for (int cz = z0 >> 4; cz < z1 >> 4; cz++)
+    	x0 >>= 4; z0 >>= 4; x1 = (x1 + 15) >> 4; z1 = (z1 + 15) >> 4;
+    	for (int cx = x0; cx < x1; cx++)
+    		for (int cz = z0; cz < z1; cz++)
     			if (!isOperationAllowed(player, world, cx, cz))
     				return false;
     	return true;
     }
     
     @Override
-    public boolean isInteractingAllowed(String player, World world, int cx, int cz)
+    public boolean isInteractingAllowed(GameProfile player, World world, int cx, int cz)
     {
     	ArrayList<IAreaConfig> list = loadedSS.get(world.provider.getDimensionId());
     	if (list == null) return true;
     	for (IAreaConfig cfg : list) {
-            if (cfg.getProtectLvlFor(player, cx, cz) > 1) return false;
+            if (cfg.getProtectLvlFor(player.getName(), cx, cz) > 1) return false;
         }
         return true;
     }
