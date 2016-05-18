@@ -22,7 +22,7 @@ import net.minecraftforge.event.entity.player.PlayerInteractEvent.Action;
  *
  * @author CD4017BE
  */
-public class AreaProtect implements ForgeChunkManager.LoadingCallback
+public class AreaProtect implements ForgeChunkManager.LoadingCallback, IProtectionHandler
 {
     public static byte permissions = 1;
     public static byte chunkloadPerm = 1;
@@ -30,17 +30,21 @@ public class AreaProtect implements ForgeChunkManager.LoadingCallback
 	public static AreaProtect instance = new AreaProtect();
 	private static boolean registered = false;
 	private static Object mod;
+	public static ArrayList<IProtectionHandler> handlers = new ArrayList<IProtectionHandler>();
 	
 	public static void register(Object mod) {
 		if (!registered) {
 			AreaProtect.mod = mod;
-			MinecraftForge.EVENT_BUS.register(instance);
-			ForgeChunkManager.setForcedChunkLoadingCallback(mod, instance);
+			if (permissions >= 0) {
+				MinecraftForge.EVENT_BUS.register(instance);
+				handlers.add(instance);
+			}
+			if (chunkloadPerm >= 0) ForgeChunkManager.setForcedChunkLoadingCallback(mod, instance);
 		}
 		registered = true;
 	}
 	
-    @SubscribeEvent
+	@SubscribeEvent
     public void handlePlayerInteract(PlayerInteractEvent event)
     {
         if (permissions < 0) return;
@@ -57,6 +61,34 @@ public class AreaProtect implements ForgeChunkManager.LoadingCallback
         }
     }
     
+	public static ProtectLvl playerAccess(String name, World world, int chunkX, int chunkZ) {
+		ProtectLvl lvl = ProtectLvl.Free;
+		for (IProtectionHandler handler : handlers) {
+			ProtectLvl tmp = handler.getPlayerAccess(name, world, chunkX, chunkZ);
+			if (tmp == ProtectLvl.NoInventory) return tmp;
+			else if (tmp.ordinal() > lvl.ordinal()) lvl = tmp;
+		}
+		return lvl;
+	}
+	
+	public static boolean operationAllowed(String player, World world, int cx, int cz) {
+		for (IProtectionHandler handler : handlers)
+			if (!handler.isOperationAllowed(player, world, cx, cz)) return false;
+		return true;
+	}
+	
+	public static boolean operationAllowed(String player, World world, int x0, int x1, int z0, int z1) {
+		for (IProtectionHandler handler : handlers)
+			if (!handler.isOperationAllowed(player, world, x0, x1, z0, z1)) return false;
+		return true;
+	}
+	
+	public static boolean interactingAllowed(String player, World world, int cx, int cz) {
+		for (IProtectionHandler handler : handlers)
+			if (!handler.isInteractingAllowed(player, world, cx, cz)) return false;
+		return true;
+	}
+	
     public HashMap<Integer, ArrayList<IAreaConfig>> loadedSS = new HashMap<Integer, ArrayList<IAreaConfig>>();
     public HashMap<Integer, ArrayList<Ticket>> usedTickets = new HashMap<Integer, ArrayList<Ticket>>();
     
@@ -67,9 +99,9 @@ public class AreaProtect implements ForgeChunkManager.LoadingCallback
      * @param chunkZ
      * @return the restriction level for given username at given position.
      */
+    @Override
     public ProtectLvl getPlayerAccess(String name, World world, int chunkX, int chunkZ)
     {
-    	if (permissions < 0) return ProtectLvl.Free;
     	int ac = 0;
     	ArrayList<IAreaConfig> list = loadedSS.get(world.provider.getDimensionId());
     	if (list == null) return ProtectLvl.Free;
@@ -79,9 +111,9 @@ public class AreaProtect implements ForgeChunkManager.LoadingCallback
         return ProtectLvl.getLvl(ac);
     }
     
+    @Override
     public boolean isOperationAllowed(String player, World world, int cx, int cz)
     {
-    	if (permissions < 0) return true;
     	ArrayList<IAreaConfig> list = loadedSS.get(world.provider.getDimensionId());
     	if (list == null) return true;
     	for (IAreaConfig cfg : list) {
@@ -90,9 +122,9 @@ public class AreaProtect implements ForgeChunkManager.LoadingCallback
         return true;
     }
     
+    @Override
     public boolean isOperationAllowed(String player, World world, int x0, int x1, int z0, int z1)
     {
-    	if (permissions < 0) return true;
     	for (int cx = x0 >> 4; cx < x1 >> 4; cx++)
     		for (int cz = z0 >> 4; cz < z1 >> 4; cz++)
     			if (!isOperationAllowed(player, world, cx, cz))
@@ -100,9 +132,9 @@ public class AreaProtect implements ForgeChunkManager.LoadingCallback
     	return true;
     }
     
+    @Override
     public boolean isInteractingAllowed(String player, World world, int cx, int cz)
     {
-    	if (permissions < 0) return true;
     	ArrayList<IAreaConfig> list = loadedSS.get(world.provider.getDimensionId());
     	if (list == null) return true;
     	for (IAreaConfig cfg : list) {
@@ -149,6 +181,7 @@ public class AreaProtect implements ForgeChunkManager.LoadingCallback
     
     public void supplyTicket(IAreaConfig config, World world)
     {
+    	if (chunkloadPerm < 0) return;
     	int[] p = config.getPosition();
     	ArrayList<Ticket> list = usedTickets.get(p[3]);
     	NBTTagCompound tag;

@@ -85,7 +85,7 @@ public class AutomatedTile extends ModTileEntity implements ISidedInventory, ITi
     @Override
     public void onPlayerCommand(PacketBuffer dis, EntityPlayerMP player) throws IOException 
     {
-        if (!AreaProtect.instance.isInteractingAllowed(player.getName(), worldObj, pos.getX() >> 4, pos.getZ() >> 4)) return;
+        if (!AreaProtect.interactingAllowed(player.getName(), worldObj, pos.getX() >> 4, pos.getZ() >> 4)) return;
         byte cmd = dis.readByte();
         if (cmd == 0 && inventory != null) netData.longs[inventory.netIdxLong] = dis.readLong();
         else if (cmd == 1 && tanks != null) netData.longs[tanks.netIdxLong] = dis.readLong();
