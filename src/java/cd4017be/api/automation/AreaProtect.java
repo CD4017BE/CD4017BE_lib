@@ -11,14 +11,15 @@ import java.util.List;
 import com.mojang.authlib.GameProfile;
 
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.relauncher.Side;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.EnumHand;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeChunkManager;
 import net.minecraftforge.common.ForgeChunkManager.Ticket;
 import net.minecraftforge.common.ForgeChunkManager.Type;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent.LeftClickBlock;
 
 /**
  *
@@ -49,18 +50,11 @@ public class AreaProtect implements ForgeChunkManager.LoadingCallback, IProtecti
 	@SubscribeEvent
     public void handlePlayerInteract(PlayerInteractEvent event)
     {
-        if (permissions < 0) return;
-    	if (event.action == Action.RIGHT_CLICK_BLOCK || event.action == Action.LEFT_CLICK_BLOCK) {
-            ProtectLvl pl = this.getPlayerAccess(event.entityPlayer.getGameProfile(), event.entityPlayer.worldObj, event.pos.getX() >> 4, event.pos.getZ() >> 4);
-            if (pl != ProtectLvl.Free && !(pl == ProtectLvl.Protected && event.action == Action.RIGHT_CLICK_BLOCK && event.entityPlayer.getCurrentEquippedItem() == null)) {
-                event.setCanceled(true);
-            }
-        } else if (event.action == Action.RIGHT_CLICK_AIR) {
-            ProtectLvl pl = this.getPlayerAccess(event.entityPlayer.getGameProfile(), event.entityPlayer.worldObj, (int)Math.floor(event.entityPlayer.posX) >> 4, (int)Math.floor(event.entityPlayer.posZ) >> 4);
-            if (pl != ProtectLvl.Free && pl != ProtectLvl.Protected) {
-                event.setCanceled(true);
-            }
-        }
+        if (permissions < 0 || event.getSide() == Side.CLIENT) return;
+        ProtectLvl pl = this.getPlayerAccess(event.getEntityPlayer().getGameProfile(), event.getEntityPlayer().worldObj, event.getPos().getX() >> 4, event.getPos().getZ() >> 4);
+        if (pl == ProtectLvl.Free) return;
+        if (event instanceof LeftClickBlock || event.getItemStack() != null || 
+        		pl == ProtectLvl.NoAcces || pl == ProtectLvl.NoInventory) event.setCanceled(true);
     }
     
 	public static ProtectLvl playerAccess(GameProfile name, World world, int chunkX, int chunkZ) {
