@@ -31,6 +31,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.ChatAllowedCharacters;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.Vec3d;
 
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
@@ -207,13 +208,13 @@ public abstract class GuiMachine extends GuiContainer
     	case 4: a = Vec3.Def(-1, 0, 0); break;
     	default: a = Vec3.Def(1, 0, 0);
     	}
-    	net.minecraft.util.Vec3 look = player.getLookVec();
+    	Vec3d look = player.getLookVec();
     	b = Vec3.Def(look.xCoord, look.yCoord, look.zCoord).mult(a).norm();
     	p = p.add(a.scale(0.5)).add(b.scale(-0.5));
     	a = a.scale(1.5);
     	final float tx = (float)(144 + 16 * dir) / 256F, dtx = 16F / 256F, ty = 24F / 256F, dty = 8F / 256F;
     	
-    	WorldRenderer t = Tessellator.getInstance().getWorldRenderer();
+    	VertexBuffer t = Tessellator.getInstance().getBuffer();
     	t.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
     	t.pos(p.x + b.x, p.y + b.y, p.z + b.z).tex(tx, ty + dty).endVertex();
     	t.pos(p.x + a.x + b.x, p.y + a.y + b.y, p.z + a.z + b.z).tex(tx + dtx, ty + dty).endVertex();
