@@ -3,7 +3,7 @@ package cd4017be.lib.util;
 import com.mojang.authlib.GameProfile;
 
 import cd4017be.api.automation.AreaProtect;
-import net.minecraft.util.BlockPos;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 public class CachedChunkProtection {
