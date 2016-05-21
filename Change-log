@@ -8,6 +8,15 @@ The Lib
 - fixed conflict with IInventory interface
 - added script language for external recipe definition via config.
 
+4.0.2 Changes:
+- fixed wrong click behavior in slots
+- improved Area Protection API (1.8.9)
+- included changes from v3.1.1:
+ - reimplemented RedstoneFlux
+ - added EnergyAPI for OpenComputers
+ - improved side-config
+ - bug fixes
+
 ################################# VERSIONS 1.8.9 #################################
 
 3.2.2 Changes:
