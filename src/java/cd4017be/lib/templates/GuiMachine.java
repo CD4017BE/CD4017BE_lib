@@ -177,18 +177,16 @@ public abstract class GuiMachine extends GuiContainer
 			} else if (s < 6 && EtabX + 9 <= mx) {
 				dir = (byte)(~tile.energy.con >> s & 1);
 			}
-			if(s < 6) {
-				GL11.glEnable(GL11.GL_DEPTH_TEST);
-				this.drawGradientRect(-64, tabsY + 63, 0, tabsY + 127, 0xff000000, 0xff000000);
-				this.mc.renderEngine.bindTexture(TextureMap.locationBlocksTexture);
-				this.drawSideCube(-32, tabsY + 95, s, dir);
-			}
+			if(s < 6) this.drawSideCube(-64, tabsY + 63, s, dir);
 		}
     }
     
-    private void drawSideCube(int x, int y, int s, byte dir) {
+    protected void drawSideCube(int x, int y, int s, byte dir) {
+    	GlStateManager.enableDepth();
+		this.drawGradientRect(x, y, x + 64, y + 64, 0xff000000, 0xff000000);
+		this.mc.renderEngine.bindTexture(TextureMap.locationBlocksTexture);
     	GL11.glPushMatrix();
-    	GL11.glTranslatef(x, y, this.zLevel + 32);
+    	GL11.glTranslatef(x + 32, y + 32, this.zLevel + 32);
     	GL11.glScalef(16F, -16F, 16F);
     	EntityPlayer player = ((TileContainer)this.inventorySlots).player;
     	GL11.glRotatef(player.rotationPitch, 1, 0, 0);

@@ -6,6 +6,7 @@ package cd4017be.api.automation;
 
 import cd4017be.lib.templates.Inventory;
 import cd4017be.lib.templates.TankContainer;
+import cd4017be.lib.util.Obj2;
 import cd4017be.lib.util.OreDictStack;
 import cd4017be.lib.util.Utils;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.oredict.OreDictionary;
 
@@ -597,6 +599,12 @@ public class AutomationRecipes
         		if (!list.isEmpty()) AutomationRecipes.addCmpRecipe(list.get(0), item);
         	}
         }
+	}
+
+	public static HashMap<Fluid, Obj2<Integer, FluidStack>> radiatorRecipes = new HashMap<Fluid, Obj2<Integer, FluidStack>>();
+	
+	public static void addRadiatorRecipe(FluidStack in, FluidStack out) {
+		radiatorRecipes.put(in.getFluid(), new Obj2<Integer, FluidStack>(in.amount, out));
 	}
     
 }
