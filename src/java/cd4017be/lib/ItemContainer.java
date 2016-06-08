@@ -70,7 +70,7 @@ public class ItemContainer extends Container
 	}
 
 	@Override
-    public ItemStack func_184996_a(int s, int b, ClickType m, EntityPlayer par4EntityPlayer)
+    public ItemStack slotClick(int s, int b, ClickType m, EntityPlayer par4EntityPlayer)
     {   
 		Slot slot = null;
         if (s >= 0 && s < inventorySlots.size()) slot = getSlot(s);
@@ -94,7 +94,7 @@ public class ItemContainer extends Container
                 slot.onSlotChanged();
             }
             return null;
-        } else return super.func_184996_a(s, b, m, player);
+        } else return super.slotClick(s, b, m, player);
     }
     
     @Override //prevents client crash IndexOutOfBoundsException sometimes caused by incorrect netdata

@@ -18,7 +18,6 @@ import net.minecraft.inventory.ISidedInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.NetworkManager;
-import net.minecraft.network.Packet;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -67,8 +66,7 @@ public class AutomatedTile extends ModTileEntity implements ISidedInventory, ITi
     }
 
     @Override
-    public void writeToNBT(NBTTagCompound nbt) {
-        super.writeToNBT(nbt);
+    public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
         if (inventory != null){
             inventory.writeToNBT(nbt, "Items");
             nbt.setLong("icfg", netData.longs[inventory.netIdxLong]);
@@ -78,6 +76,7 @@ public class AutomatedTile extends ModTileEntity implements ISidedInventory, ITi
             nbt.setLong("tcfg", netData.longs[tanks.netIdxLong]);
         }
         if (energy != null) energy.writeToNBT(nbt, "wire");
+        return super.writeToNBT(nbt);
     }
     
     public static int CmdOffset = 16;
@@ -162,9 +161,8 @@ public class AutomatedTile extends ModTileEntity implements ISidedInventory, ITi
     }
 
     @Override
-    public Packet getDescriptionPacket() 
-    {
-        NBTTagCompound nbt = new NBTTagCompound();
+	public SPacketUpdateTileEntity getUpdatePacket() {
+    	NBTTagCompound nbt = new NBTTagCompound();
         boolean send = false;
         if (this instanceof IOperatingArea) {
         	nbt.setIntArray("area", ((IOperatingArea)this).getOperatingArea());
@@ -176,7 +174,7 @@ public class AutomatedTile extends ModTileEntity implements ISidedInventory, ITi
         }
         if (send) return new SPacketUpdateTileEntity(pos, -1, nbt);
         else return null;
-    }
+	}
 
     public ItemStack getStackInSlot(int i) 
     {
