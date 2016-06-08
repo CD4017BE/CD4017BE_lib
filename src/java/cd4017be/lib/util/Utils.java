@@ -507,15 +507,15 @@ public class Utils
     {
         IBlockState state = world.getBlockState(pos);
         Block block = state.getBlock();
-        if (block == Blocks.air) return null;
+        if (block == Blocks.AIR) return null;
         else if (block instanceof IFluidBlock) {
             FluidStack fluid = ((IFluidBlock)block).drain(world, pos, false);
             if (!sourceOnly && fluid == null) return new FluidStack(((IFluidBlock)block).getFluid(), 0);
             else return fluid;
         }
         boolean source = state == block.getDefaultState();
-        if (block == Blocks.water || block == Blocks.flowing_water) return source || !sourceOnly ? new FluidStack(FluidRegistry.WATER, source ? 1000 : 0) : null;
-        else if (block == Blocks.lava || block == Blocks.flowing_lava) return source || !sourceOnly ? new FluidStack(FluidRegistry.LAVA, source ? 1000 : 0) : null;
+        if (block == Blocks.WATER || block == Blocks.FLOWING_WATER) return source || !sourceOnly ? new FluidStack(FluidRegistry.WATER, source ? 1000 : 0) : null;
+        else if (block == Blocks.LAVA|| block == Blocks.FLOWING_LAVA) return source || !sourceOnly ? new FluidStack(FluidRegistry.LAVA, source ? 1000 : 0) : null;
         else return null;
     }
     

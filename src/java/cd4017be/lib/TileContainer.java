@@ -15,7 +15,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.ClickType;
 import net.minecraft.inventory.Container;
-import net.minecraft.inventory.ICrafting;
+import net.minecraft.inventory.IContainerListener;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
@@ -96,12 +96,6 @@ public class TileContainer extends Container
     {
         return super.mergeItemStack(item, ss, se, d);
     }
-    
-    @Override
-	public void onCraftGuiOpened(ICrafting crafting) {
-		super.onCraftGuiOpened(crafting);
-		tileEntity.addCraftingToCrafters(this, crafting);
-	}
 
     @Override
     public void updateProgressBar(int var, int val) 
@@ -128,10 +122,9 @@ public class TileContainer extends Container
                 tileEntity.netData.writeData(data, chng);
                 send = !chng.isEmpty();
             }
-            send |= tileEntity.detectAndSendChanges(this, crafters, data);
-            if (send) for (int i = 0; i < this.crafters.size(); i++) {
-                EntityPlayerMP crafter = (EntityPlayerMP)this.crafters.get(i);
-                BlockGuiHandler.sendPacketToPlayer(crafter, data);
+            send |= tileEntity.detectAndSendChanges(this, this.listeners, data);
+            if (send) for (IContainerListener crafter : this.listeners) {
+                BlockGuiHandler.sendPacketToPlayer((EntityPlayerMP)crafter, data);
             }
         } catch (IOException e) {e.printStackTrace();}
         super.detectAndSendChanges();
@@ -144,7 +137,7 @@ public class TileContainer extends Container
     }
 
     @Override
-    public ItemStack func_184996_a(int s, int b, ClickType m, EntityPlayer player) 
+    public ItemStack slotClick(int s, int b, ClickType m, EntityPlayer player) 
     {
         return tileEntity.slotClick(this, s, b, m, player);
     }
@@ -173,7 +166,7 @@ public class TileContainer extends Container
                 slot.onSlotChanged();
             }
             return null;
-        } else return super.func_184996_a(s, b, m, player); 
+        } else return super.slotClick(s, b, m, player); 
     }
 
     @Override //prevents client crash IndexOutOfBoundsException sometimes caused by incorrect netdata

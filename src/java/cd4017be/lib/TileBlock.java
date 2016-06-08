@@ -113,8 +113,8 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
     protected TileBlock(String id, Material m, SoundType sound, Class<? extends ItemBlock> item, int type)
     {
         super(id, m, item);
-        this.setCreativeTab(CreativeTabs.tabDecorations);
-        this.setStepSound(sound);
+        this.setCreativeTab(CreativeTabs.DECORATIONS);
+        this.setSoundType(sound);
         this.orient = Orientations[tmpType];
         this.redstone = (type & 16) != 0;
         this.opaque = (type & 32) == 0;
@@ -189,7 +189,7 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
     }
 
     @Override
-	public void onNeighborBlockChange(World world, BlockPos pos, IBlockState state, Block b) {
+	public void neighborChanged(IBlockState state, World world, BlockPos pos, Block b) {
     	TileEntity te = world.getTileEntity(pos);
         if (te != null && te instanceof ModTileEntity) ((ModTileEntity)te).onNeighborBlockChange(b);
 	}
@@ -279,15 +279,9 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
 
 	@Override
 	public void onEntityCollidedWithBlock(World world, BlockPos pos, IBlockState state, Entity entity) {
-		this.onEntityCollidedWithBlock(world, pos, entity);
-	}
-
-	@Override
-    public void onEntityCollidedWithBlock(World world, BlockPos pos, Entity entity) 
-    {
-        TileEntity te = world.getTileEntity(pos);
+		TileEntity te = world.getTileEntity(pos);
         if (te != null && te instanceof ModTileEntity) ((ModTileEntity)te).onEntityCollided(entity);
-    }
+	}
 
     @Override
     public boolean isOpaqueCube(IBlockState state) 

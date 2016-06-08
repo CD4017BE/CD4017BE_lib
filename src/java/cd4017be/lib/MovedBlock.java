@@ -6,30 +6,19 @@
 
 package cd4017be.lib;
 
-import net.minecraftforge.fml.common.FMLCommonHandler;
-
-import java.lang.reflect.Method;
-import java.util.Iterator;
-
 import cd4017be.api.automation.IOperatingArea;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.command.ICommandManager;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityList;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.network.play.server.SPacketEntityEffect;
-import net.minecraft.network.play.server.SPacketRespawn;
-import net.minecraft.potion.PotionEffect;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.EnumSkyBlock;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
-import net.minecraft.world.WorldType;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
 
@@ -51,12 +40,19 @@ public class MovedBlock
     public boolean set(World world, BlockPos pos)
     {
         TileEntity tile = null;
-        boolean multipart = false;
+        //boolean multipart = false;
         if (nbt != null) {
             nbt.setInteger("x", pos.getX());
             nbt.setInteger("y", pos.getY());
             nbt.setInteger("z", pos.getZ());
-            multipart = nbt.getString("id").equals("savedMultipart");
+            tile = TileEntity.create(nbt);
+            if (tile instanceof IOperatingArea) {
+                int [] area = ((IOperatingArea)tile).getOperatingArea();
+                area[0] += pos.getX(); area[3] += pos.getX();
+                area[1] += pos.getY(); area[4] += pos.getY();
+                area[2] += pos.getZ(); area[5] += pos.getZ();
+            }
+            /* multipart = nbt.getString("id").equals("savedMultipart");
             if (multipart) {
                 try {
                     Class multipartHelper = Class.forName("codechicken.multipart.MultipartHelper");
@@ -64,25 +60,18 @@ public class MovedBlock
                     tile = (TileEntity)m.invoke(null, new Object[] { world, nbt });
                 } catch (Exception e) {e.printStackTrace();}
             } else {
-                tile = TileEntity.createTileEntity(((WorldServer)world).getMinecraftServer(), nbt);
-                if (tile instanceof IOperatingArea) {
-                    int [] area = ((IOperatingArea)tile).getOperatingArea();
-                    area[0] += pos.getX(); area[3] += pos.getX();
-                    area[1] += pos.getY(); area[4] += pos.getY();
-                    area[2] += pos.getZ(); area[5] += pos.getZ();
-                }
-            }
+                
+            }*/
         }
-        boolean set = setBlock(world, pos, block, tile);
-        if (multipart && set) {
+        /*if (multipart && set) {
             try {
                 Class multipartHelper = Class.forName("codechicken.multipart.MultipartHelper");
                 multipartHelper.getMethod("sendDescPacket", new Class[] { World.class, TileEntity.class }).invoke(null, new Object[] { world, tile });
                 Class tileMultipart = Class.forName("codechicken.multipart.TileMultipart");
                 tileMultipart.getMethod("onMoved", new Class[0]).invoke(tile, new Object[0]);
             } catch (Exception e) {e.printStackTrace();}
-        }
-        return set;
+        }*/
+        return setBlock(world, pos, block, tile);
     }
     
     public static MovedBlock get(World world, BlockPos pos)
@@ -121,7 +110,6 @@ public class MovedBlock
         Chunk chunk = world.getChunkFromBlockCoords(pos);
         IBlockState state0 = chunk.getBlockState(pos);
         Block block = state.getBlock();
-        Block block0 = state0.getBlock();
         int oldLight = state0.getLightValue(world, pos);
         int oldOpac = state0.getLightOpacity(world, pos);
         
@@ -146,7 +134,7 @@ public class MovedBlock
         ExtendedBlockStorage extendedblockstorage = storageArrays[y >> 4];
         boolean flag = false;
         if (extendedblockstorage == Chunk.NULL_BLOCK_STORAGE) {
-        	if (block == Blocks.air) return false;
+        	if (block == Blocks.AIR) return false;
         	extendedblockstorage = storageArrays[y >> 4] = new ExtendedBlockStorage(y >> 4 << 4, !world.provider.getHasNoSky());
             flag = y >= h;
         }

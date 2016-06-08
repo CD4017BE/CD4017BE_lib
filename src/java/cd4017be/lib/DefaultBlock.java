@@ -20,7 +20,7 @@ public class DefaultBlock extends Block
     public DefaultBlock(String id, Material m, Class<? extends ItemBlock> item)
     {
         super(m);
-        this.setCreativeTab(CreativeTabs.tabBlock);
+        this.setCreativeTab(CreativeTabs.BUILDING_BLOCKS);
         this.setUnlocalizedName(id);
         BlockItemRegistry.registerBlock(this, id, item);
     }

@@ -186,7 +186,7 @@ public abstract class GuiMachine extends GuiContainer
     protected void drawSideCube(int x, int y, int s, byte dir) {
     	GlStateManager.enableDepth();
 		this.drawGradientRect(x, y, x + 64, y + 64, 0xff000000, 0xff000000);
-		this.mc.renderEngine.bindTexture(TextureMap.locationBlocksTexture);
+		this.mc.renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
     	GL11.glPushMatrix();
     	GL11.glTranslatef(x + 32, y + 32, this.zLevel + 32);
     	GL11.glScalef(16F, -16F, 16F);
@@ -268,7 +268,7 @@ public abstract class GuiMachine extends GuiContainer
         	if (res != null) tex = Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(res.toString());
         }
         if (tex != null) {
-            this.mc.renderEngine.bindTexture(TextureMap.locationBlocksTexture);
+            this.mc.renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
             float n = 50F - (float)tanks.getAmount(id) / (float)tanks.tanks[id].cap * 50F;
             float u = tex.getMinU();
             float v = tex.getMinV();

@@ -25,7 +25,7 @@ public class BlockSuperfluid extends BlockFluidClassic
     public static final Material materialGas = new MaterialGas();
     public static class MaterialGas extends MaterialTransparent {
     	public MaterialGas() {
-    		super(MapColor.airColor);
+    		super(MapColor.AIR);
     		this.setNoPushMobility();
     	}
     }
@@ -34,7 +34,7 @@ public class BlockSuperfluid extends BlockFluidClassic
     
     public BlockSuperfluid(String id, ModFluid fluid)
     {
-        super(fluid, fluid.isGaseous() ? fluid.getTemperature() > 350 ? Material.fire : materialGas : Material.water);
+        super(fluid, fluid.isGaseous() ? fluid.getTemperature() > 350 ? Material.FIRE : materialGas : Material.WATER);
         this.setUnlocalizedName(id);
         GameRegistry.registerBlock(this, null, id);
     }

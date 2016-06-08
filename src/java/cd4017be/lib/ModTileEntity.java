@@ -19,7 +19,7 @@ import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.ClickType;
-import net.minecraft.inventory.ICrafting;
+import net.minecraft.inventory.IContainerListener;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.ISidedInventory;
 import net.minecraft.inventory.Slot;
@@ -171,11 +171,6 @@ public class ModTileEntity extends TileEntity
         
     }
     
-    public void addCraftingToCrafters(TileContainer container, ICrafting crafting)
-    {
-        
-    }
-    
     public void updateProgressBar(int var, int val)
     {
         
@@ -186,7 +181,7 @@ public class ModTileEntity extends TileEntity
         if (this.netData != null) this.netData.readData(dis);
     }
     
-    public boolean detectAndSendChanges(TileContainer container, List<ICrafting> crafters, PacketBuffer dos) throws IOException 
+    public boolean detectAndSendChanges(TileContainer container, List<IContainerListener> crafters, PacketBuffer dos) throws IOException 
     {
         return false;
     }
