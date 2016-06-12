@@ -7,14 +7,47 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import net.minecraftforge.fml.common.FMLLog;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+
 import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.Level;
 
 public class ConfigurationFile 
 {
+	public static File configDir = null;
+	
+	public static File init(FMLPreInitializationEvent event, String fileName, String preset) {
+		if (configDir == null) configDir = new File(event.getModConfigurationDirectory(), "cd4017be");
+		File file = new File(configDir, fileName);
+    	if (file.exists()) return file;
+    	FMLLog.log("cd4017be_lib", Level.INFO, "Config file %s does not exist, creating a new one using preset %s", file, preset);
+    	try {
+    		copyData(preset, file);
+    		return file;
+    	} catch(IOException e) {
+    		FMLLog.log("Automation", Level.WARN, e, "Config file creation failed!");
+    		return null;
+    	}
+	}
+	
+	public static InputStream getStream(String fileName) throws IOException {
+		return (InputStream)(new DataInputStream(new FileInputStream(new File(configDir, fileName))));
+	}
+	
+	public static String readTextFile(InputStream is) throws IOException {
+    	InputStreamReader isr = new InputStreamReader(is);
+		String s = "";
+		int n;
+		char[] buff = new char[256];
+		while((n = isr.read(buff)) > 0) s += String.valueOf(buff, 0, n);
+		return s;
+    }
 	
 	private final HashMap<String, Object> variables;
 	
@@ -240,6 +273,7 @@ public class ConfigurationFile
 	public static void copyData(String resourcePath, File target) throws IOException
 	{
 		InputStream in = ConfigurationFile.class.getResourceAsStream(resourcePath);
+		target.getParentFile().mkdirs();
 		target.createNewFile();
 		OutputStream out = new DataOutputStream(new FileOutputStream(target));
 		IOUtils.copy(in, out);

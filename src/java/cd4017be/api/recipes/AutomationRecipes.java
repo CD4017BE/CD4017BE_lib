@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package cd4017be.api.automation;
+package cd4017be.api.recipes;
 
 import cd4017be.lib.templates.Inventory;
 import cd4017be.lib.templates.TankContainer;
@@ -31,7 +31,7 @@ public class AutomationRecipes
     public static float LFEmult = 1F;
     public static float CoolEmult = 1F;
     public static float ElEmult = 1F;
-	
+    
     public static class LFRecipe
     {
         public FluidStack Linput;
