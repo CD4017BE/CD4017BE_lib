@@ -1,16 +1,20 @@
 package cd4017be.api.recipes;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+
 import org.apache.logging.log4j.Level;
 
 import cd4017be.api.recipes.AutomationRecipes.*;
+import cd4017be.lib.ConfigurationFile;
 import cd4017be.lib.NBTRecipe;
 import cd4017be.lib.util.ScriptCompiler;
-import cd4017be.lib.util.ScriptCompiler.CompileException;
+import cd4017be.lib.util.ScriptCompiler.SubMethod;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.IFuelHandler;
@@ -21,8 +25,10 @@ import net.minecraftforge.oredict.ShapedOreRecipe;
 import net.minecraftforge.oredict.ShapelessOreRecipe;
 
 public class RecipeAPI {
-
+	private static final String[] phases = {"@PRE_INIT", "@INIT", "@POST_INIT"};
+	public static final int PRE_INIT = 0, INIT = 1, POST_INIT = 2;
 	public static HashMap<String, IRecipeHandler> Handlers;
+	public static HashMap<String, CachedScript> cache = new HashMap<String, CachedScript>();
 	
 	static {
 		Handlers = new HashMap<String, IRecipeHandler>();
@@ -42,13 +48,35 @@ public class RecipeAPI {
 		}
 	}
 	
-	public static void loadRecipes(String fileName) {
-		RecipeScriptParser p = new RecipeScriptParser(new HashMap<String, Object>());
+	public static void loadRecipes(String fileName, int ph) {
 		try {
-			p.extScript(p.variables, fileName, ScriptCompiler.defaultRecLimit);
-		} catch (CompileException e) {
-			FMLLog.log("cd4017be_lib", Level.ERROR, e, "recipe script loading failed for %s", fileName);
+			CachedScript scr = cache.get(fileName);
+			if (scr == null && ph == 0) cache.put(fileName, scr = new CachedScript(fileName));
+			if (scr != null && scr.methods[ph] != null) scr.state.run(scr.methods[ph], ScriptCompiler.defaultRecLimit);
+		} catch (Exception e) {
+			FMLLog.log("RECIPE_SCRIPT", Level.ERROR, e, "loading failed for %s", fileName);
+		} 
+		if (ph >= phases.length - 1) {
+			cache.remove(fileName);
+			RecipeScriptParser.codeCache.clear();
 		}
+	}
+	
+	static class CachedScript {
+		public CachedScript(String file) throws IOException {
+			String code = ConfigurationFile.readTextFile(ConfigurationFile.getStream(file));
+			int[] idx = new int[phases.length + 1];
+			idx[phases.length] = code.length();
+			methods = new SubMethod[phases.length];
+			for (int i = idx.length - 2; i >= 0; i--) {
+				idx[i] = code.lastIndexOf(phases[i], idx[i + 1]);
+				if (idx[i] < 0) idx[i] = idx[i + 1];
+				else methods[i] = new SubMethod(code.substring(idx[i] + phases[i].length(), idx[i + 1]), new ResourceLocation(file.replace(".rcp", i + ".rcp")));
+			}
+			state = new RecipeScriptParser(new HashMap<String, Object>());
+		}
+		RecipeScriptParser state;
+		SubMethod[] methods;
 	}
 	
 	public static interface IRecipeHandler {
