@@ -1,6 +1,11 @@
 The Lib
 
-<<<<<<< Upstream, based on master-1.9
+################################# VERSIONS 1.9.4 #################################
+4.1.0 Changes:
+- update to MC-1.9.4
+- fixed initial client synchronization for TileEntities
+- included 3.2.0 changes
+
 ################################# VERSIONS 1.9 #################################
 
 4.0.3 Changes (from 1.8.9-3.2.2):
@@ -18,8 +23,6 @@ The Lib
  - improved side-config
  - bug fixes
 
-=======
->>>>>>> da6d778 Revert "v4.0.2"
 ################################# VERSIONS 1.8.9 #################################
 
 3.2.2 Changes:
