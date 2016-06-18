@@ -45,7 +45,12 @@ public class ModTileEntity extends TileEntity
     
     public int dimensionId;
     
-    public boolean onActivated(EntityPlayer player, EnumHand hand, ItemStack item, EnumFacing s, float X, float Y, float Z)
+    @Override
+	public NBTTagCompound getUpdateTag() {
+		return this.writeToNBT(new NBTTagCompound());
+	}
+
+	public boolean onActivated(EntityPlayer player, EnumHand hand, ItemStack item, EnumFacing s, float X, float Y, float Z)
     {
         TileBlockEntry entry = TileBlockRegistry.getBlockEntry(this.getBlockType());
         if (entry != null && entry.container != null && !player.isSneaking()) {
