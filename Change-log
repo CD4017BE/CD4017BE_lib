@@ -1,5 +1,11 @@
 The Lib
 
+################################# VERSIONS 1.9.4 #################################
+5.1.0 Changes:
+- update to MC-1.9.4
+- fixed initial client synchronization for TileEntities
+- included 3.2.0 changes
+
 ################################# VERSIONS 1.8.9 #################################
 3.2.0 Changes:
 - added script language for external recipe definition via config.
