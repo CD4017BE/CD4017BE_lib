@@ -267,6 +267,14 @@ public abstract class ScriptCompiler {
 			if (param[0] instanceof VecN) return ((VecN)param[0]).l();
 			else if (param[0] instanceof Double) return Math.abs((double)param[0]);
 			else break;
+		case ">":
+			if (param[0] instanceof Double) {
+				double x = (Double)param[0];
+				for (int i = 1; i < param.length; i++) 
+					if (param[i] instanceof Double && (Double)param[i] < x) x = (Double)param[i];
+					else return 0D;
+				return 1D;
+			} else break;
 		case "$":
 			if (param[0] instanceof String) return String.format((String)param[0], Arrays.copyOfRange(param, 1, param.length));
 			else break;

@@ -24,7 +24,7 @@ import cd4017be.lib.util.ScriptCompiler;
 public class RecipeScriptParser extends ScriptCompiler {
 
 	public static HashMap<ResourceLocation, String> codeCache = new HashMap<ResourceLocation, String>(); 
-	private static final String[] functions = {"it", "fl", "ore", "hasit", "hasfl"};
+	private static final String[] functions = {"it", "fl", "ore", "hasit", "hasfl", "nore"};
 	private static final String[] methods = {"add"};
 	
 	public RecipeScriptParser(HashMap<String, Object> vars) {
@@ -108,6 +108,10 @@ public class RecipeScriptParser extends ScriptCompiler {
 			for (Object o: param)
 				if (!FluidRegistry.isFluidRegistered((String)o)) return 0D;
 			return 1D;
+		case 5:
+			if (param[0] instanceof String)
+				return (double)OreDictionary.getOres((String)param[0]).size();
+			else return 0D;
 		}
 		return null;
 	}

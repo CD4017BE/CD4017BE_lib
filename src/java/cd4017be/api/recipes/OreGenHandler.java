@@ -8,6 +8,7 @@ import com.google.common.base.Predicate;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.block.state.pattern.BlockHelper;
+import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
@@ -37,14 +38,15 @@ public class OreGenHandler implements IRecipeHandler, IWorldGenerator{
 
 	@Override
 	public boolean addRecipe(Object... param) {
-		if (param.length < 5 || !(param[1] instanceof ItemStack && param[2] instanceof ItemStack && param[3] instanceof Double && param[4] instanceof VecN)) return false;
+		if (param.length < 5 || !(param[1] instanceof String && param[2] instanceof ItemStack && param[3] instanceof Double && param[4] instanceof VecN)) return false;
 		ItemStack is = (ItemStack)param[2];
 		Item i = is.getItem();
 		VecN vec = (VecN)param[4];
 		if (!(i instanceof ItemBlock && vec.x.length >= 3)) return false;
 		IBlockState out = ((ItemBlock)i).block.getStateFromMeta(i.getMetadata(is.getMetadata()));
-		Predicate<IBlockState> in = BlockHelper.forBlock(Block.getBlockFromItem(((ItemStack)param[1]).getItem()));
-		generators.add(new OreGen(out, is.stackSize, ((Double)param[3]).intValue(), (int)vec.x[0], (int)vec.x[1], (int)vec.x[2], in));
+		Block in = Block.getBlockFromName((String)param[1]);
+		if (in == null) in = Blocks.stone;
+		generators.add(new OreGen(out, is.stackSize, ((Double)param[3]).intValue(), (int)vec.x[0], (int)vec.x[1], (int)vec.x[2], BlockHelper.forBlock(in)));
 		return true;
 	}
 
