@@ -38,6 +38,7 @@ public class RecipeAPI {
 		Handlers.put("ore", new OreDictionaryHandler());
 		Handlers.put("smelt", new SmeltingHandler());
 		Handlers.put("fuel", new FuelHandler());
+		Handlers.put("worldgen", new OreGenHandler());
 		if (Loader.isModLoaded("Automation")){
 			Handlers.put("compAs", new MechanicAssemblerHandler());
 			Handlers.put("advFurn", new ThermalAssemblerHandler());

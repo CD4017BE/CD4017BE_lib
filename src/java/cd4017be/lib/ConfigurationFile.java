@@ -22,18 +22,39 @@ public class ConfigurationFile
 {
 	public static File configDir = null;
 	
-	public static File init(FMLPreInitializationEvent event, String fileName, String preset) {
+	public static File init(FMLPreInitializationEvent event, String fileName, String preset, boolean versionCheck) {
 		if (configDir == null) configDir = new File(event.getModConfigurationDirectory(), "cd4017be");
 		File file = new File(configDir, fileName);
-    	if (file.exists()) return file;
-    	FMLLog.log("cd4017be_lib", Level.INFO, "Config file %s does not exist, creating a new one using preset %s", file, preset);
-    	try {
+		if (file.exists() && (!versionCheck || checkVersions(file, preset))) return file;
+		try {
+			FMLLog.log("cd4017be_lib", Level.INFO, "Config file %s not existing or outdated, creating new from preset %s", file, preset);
     		copyData(preset, file);
     		return file;
     	} catch(IOException e) {
     		FMLLog.log("Automation", Level.WARN, e, "Config file creation failed!");
-    		return null;
+    		return file.exists() ? file : null;
     	}
+	}
+	
+	public static boolean checkVersions(File file, String refPath) {
+		char[] ind = new char[8];
+		try {
+			InputStreamReader isr = new InputStreamReader(new FileInputStream(file));
+			isr.read(ind);
+			isr.close();
+			if (ind[1] != 'V' || ind[2] != ':') return false;
+			String v = String.copyValueOf(ind, 3, 5);
+			isr = new InputStreamReader(ConfigurationFile.class.getResourceAsStream(refPath));
+			isr.read(ind);
+			isr.close();
+			return v.compareTo(String.copyValueOf(ind, 3, 5)) >= 0;
+		} catch(IOException e) {
+			return false;
+		}
+	}
+	
+	public static File init(FMLPreInitializationEvent event, String fileName, String preset) {
+		return init(event, fileName, preset, false);
 	}
 	
 	public static InputStream getStream(String fileName) throws IOException {

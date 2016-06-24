@@ -83,7 +83,7 @@ public abstract class GuiMachine extends GuiContainer
 				} else if (k == Keyboard.KEY_DOWN) {
 					return 2;
 				} else if (ChatAllowedCharacters.isAllowedCharacter(c) && cur < maxL){
-					text = text.substring(0, cur).concat("" + c).concat(text.substring(cur, Math.min(text.length(), maxL)));
+					text = text.substring(0, cur).concat("" + c).concat(text.substring(cur, Math.min(text.length(), maxL - 1)));
 					cur++;
 				}
 			} catch (IndexOutOfBoundsException e) {
