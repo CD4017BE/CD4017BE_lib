@@ -272,5 +272,10 @@ public class AutomatedTile extends ModTileEntity implements ISidedInventory, ITi
 		if (inventory == null) return 0;
         return inventory.getSizeInventory();
 	}
+
+	@Override
+	public boolean isUseableByPlayer(EntityPlayer player) {
+		return this.canPlayerAccessUI(player);
+	}
     
 }

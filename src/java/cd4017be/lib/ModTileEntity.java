@@ -158,9 +158,9 @@ public class ModTileEntity extends TileEntity
         return false;
     }
     
-    public boolean isUseableByPlayer(EntityPlayer player) 
+    public boolean canPlayerAccessUI(EntityPlayer player) 
     {
-        return true;
+        return !player.isDead && !this.tileEntityInvalid;
     }
     
     public void initContainer(TileContainer container)

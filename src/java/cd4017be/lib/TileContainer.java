@@ -57,7 +57,7 @@ public class TileContainer extends Container
     @Override
     public boolean canInteractWith(EntityPlayer player) 
     {
-        return !tileEntity.isInvalid() && tileEntity.isUseableByPlayer(player);
+        return tileEntity.canPlayerAccessUI(player);
     }
     
     public int[] getPlayerInv()
