@@ -1,6 +1,10 @@
 The Lib
 
 ################################# VERSIONS 1.8.9 #################################
+3.2.1 Changes:
+- added world generation and a few utility functions to recipe script.
+- fixed conflict with IInventory interface
+
 3.2.0 Changes:
 - added script language for external recipe definition via config.
 
