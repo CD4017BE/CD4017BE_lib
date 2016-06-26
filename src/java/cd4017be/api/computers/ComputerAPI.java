@@ -106,7 +106,7 @@ public class ComputerAPI //implements IPeripheralProvider //TODO reimplement
     
     public static double update(TileEntity tile, Object node, double energy)
     {
-    	if (!OCinstalled) return 0;
+    	if (node == null || !OCinstalled) return 0;
     	return update1(tile, node, energy);
     }
     
@@ -123,7 +123,7 @@ public class ComputerAPI //implements IPeripheralProvider //TODO reimplement
     
     @Optional.Method(modid = "OpenComputers")
     private static double update1(TileEntity tile, Object node, double energy) {
-    	if (node == null || !(node instanceof Component)) return 0;
+    	if (!(node instanceof Component)) return 0;
     	if (((Component)node).network() == null) Network.joinOrCreateNetwork(tile);
         if (node instanceof ComponentConnector) return energy - ((ComponentConnector)node).changeBuffer(energy * 0.001D) * 1000D;
         return 0;
