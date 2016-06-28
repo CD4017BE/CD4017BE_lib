@@ -23,6 +23,7 @@ import cd4017be.api.energy.EnergyOpenComputers;
 import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Optional;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 
 /**
@@ -114,6 +115,16 @@ public class ComputerAPI //implements IPeripheralProvider //TODO reimplement
     {
     	if (!OCinstalled) return;
     	removeOCnode1(node);
+    }
+    
+    @Optional.Method(modid = "OpenComputers")
+    public static void saveNode(Object node, NBTTagCompound nbt) {
+    	((Node)node).save(nbt);
+    }
+    
+    @Optional.Method(modid = "OpenComputers")
+    public static void readNode(Object node, NBTTagCompound nbt) {
+    	((Node)node).load(nbt);
     }
     
     @Optional.Method(modid = "OpenComputers")
