@@ -1,6 +1,15 @@
 The Lib
 
+################################# VERSIONS 1.9 #################################
+
+4.0.3 Changes (from 1.8.9-3.2.2):
+- added OC node save & load methods to ComputerAPI
+- added world generation and a few utility functions to recipe script.
+- fixed conflict with IInventory interface
+- added script language for external recipe definition via config.
+
 ################################# VERSIONS 1.8.9 #################################
+
 3.2.2 Changes:
 - added OC node save & load methods to ComputerAPI
 - added world generation and a few utility functions to recipe script.
