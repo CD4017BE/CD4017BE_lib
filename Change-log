@@ -1,7 +1,8 @@
 The Lib
 
 ################################# VERSIONS 1.8.9 #################################
-3.2.1 Changes:
+3.2.2 Changes:
+- added OC node save & load methods to ComputerAPI
 - added world generation and a few utility functions to recipe script.
 - fixed conflict with IInventory interface
 
@@ -23,7 +24,7 @@ The Lib
 - improved pipe rendering performance (only effective when updating mods too)
 - added my own model loader for use in TESRs
 
-3.0.4 Changes: <-
+3.0.4 Changes:
 - required for Inductive Automation 4.0.3
 
 3.0.3 Changes:
