@@ -7,13 +7,14 @@ import com.google.common.base.Predicate;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.block.state.pattern.BlockHelper;
+import net.minecraft.block.state.pattern.BlockMatcher;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.BlockPos;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraft.world.chunk.IChunkGenerator;
 import net.minecraft.world.chunk.IChunkProvider;
 import net.minecraft.world.gen.feature.WorldGenMinable;
 import net.minecraftforge.fml.common.IWorldGenerator;
@@ -31,7 +32,7 @@ public class OreGenHandler implements IRecipeHandler, IWorldGenerator{
 	}
 
 	@Override
-	public void generate(Random random, int chunkX, int chunkZ, World world, IChunkProvider chunkGenerator, IChunkProvider chunkProvider) {
+	public void generate(Random random, int chunkX, int chunkZ, World world, IChunkGenerator chunkGenerator, IChunkProvider chunkProvider) {
 		for (OreGen gen : generators) 
 			gen.generate(world, random, new BlockPos(chunkX << 4, 0, chunkZ << 4));
 	}
@@ -46,7 +47,7 @@ public class OreGenHandler implements IRecipeHandler, IWorldGenerator{
 		IBlockState out = ((ItemBlock)i).block.getStateFromMeta(i.getMetadata(is.getMetadata()));
 		Block in = Block.getBlockFromName((String)param[1]);
 		if (in == null) in = Blocks.stone;
-		generators.add(new OreGen(out, is.stackSize, ((Double)param[3]).intValue(), (int)vec.x[0], (int)vec.x[1], (int)vec.x[2], BlockHelper.forBlock(in)));
+		generators.add(new OreGen(out, is.stackSize, ((Double)param[3]).intValue(), (int)vec.x[0], (int)vec.x[1], (int)vec.x[2], BlockMatcher.forBlock(in)));
 		return true;
 	}
 
