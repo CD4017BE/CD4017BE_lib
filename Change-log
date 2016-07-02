@@ -1,6 +1,11 @@
 The Lib
 
 ################################# VERSIONS 1.9.4 #################################
+4.1.1 Changes (from 1.8.9-3.2.2):
+- added OC node save & load methods to ComputerAPI
+- added world generation and a few utility functions to recipe script.
+- fixed conflict with IInventory interface
+
 4.1.0 Changes:
 - update to MC-1.9.4
 - fixed initial client synchronization for TileEntities

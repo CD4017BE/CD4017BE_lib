@@ -46,7 +46,7 @@ public class OreGenHandler implements IRecipeHandler, IWorldGenerator{
 		if (!(i instanceof ItemBlock && vec.x.length >= 3)) return false;
 		IBlockState out = ((ItemBlock)i).block.getStateFromMeta(i.getMetadata(is.getMetadata()));
 		Block in = Block.getBlockFromName((String)param[1]);
-		if (in == null) in = Blocks.stone;
+		if (in == null) in = Blocks.STONE;
 		generators.add(new OreGen(out, is.stackSize, ((Double)param[3]).intValue(), (int)vec.x[0], (int)vec.x[1], (int)vec.x[2], BlockMatcher.forBlock(in)));
 		return true;
 	}
