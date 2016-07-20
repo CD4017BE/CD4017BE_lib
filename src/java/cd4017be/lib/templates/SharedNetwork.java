@@ -62,8 +62,8 @@ public abstract class SharedNetwork<C extends IComponent<C, N>, N extends Shared
 			onMerged(network);
 		} else {
 			network.onMerged((N)this);
-			for (C c : components.values()) c.setNetwork(network);
-			network.components.putAll(components);
+			//for (C c : components.values()) c.setNetwork(network);
+			//network.components.putAll(components);
 		}
 	}
 	

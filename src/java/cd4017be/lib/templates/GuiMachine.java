@@ -42,6 +42,20 @@ import org.lwjgl.opengl.GL11;
  */
 public abstract class GuiMachine extends GuiContainer
 {
+	public int focus = -1;
+	public ArrayList<IGuiComp> guiComps = new ArrayList<IGuiComp>();
+	
+	public void focus(int id) {
+		if (focus >= 0 && focus < guiComps.size()) guiComps.get(focus).unfocus();
+		focus = id;
+	}
+	
+	public static interface IGuiComp {
+		public void draw();
+		public void keyTyped(char c, int k);
+		public void mouseIn(int x, int y, int b, int d);
+		public void unfocus();
+	}
 	
 	public class TextField {
 		public final int maxL;
@@ -95,6 +109,44 @@ public abstract class GuiMachine extends GuiContainer
 			return -1;
 		}
 	}
+	
+	public class Slider implements IGuiComp{
+		public final int id, px, py, l, tx, ty, tw, th;
+		public final boolean hor;
+		public Slider(int id, int x, int y, int l, int texX, int texY, int texW, int texH, boolean horizontal) {
+			this.id = id;
+			this.hor = horizontal;
+			this.px = x + GuiMachine.this.guiLeft;
+			this.py = y + GuiMachine.this.guiTop;
+			this.l = l;
+			this.tx = texX;
+			this.ty = texY;
+			this.tw = texW;
+			this.th = texH;
+		}
+		@Override
+		public void draw() {
+			int f = (int)((Float)GuiMachine.this.getDisplVar(id) * (float)l - 0.5F * (float)(hor?tw:th));
+			GuiMachine.this.drawTexturedModalRect(hor? px + f : px, hor? py : py + f, tx, ty, tw, th);
+		}
+		@Override
+		public void keyTyped(char c, int k) {}
+		@Override
+		public void mouseIn(int x, int y, int b, int d) {
+			x -= px; y -= py;
+			if (x < 0 || y < 0 || x >= (hor?l:tw) || y >= (hor?th:l)) {
+				if (GuiMachine.this.focus != id) return;
+				else if (d == 0) return;
+			} else if (GuiMachine.this.focus != id) GuiMachine.this.focus(id);
+			if (d == 2 && GuiMachine.this.focus == id) GuiMachine.this.focus = -1;
+			float f = ((float)(hor?x:y) + 0.5F) / (float)l;
+			if (f < 0) f = 0;
+			else if (f > 1) f = 1;
+			GuiMachine.this.setDisplVar(id, f, d == 2);
+		}
+		@Override
+		public void unfocus() {}
+	}
     
     public GuiMachine(Container container)
     {
@@ -116,6 +168,9 @@ public abstract class GuiMachine extends GuiContainer
         this.mouseY = my;
         super.drawScreen(mx, my, par3);
     }
+    
+    protected Object getDisplVar(int id) {return null;}
+    protected void setDisplVar(int id, Object obj, boolean send) {}
     
     public int GuiLeft()
     {
@@ -236,6 +291,7 @@ public abstract class GuiMachine extends GuiContainer
 
 	@Override
 	protected void drawGuiContainerBackgroundLayer(float partialTicks, int mouseX, int mouseY) {
+		for (IGuiComp comp : guiComps) comp.draw();
 		if (this.inventorySlots instanceof TileContainer)
 			for (TankSlot slot : ((TileContainer)this.inventorySlots).tankSlots)
 				this.drawLiquidTank(slot.inventory, slot.tankNumber, slot.xDisplayPosition, slot.yDisplayPosition, slot.bigSize);
@@ -246,6 +302,7 @@ public abstract class GuiMachine extends GuiContainer
 
 	@Override
 	protected void mouseClicked(int x, int y, int b) throws IOException {
+		for (IGuiComp comp : guiComps) comp.mouseIn(x, y, b, 0);
 		if (FtabX < 0) this.clickLiquidConfig(tile, x - guiLeft - FtabX, y - guiTop - tabsY);
 		if (ItabX < 0) this.clickItemConfig(tile, x - guiLeft - ItabX, y - guiTop - tabsY);
 		if (EtabX < 0) this.clickEnergyConfig(tile, x - guiLeft - EtabX, y - guiTop - tabsY);
@@ -433,6 +490,7 @@ public abstract class GuiMachine extends GuiContainer
 	@Override
 	protected void mouseClickMove(int x, int y, int b, long t) 
 	{
+		for (IGuiComp comp : guiComps) comp.mouseIn(x, y, b, 1);
 		Slot slot = this.getSlotAtPosition(x, y);
         ItemStack itemstack = this.mc.thePlayer.inventory.getItemStack();
         if (slot instanceof SlotHolo && slot != lastClickSlot) {
@@ -444,6 +502,7 @@ public abstract class GuiMachine extends GuiContainer
 
 	@Override
 	protected void mouseReleased(int mouseX, int mouseY, int state) {
+		for (IGuiComp comp : guiComps) comp.mouseIn(mouseX, mouseY, state, 2);
 		super.mouseReleased(mouseX, mouseY, state);
 		lastClickSlot = null;
 	}
