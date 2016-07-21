@@ -167,7 +167,7 @@ public class BlockPipe extends TileBlock
         if (te != null && te instanceof IPipe) {
             IPipe.Cover cover = ((IPipe)te).getCover();
             if (cover != null) {
-            	return cover.block.getBlock().isOpaqueCube(state);
+            	return cover.block.isOpaqueCube();
             }
         }
         return false;
