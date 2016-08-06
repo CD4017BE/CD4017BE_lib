@@ -24,27 +24,29 @@ public class EnergyRedstoneFlux implements EnergyAPI.IEnergyHandler
     static class EnergyTile implements IEnergyAccess {
     	
     	final IEnergyHandler energy;
+    	final EnumFacing s;
     	
-    	EnergyTile(IEnergyHandler tile) {
+    	EnergyTile(IEnergyHandler tile, EnumFacing s) {
     		this.energy = tile;
+    		this.s = s;
     	}
     	
 		@Override
-		public double getStorage(int s) {
-			return (double)energy.getEnergyStored(s < 0 || s >= 6 ? null : EnumFacing.VALUES[s]) * RF_value;
+		public float getStorage() {
+			return (float)energy.getEnergyStored(s) * RF_value;
 		}
 
 		@Override
-		public double getCapacity(int s) {
-			return (double)energy.getMaxEnergyStored(s < 0 || s >= 6 ? null : EnumFacing.VALUES[s]) * RF_value;
+		public float getCapacity() {
+			return (float)energy.getMaxEnergyStored(s) * RF_value;
 		}
 
 		@Override
-		public double addEnergy(double e, int s) {
+		public float addEnergy(float e) {
 			if (e >= RF_value && energy instanceof IEnergyReceiver)
-				return (double)((IEnergyReceiver)energy).receiveEnergy(s < 0 || s >= 6 ? null : EnumFacing.VALUES[s], (int)Math.floor(e / RF_value), false) * RF_value;
+				return (float)((IEnergyReceiver)energy).receiveEnergy(s, (int)Math.floor(e / RF_value), false) * RF_value;
 			else if (e <= -RF_value && energy instanceof IEnergyProvider)
-				return (double)((IEnergyProvider)energy).extractEnergy(s < 0 || s >= 6 ? null : EnumFacing.VALUES[s], (int)Math.floor(e / -RF_value), false) * -RF_value;
+				return (float)((IEnergyProvider)energy).extractEnergy(s, (int)Math.floor(e / -RF_value), false) * -RF_value;
 			else return 0;
 		}
     	
@@ -61,33 +63,33 @@ public class EnergyRedstoneFlux implements EnergyAPI.IEnergyHandler
     	}
     	
 		@Override
-		public double getStorage(int s) {
-			return (double)energy.getEnergyStored(item) * RF_value;
+		public float getStorage() {
+			return (float)energy.getEnergyStored(item) * RF_value;
 		}
 
 		@Override
-		public double getCapacity(int s) {
-			return (double)energy.getMaxEnergyStored(item) * RF_value;
+		public float getCapacity() {
+			return (float)energy.getMaxEnergyStored(item) * RF_value;
 		}
 
 		@Override
-		public double addEnergy(double e, int s) {
+		public float addEnergy(float e) {
 			if (e >= RF_value)
-				return (double)energy.receiveEnergy(item, (int)Math.floor(e / RF_value), false) * RF_value;
+				return (float)energy.receiveEnergy(item, (int)Math.floor(e / RF_value), false) * RF_value;
 			else if (e <= -RF_value && energy instanceof IEnergyProvider)
-				return (double)energy.extractEnergy(item, (int)Math.floor(e / -RF_value), false) * -RF_value;
+				return (float)energy.extractEnergy(item, (int)Math.floor(e / -RF_value), false) * -RF_value;
 			else return 0;
 		}
     	
     }
 
     @Override
-    public IEnergyAccess create(TileEntity te) {
-        return te instanceof IEnergyHandler ? new EnergyTile((IEnergyHandler)te) : null;
+    public IEnergyAccess create(TileEntity te, EnumFacing s) {
+        return te instanceof IEnergyHandler ? new EnergyTile((IEnergyHandler)te, s) : null;
     }
     
 	@Override
-	public IEnergyAccess create(ItemStack item) {
+	public IEnergyAccess create(ItemStack item, int s) {
 		return item.getItem() instanceof IEnergyContainerItem ? new EnergyItem(item, (IEnergyContainerItem)item.getItem()) : null;
 	}
     

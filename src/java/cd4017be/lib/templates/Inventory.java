@@ -4,378 +4,251 @@
  */
 package cd4017be.lib.templates;
 
-import cd4017be.api.automation.IItemPipeCon;
-import cd4017be.lib.ModTileEntity;
 import cd4017be.lib.util.Utils;
-import cd4017be.lib.util.Utils.ItemType;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.ISidedInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.text.ITextComponent;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
+import net.minecraftforge.items.CapabilityItemHandler;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.ItemHandlerHelper;
 
 /**
  *
  * @author CD4017BE
  */
-public class Inventory implements ISidedInventory
+public class Inventory
 {
-    public int netIdxLong = 0;
-    private ModTileEntity tile;
-    public ItemStack[] items;
-    public final Component[] componets;
-    public String invName;
-    
-    public static class Component
-    {
-        public final int s;
-        public final int e;
-        public final byte d;
-        public boolean invChange = true;
-        public Component(int s, int e, int d)
-        {
-            this.s = s;
-            this.e = e;
-            this.d = (byte)d;
-        }
-        
-        public int[] slots()
-        {
-        	int[] slots = new int[e - s];
-        	for (int i = 0; i < slots.length; i++) slots[i] = s + i;
-        	return slots;
-        }
-    }
-    
-    public Inventory(ModTileEntity tile, int l, Component... cmp)
-    {
-        this.tile = tile;
-        this.componets = cmp == null ? new Component[0] : cmp;
-        this.items = new ItemStack[l];
-    }
-    
-    public Inventory setInvName(String name)
-    {
-        this.invName = name;
-        return this;
-    }
-    
-    public Inventory setNetLong(int idx)
-    {
-        this.netIdxLong = idx;
-        return this; 
-    }
-    
-    public void update()
-    {
-        if (tile.netData.longs[netIdxLong] == 0) return;
-        for (int i = 0; i < this.componets.length; i++) {
-            if (this.componets[i].d == 0) continue;
-            for (int s = 0; s < 6; s++) {
-            	byte m = this.getConfig(tile.netData.longs[netIdxLong], s, i);
-            	if (m < 2 || ((this.componets[i].d > 0 ^ m == 3) && !(tile instanceof IItemPipeCon))) continue;
-            	TileEntity te = Utils.getTileOnSide(tile, (byte)s);
-                if (te == null || !(te instanceof IInventory)) continue;
-                IInventory inv = (IInventory)te;
-                if ((this.componets[i].d > 0 ^ m == 3) && !(te instanceof IPipe)) continue;
-                if (m == 3) {
-                    Utils.transfer(this, s, componets[i].slots(), inv, s^1, Utils.accessibleSlots(inv, s^1), new ItemType());
-                    //int[] src = findItemStack(this, s, null, 64, true);
-                    //if (src.length == 0) break;
-                    //int[] dst = findPlaceFor(inv, s^1, this.items[src[0]], 64, true);
-                    //if (dst.length == 0) break;
-                    //transferItems(this, src, 64, (IInventory)te, dst);
-                } else {
-                    Utils.transfer(inv, s^1, Utils.accessibleSlots(inv, s^1), this, s, componets[i].slots(), new ItemType());
-                    //int[] src = findItemStack(inv, getSlots(inv, s^1), s^1, null, 64, true);
-                    //if (src.length == 0) break;
-                    //int[] dst = findPlaceFor(this, s, ((IInventory)te).getStackInSlot(src[0]), 64, true);
-                    //if (dst.length == 0) break;
-                    //transferItems((IInventory)te, src, 64, this, dst);
-                }
-            }
-        }
-    }
-    
-    public void writeToNBT(NBTTagCompound nbt, String name)
-    {
-        NBTTagList list = new NBTTagList();
-        for (int s = 0; s < items.length; s++)
-        {
-            if (items[s] != null)
-            {
-                NBTTagCompound item = new NBTTagCompound();
-                item.setByte("Slot", (byte)s);
-                items[s].writeToNBT(item);
-                list.appendTag(item);
-            }
-        }
-        nbt.setTag(name, list);
-    }
-    
-    public void readFromNBT(NBTTagCompound nbt, String name)
-    {
-        NBTTagList list = nbt.getTagList(name, 10);
-        for (int id = 0; id < list.tagCount(); ++id)
-        {
-            NBTTagCompound item = list.getCompoundTagAt(id);
-            byte s = item.getByte("Slot");
-            if (s >= 0 && s < items.length)
-            {
-                items[s] = ItemStack.loadItemStackFromNBT(item);
-            }
-        }
-    }
-    
-    public static int[] getSlots(IInventory inv, int s)
-    {
-        if (inv instanceof ISidedInventory) {
-            return ((ISidedInventory)inv).getSlotsForFace(EnumFacing.VALUES[s]);
-        } else {
-            int[] array = new int[inv.getSizeInventory()];
-            for (int i = 0; i < array.length; i++) array[i] = i;
-            return array;
-        }
-    }
-    
-    public static int[] findItemStack(IInventory inv, int[] slots, int s, ItemStack type, int n, boolean check)
-    {
-        boolean sided = check && inv instanceof ISidedInventory;
-        int[] array = new int[slots.length];
-        int i = 0;
-        for (int slot : slots) {
-            ItemStack stack = inv.getStackInSlot(slot);
-            if (stack != null && (type == null || Utils.itemsEqual(stack, type)) && (!sided || ((ISidedInventory)inv).canExtractItem(slot, stack, EnumFacing.VALUES[s]))) {
-                array[i++] = slot;
-                if (type == null) type = stack;
-                if ((n -= stack.stackSize) <= 0) break;
-            }
-        }
-        slots = new int[i];
-        System.arraycopy(array, 0, slots, 0, i);
-        return slots;
-    }
-    
-    public static int[] findPlaceFor(IInventory inv, int s, ItemStack item, int n, boolean check)
-    {
-        if (item == null) return new int[0];
-        item = item.copy();
-        boolean sided = check && inv instanceof ISidedInventory;
-        int[] slots = getSlots(inv, s);
-        int[] array = new int[slots.length];
-        boolean hasnull = false;
-        int i = 0;
-        for (int slot : slots) {
-            ItemStack stack = inv.getStackInSlot(slot);
-            if (stack != null && Utils.itemsEqual(stack, item) && (!sided || ((ISidedInventory)inv).canInsertItem(slot, item, EnumFacing.VALUES[s]))){
-                int m = Math.min(inv.getInventoryStackLimit(), stack.getMaxStackSize()) - stack.stackSize;
-                if (m <= 0) continue;
-                array[i++] = slot;
-                if ((n -= m) <= 0) break;
-            } else if (stack == null)hasnull = true;
-        }
-        if (hasnull && n > 0)
-        for (int slot : slots) {
-            ItemStack stack = inv.getStackInSlot(slot);
-            if (stack == null && (!sided || ((ISidedInventory)inv).canInsertItem(slot, item, EnumFacing.VALUES[s]))) {
-                array[i++] = slot;
-                if ((n -= inv.getInventoryStackLimit()) <= 0) break; 
-            }
-        }
-        slots = new int[i];
-        System.arraycopy(array, 0, slots, 0, i);
-        return slots;
-    }
-    
-    public static void transferItems(IInventory srcI, int[] srcS, int n, IInventory dstI, int[] dstS)
-    {
-        int i = 0;
-        for (int slot : dstS) {
-            ItemStack stack = dstI.getStackInSlot(slot);
-            int m = stack == null ? dstI.getInventoryStackLimit() : Math.min(dstI.getInventoryStackLimit(), stack.getMaxStackSize()) - stack.stackSize;
-            while (m > 0 && n > 0) {
-                ItemStack item = srcI.decrStackSize(srcS[i], Math.min(m, n));
-                if (item == null) {
-                    if (++i >= srcS.length) n = 0;
-                    continue;
-                }
-                if (stack == null){
-                    stack = item;
-                    m = Math.min(m, stack.getMaxStackSize());
-                } else stack.stackSize += item.stackSize;
-                m -= item.stackSize;
-                n -= item.stackSize;
-            }
-            dstI.setInventorySlotContents(slot, stack);
-            if (n <= 0) break;
-        }
-        srcI.markDirty();
-        dstI.markDirty();
-    }
-    
-    public byte getConfig(long cfg, int s, int id)
-    {
-        return (byte)(cfg >> (2 * s + 12 * id) & 3);
-    }
-    
-    @Override
-    public int getSizeInventory() 
-    {
-        return items.length;
-    }
+	/**	bits[0-59 6*5*2]: side * comp * access */
+	public long sideCfg = 0;
+	public final ItemStack[] items;
+	public final Group[] groups;
+	public final IAccessHandler handler;
+	public int shift = 0;
 
-    @Override
-    public ItemStack getStackInSlot(int i) 
-    {
-        return items[i];
-    }
-
-    @Override
-    public void setInventorySlotContents(int i, ItemStack itemstack) 
-    {
-        ItemStack old = items[i];
-        items[i] = itemstack;
-        this.slotChange(old, items[i], i);
-    }
-
-    @Override
-    public int getInventoryStackLimit() {
-        return 64;
-    }
-    
-    private void slotChange(ItemStack oldItem, ItemStack newItem, int slot)
-    {
-        if (tile instanceof IAutomatedInv) ((IAutomatedInv)tile).slotChange(oldItem, newItem, slot);
-        for (Component cmp : this.componets)
-            if (slot >= cmp.s && slot < cmp.e)
-            {
-                cmp.invChange = true;
-                return;
-            }
-    }
-
-    @Override
-    public boolean isUseableByPlayer(EntityPlayer entityplayer) {return true;}
-    
-    @Override
-    public int[] getSlotsForFace(EnumFacing side) 
-    {
-        int[] array = new int[items.length];
-        int n = 0;
-        for (int i = 0; i < this.componets.length; i++) {
-            byte m = this.getConfig(tile.netData.longs[netIdxLong], side.getIndex(), i);
-            if (m != 0)
-            for (int j = this.componets[i].s; j < this.componets[i].e; j++)
-            array[n++] = j;
-        }
-        int[] slots = new int[n];
-        System.arraycopy(array, 0, slots, 0, n);
-        return slots;
-    }
-
-    @Override
-    public boolean canInsertItem(int i, ItemStack itemstack, EnumFacing s) 
-    {
-        for (int j = 0; j < this.componets.length; j++) {
-            if (i >= this.componets[j].s && i < this.componets[j].e) {
-                byte m = this.getConfig(tile.netData.longs[netIdxLong], s.getIndex(), j);
-                return m == 1 || m == 2 && (tile instanceof IAutomatedInv ? ((IAutomatedInv)tile).canInsert(itemstack, j, i) : true);
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public boolean canExtractItem(int i, ItemStack itemstack, EnumFacing s) 
-    {
-        for (int j = 0; j < this.componets.length; j++) {
-            if (i >= this.componets[j].s && i < this.componets[j].e) {
-                byte m = this.getConfig(tile.netData.longs[netIdxLong], s.getIndex(), j);
-                return m == 1 || m == 3 && (tile instanceof IAutomatedInv ? ((IAutomatedInv)tile).canExtract(itemstack, j, i) : true);
-            }
-        }
-        return false;
-    }
-    
-    @Override
-    public boolean isItemValidForSlot(int i, ItemStack itemstack) 
-    {
-        for (int j = 0; j < this.componets.length; j++) {
-            if (i >= this.componets[j].s && i < this.componets[j].e) {
-                return tile instanceof IAutomatedInv ? ((IAutomatedInv)tile).isValid(itemstack, j, i) : true;
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public ItemStack decrStackSize(int i, int n) 
-    {
-        if (items[i] == null) return null;
-        ItemStack old = items[i].copy();
-        ItemStack ret;
-        if (n < items[i].stackSize) ret = items[i].splitStack(n);
-        else {
-            ret = items[i];
-            items[i] = null;
-        }
-        this.slotChange(old, items[i], i);
-        return ret;
-    }
-
-    @Override
-    public ItemStack removeStackFromSlot(int i) 
-    {
-        ItemStack item = items[i];
-        items[i] = null;
-        return item;
-    }
-
-	@Override
-	public String getName() {
-		return invName;
+	/**
+	 * @param l amount of item slots
+	 * @param g amount of accessible slot groups (max 5), use group() to define them.
+	 * @param handler implement this for detailed in/out control or set null to use default
+	 */
+	public Inventory(int l, int g, IAccessHandler handler) {
+		if (g > 5 || g > l) throw new IllegalArgumentException("Too many slot groups! " + g + " / " + (l < 5 ? l : 5));
+		this.items = new ItemStack[l];
+		this.groups = new Group[g];
+		this.handler = handler == null ? new DefaultAccessHandler() : handler;
 	}
 
-	@Override
-	public boolean hasCustomName() {
-		return true;
+	/**
+	 * Set the properties of a slot group. You must call this method for all of them, otherwise you may get NullPointerExceptions!
+	 * Also it's not recommended to let slot groups overlap.
+	 * @param i group index to set (0...c-1)
+	 * @param s start slot index (inclusive)
+	 * @param e end slot index (exclusive)
+	 * @param dir preferred direction: -1 input, 0 none, 1 output
+	 * @return this for construction convenience
+	 */
+	public Inventory group(int i, int s, int e, byte dir) {
+		groups[i] = new Group(i, s, e, dir);
+		return this;
 	}
 
-	@Override
-	public void markDirty() {}
-
-	@Override
-	public void openInventory(EntityPlayer player) {}
-
-	@Override
-	public void closeInventory(EntityPlayer player) {}
-
-	@Override
-	public int getField(int id) {
-		return 0;
+	/**
+	 * call each tick to update automation
+	 * @param tile the TileEntity owning this
+	 */
+	public void update(AutomatedTile tile) {
+		int cfg;
+		boolean pipe;//TODO pipe special
+		IItemHandler access;
+		for (byte s = 0; s < 6; s++) {
+			cfg = (int)(sideCfg >> (s * 10));
+			if((cfg & 0x15) == (cfg & 0x2a) >> 1) continue; //all connections are blocked or passive
+			TileEntity te = Utils.getTileOnSide(tile, s);
+			if (te == null || !te.hasCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, EnumFacing.VALUES[s^1])) continue;
+			access = te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, EnumFacing.VALUES[s^1]);
+			for (int g = 0; g < groups.length; g++, cfg >>= 2) 
+				if ((cfg & 3) == 1 && groups[g].dir == -1)
+					transferStack(access, new Access(g), shift);
+				else if ((cfg & 3) == 2 && groups[g].dir == 1) 
+					transferStack(new Access(g), access, shift);
+		}
+		shift++; //Integer overflow after 3.4 Years continuous operation -> won't happen
 	}
 
-	@Override
-	public void setField(int id, int value) {}
-
-	@Override
-	public int getFieldCount() {
-		return 0;
+	/**
+	 * Moves one stack from src to dest inventory
+	 * @param src source
+	 * @param dest destination
+	 * @param shift periodically changing slot offset to ensure items that can't be inserted at destination don't block the whole process.
+	 */
+	public static void transferStack(IItemHandler src, IItemHandler dest, int shift) {
+		int slot = -1, empty = -1;
+		ItemStack item = null, stack;
+		int ls = src.getSlots();
+		for (int i = 0; i < ls; i++) //find an item to extract
+			if ((item = src.extractItem(slot = (i + shift) % ls, 65536, true)) != null) break;
+		if (item == null) return; //none found
+		if (slot >= (ls = shift % ls)) //if we could have found this item in a lower slot, use that instead to keep inventory clean
+			for (int i = 0; i < ls; i++) 
+				if (item.isItemEqual(src.getStackInSlot(i)) && (stack = src.extractItem(i, 65536, true)) != null) {
+					slot = i; item = stack; break;
+				}
+		int n = item.stackSize, ld = dest.getSlots();
+		for (int i = 0; i < ld; i++) //first try to insert into slots with existing items
+			if (dest.getStackInSlot(i) == null) empty = empty < 0 ? i : empty; //save location of first empty slot
+			else if ((item = dest.insertItem(i, item, false)) == null) break;
+		if (empty >= 0 && item != null) //then insert into empty slots if any
+			for (int i = empty; i < ld; i++)
+				if (dest.getStackInSlot(i) == null && (item = dest.insertItem(i, item, false)) == null) break;
+		if (item != null) n -= item.stackSize;
+		if (n > 0) src.extractItem(slot, n, false); //extract the transported amount from source
 	}
 
-	@Override
-	public void clear() {
-		for (int i = 0; i < items.length; i++) items[i] = null;
+	public void writeToNBT(NBTTagCompound nbt, String name) {
+		nbt.setLong(name + "Cfg", sideCfg);
+		for (int i = 0; i < items.length; i++) 
+			if (items[i] != null) {
+				NBTTagCompound tag = new NBTTagCompound();
+				items[i].writeToNBT(tag);
+				nbt.setTag(name + Integer.toHexString(i), tag);
+			}
 	}
 
-	@Override
-	public ITextComponent getDisplayName() {
-		return new TextComponentString(this.getName());
+	public void readFromNBT(NBTTagCompound nbt, String name) {
+		sideCfg = nbt.getLong(name + "Cfg");
+		for (int i = 0; i < items.length; i++) {
+			String tagName = name + Integer.toHexString(i);
+			items[i] = nbt.hasKey(tagName, 10) ? ItemStack.loadItemStackFromNBT(nbt.getCompoundTag(tagName)) : null;
+		}
 	}
-    
+
+	public byte getConfig(int s, int id) {
+		return (byte)(sideCfg >> (10 * s + 2 * id) & 3);
+	}
+
+	public class Group {
+
+		public final int idx, s, e;
+		public final byte dir;
+
+		private Group(int idx, int s, int e, int d) {
+			this.idx = idx;
+			this.s = s;
+			this.e = e;
+			this.dir = (byte)d;
+		}
+
+	}
+
+	public class Access implements IItemHandler {
+
+		final int[] slots;
+		/** bits[0-2]: groupId, bit[6]: insert, bit[7]: extract */
+		final byte[] dir;
+
+		public Access(EnumFacing s) {
+			int cfg = (int)(Inventory.this.sideCfg >> (s.ordinal() * 10)) & 0x3ff, cfg1 = cfg;
+			int n = 0;
+			for (Group g : Inventory.this.groups) 
+				if (((cfg1 >>= 2) & 3) != 0) n += g.e - g.s;
+			slots = new int[n];
+			dir = new byte[n];
+			n = 0;
+			byte d;
+			for (Group g : Inventory.this.groups)
+				if (((cfg >>= 2) & 3) != 0) {
+					d = (byte)(g.idx | cfg << 6);
+					for (int i = g.s; i < g.e; i++) {
+						slots[n] = i; dir[n++] = d;
+					}
+				}
+		}
+
+		public Access(int g) {
+			Group group = Inventory.this.groups[g];
+			slots = new int[group.e - group.s];
+			dir = new byte[slots.length];
+			byte d = (byte)(g | 0xc0);
+			for (int i = group.s, n = 0; i < group.e; i++, n++) {
+				slots[n] = i; dir[n] = d;
+			}
+		}
+
+		@Override
+		public int getSlots() {
+			return slots.length;
+		}
+
+		@Override
+		public ItemStack getStackInSlot(int i) {
+			return Inventory.this.items[slots[i]];
+		}
+
+		@Override
+		public ItemStack insertItem(int i, ItemStack stack, boolean sim) {
+			ItemStack item;
+			int d = dir[i], s, m;
+			if ((d & 0x40) == 0 || (m = Inventory.this.handler.insertAm(d & 7, item = Inventory.this.items[s = slots[i]], stack)) <= 0) return stack;
+			if (!sim) {
+				if (item == null) item = ItemHandlerHelper.copyStackWithSize(stack, m);
+				else item.stackSize += m;
+				Inventory.this.handler.setSlot(d & 0x47, s, item);
+			}
+			return (m = stack.stackSize - m) > 0 ? ItemHandlerHelper.copyStackWithSize(stack, m) : null;
+		}
+
+		@Override
+		public ItemStack extractItem(int i, int m, boolean sim) {
+			ItemStack item;
+			int d = dir[i], s;
+			if ((d & 0x80) == 0 || (m = Inventory.this.handler.extractAm(d & 7, item = Inventory.this.items[s = slots[i]], m)) <= 0) return null;
+			if (!sim) {
+				if (item.stackSize == m) item = null;
+				else item.stackSize -= m;
+				Inventory.this.handler.setSlot(d & 0x87, s, item);
+			}
+			return ItemHandlerHelper.copyStackWithSize(item, m);
+		}
+	}
+
+	public interface IAccessHandler {
+		/**
+		 * @param slot group index
+		 * @param item current item in slot
+		 * @param insert item to insert
+		 * @return amount to move into the slot
+		 */
+		public int insertAm(int g, ItemStack item, ItemStack insert);
+		/**
+		 * @param g slot group index
+		 * @param item current item in slot
+		 * @param extract requested extract amount
+		 * @return amount to remove from the slot
+		 */
+		public int extractAm(int g, ItemStack item, int extract);
+		/**
+		 * set the slot to a new item (your implementation has to do this)
+		 * @param g slot group index with bit 6 on insert or bit 7 on extract
+		 * @param s slot index
+		 * @param item item to set
+		 */
+		public void setSlot(int g, int s, ItemStack item);
+	}
+
+	public class DefaultAccessHandler implements IAccessHandler {
+		@Override
+		public int insertAm(int g, ItemStack item, ItemStack insert) {
+			int m = Math.min(insert.getMaxStackSize(), insert.stackSize); 
+			return item == null ? m : item.stackSize < m && ItemHandlerHelper.canItemStacksStack(item, insert) ? m - item.stackSize : 0;
+		}
+		@Override
+		public int extractAm(int g, ItemStack item, int extract) {
+			return item == null ? 0 : item.stackSize < extract ? item.stackSize : extract;
+		}
+		@Override
+		public void setSlot(int g, int s, ItemStack item) {
+			Inventory.this.items[s] = item;
+		}
+	}
+
 }

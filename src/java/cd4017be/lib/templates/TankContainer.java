@@ -4,305 +4,300 @@
  */
 package cd4017be.lib.templates;
 
-import cd4017be.lib.ModTileEntity;
-import cd4017be.lib.util.Obj2;
 import cd4017be.lib.util.Utils;
-import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.FluidTankInfo;
-import net.minecraftforge.fluids.IFluidHandler;
+import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
+import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.fluids.capability.IFluidTankProperties;
 
 
 /**
- *
+ * Fully automated template for fluid tanks, where up to 4 of them can be "listed" to have side access and other automation properties.
  * @author CD4017BE
  */
-public class TankContainer implements IFluidHandler
+public class TankContainer
 {
-    public int netIdxLong = 0;
-    public int netIdxFluid = 0;
-    public final Tank[] tanks;
-    private final ModTileEntity tile;
-    
-    public static class Tank
-    {
-        public final int cap;
-        public final byte dir;
-        public Fluid[] types;
-        public int inSlot = -1;
-        public int outSlot = -1;
-        
-        public Tank(int cap, int dir, Fluid... types)
-        {
-            this.cap = cap;
-            this.types = types;
-            this.dir = (byte)dir;
-        }
-        
-        public Tank setIn(int slot)
-        {
-            this.inSlot = slot;
-            return this;
-        }
-        public Tank setOut(int slot)
-        {
-            this.outSlot = slot;
-            return this;
-        }
-    }
-    
-    public TankContainer(ModTileEntity tile, Tank... config)
-    {
-        this.tile = tile;
-        this.tanks = config == null ? new Tank[0] : config;
-        for (int i = 0; i < tanks.length; i++) {
-            if (tanks[i].types != null && tanks[i].types.length == 1) tile.netData.fluids[netIdxFluid + i] = new FluidStack(tanks[i].types[0], 0);
-        }
-    }
-    
-    public TankContainer setNetLong(int idx)
-    {
-        netIdxLong = idx;
-        return this;
-    }
-    
-    public void update()
-    {
-        for (int id = 0; id < tanks.length; id++)
-            if (tanks[id].dir != 0)
-                for (int s = 0; s < 6; s++) {
-                    byte cfg = this.getConfig(s, id);
-                    if (cfg == 0) continue;
-                    if (tanks[id].dir > 0 && cfg == 3 && this.getAmount(id) > 0)
-                    {
-                        TileEntity te = Utils.getTileOnSide(tile, (byte)s);
-                        if (!(te instanceof IFluidHandler)) continue;
-                        IFluidHandler handler = (IFluidHandler)te;
-                        this.drain(id, handler.fill(EnumFacing.VALUES[s ^ 1], this.getFluid(id), true), true);
-                    } else if (tanks[id].dir < 0 && cfg == 2 && this.getSpace(id) > 0)
-                    {
-                        TileEntity te = Utils.getTileOnSide(tile, (byte)s);
-                        if (!(te instanceof IFluidHandler)) continue;
-                        IFluidHandler handler = (IFluidHandler)te;
-                        int am = this.getSpace(id);
-                        FluidStack stack = null;
-                        if (this.getFluid(id) != null) stack = new FluidStack(this.getFluid(id), am);
-                        else if (tanks[id].types.length > 0) {
-                            for (Fluid type : tanks[id].types)
-                                if (handler.canDrain(EnumFacing.VALUES[s ^ 1], type)) {
-                                    stack = new FluidStack(type, am);
-                                    break;
-                                }
-                            if (stack == null) continue;
-                        }
-                        this.fill(id, stack == null ? handler.drain(EnumFacing.VALUES[s ^ 1], am, true) : handler.drain(EnumFacing.VALUES[s ^ 1], stack, true), true);
-                    }
-                }
-        if (tile instanceof IInventory)
-        {
-            IInventory inv = (IInventory)tile;
-            for (int id = 0; id < tanks.length; id++) {
-                if (tanks[id].inSlot >= 0 && tanks[id].inSlot < inv.getSizeInventory() && this.getSpace(id) > 0)
-                {
-                    ItemStack item = inv.getStackInSlot(tanks[id].inSlot);
-                    if (this.getFluid(id) == null || this.getFluid(id).isFluidEqual(item)) {
-                    	Obj2<ItemStack, FluidStack> output = Utils.drainFluid(item, this.getSpace(id));
-                    	this.fill(id, output.objB, true);
-                    	inv.setInventorySlotContents(tanks[id].inSlot, output.objA);
-                    }
-                }
-                if (tanks[id].outSlot >= 0 && tanks[id].outSlot < inv.getSizeInventory() && this.getAmount(id) > 0)
-                {
-                    ItemStack item = inv.getStackInSlot(tanks[id].outSlot);
-                    Obj2<ItemStack, Integer> output = Utils.fillFluid(item, this.getFluid(id));
-                    this.drain(id, output.objB, true);
-                    inv.setInventorySlotContents(tanks[id].outSlot, output.objA);
-                }
-            }
-        }
-    }
-    
-    public FluidStack getFluid(int id)
-    {
-        return tile.netData.fluids[netIdxFluid + id];
-    }
-    
-    public void setFluid(int id, FluidStack fluid)
-    {
-    	if (fluid != null && fluid.amount == 0) fluid = null;
-    	if (fluid == null && tile.netData.fluids[netIdxFluid + id] != null && this.isLocked(id)) {
-    		tile.netData.fluids[netIdxFluid + id].amount = 0;
-    	} else tile.netData.fluids[netIdxFluid + id] = fluid;
-    }
-    
-    public int getAmount(int id)
-    {
-        FluidStack stack = tile.netData.fluids[netIdxFluid + id];
-        return stack == null ? 0 : stack.amount;
-    }
-    
-    public int getSpace(int id)
-    {
-        FluidStack stack = tile.netData.fluids[netIdxFluid + id];
-        return stack == null ? tanks[id].cap : tanks[id].cap - stack.amount;
-    }
-    
-    public int fill(int id, FluidStack resource, boolean doFill)
-    {
-        if (resource == null) return 0;
-        FluidStack stack = this.getFluid(id);
-        if (stack != null && !stack.isFluidEqual(resource)) return 0;
-        int m = tanks[id].cap - (stack == null ? 0 : stack.amount);
-        if (m > resource.amount) m = resource.amount;
-        if (doFill) {
-            if (stack == null){
-                stack = resource.copy();
-                stack.amount = m;
-            } else {
-                stack.amount += m;
-            }
-            this.setFluid(id, stack);
-        }
-        return m;
-    }
-    
-    public FluidStack drain(int id, int amount, boolean doDrain)
-    {
-        FluidStack stack = this.getFluid(id);
-        if (stack == null || amount <= 0) return null;
-        int m = stack.amount;
-        if (m > amount) m = amount;
-        FluidStack ret = stack.copy();
-        if (doDrain) {
-            stack.amount -= m;
-            if (stack.amount <= 0) stack = null;
-            this.setFluid(id, stack);
-        }
-        ret.amount = m;
-        return ret;
-    }
-    
-    public byte getConfig(int s, int id)
-    {
-        return (byte)(tile.netData.longs[netIdxLong] >> (2 * s + 16 * id) & 3);
-    }
-    
-    public boolean isLocked(int id)
-    {
-    	return tanks[id].types.length == 1 || (tile.netData.longs[netIdxLong] >> (12 + 16 * id) & 1) != 0;
-    }
-    
-    private boolean canFillTank(int side, Fluid type, int id)
-    {
-        byte cfg = this.getConfig(side, id);
-        if (cfg == 0 || cfg == 3) return false;
-        FluidStack stack = this.getFluid(id);
-        if (stack != null) return stack.getFluid().equals(type) && stack.amount < tanks[id].cap;
-        if (tanks[id].types.length > 0) {
-            for (Fluid fluid : tanks[id].types)
-                if (fluid.equals(type)) return true;
-            return false;
-        } else return true;
-    }
-    
-    private boolean canDrainTank(int side, Fluid type, int id)
-    {
-        byte cfg = this.getConfig(side, id);
-        if (cfg == 0 || cfg == 2) return false;
-        FluidStack stack = this.getFluid(id);
-        if (stack == null || stack.amount == 0) return false;
-        return type == null || stack.getFluid().equals(type);
-    }
-    
-    @Override
-    public int fill(EnumFacing from, FluidStack resource, boolean doFill) 
-    {
-        int ref = -1;
-        for (int id = 0; id < tanks.length; id++)
-            if (this.canFillTank(from.ordinal(), resource.getFluid(), id))
-                if (ref == -1 || tanks[id].dir < tanks[ref].dir || (tanks[id].dir == tanks[ref].dir && this.getSpace(id) > this.getSpace(ref))) ref = id;
-        if (ref >= 0) return this.fill(ref, resource, doFill);
-        else return 0;
-    }
+	/**	bits[0-47 6*4*2]: side * tank * access, bits[48-51 4*1]: tank * locked */
+	public long sideCfg = 0;
+	public final FluidStack[] fluids;
+	public final Tank[] tanks;
 
-    @Override
-    public FluidStack drain(EnumFacing from, FluidStack resource, boolean doDrain) 
-    {
-        int ref = -1;
-        for (int id = 0; id < tanks.length; id++)
-            if (this.canDrainTank(from.ordinal(), resource.getFluid(), id))
-                if (ref == -1 || tanks[id].dir > tanks[ref].dir || (tanks[id].dir == tanks[ref].dir && this.getAmount(id) > this.getAmount(ref))) ref = id;
-        if (ref >= 0) return this.drain(ref, resource.amount, doDrain);
-        else return null;
-    }
+	/**
+	 * @param l total amount of fluid slots
+	 * @param t amount of slots that are "listed" tanks (max 4), use tank() to define them.
+	 */
+	public TankContainer(int l, int t) {
+		if (t > 4 || t > l) throw new IllegalArgumentException("Too many tanks! " + t + " / " + (l < 4 ? l : 4));
+		fluids = new FluidStack[l];
+		tanks = new Tank[t];
+	}
 
-    @Override
-    public FluidStack drain(EnumFacing from, int maxDrain, boolean doDrain) 
-    {
-        int ref = -1;
-        for (int id = 0; id < tanks.length; id++)
-            if (this.canDrainTank(from.ordinal(), null, id))
-                if (ref == -1 || tanks[id].dir > tanks[ref].dir || (tanks[id].dir == tanks[ref].dir && this.getAmount(id) > this.getAmount(ref))) ref = id;
-        if (ref >= 0) return this.drain(ref, maxDrain, doDrain);
-        else return null;
-    }
+	/**
+	 * Set the properties of a tank. You must call this method for all of them, otherwise you may get NullPointerExceptions!
+	 * @param i tanks index to set (0...t-1)
+	 * @param cap [mB] capacity
+	 * @param dir preferred direction: -1 input, 0 none, 1 output
+	 * @param in inventory slot index for input from containers or -1 for none
+	 * @param out inventory slot index for output to containers or -1 for none
+	 * @param types list of allowed fluid types, leave empty to allow any.
+	 * @return this for construction convenience
+	 */
+	public TankContainer tank(int i, int cap, byte dir, int in, int out, Fluid... types) {
+		tanks[i] = new Tank(i, cap, dir, in, out, types);
+		if (types.length == 1) {
+			fluids[i] = new FluidStack(tanks[i].types[0], 0);
+			sideCfg |= 1 << (i + 48);
+		}
+		return this;
+	}
 
-    @Override
-    public boolean canFill(EnumFacing from, Fluid fluid) 
-    {
-        for (int id = 0; id < tanks.length; id++)
-            if (this.canFillTank(from.ordinal(), fluid, id)) return true;
-        return false;
-    }
+	/**
+	 * call each tick to update automation
+	 * @param tile the TileEntity owning this
+	 */
+	public void update(AutomatedTile tile) {
+		byte cfg;
+		IFluidHandler access;
+		FluidStack fluid;
+		for (byte s = 0; s < 6; s++) {
+			if((cfg = (byte)(sideCfg >> (s * 8))) == 0) continue;
+			TileEntity te = Utils.getTileOnSide(tile, s);
+			if (te == null || !te.hasCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, EnumFacing.VALUES[s^1])) continue;
+			access = te.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, EnumFacing.VALUES[s^1]);
+			for (int t = 0; t < tanks.length; t++, cfg >>= 2) 
+				if ((cfg & 3) == 1 && tanks[t].dir == -1) {
+					if ((fluid = fluids[t]) != null) {
+						if ((fluid = access.drain(new FluidStack(fluid, tanks[t].cap - fluid.amount), true)) != null) 
+							fluids[t].amount += fluid.amount;
+					} else if (tanks[t].types == null) {
+						fluids[t] = access.drain(tanks[t].cap, true);
+					} else for (Fluid f : tanks[t].types) {
+						if ((fluids[t] = access.drain(new FluidStack(f, tanks[t].cap), true)) != null) break;
+					}
+				} else if ((cfg & 3) == 2 && tanks[t].dir == 1 && (fluid = fluids[t]) != null && fluid.amount > 0 && 
+					(fluid.amount -= access.fill(fluid.copy(), true)) <= 0 && (sideCfg >> (t + 48) & 1) == 0) 
+						fluids[t] = null;
+		}
+		if (tile.inventory != null) {
+			ItemStack item;
+			for (int t = 0; t < tanks.length; t++) {
+				if (tanks[t].inSlot >= 0 && ((fluid = fluids[t]) == null || fluid.amount < tanks[t].cap) && (item = tile.inventory.items[tanks[t].inSlot]) != null && item.hasCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, null)) {
+					access = item.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, null);
+					if (fluid != null) {
+						if ((fluid = access.drain(new FluidStack(fluid, tanks[t].cap - fluid.amount), true)) != null) 
+							fluids[t].amount += fluid.amount;
+					} else if (tanks[t].types == null) {
+						fluids[t] = access.drain(tanks[t].cap, true);
+					} else for (Fluid f : tanks[t].types) {
+						if ((fluids[t] = access.drain(new FluidStack(f, tanks[t].cap), true)) != null) break;
+					}
+				}
+				if (tanks[t].outSlot >= 0 && (fluid = fluids[t]) != null && fluid.amount > 0 && (item = tile.inventory.items[tanks[t].outSlot]) != null && item.hasCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, null)) {
+					access = item.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, null);
+					if ((fluid.amount -= access.fill(fluid.copy(), true)) <= 0 && (sideCfg >> (t + 48) & 1) == 0) fluids[t] = null;
+				}
+			}
+		}
+	}
 
-    @Override
-    public boolean canDrain(EnumFacing from, Fluid fluid) 
-    {
-        for (int id = 0; id < tanks.length; id++)
-            if (this.canDrainTank(from.ordinal(), fluid, id)) return true;
-        return false;
-    }
+	public void setFluid(int t, FluidStack fluid) {
+		if (fluid != null && fluid.amount == 0) fluid = null;
+		if (fluid == null && fluids[t] != null && (sideCfg >> (t + 48) & 1) != 0) fluids[t].amount = 0;
+		else fluids[t] = fluid;
+	}
 
-    @Override
-    public FluidTankInfo[] getTankInfo(EnumFacing from) 
-    {
-        FluidTankInfo[] array = new FluidTankInfo[tanks.length];
-        int n = 0;
-        for (int id = 0; id < tanks.length; id++)
-            if (this.getConfig(from.ordinal(), id) != 0)
-                array[n++] = new FluidTankInfo(this.getFluid(id), tanks[id].cap);
-        FluidTankInfo[] info = new FluidTankInfo[n];
-        System.arraycopy(array, 0, info, 0, n);
-        return info;
-    }
-    
-    public void readFromNBT(NBTTagCompound nbt, String name)
-    {
-        for (int id = 0; id < tanks.length; id++)
-        {
-            String tagName = name + Integer.toString(id);
-            if (nbt.hasKey(tagName)) {
-                this.setFluid(id, FluidStack.loadFluidStackFromNBT(nbt.getCompoundTag(tagName)));
-            } else this.setFluid(id, null);
-        }
-    }
-    
-    public void writeToNBT(NBTTagCompound nbt, String name)
-    {
-        for (int id = 0; id < tanks.length; id++)
-        {
-            FluidStack stack = this.getFluid(id);
-            if (stack != null) {
-                NBTTagCompound tag = new NBTTagCompound();
-                stack.writeToNBT(tag);
-                nbt.setTag(name + Integer.toString(id), tag);
-            }
-        }
-    }
-    
+	public int getAmount(int t) {
+		return fluids[t] == null ? 0 : fluids[t].amount;
+	}
+
+	public int getSpace(int t) {
+		return fluids[t] == null ? tanks[t].cap : tanks[t].cap - fluids[t].amount;
+	}
+
+	public int fill(int t, FluidStack fluid, boolean doFill) {
+		if (!tanks[t].canFillFluidType(fluid)) return 0;
+		FluidStack stack = fluids[t];
+		int rem = tanks[t].cap - (stack == null ? 0 : stack.amount);
+		if (rem > fluid.amount) rem = fluid.amount;
+		if (doFill && rem > 0) {
+			if (stack != null) stack.amount += rem;
+			else fluids[t] = new FluidStack(fluid, rem);
+		}
+		return rem;
+	}
+
+	public FluidStack drain(int t, int amount, boolean doDrain) {
+		FluidStack stack;
+		if ((stack = fluids[t]) == null || stack.amount <= 0) return null;
+		int rem = Math.min(amount, stack.amount);
+		if (doDrain && (stack.amount -= rem) <= 0 && (TankContainer.this.sideCfg >> (t + 48) & 1) == 0)
+			TankContainer.this.fluids[t] = null;
+		return new FluidStack(stack, rem);
+	}
+
+	public byte getConfig(int s, int t) {
+		return (byte)(sideCfg >> (8 * s + 2 * t) & 3);
+	}
+
+	public boolean canUnlock(int t) {
+		return tanks[t].types == null || tanks[t].types.length != 1;
+	}
+
+	public boolean isLocked(int t) {
+		return (sideCfg >> (48 + t) & 1) != 0;
+	}
+
+	public void readFromNBT(NBTTagCompound nbt, String name) {
+		sideCfg = nbt.getLong(name + "Cfg");
+		for (int f = 0; f < fluids.length; f++) {
+			String tagName = name + Integer.toHexString(f);
+			fluids[f] = nbt.hasKey(tagName, 10) ? FluidStack.loadFluidStackFromNBT(nbt.getCompoundTag(tagName)) : null;
+		}
+	}
+
+	public void writeToNBT(NBTTagCompound nbt, String name) {
+		nbt.setLong(name + "Cfg", sideCfg);
+		for (int f = 0; f < fluids.length; f++)
+			if (fluids[f] != null) {
+				NBTTagCompound tag = new NBTTagCompound();
+				fluids[f].writeToNBT(tag);
+				nbt.setTag(name + Integer.toHexString(f), tag);
+			}
+	}
+
+	/**
+	 * Defines the properties of a "listed" Tank such as: capacity, preferred transport direction, allowed fluid types and item container slots.
+	 * @author CD4017BE
+	 */
+	public class Tank implements IFluidTankProperties {
+
+		public final int idx, cap, inSlot, outSlot;
+		public final byte dir;
+		public final Fluid[] types;
+
+		private Tank(int idx, int cap, byte dir, int in, int out, Fluid... types) {
+			this.idx = idx;
+			this.cap = cap;
+			this.types = types.length == 0 ? null : types;
+			this.dir = dir;
+			this.inSlot = in;
+			this.outSlot = out;
+		}
+
+		@Override
+		public FluidStack getContents() {
+			return TankContainer.this.fluids[idx] == null ? null : TankContainer.this.fluids[idx].copy();
+		}
+
+		@Override
+		public int getCapacity() {
+			return cap;
+		}
+
+		@Override
+		public boolean canFill() {
+			return true;
+		}
+
+		@Override
+		public boolean canDrain() {
+			return true;
+		}
+
+		@Override
+		public boolean canFillFluidType(FluidStack fluidStack) {
+			if (TankContainer.this.fluids[idx] != null) return TankContainer.this.fluids[idx].isFluidEqual(fluidStack);
+			if (types == null) return true;
+			for (Fluid f : types) if (fluidStack.getFluid() == f) return true;
+			return false;
+		}
+
+		@Override
+		public boolean canDrainFluidType(FluidStack fluidStack) {
+			return TankContainer.this.fluids[idx] != null && TankContainer.this.fluids[idx].isFluidEqual(fluidStack);
+		}
+	}
+
+	/**
+	 * Used to access the TankContainer from a side via the Forge capabilities system.
+	 * @author CD4017BE
+	 */
+	public class Access implements IFluidHandler {
+		/** side config */
+		final byte accessIdx;
+
+		public Access(EnumFacing s) {
+			if (s == null) accessIdx = (byte)0xff;
+			else accessIdx = (byte)(TankContainer.this.sideCfg >> (s.ordinal() * 8));
+		}
+
+		@Override
+		public IFluidTankProperties[] getTankProperties() {
+			int ml = TankContainer.this.tanks.length, n = 0;
+			for (int i = 0, k = 3; i < ml; i++, k <<= 2) 
+				if((accessIdx & k) != 0) n++;
+			Tank[] prop = new Tank[n];
+			for (int i = 0, j = 0, k = 3; j < n; i++, k <<= 2)
+				if((accessIdx & k) != 0) prop[j++] = TankContainer.this.tanks[i];
+			return prop;
+		}
+
+		@Override
+		public int fill(FluidStack fluid, boolean doFill) {
+			int am = fluid.amount, rem;
+			FluidStack stack;
+			for (int i = 0, k = 1; am > 0 && i < 4; i++, k <<= 2) 
+				if ((accessIdx & k) != 0 && TankContainer.this.tanks[i].canFillFluidType(fluid)) {
+					stack = TankContainer.this.fluids[i];
+					rem = TankContainer.this.tanks[i].cap - (stack == null ? 0 : stack.amount);
+					if (rem > am) {rem = am; am = 0;} else am -= rem;
+					if (doFill && rem > 0) {
+						if (stack != null) stack.amount += rem;
+						else TankContainer.this.fluids[i] = new FluidStack(fluid, rem);
+					}
+				}
+			return fluid.amount - am;
+		}
+
+		@Override
+		public FluidStack drain(FluidStack fluid, boolean doDrain) {
+			int am = fluid.amount, rem;
+			FluidStack stack;
+			for (int i = 0, k = 1; am > 0 && i < 4; i++, k <<= 2) 
+				if ((accessIdx & k) != 0 && (stack = TankContainer.this.fluids[i]) != null && stack.amount > 0 && stack.isFluidEqual(fluid)) {
+					rem = Math.min(am, stack.amount);
+					am -= rem;
+					if (doDrain && (stack.amount -= rem) <= 0 && (TankContainer.this.sideCfg >> (i + 48) & 1) == 0)
+						TankContainer.this.fluids[i] = null;
+				}
+			return new FluidStack(fluid, fluid.amount - am);
+		}
+
+		@Override
+		public FluidStack drain(int maxDrain, boolean doDrain) {
+			FluidStack fluid = null, stack;
+			int rem;
+			for (int i = 0, k = 1; i < 4; i++, k <<= 2) 
+				if ((accessIdx & k) != 0 && (stack = TankContainer.this.fluids[i]) != null && stack.amount > 0) {
+					if (fluid == null) {
+						rem = Math.min(maxDrain, stack.amount);
+						fluid = new FluidStack(stack, rem);
+					} else if (stack.isFluidEqual(fluid)) {
+						rem = Math.min(maxDrain - fluid.amount, stack.amount);
+						fluid.amount += rem;
+					} else continue;
+					if (doDrain && (stack.amount -= rem) <= 0 && (TankContainer.this.sideCfg >> (i + 48) & 1) == 0)
+						TankContainer.this.fluids[i] = null;
+					if (fluid.amount >= maxDrain) return fluid;
+				}
+			return fluid;
+		}
+
+	}
+
 }

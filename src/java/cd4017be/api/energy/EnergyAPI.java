@@ -8,6 +8,7 @@ import java.util.ArrayList;
 
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.EnumFacing;
 
 /**
  * This is the core class for energy exchange with other mods. 
@@ -24,12 +25,14 @@ public class EnergyAPI
 	public static final IEnergyAccess NULL = new NullAccess();
 	/** the IEnergyHandler instance for InductiveAutomation */
 	public static EnergyAutomation main = new EnergyAutomation();
+	/**[J] energy conversion factor for Item Charge*/
+	public static final float IA_value = 1000F;
 	/**[J] energy conversion factor for RedstoneFlux*/
-	public static double RF_value = 100D;
+	public static float RF_value = 100F;
 	/**[J] energy conversion factor for IndustrialCraft's EU*/
-	public static double EU_value = 400D;
+	public static float EU_value = 400F;
 	/**[J] energy conversion factor for OpenComputers*/
-	public static double OC_value = 1000D;
+	public static float OC_value = 1000F;
 	
 	/** 
 	 * This is a wrapper used to access energy in ItemStacks or TileEntities. 
@@ -39,21 +42,18 @@ public class EnergyAPI
 	 * */
 	public static interface IEnergyAccess {
 		/** 
-		 * @param s access type  
 		 * @return [J] stored energy
 		 */
-		public double getStorage(int s);
+		public float getStorage();
 		/**
-		 * @param s access type
 		 * @return [J] storage capacity
 		 */
-		public double getCapacity(int s);
+		public float getCapacity();
 		/**
 		 * @param e [J] the amount energy to insert (e > 0) or extract (e < 0)
-		 * @param s access type
 		 * @return [J] the amount of energy actually inserted (> 0) or extracted (< 0)
 		 */
-		public double addEnergy(double e, int s);
+		public float addEnergy(float e);
 	}
 	
 	/** This is used to support IEnergyAccess instances for TileEntities and ItemStacks */
@@ -63,30 +63,30 @@ public class EnergyAPI
 		 * @param te the TileEntity to create a wrapper for
 		 * @return the wrapper or null if given TileEntity is not supported by this handler
 		 */
-		public IEnergyAccess create(TileEntity te);
+		public IEnergyAccess create(TileEntity te, EnumFacing s);
 		/**
 		 * @param item the ItemStack to create a wrapper for
 		 * @return the wrapper or null if given ItemStack is not supported by this handler
 		 */
-		public IEnergyAccess create(ItemStack item);
+		public IEnergyAccess create(ItemStack item, int s);
 	}
 	
 	static {
 		handlers.add(main);
 		handlers.add(new EnergyRedstoneFlux());
-		//registerAccess(EnergyIndustrialCraft.class); //TODO reimplement
+		//TODO implement IC2 & TESLA energy
 	}
 	
 	/**
 	 * @param te the TileEntity to get a valid wrapper for
 	 * @return the wrapper instance. Never null: if no valid handler was found this is the default instance.
 	 */
-	public static IEnergyAccess get(TileEntity te) {
+	public static IEnergyAccess get(TileEntity te, EnumFacing s) {
 		if (te == null) return NULL;
 		if (te instanceof IEnergyAccess) return (IEnergyAccess)te;
 		IEnergyAccess e;
 		for (IEnergyHandler c : handlers)
-			if ((e = c.create(te)) != null)
+			if ((e = c.create(te, s)) != null)
 				return e;
 		return NULL;
 	}
@@ -95,11 +95,11 @@ public class EnergyAPI
 	 * @param te the ItemStack to get a valid wrapper for
 	 * @return the wrapper instance. Never null: if no valid handler was found this is the default instance.
 	 */
-	public static IEnergyAccess get(ItemStack item) {
+	public static IEnergyAccess get(ItemStack item, int s) {
 		if (item == null || item.getItem() == null || item.stackSize != 1) return NULL;
 		IEnergyAccess e;
 		for (IEnergyHandler c : handlers)
-			if ((e = c.create(item)) != null)
+			if ((e = c.create(item, s)) != null)
 				return e;
 		return NULL;
 	}
@@ -107,17 +107,17 @@ public class EnergyAPI
 	static class NullAccess implements IEnergyAccess {
 		
 		@Override
-		public double getStorage(int s) {
+		public float getStorage() {
 			return 0;
 		}
 		
 		@Override
-		public double getCapacity(int s) {
+		public float getCapacity() {
 			return 0;
 		}
 		
 		@Override
-		public double addEnergy(double e, int s) {
+		public float addEnergy(float e) {
 			return 0;
 		}
 	}

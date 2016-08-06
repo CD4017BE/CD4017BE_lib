@@ -4,104 +4,114 @@
  */
 package cd4017be.api.automation;
 
+import cd4017be.api.energy.EnergyAPI.IEnergyAccess;
+import cd4017be.api.energy.EnergyAutomation;
 import cd4017be.lib.ModTileEntity;
 import cd4017be.lib.TooltipInfo;
 import cd4017be.lib.util.Utils;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.EnumFacing;
 
 /**
  *
  * @author CD4017BE
  */
-public class PipeEnergy
+public class PipeEnergy implements IEnergyAccess
 {
-    public static final PipeEnergy empty = new PipeEnergy(0, 0);
-    public boolean update;
-    public byte con;
-    public double Ucap;
-    public double[] Iind;
-    public final int Umax;
-    public final float Rcond;
-    
-    public PipeEnergy(int Umax, float Rcond)
-    {
-    	con = 0;
-        Ucap = 0F;
-        Iind = new double[]{0, 0, 0};
-        this.Umax = Umax;
-        this.Rcond = Rcond;
-    }
-    
-    public PipeEnergy connect(byte c)
-    {
-    	con = c;
-    	return this;
-    }
-    
-    public void addEnergy(double E)
-    {
-        this.Ucap = Math.sqrt(this.Ucap * this.Ucap + E);
-        if (Double.isNaN(Ucap)) this.Ucap = 0F;
-    }
-    
-    public double getEnergy(double U, double R)
-    {
-        if (R < 1) R = 1;
-        return (Ucap * Ucap - U * U) / R;
-    }
-    
-    public void readFromNBT(NBTTagCompound nbt, String name) 
-    {
-        this.con = nbt.getByte("con");
-    	this.Ucap = nbt.getDouble(name.concat("Ucap"));
-        this.Iind[0] = nbt.getDouble(name.concat("IindY"));
-        this.Iind[1] = nbt.getDouble(name.concat("IindZ"));
-        this.Iind[2] = nbt.getDouble(name.concat("IindX"));
-    }
+	public boolean update;
+	public byte sideCfg;
+	public float Ucap;
+	public float[] Iind;
+	public final int Umax;
+	public final float Zcond;
 
-    public void writeToNBT(NBTTagCompound nbt, String name) 
-    {
-    	nbt.setByte("con", con);
-        nbt.setDouble(name.concat("Ucap"), Ucap);
-        nbt.setDouble(name.concat("IindY"), Iind[0]);
-        nbt.setDouble(name.concat("IindZ"), Iind[1]);
-        nbt.setDouble(name.concat("IindX"), Iind[2]);
-    }
+	public PipeEnergy(int Umax, float Rcond) {
+		this.Umax = Umax;
+		this.Zcond = 1F + Rcond;
+		sideCfg = 0x3f;
+		Iind = new float[]{0, 0, 0};
+	}
 
-    public boolean isConnected(int s)
-    {
-    	return (con >> s & 1) == 0;
-    }
-    
-    public void update(ModTileEntity tile) 
-    {
-    	if (!(tile instanceof IEnergy)) return;
-        IEnergy src = (IEnergy)tile;
-        int s;
-    	for (int i = 0; i < Iind.length; i++) {
-    		s = i << 1;
-            if (src.getEnergy((byte)s) != this || !this.isConnected(s)) continue;
-            TileEntity te = Utils.getTileOnSide(tile, (byte)s);
-            PipeEnergy energy = te != null && te instanceof IEnergy ? ((IEnergy)te).getEnergy((byte)(s | 1)) : null;
-            if (energy != null && energy.Umax > 0 && energy.isConnected(s | 1)) {
-                double uc = energy.Ucap;
-                double ii = (Ucap - uc) / (1D + Rcond);
-                double ud = (ii + Iind[i] * (1D - Rcond)) / 2D;
-                Ucap -= ud;
-                energy.Ucap += ud;
-                Iind[i] = ii;
-            }
-        }
-        if (Ucap > Umax) Ucap = Umax;
-    }
-    
-    public static String[] getEnergyInfo(float U1, float U0, float R)
-    {
-    	float I = (U1 - U0) / R;
-    	float P = (U1 + U0) * I;
-    	return TooltipInfo.format("gui.cd4017be.energyFlow", P / 1000F, I).split("\n");
-    	//return new String[]{"Power:", String.format("%.1f kW", P / 1000F), String.format("@ %.0f A", I)};
-    }
-    
+	public PipeEnergy connect(byte c) {
+		sideCfg = c;
+		return this;
+	}
+
+	public float getEnergy(float U, float R) {
+		if (R < 1) R = 1;
+		return (Ucap * Ucap - U * U) / R;
+	}
+	
+	@Override
+	public float getStorage() {
+		return Ucap * Ucap;
+	}
+
+	@Override
+	public float getCapacity() {
+		return (float)Umax * (float)Umax;
+	}
+
+	@Override
+	public float addEnergy(float e) {
+		float d = Ucap * Ucap; e += d;
+		float m = (float)Umax * (float)Umax;
+		if (e < 0) {
+			e = 0;
+			Ucap = 0;
+		} else if (e > m) {
+			e = m;
+			Ucap = Umax;
+		} else {
+			Ucap = (float)Math.sqrt(e);
+			if (Float.isNaN(Ucap)) Ucap = 0F;
+		}
+		return e - d;
+	}
+
+	public void readFromNBT(NBTTagCompound nbt, String name) {
+		sideCfg = nbt.getByte(name + "Cfg");
+		Ucap = nbt.getFloat(name + "U");
+		Iind[0] = nbt.getFloat(name + "Iy");
+		Iind[1] = nbt.getFloat(name + "Iz");
+		Iind[2] = nbt.getFloat(name + "Ix");
+	}
+
+	public void writeToNBT(NBTTagCompound nbt, String name) {
+		nbt.setByte(name + "Cfg", sideCfg);
+		nbt.setDouble(name + "U", Ucap);
+		nbt.setDouble(name + "Iy", Iind[0]);
+		nbt.setDouble(name + "Iz", Iind[1]);
+		nbt.setDouble(name + "Ix", Iind[2]);
+	}
+
+	public boolean isConnected(int s) {
+		return (sideCfg >> s & 1) != 0;
+	}
+
+	public void update(ModTileEntity tile) {
+		PipeEnergy energy;
+		for (byte i = 0, s = 0; i < 3; i++, s += 2) 
+			if ((sideCfg >> s & 1) != 0) {
+				TileEntity te = Utils.getTileOnSide(tile, s);
+				if (te != null && te.hasCapability(EnergyAutomation.ELECTRIC_CAPABILITY, EnumFacing.VALUES[s | 1])) {
+					energy = te.getCapability(EnergyAutomation.ELECTRIC_CAPABILITY, EnumFacing.VALUES[s | 1]);
+					float ii = (Ucap - energy.Ucap) / Zcond;
+					float ud = (ii + Iind[i]) * 0.5F;
+					Ucap -= ud;
+					energy.Ucap += ud;
+					Iind[i] = ii;
+				}
+		}
+		if (Ucap > Umax) Ucap = Umax;
+	}
+
+	public static String[] getEnergyInfo(float U1, float U0, float R) {
+		float I = (U1 - U0) / R;
+		float P = (U1 + U0) * I;
+		return TooltipInfo.format("gui.cd4017be.energyFlow", P / 1000F, I).split("\n");
+		//return new String[]{"Power:", String.format("%.1f kW", P / 1000F), String.format("@ %.0f A", I)};
+	}
+
 }
