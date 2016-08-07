@@ -4,6 +4,7 @@
  */
 package cd4017be.lib;
 
+import cd4017be.lib.DataContainer.IGuiData;
 import cd4017be.lib.TileBlockRegistry.TileBlockEntry;
 import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -130,14 +131,10 @@ public class BlockGuiHandler implements IGuiHandler
     	FMLProxyPacket packet = event.getPacket();
     	if (!packet.channel().equals(guiChannel)) return;
     	Container container = Minecraft.getMinecraft().thePlayer.openContainer;
-        if (container != null && container instanceof TileContainer) {
-            try {
-                PacketBuffer data = new PacketBuffer(packet.payload());
-                ModTileEntity te = ((TileContainer)container).tileEntity;
-                if (te.getPos().equals(data.readBlockPos())) ((TileContainer)container).onDataUpdate(data);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        if (container != null && container instanceof DataContainer) {
+            PacketBuffer data = new PacketBuffer(packet.payload());
+            IGuiData te = ((DataContainer)container).data;
+            if (te.getPos().equals(data.readBlockPos())) ((DataContainer)container).onDataUpdate(data);
         }
     }
     
@@ -174,7 +171,7 @@ public class BlockGuiHandler implements IGuiHandler
             TileEntity te = world.getTileEntity(pos);
             if (entry != null && entry.container != null && te != null && entry.tileEntity.isInstance(te)) {
                 try {
-                    return entry.container.getConstructor(ModTileEntity.class, EntityPlayer.class).newInstance((ModTileEntity)te, player);
+                    return entry.container.getConstructor(IGuiData.class, EntityPlayer.class).newInstance((IGuiData)te, player);
                 } catch (NoSuchMethodException ex) {
                     FMLLog.severe("CD4017BE-lib: TileContainer %1$s is missing the Constructor ( %2$s , %3$s )", entry.container.getName(), ModTileEntity.class.getName(), EntityPlayer.class.getName());
                     return null;

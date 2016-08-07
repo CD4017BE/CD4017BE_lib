@@ -8,12 +8,16 @@ import cd4017be.api.automation.AreaProtect;
 import cd4017be.api.automation.IOperatingArea;
 import cd4017be.api.automation.PipeEnergy;
 import cd4017be.api.energy.EnergyAutomation;
+import cd4017be.lib.TileContainer;
 import cd4017be.lib.ModTileEntity;
 import cd4017be.lib.templates.TankContainer;
 
 import java.io.IOException;
 
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.inventory.ClickType;
+import net.minecraft.inventory.Slot;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.PacketBuffer;
@@ -142,5 +146,9 @@ public class AutomatedTile extends ModTileEntity implements ITickable
 		if (inventory != null) nbt.setLong("Icfg", inventory.sideCfg);
 		return new SPacketUpdateTileEntity(pos, -1, nbt);
 	}
+
+	public boolean transferStack(ItemStack item, int s, TileContainer container) {return false;}
+    
+    public boolean slotClick(ItemStack item, Slot s, int b, ClickType m, TileContainer container) {return false;}
 
 }

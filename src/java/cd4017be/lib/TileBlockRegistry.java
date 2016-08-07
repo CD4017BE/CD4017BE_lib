@@ -11,6 +11,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 import java.util.HashMap;
 
+import cd4017be.lib.DataContainer.IGuiData;
 import net.minecraft.block.Block;
 import net.minecraft.client.gui.inventory.GuiContainer;
 
@@ -59,7 +60,8 @@ public class TileBlockRegistry
      */
     public static void register(TileBlock block, Class<? extends ModTileEntity> tileEntity, Class<? extends TileContainer> container)
     {
-        TileBlockEntry entry = new TileBlockEntry(block);
+        if (container != null && !IGuiData.class.isAssignableFrom(tileEntity)) throw new IllegalArgumentException(String.format("%s doesn't implement %s !", tileEntity.getName(), IGuiData.class.getName()));
+    	TileBlockEntry entry = new TileBlockEntry(block);
         entry.tileEntity = tileEntity;
         GameRegistry.registerTileEntity(tileEntity, block.getUnlocalizedName());
         entry.container = container;
