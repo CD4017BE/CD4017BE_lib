@@ -1,6 +1,5 @@
-package cd4017be.lib;
+package cd4017be.lib.Gui;
 
-import cd4017be.lib.templates.SlotHolo;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.ClickType;
 import net.minecraft.inventory.Container;

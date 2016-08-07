@@ -11,6 +11,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.ItemHandlerHelper;
 
 /**
@@ -58,7 +59,6 @@ public class Inventory
 	 */
 	public void update(AutomatedTile tile) {
 		int cfg;
-		boolean pipe;//TODO pipe special
 		IItemHandler access;
 		for (byte s = 0; s < 6; s++) {
 			cfg = (int)(sideCfg >> (s * 10));
@@ -147,15 +147,15 @@ public class Inventory
 		final byte[] dir;
 
 		public Access(EnumFacing s) {
-			int cfg = (int)(Inventory.this.sideCfg >> (s.ordinal() * 10)) & 0x3ff, cfg1 = cfg;
+			int cfg = (int)(sideCfg >> (s.ordinal() * 10)) & 0x3ff, cfg1 = cfg;
 			int n = 0;
-			for (Group g : Inventory.this.groups) 
+			for (Group g : groups) 
 				if (((cfg1 >>= 2) & 3) != 0) n += g.e - g.s;
 			slots = new int[n];
 			dir = new byte[n];
 			n = 0;
 			byte d;
-			for (Group g : Inventory.this.groups)
+			for (Group g : groups)
 				if (((cfg >>= 2) & 3) != 0) {
 					d = (byte)(g.idx | cfg << 6);
 					for (int i = g.s; i < g.e; i++) {
@@ -165,7 +165,7 @@ public class Inventory
 		}
 
 		public Access(int g) {
-			Group group = Inventory.this.groups[g];
+			Group group = groups[g];
 			slots = new int[group.e - group.s];
 			dir = new byte[slots.length];
 			byte d = (byte)(g | 0xc0);
@@ -181,18 +181,18 @@ public class Inventory
 
 		@Override
 		public ItemStack getStackInSlot(int i) {
-			return Inventory.this.items[slots[i]];
+			return items[slots[i]];
 		}
 
 		@Override
 		public ItemStack insertItem(int i, ItemStack stack, boolean sim) {
 			ItemStack item;
 			int d = dir[i], s, m;
-			if ((d & 0x40) == 0 || (m = Inventory.this.handler.insertAm(d & 7, item = Inventory.this.items[s = slots[i]], stack)) <= 0) return stack;
+			if ((d & 0x40) == 0 || (m = handler.insertAm(d & 7, s = slots[i], item = items[s], stack)) <= 0) return stack;
 			if (!sim) {
 				if (item == null) item = ItemHandlerHelper.copyStackWithSize(stack, m);
 				else item.stackSize += m;
-				Inventory.this.handler.setSlot(d & 0x47, s, item);
+				handler.setSlot(d & 0x47, s, item);
 			}
 			return (m = stack.stackSize - m) > 0 ? ItemHandlerHelper.copyStackWithSize(stack, m) : null;
 		}
@@ -201,34 +201,80 @@ public class Inventory
 		public ItemStack extractItem(int i, int m, boolean sim) {
 			ItemStack item;
 			int d = dir[i], s;
-			if ((d & 0x80) == 0 || (m = Inventory.this.handler.extractAm(d & 7, item = Inventory.this.items[s = slots[i]], m)) <= 0) return null;
+			if ((d & 0x80) == 0 || (m = handler.extractAm(d & 7, s = slots[i], item = items[s], m)) <= 0) return null;
 			if (!sim) {
 				if (item.stackSize == m) item = null;
 				else item.stackSize -= m;
-				Inventory.this.handler.setSlot(d & 0x87, s, item);
+				handler.setSlot(d & 0x87, s, item);
 			}
 			return ItemHandlerHelper.copyStackWithSize(item, m);
 		}
+	}
+	
+	public class SlotAccess implements IItemHandlerModifiable {
+
+		@Override
+		public int getSlots() {
+			return items.length;
+		}
+
+		@Override
+		public ItemStack getStackInSlot(int i) {
+			return items[i];
+		}
+
+		@Override
+		public ItemStack insertItem(int i, ItemStack stack, boolean sim) {
+			ItemStack item;
+			int m = handler.insertAm(-1, i, item = items[i], stack);
+			if (m <= 0) return stack;
+			if (!sim) {
+				if (item == null) item = ItemHandlerHelper.copyStackWithSize(stack, m);
+				else item.stackSize += m;
+				handler.setSlot(-1, i, item);
+			}
+			return (m = stack.stackSize - m) > 0 ? ItemHandlerHelper.copyStackWithSize(stack, m) : null;
+		}
+
+		@Override
+		public ItemStack extractItem(int i, int m, boolean sim) {
+			ItemStack item;
+			if ((m = handler.extractAm(-1, i, item = items[i], m)) <= 0) return null;
+			if (!sim) {
+				if (item.stackSize == m) item = null;
+				else item.stackSize -= m;
+				handler.setSlot(-1, i, item);
+			}
+			return ItemHandlerHelper.copyStackWithSize(item, m);
+		}
+
+		@Override
+		public void setStackInSlot(int i, ItemStack stack) {
+			handler.setSlot(-1, i, stack);
+		}
+		
 	}
 
 	public interface IAccessHandler {
 		/**
 		 * @param slot group index
+		 * @param s slot index
 		 * @param item current item in slot
 		 * @param insert item to insert
 		 * @return amount to move into the slot
 		 */
-		public int insertAm(int g, ItemStack item, ItemStack insert);
+		public int insertAm(int g, int s, ItemStack item, ItemStack insert);
 		/**
 		 * @param g slot group index
+		 * @param s slot index
 		 * @param item current item in slot
 		 * @param extract requested extract amount
 		 * @return amount to remove from the slot
 		 */
-		public int extractAm(int g, ItemStack item, int extract);
+		public int extractAm(int g, int s, ItemStack item, int extract);
 		/**
 		 * set the slot to a new item (your implementation has to do this)
-		 * @param g slot group index with bit 6 on insert or bit 7 on extract
+		 * @param g slot group index with bit 6 on insert or bit 7 on extract. for GUI access it's -1
 		 * @param s slot index
 		 * @param item item to set
 		 */
@@ -237,12 +283,12 @@ public class Inventory
 
 	public class DefaultAccessHandler implements IAccessHandler {
 		@Override
-		public int insertAm(int g, ItemStack item, ItemStack insert) {
+		public int insertAm(int g, int s, ItemStack item, ItemStack insert) {
 			int m = Math.min(insert.getMaxStackSize(), insert.stackSize); 
 			return item == null ? m : item.stackSize < m && ItemHandlerHelper.canItemStacksStack(item, insert) ? m - item.stackSize : 0;
 		}
 		@Override
-		public int extractAm(int g, ItemStack item, int extract) {
+		public int extractAm(int g, int s, ItemStack item, int extract) {
 			return item == null ? 0 : item.stackSize < extract ? item.stackSize : extract;
 		}
 		@Override

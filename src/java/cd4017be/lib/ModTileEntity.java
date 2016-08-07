@@ -4,6 +4,7 @@
  */
 package cd4017be.lib;
 
+import cd4017be.lib.Gui.DataContainer;
 import cd4017be.lib.TileBlockRegistry.TileBlockEntry;
 
 import java.io.IOException;

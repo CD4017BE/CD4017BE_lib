@@ -4,7 +4,8 @@
  */
 package cd4017be.lib;
 
-import cd4017be.lib.DataContainer.IGuiData;
+import cd4017be.lib.Gui.DataContainer;
+import cd4017be.lib.Gui.DataContainer.IGuiData;
 import cd4017be.lib.TileBlockRegistry.TileBlockEntry;
 import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;

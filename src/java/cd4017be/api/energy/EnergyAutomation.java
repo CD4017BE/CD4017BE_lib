@@ -49,7 +49,7 @@ public class EnergyAutomation implements IEnergyHandler
 			if (!stack.hasTagCompound()) stack.setTagCompound(new NBTTagCompound());
 		}
 		
-		public void addInformation(List list) {
+		public void addInformation(List<String> list) {
 			list.add(String.format("Energy: %d / %d %s", this.getStorageI(), item.getEnergyCap(stack), TooltipInfo.getEnergyUnit()));
 		}
 		/**

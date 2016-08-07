@@ -8,8 +8,8 @@ import cd4017be.api.automation.AreaProtect;
 import cd4017be.api.automation.IOperatingArea;
 import cd4017be.api.automation.PipeEnergy;
 import cd4017be.api.energy.EnergyAutomation;
-import cd4017be.lib.TileContainer;
 import cd4017be.lib.ModTileEntity;
+import cd4017be.lib.Gui.TileContainer;
 import cd4017be.lib.templates.TankContainer;
 
 import java.io.IOException;

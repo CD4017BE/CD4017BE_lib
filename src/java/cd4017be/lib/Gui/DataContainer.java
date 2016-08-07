@@ -1,5 +1,6 @@
-package cd4017be.lib;
+package cd4017be.lib.Gui;
 
+import cd4017be.lib.BlockGuiHandler;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
