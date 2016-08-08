@@ -568,7 +568,7 @@ public abstract class GuiMachine extends GuiContainer
 				drawTexturedModalRect(px, py + h - n, mc.getTextureMapBlocks().getAtlasSprite(res.toString()), w, n);
 			}
 			mc.renderEngine.bindTexture(LIB_TEX);
-			drawTexturedModalRect(px + w - 16, py, 110, 0, 18, 52);
+			drawTexturedModalRect(px + w - 16, py, 110, 52 - h, 16, h);
 			GlStateManager.disableBlend();
 			GlStateManager.enableAlpha();
 		}
