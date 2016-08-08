@@ -18,7 +18,6 @@ import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
-import net.minecraft.item.ItemBlock;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
@@ -56,9 +55,9 @@ public class BlockPipe extends TileBlock
 	
 	public float size = 0.25F;
 	
-    public BlockPipe(String id, Material m, SoundType sound, Class<? extends ItemBlock> item, int type)
+    public BlockPipe(String id, Material m, SoundType sound, int type)
     {
-        super(id, m, sound, item, type);
+        super(id, m, sound, type);
     }
 
 	@Override

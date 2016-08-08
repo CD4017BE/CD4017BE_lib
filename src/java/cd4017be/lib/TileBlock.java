@@ -23,7 +23,6 @@ import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.BlockRenderLayer;
@@ -96,9 +95,9 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
      * 0x20 = nonOpaque
      * 0x40 = differentDrops
      */
-	public static TileBlock create(String id, Material m, SoundType sound, Class<? extends ItemBlock> item, int type) {
+	public static TileBlock create(String id, Material m, SoundType sound, int type) {
 		tmpType = (type & 15) % Orientations.length;
-		TileBlock block = new TileBlock(id, m, sound, item, type);
+		TileBlock block = new TileBlock(id, m, sound, type);
 		tmpType = 0;
 		return block;
 	}
@@ -110,9 +109,9 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
      * 0x40 = differentDrops
      * 0x80 = fullBlock
      */
-    protected TileBlock(String id, Material m, SoundType sound, Class<? extends ItemBlock> item, int type)
+    protected TileBlock(String id, Material m, SoundType sound, int type)
     {
-        super(id, m, item);
+        super(id, m);
         this.setCreativeTab(CreativeTabs.DECORATIONS);
         this.setSoundType(sound);
         this.orient = Orientations[tmpType];

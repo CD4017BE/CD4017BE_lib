@@ -4,7 +4,6 @@
  */
 package cd4017be.lib;
 
-import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -17,7 +16,6 @@ import net.minecraft.client.renderer.ItemMeshDefinition;
 import net.minecraft.client.renderer.block.model.ModelBakery;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 
@@ -27,9 +25,6 @@ import net.minecraft.util.ResourceLocation;
  */
 public class BlockItemRegistry 
 {
-    public static HashMap<String, Short> blockItemIdMap = new HashMap<String, Short>();
-    private static HashMap<String, Item> items = new HashMap<String, Item>();
-    private static HashMap<String, Block> blocks = new HashMap<String, Block>();
     private static HashMap<String, ItemStack> stacks = new HashMap<String, ItemStack>();
     
     public static String currentMod = "";
@@ -47,98 +42,40 @@ public class BlockItemRegistry
     {
         return currentMod.concat(":");
     }
-    
-    /**
-     * Registers a Block with given Name-Id, ItemBlock-Class and parameters for the ItemBlock
-     * @param block
-     * @param id
-     * @param item
-     * @param par
-     */
-    public static void registerBlock(Block block, String id, Class<? extends ItemBlock> item, Object... par)
-    {
-        blocks.put(id /*block.getUnlocalizedName()*/, block);
-        GameRegistry.registerBlock(block, item, id /*block.getUnlocalizedName()*/, par);
-        if (item != null && item.equals(ItemBlock.class)) registerItemStack(new ItemStack(block), block.getUnlocalizedName());
-    }
-    
-    /**
-     * Registers an Item
-     * @param item
-     */
-    public static void registerItem(Item item, String id)
-    {
-        items.put(id /*item.getUnlocalizedName()*/, item);
-        GameRegistry.registerItem(item, id /*item.getUnlocalizedName()*/);
-        if (!item.getHasSubtypes()) registerItemStack(new ItemStack(item), item.getUnlocalizedName());
-    }
-    
-    /**
-     * registers the .json model for the Item or optionally a specific meta type of it.
-     * @param id name or "name:meta"
-     */
+
     @SideOnly(Side.CLIENT)
-    public static void registerItemRender(String id) {
-    	int p = id.indexOf(':');
-    	if (p <= 0) {
-    		registerItemRender(getItem(id), new SingleTextureDefinition(texPath() + id));
-    		return;
-    	}
-    	int m;
-    	try {m = Integer.parseInt(id.substring(p + 1));} catch (NumberFormatException e) {m = 0;}
-    	id = id.substring(0, p);
-    	Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(getItem(id), m, new ModelResourceLocation(texPath() + id, "inventory" + (m != 0 ? "_" + m : "")));
+    public static void registerRender(Item item, int m0, int m1) {
+    	String id = item.getRegistryName().getResourcePath();
+    	ResourceLocation[] locs = new ResourceLocation[m1 - m0];
+    	for (int m = m0; m <= m1; m++)
+    		Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(item, m, new ModelResourceLocation(locs[m] = new ResourceLocation(currentMod, m == 0 ? id : id + "_" + m), "inventory"));
+    	ModelBakery.registerItemVariants(item, locs);
     }
-    
+
     @SideOnly(Side.CLIENT)
-    public static void registerItemRender(Item item, ItemMeshDefinition def) {
+    public static void registerRender(Item item, ItemMeshDefinition def) {
+    	if (def == null) def = new SingleTextureDefinition(texPath() + item.getRegistryName().getResourcePath());
     	Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(item, def);
-    }
-    
-    /**
-     * registers the .json model for the Block or optionally a specific meta type of it.
-     * @param id name or "name:meta"
-     */
-    @SideOnly(Side.CLIENT)
-    public static void registerBlockRender(String id)
-    {
-    	int p = id.indexOf(':');
-    	if (p <= 0) {
-    		registerBlockRender(id, new SingleTextureDefinition(texPath() + id));
-    		return;
-    	}
-    	int m;
-    	try {m = Integer.parseInt(id.substring(p + 1));} catch (NumberFormatException e) {m = 0;}
-    	id = id.substring(0, p);
-    	Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(Item.getItemFromBlock(getBlock(id)), m, new ModelResourceLocation(texPath() + id + (m != 0 ? "_" + m : ""), "inventory"));
-    }
-    
-    @SideOnly(Side.CLIENT)
-    public static void registerBlockRender(String id, ItemMeshDefinition def)
-    {
-    	Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(Item.getItemFromBlock(getBlock(id)), def);
-    }
-    
-    @SideOnly(Side.CLIENT)
-    public static void registerModels(String id, String... models) {
-    	Item item = itemId(id);
-    	if (item == null) item = Item.getItemFromBlock(blockId(id));
-    	registerModels(item, models);
-    }
-    
-    @SideOnly(Side.CLIENT)
-    public static void registerModels(Block block, String... models) {
-    	registerModels(Item.getItemFromBlock(block), models);
     }
     
     @SideOnly(Side.CLIENT)
     public static void registerModels(Item item, String... models) {
     	ResourceLocation[] locs = new ResourceLocation[models.length];
-    	for (int i = 0; i < locs.length; i++) {
+    	for (int i = 0; i < locs.length; i++)
     		locs[i] = new ResourceLocation(currentMod, models[i]);
-    	}
     	ModelBakery.registerItemVariants(item, locs);
     }
+
+    @SideOnly(Side.CLIENT)
+    public static void registerRender(Item item) {registerRender(item, 0, 0);}
+    @SideOnly(Side.CLIENT)
+    public static void registerRender(Block block, int m0, int m1) {registerRender(Item.getItemFromBlock(block), m0, m1);}
+    @SideOnly(Side.CLIENT)
+    public static void registerRender(Block block, ItemMeshDefinition def) {registerRender(Item.getItemFromBlock(block), def);}
+    @SideOnly(Side.CLIENT)
+    public static void registerRender(Block block) {registerRender(block, 0, 0);}
+    @SideOnly(Side.CLIENT)
+    public static void registerModels(Block block, String... models) {registerModels(Item.getItemFromBlock(block), models);}
     
     /**
      * Registers a special ItemStack. Used for Items with sub types. 
@@ -164,36 +101,6 @@ public class BlockItemRegistry
             item.setItemDamage(s + i);
             stacks.put(names[i], item);
         }
-    }
-    
-    
-    public static Block getBlock(String name)
-    {
-        return blocks.get(name);
-    }
-    
-    
-    public static Item getItem(String name)
-    {
-        return items.get(name);
-    }
-    
-    /**
-     * @param name Block-name with "tile." prefix.
-     * @return the Block registered for the given name.
-     */
-    public static Block blockId(String name)
-    {
-        return blocks.get(name);
-    }
-    
-    /**
-     * @param name Item-name.
-     * @return the Item registered for the given name.
-     */
-    public static Item itemId(String name)
-    {
-        return items.get(name);
     }
     
     /**

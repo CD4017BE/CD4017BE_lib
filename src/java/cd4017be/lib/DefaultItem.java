@@ -11,6 +11,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.text.translation.I18n;
+import net.minecraftforge.fml.common.registry.GameRegistry;
 
 import org.lwjgl.input.Keyboard;
 
@@ -24,14 +25,13 @@ public class DefaultItem extends Item
     public DefaultItem(String id)
     {
         super();
-        this.setUnlocalizedName(id);
-        BlockItemRegistry.registerItem(this, id);
-        this.init();
+        this.setRegistryName(id);
+        this.setUnlocalizedName("cd4017be." + id);
+        GameRegistry.register(this);
     }
     
-    protected void init()
-    {
-        
+    protected void init() {
+    	BlockItemRegistry.registerItemStack(new ItemStack(this), this.getRegistryName().getResourcePath());
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -48,16 +48,13 @@ public class DefaultItem extends Item
     }
     
 	@Override
-	public String getUnlocalizedName(ItemStack item) 
-	{
-		String s = super.getUnlocalizedName(item).replaceFirst("item.", "item.cd4017be.");
-		if (this.hasSubtypes) s += ":" + item.getItemDamage();
-		return s;
+	public String getUnlocalizedName(ItemStack item) {
+		String s = super.getUnlocalizedName(item);
+		return this.hasSubtypes ? s + ":" + item.getItemDamage() : s;
 	}
 
 	@Override
-	public String getItemStackDisplayName(ItemStack item) 
-	{
+	public String getItemStackDisplayName(ItemStack item) {
 		return I18n.translateToLocal(this.getUnlocalizedName(item) + ".name");
 	}
     

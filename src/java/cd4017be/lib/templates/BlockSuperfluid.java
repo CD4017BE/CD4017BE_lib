@@ -35,8 +35,9 @@ public class BlockSuperfluid extends BlockFluidClassic
     public BlockSuperfluid(String id, ModFluid fluid)
     {
         super(fluid, fluid.isGaseous() ? fluid.getTemperature() > 350 ? Material.FIRE : materialGas : Material.WATER);
+        this.setRegistryName(id);
+        GameRegistry.register(this);
         this.setUnlocalizedName(id);
-        GameRegistry.registerBlock(this, null, id);
     }
 
     /*
