@@ -154,9 +154,11 @@ public class Inventory implements IItemHandlerModifiable
 		ItemStack item;
 		if ((m = handler.extractAm(-1, i, item = items[i], m)) <= 0) return null;
 		if (!sim) {
-			if (item.stackSize == m) item = null;
-			else item.stackSize -= m;
-			handler.setSlot(-1, i, item);
+			if (item.stackSize <= m) handler.setSlot(-1, i, null);
+			else {
+				item.stackSize -= m;
+				handler.setSlot(-1, i, item);
+			}
 		}
 		return ItemHandlerHelper.copyStackWithSize(item, m);
 	}
@@ -280,8 +282,8 @@ public class Inventory implements IItemHandlerModifiable
 	public class DefaultAccessHandler implements IAccessHandler {
 		@Override
 		public int insertAm(int g, int s, ItemStack item, ItemStack insert) {
-			int m = Math.min(insert.getMaxStackSize(), insert.stackSize); 
-			return item == null ? m : item.stackSize < m && ItemHandlerHelper.canItemStacksStack(item, insert) ? m - item.stackSize : 0;
+			int m = Math.min(insert.getMaxStackSize() - (item == null ? 0 : item.stackSize), insert.stackSize); 
+			return item == null || ItemHandlerHelper.canItemStacksStack(item, insert) ? m : 0;
 		}
 		@Override
 		public int extractAm(int g, int s, ItemStack item, int extract) {

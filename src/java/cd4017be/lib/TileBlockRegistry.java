@@ -11,10 +11,10 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 import java.util.HashMap;
 
-import cd4017be.lib.Gui.TileContainer;
 import cd4017be.lib.Gui.DataContainer.IGuiData;
 import net.minecraft.block.Block;
 import net.minecraft.client.gui.inventory.GuiContainer;
+import net.minecraft.inventory.Container;
 
 /**
  *
@@ -26,7 +26,7 @@ public class TileBlockRegistry
     public static class TileBlockEntry {
         public final TileBlock block;
         public Class<? extends ModTileEntity> tileEntity;
-        public Class<? extends TileContainer> container;
+        public Class<? extends Container> container;
         @SideOnly(Side.CLIENT)
         public Class<? extends GuiContainer> gui;
         
@@ -59,7 +59,7 @@ public class TileBlockRegistry
      * @param tileEntity
      * @param container
      */
-    public static void register(TileBlock block, Class<? extends ModTileEntity> tileEntity, Class<? extends TileContainer> container)
+    public static void register(TileBlock block, Class<? extends ModTileEntity> tileEntity, Class<? extends Container> container)
     {
         if (container != null && !IGuiData.class.isAssignableFrom(tileEntity)) throw new IllegalArgumentException(String.format("%s doesn't implement %s !", tileEntity.getName(), IGuiData.class.getName()));
     	TileBlockEntry entry = new TileBlockEntry(block);

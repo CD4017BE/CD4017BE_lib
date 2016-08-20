@@ -26,35 +26,19 @@ import net.minecraft.util.ResourceLocation;
 public class BlockItemRegistry 
 {
     private static HashMap<String, ItemStack> stacks = new HashMap<String, ItemStack>();
-    
-    public static String currentMod = "";
-    
-    /**
-     * Call this before registering Items or Blocks
-     * @param name
-     */
-    public static void setMod(String name)
-    {
-        currentMod = name;
-    }
-    
-    public static String texPath()
-    {
-        return currentMod.concat(":");
-    }
 
     @SideOnly(Side.CLIENT)
     public static void registerRender(Item item, int m0, int m1) {
     	String id = item.getRegistryName().getResourcePath();
-    	ResourceLocation[] locs = new ResourceLocation[m1 - m0];
+    	ResourceLocation[] locs = new ResourceLocation[m1 - m0 + 1];
     	for (int m = m0; m <= m1; m++)
-    		Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(item, m, new ModelResourceLocation(locs[m] = new ResourceLocation(currentMod, m == 0 ? id : id + "_" + m), "inventory"));
+    		Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(item, m, new ModelResourceLocation(locs[m] = new ResourceLocation(item.getRegistryName().getResourceDomain(), m == 0 ? id : id + "_" + m), "inventory"));
     	ModelBakery.registerItemVariants(item, locs);
     }
 
     @SideOnly(Side.CLIENT)
     public static void registerRender(Item item, ItemMeshDefinition def) {
-    	if (def == null) def = new SingleTextureDefinition(texPath() + item.getRegistryName().getResourcePath());
+    	if (def == null) def = new SingleTextureDefinition(item.getRegistryName().toString());
     	Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(item, def);
     }
     
@@ -62,7 +46,7 @@ public class BlockItemRegistry
     public static void registerModels(Item item, String... models) {
     	ResourceLocation[] locs = new ResourceLocation[models.length];
     	for (int i = 0; i < locs.length; i++)
-    		locs[i] = new ResourceLocation(currentMod, models[i]);
+    		locs[i] = new ResourceLocation(item.getRegistryName().getResourceDomain(), models[i]);
     	ModelBakery.registerItemVariants(item, locs);
     }
 

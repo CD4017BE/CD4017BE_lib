@@ -27,7 +27,6 @@ public class DataContainer extends Container {
 	public DataContainer(IGuiData data, EntityPlayer player) {
 		this.data = data;
 		this.player = player;
-		data.initContainer(this);
 	}
 
 	@Override
@@ -65,7 +64,7 @@ public class DataContainer extends Container {
         	dis.readBytes(chng);
         	for (int i = 0; i < chng.length; i++)
         		for (int c = chng[i] & 0xff, j = i << 3; c != 0 && j < refInts.length; c >>= 1, j++)
-        			if ((c & 1) != 0) refInts[j] = dis.readInt();
+        			if ((c & 1) != 0) data.setSyncVariable(j, refInts[j] = dis.readInt());
         }
 		data.updateClientChanges(this, dis);
     }
@@ -79,6 +78,7 @@ public class DataContainer extends Container {
 		public boolean canPlayerAccessUI(EntityPlayer player);
 		public BlockPos getPos();
 		public int[] getSyncVariables();
+		public void setSyncVariable(int i, int v);
 		public boolean detectAndSendChanges(DataContainer container, PacketBuffer dos);
 		public void updateClientChanges(DataContainer container, PacketBuffer dis);
 	}

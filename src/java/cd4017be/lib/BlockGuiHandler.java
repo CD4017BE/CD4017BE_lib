@@ -24,6 +24,7 @@ import java.lang.reflect.InvocationTargetException;
 import org.apache.logging.log4j.Level;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
@@ -38,191 +39,197 @@ import net.minecraft.world.World;
  * 
  * @author CD4017BE
  */
-public class BlockGuiHandler implements IGuiHandler
-{
-    private static final String guiChannel = "CD4017BE_gui";
-    
-    public static BlockGuiHandler instance = new BlockGuiHandler();
-    private static Object modRef;
-    public static FMLEventChannel eventChannel;
-    
-    static {
-        eventChannel = NetworkRegistry.INSTANCE.newEventDrivenChannel(guiChannel);
-        eventChannel.register(instance);
-    }
-    
-    /**
-     * Set a mod to register this Handler with.
-     * @param mod
-     */
-    public static void registerMod(Object mod)
-    {
-        if (modRef == null) {
-            modRef = mod;
-            NetworkRegistry.INSTANCE.registerGuiHandler(modRef, instance);
-        }
-    }
-    
-    /**
-     * Will open a Gui registered for the block at given position.
-     * @param player
-     * @param world
-     * @param x
-     * @param y
-     * @param z
-     */
-    public static void openGui(EntityPlayer player, World world, int x, int y, int z)
-    {
-        if (modRef != null) player.openGui(modRef, 0, world, x, y, z);
-        else FMLLog.severe("CD4017BE-lib: BlockGuiHandler failed to open Gui! No Mod registered!");
-    }
-    
-    /**
-     * Will open a Gui for the item currently held by the player. The item has to implement IGuiItem.
-     * @param player
-     * @param world
-     * @param x
-     * @param y
-     * @param z
-     */
-    public static void openItemGui(EntityPlayer player, World world, int x, int y, int z)
-    {
-        if (modRef != null) player.openGui(modRef, 1, world, x, y, z);
-        else FMLLog.severe("CD4017BE-lib: BlockGuiHandler failed to open Gui! No Mod registered!");
-    }
-    
-    /**
-     * Sends a Gui command packet to the server. 
-     * @param data
-     */
-    public static void sendPacketToServer(PacketBuffer data)
-    {
-        eventChannel.sendToServer(new FMLProxyPacket(data, guiChannel));
-    }
-    
-    /**
-     * Sends a Gui update packet to the given player.
-     * @param player
-     * @param data
-     */
-    public static void sendPacketToPlayer(EntityPlayerMP player, PacketBuffer data)
-    {
-        eventChannel.sendTo(new FMLProxyPacket(data, guiChannel), player);
-    }
-    
-    /**
-     * Creates a ByteArrayOutputStream for use with sendPacketToServer with the target position already written to the stream.
-     * @param x
-     * @param y
-     * @param z
-     * @return
-     * @throws IOException
-     */
-    public static PacketBuffer getPacketTargetData(BlockPos pos)
-    {
-        PacketBuffer data = new PacketBuffer(Unpooled.buffer());
-    	data.writeBlockPos(pos);
-        return data;
-    }
-    
-    @SideOnly(Side.CLIENT)
-    @SubscribeEvent
-    public void onServerPacketReceived(FMLNetworkEvent.ClientCustomPacketEvent event)
-    {
-    	FMLProxyPacket packet = event.getPacket();
-    	if (!packet.channel().equals(guiChannel)) return;
-    	Container container = Minecraft.getMinecraft().thePlayer.openContainer;
-        if (container != null && container instanceof DataContainer) {
-            PacketBuffer data = new PacketBuffer(packet.payload());
-            IGuiData te = ((DataContainer)container).data;
-            if (te.getPos().equals(data.readBlockPos())) ((DataContainer)container).onDataUpdate(data);
-        }
-    }
-    
-    @SubscribeEvent
-    public void onPlayerPacketReceived(FMLNetworkEvent.ServerCustomPacketEvent event)
-    {
-    	FMLProxyPacket packet = event.getPacket();
-    	if (!packet.channel().equals(guiChannel)) return;
-    	if (!(event.getHandler() instanceof NetHandlerPlayServer)) {
-    		FMLLog.log(Level.WARN, "NetHandler not instanceof NetHandlerPlayServer!");
-    	}
-    	EntityPlayerMP player = ((NetHandlerPlayServer)event.getHandler()).playerEntity;
-        try {
-            PacketBuffer data = new PacketBuffer(packet.payload());
-            BlockPos pos = data.readBlockPos();
-            if (pos.getY() < 0) {
-                ItemStack item = player.getHeldItemMainhand();
-                if (item != null && item.getItem() instanceof IGuiItem) ((IGuiItem)item.getItem()).onPlayerCommand(player.worldObj, player, data);
-            } else {
-                TileEntity te = player.worldObj.getTileEntity(pos);
-                if (te != null && te instanceof ModTileEntity) ((ModTileEntity)te).onPlayerCommand(data, player);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+public class BlockGuiHandler implements IGuiHandler {
 
-    @Override
-    public Object getServerGuiElement(int ID, EntityPlayer player, World world, int x, int y, int z) 
-    {
-        if (ID == 0) {
-        	BlockPos pos = new BlockPos(x, y, z);
-            TileBlockEntry entry = TileBlockRegistry.getBlockEntry(world.getBlockState(pos).getBlock());
-            TileEntity te = world.getTileEntity(pos);
-            if (entry != null && entry.container != null && te != null && entry.tileEntity.isInstance(te)) {
-                try {
-                    return entry.container.getConstructor(IGuiData.class, EntityPlayer.class).newInstance((IGuiData)te, player);
-                } catch (NoSuchMethodException ex) {
-                    FMLLog.severe("CD4017BE-lib: TileContainer %1$s is missing the Constructor ( %2$s , %3$s )", entry.container.getName(), ModTileEntity.class.getName(), EntityPlayer.class.getName());
-                    return null;
-                } catch (InstantiationException ex) {
-                    ex.printStackTrace();
-                    return null;
-                } catch (IllegalAccessException ex) {
-                    ex.printStackTrace();
-                    return null;
-                } catch (InvocationTargetException ex) {
-                    ex.printStackTrace();
-                    return null;
-                }
-            } else return null;
-        } else if (ID == 1) {
-            ItemStack item = player.getHeldItemMainhand();
-            if (item != null && item.getItem() instanceof IGuiItem) return ((IGuiItem)item.getItem()).getContainer(world, player, x, y, z);
-            else return null;
-        } else return null;
-    }
+	private static final String guiChannel = "CD4017BE_gui";
 
-    @Override
-    public Object getClientGuiElement(int ID, EntityPlayer player, World world, int x, int y, int z) 
-    {
-        if (ID == 0) { //Block gui
-        	BlockPos pos = new BlockPos(x, y, z);
-            TileBlockEntry entry = TileBlockRegistry.getBlockEntry(world.getBlockState(pos).getBlock());
-            TileEntity te = world.getTileEntity(pos);
-            if (entry != null && entry.gui != null && te != null && entry.tileEntity.isInstance(te)) {
-                try {
-                    return entry.gui.getConstructor(entry.tileEntity, EntityPlayer.class).newInstance(entry.tileEntity.cast(te), player);
-                } catch (NoSuchMethodException ex) {
-                    FMLLog.severe("CD4017BE-lib: GuiContainer %1$s is missing the Constructor ( %2$s , %3$s )", entry.gui.getName(), entry.tileEntity.getName(), EntityPlayer.class.getName());
-                    return null;
-                } catch (InstantiationException ex) {
-                    ex.printStackTrace();
-                    return null;
-                } catch (IllegalAccessException ex) {
-                    ex.printStackTrace();
-                    return null;
-                } catch (InvocationTargetException ex) {
-                    ex.printStackTrace();
-                    return null;
-                }
-            } else return null;
-        } else if (ID == 1) { //Item gui
-            ItemStack item = player.getHeldItemMainhand();
-            if (item != null && item.getItem() instanceof IGuiItem) return ((IGuiItem)item.getItem()).getGui(world, player, x, y, z);
-            else return null;
-        } else return null;
-    }
-    
+	public static BlockGuiHandler instance = new BlockGuiHandler();
+	private static Object modRef;
+	public static FMLEventChannel eventChannel;
+
+	static {
+		eventChannel = NetworkRegistry.INSTANCE.newEventDrivenChannel(guiChannel);
+		eventChannel.register(instance);
+	}
+
+	/**
+	 * Set a mod to register this Handler with.
+	 * @param mod
+	 */
+	public static void registerMod(Object mod) {
+		if (modRef == null) {
+			modRef = mod;
+			NetworkRegistry.INSTANCE.registerGuiHandler(modRef, instance);
+		}
+	}
+
+	/**
+	 * Will open a Gui registered for the block at given position.
+	 * @param player
+	 * @param world
+	 * @param x
+	 * @param y
+	 * @param z
+	 */
+	public static void openGui(EntityPlayer player, World world, int x, int y, int z) {
+		if (modRef != null) player.openGui(modRef, 0, world, x, y, z);
+		else FMLLog.severe("CD4017BE-lib: BlockGuiHandler failed to open Gui! No Mod registered!");
+	}
+
+	/**
+	 * Will open a Gui for the item currently held by the player. The item has to implement IGuiItem.
+	 * @param player
+	 * @param world
+	 * @param x
+	 * @param y
+	 * @param z
+	 */
+	public static void openItemGui(EntityPlayer player, World world, int x, int y, int z) {
+		if (modRef != null) player.openGui(modRef, 1, world, x, y, z);
+		else FMLLog.severe("CD4017BE-lib: BlockGuiHandler failed to open Gui! No Mod registered!");
+	}
+
+	/**
+	 * Sends a Gui command packet to the server. 
+	 * @param data
+	 */
+	public static void sendPacketToServer(PacketBuffer data) {
+		eventChannel.sendToServer(new FMLProxyPacket(data, guiChannel));
+	}
+
+	/**
+	 * Sends a Gui update packet to the given player.
+	 * @param player
+	 * @param data
+	 */
+	public static void sendPacketToPlayer(EntityPlayerMP player, PacketBuffer data) {
+		eventChannel.sendTo(new FMLProxyPacket(data, guiChannel), player);
+	}
+
+	/**
+	 * Creates a ByteArrayOutputStream for use with sendPacketToServer with the target position already written to the stream.
+	 * @param x
+	 * @param y
+	 * @param z
+	 * @return
+	 * @throws IOException
+	 */
+	public static PacketBuffer getPacketTargetData(BlockPos pos) {
+		PacketBuffer data = new PacketBuffer(Unpooled.buffer());
+		data.writeBlockPos(pos);
+		return data;
+	}
+
+	@SideOnly(Side.CLIENT)
+	@SubscribeEvent
+	public void onServerPacketReceived(FMLNetworkEvent.ClientCustomPacketEvent event) {
+		FMLProxyPacket packet = event.getPacket();
+		if (!packet.channel().equals(guiChannel)) return;
+		Container container = Minecraft.getMinecraft().thePlayer.openContainer;
+		if (container != null && container instanceof DataContainer) {
+			PacketBuffer data = new PacketBuffer(packet.payload());
+			IGuiData te = ((DataContainer)container).data;
+			try {
+				if (te.getPos().equals(data.readBlockPos())) ((DataContainer)container).onDataUpdate(data);
+			} catch (Exception e) {
+				String s = " ";
+				byte[] d = data.array();
+				for (int i = 8; i < data.writerIndex(); i++) s += Integer.toHexString(d[i] & 0xff) + " ";
+				FMLLog.log("CD4017BE_packet", Level.ERROR, e, "reading gui update packet: [%s]", s);
+			}
+		}
+	}
+
+	@SubscribeEvent
+	public void onPlayerPacketReceived(FMLNetworkEvent.ServerCustomPacketEvent event) {
+		FMLProxyPacket packet = event.getPacket();
+		if (!packet.channel().equals(guiChannel)) return;
+		if (!(event.getHandler() instanceof NetHandlerPlayServer)) {
+			FMLLog.log(Level.WARN, "NetHandler not instanceof NetHandlerPlayServer!");
+		}
+		EntityPlayerMP player = ((NetHandlerPlayServer)event.getHandler()).playerEntity;
+		try {
+			PacketBuffer data = new PacketBuffer(packet.payload());
+			BlockPos pos = data.readBlockPos();
+			if (pos.getY() < 0) {
+				ItemStack item = player.getHeldItemMainhand();
+				if (item != null && item.getItem() instanceof IGuiItem) ((IGuiItem)item.getItem()).onPlayerCommand(item, player, data);
+			} else {
+				TileEntity te = player.worldObj.getTileEntity(pos);
+				if (te != null && te instanceof ModTileEntity) ((ModTileEntity)te).onPlayerCommand(data, player);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public Object getServerGuiElement(int ID, EntityPlayer player, World world, int x, int y, int z) {
+		Container c;
+		if (ID == 0) {
+			BlockPos pos = new BlockPos(x, y, z);
+			TileBlockEntry entry = TileBlockRegistry.getBlockEntry(world.getBlockState(pos).getBlock());
+			TileEntity te = world.getTileEntity(pos);
+			if (entry != null && entry.container != null && te != null && entry.tileEntity.isInstance(te)) {
+				try {
+					c = entry.container.getConstructor(IGuiData.class, EntityPlayer.class).newInstance((IGuiData)te, player);
+				} catch (NoSuchMethodException ex) {
+					FMLLog.severe("CD4017BE-lib: TileContainer %1$s is missing the Constructor ( %2$s , %3$s )", entry.container.getName(), ModTileEntity.class.getName(), EntityPlayer.class.getName());
+					return null;
+				} catch (InstantiationException ex) {
+					ex.printStackTrace();
+					return null;
+				} catch (IllegalAccessException ex) {
+					ex.printStackTrace();
+					return null;
+				} catch (InvocationTargetException ex) {
+					ex.printStackTrace();
+					return null;
+				}
+			} else return null;
+		} else if (ID == 1) {
+			ItemStack item = player.getHeldItemMainhand();
+			if (item != null && item.getItem() instanceof IGuiItem) c = ((IGuiItem)item.getItem()).getContainer(world, player, x, y, z);
+			else return null;
+		} else return null;
+		if (c instanceof DataContainer) ((DataContainer)c).data.initContainer((DataContainer)c);
+		return c;
+	}
+
+	@Override
+	public Object getClientGuiElement(int ID, EntityPlayer player, World world, int x, int y, int z) {
+		GuiContainer g;
+		if (ID == 0) { //Block gui
+			BlockPos pos = new BlockPos(x, y, z);
+			TileBlockEntry entry = TileBlockRegistry.getBlockEntry(world.getBlockState(pos).getBlock());
+			TileEntity te = world.getTileEntity(pos);
+			if (entry != null && entry.gui != null && te != null && entry.tileEntity.isInstance(te)) {
+				try {
+					g = entry.gui.getConstructor(entry.tileEntity, EntityPlayer.class).newInstance(entry.tileEntity.cast(te), player);
+				} catch (NoSuchMethodException ex) {
+					FMLLog.severe("CD4017BE-lib: GuiContainer %1$s is missing the Constructor ( %2$s , %3$s )", entry.gui.getName(), entry.tileEntity.getName(), EntityPlayer.class.getName());
+					return null;
+				} catch (InstantiationException ex) {
+					ex.printStackTrace();
+					return null;
+				} catch (IllegalAccessException ex) {
+					ex.printStackTrace();
+					return null;
+				} catch (InvocationTargetException ex) {
+					ex.printStackTrace();
+					return null;
+				}
+			} else return null;
+		} else if (ID == 1) { //Item gui
+			ItemStack item = player.getHeldItemMainhand();
+			if (item != null && item.getItem() instanceof IGuiItem) g = ((IGuiItem)item.getItem()).getGui(world, player, x, y, z);
+			else return null;
+		} else return null;
+		if (g.inventorySlots instanceof DataContainer) {
+			DataContainer c = (DataContainer)g.inventorySlots;
+			c.data.initContainer(c);
+		}
+		return g;
+	}
+
 }

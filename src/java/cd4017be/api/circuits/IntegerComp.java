@@ -18,19 +18,14 @@ public class IntegerComp extends MultiblockComp<IntegerComp, SharedInteger> {
 	}
 
 	public int inputState;
-	/** bits[0-11 6*2]: sideCfg, bit[12,13]: internalIO, bit[14,15]: totalIO */
-	public short con;
-
-	@Override
-	public boolean canConnect(byte side) {
-		return (con >> (side * 2) & 3) == 0;
-	}
+	/** bits[0-13 8*(1+1)]: side*(in+out) */
+	public short rsIO;
 
 	public void onStateChange() {
 		World world = ((TileEntity)tile).getWorld();
 		BlockPos pos = ((TileEntity)tile).getPos();
 		for (int i = 0; i < 6; i++)
-			if ((con >> (i * 2) & 3) == 2)
+			if ((rsIO >> (i * 2) & 2) != 0)
 				world.notifyBlockOfStateChange(pos.offset(EnumFacing.VALUES[i]), Blocks.REDSTONE_TORCH);
 	}
 
@@ -39,7 +34,7 @@ public class IntegerComp extends MultiblockComp<IntegerComp, SharedInteger> {
 		BlockPos pos = ((TileEntity)tile).getPos();
 		int newIn = 0;
 		for (byte i = 0; i < 6; i++) 
-				if ((con >> (i * 2) & 3) == 1) {
+				if ((rsIO >> (i * 2) & 1) != 0) {
 					EnumFacing s = EnumFacing.VALUES[i];
 					newIn |= world.getRedstonePower(pos.offset(s), s);
 				}
@@ -48,14 +43,16 @@ public class IntegerComp extends MultiblockComp<IntegerComp, SharedInteger> {
 			network.updateState = true;
 		}
 	}
-	
+
 	public void readFromNBT(NBTTagCompound nbt) {
-		con = nbt.getShort("con");
+		con = nbt.getByte("con");
+		network.setIO(this, nbt.getShort("io"));
 		inputState = nbt.getInteger("state");
 	}
-	
+
 	public void writeToNBT(NBTTagCompound nbt) {
-		nbt.setShort("con", con);
+		nbt.setByte("con", con);
+		nbt.setShort("io", rsIO);
 		nbt.setInteger("state", inputState); //inputState is saved to ensure blocks don't get incomplete redstone states after chunkload.
 	}
 

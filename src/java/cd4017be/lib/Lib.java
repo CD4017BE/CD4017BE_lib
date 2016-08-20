@@ -28,7 +28,7 @@ public class Lib {
 		Capabilities.register();
 		creativeTab = new TabMaterials("cd4017be_lib");
 		(materials = new ItemMaterial("m")).setCreativeTab(creativeTab);
-		creativeTab.item = new ItemStack(materials, 1, -1);
+		creativeTab.item = new ItemStack(materials);
 		RecipeAPI.registerScript(event, "core", null);
 	}
 
@@ -42,6 +42,7 @@ public class Lib {
 	public void postInit(FMLPostInitializationEvent event) {
 		RecipeAPI.executeScripts(RecipeAPI.POST_INIT);
 		if (event.getSide().isClient()) {
+			BlockItemRegistry.registerRender(materials);
 			BlockItemRegistry.registerRender(materials, new ItemMaterialMeshDefinition(materials));
 		}
 	}

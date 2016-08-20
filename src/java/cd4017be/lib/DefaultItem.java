@@ -28,6 +28,7 @@ public class DefaultItem extends Item
         this.setRegistryName(id);
         this.setUnlocalizedName("cd4017be." + id);
         GameRegistry.register(this);
+        this.init();
     }
     
     protected void init() {
@@ -40,7 +41,6 @@ public class DefaultItem extends Item
         if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)) {
         	String s = this.getUnlocalizedName(item) + ".tip";
         	String s1 = TooltipInfo.getLocFormat(s);
-        	if (s1.equals(s) && this.hasSubtypes) s1 = TooltipInfo.getLocFormat(s = super.getUnlocalizedName(item).replaceFirst("tile.", "tile.cd4017be.") + ".tip");
             if (!s1.equals(s)) list.addAll(Arrays.asList(s1.split("\n")));
         } else list.add(TooltipInfo.getShiftHint());
         super.addInformation(item, player, list, b);

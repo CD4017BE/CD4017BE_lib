@@ -9,7 +9,7 @@ import net.minecraftforge.common.capabilities.Capability;
 public class MutiblockTile<C extends MultiblockComp<C, N>, N extends SharedNetwork<C, N>> extends ModTileEntity implements ITickable {
 
 	protected C comp;
-	public boolean updateCon;
+	public boolean updateCon = true;
 
 	@Override
 	public void update() {

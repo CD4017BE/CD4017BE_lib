@@ -11,6 +11,7 @@ import cd4017be.lib.templates.SharedNetwork;
  */
 public class SharedInteger extends SharedNetwork<IntegerComp, SharedInteger> {
 
+	private static final short AllIn = 0x5555, AllOut = (short)0xaaaa;
 	public ArrayList<IntegerComp> inputs = new ArrayList<IntegerComp>();
 	public ArrayList<IntegerComp> outputs = new ArrayList<IntegerComp>();
 	public int outputState = 0;
@@ -22,8 +23,8 @@ public class SharedInteger extends SharedNetwork<IntegerComp, SharedInteger> {
 
 	public SharedInteger(IntegerComp comp) {
 		super(comp);
-		if ((comp.con & 0x1000) != 0) inputs.add(comp);
-		if ((comp.con & 0x2000) != 0) outputs.add(comp);
+		if ((comp.rsIO & AllIn) != 0) inputs.add(comp);
+		if ((comp.rsIO & AllOut) != 0) outputs.add(comp);
 		outputState = comp.inputState;
 	}
 
@@ -38,11 +39,11 @@ public class SharedInteger extends SharedNetwork<IntegerComp, SharedInteger> {
 	@Override
 	public void remove(IntegerComp comp) {
 		super.remove(comp);
-		if ((comp.con & 0x1000) != 0) {
+		if ((comp.rsIO & AllIn) != 0) {
 			inputs.remove(comp);
 			updateState = true;
 		}
-		if ((comp.con & 0x2000) != 0) 
+		if ((comp.rsIO & AllOut) != 0) 
 			outputs.remove(comp);
 	}
 
@@ -50,12 +51,12 @@ public class SharedInteger extends SharedNetwork<IntegerComp, SharedInteger> {
 	public SharedInteger onSplit(HashMap<Long, IntegerComp> comps) {
 		SharedInteger si = new SharedInteger(comps);
 		for (IntegerComp c : comps.values()) {
-			if ((c.con & 0x1000) != 0) {
+			if ((c.rsIO & AllIn) != 0) {
 				this.inputs.remove(c);
 				si.inputs.add(c);
 				si.updateState = updateState = true;
 			}
-			if ((c.con & 0x2000) != 0) {
+			if ((c.rsIO & AllOut) != 0) {
 				this.outputs.remove(c);
 				si.outputs.add(c);
 			}
@@ -64,18 +65,12 @@ public class SharedInteger extends SharedNetwork<IntegerComp, SharedInteger> {
 	}
 
 	public void setIO(IntegerComp c, short con) {
-		con &= 0x0fff;
-		for (int i = 0, j; i < 12; i+=2) {
-			j = con >> i & 3;
-			if (j == 1) con |= 0x1000;
-			else if (j == 2) con |= 0x2000;
-		}
-		int add = con & ~c.con, rem = c.con & ~con;
-		if ((add & 0x1000) != 0) inputs.add(c);
-		else if ((rem & 0x1000) != 0) inputs.remove(c);
-		if ((add & 0x2000) != 0) outputs.add(c);
-		else if ((rem & 0x2000) != 0) outputs.remove(c);
-		c.con = con;
+		int add = con & ~c.rsIO, rem = c.rsIO & ~con;
+		if ((add & AllIn) != 0) inputs.add(c);
+		else if ((rem & AllIn) != 0) inputs.remove(c);
+		if ((add & AllOut) != 0) outputs.add(c);
+		else if ((rem & AllOut) != 0) outputs.remove(c);
+		c.rsIO = con;
 	}
 
 	@Override

@@ -17,6 +17,7 @@ public abstract class MultiblockComp<C extends MultiblockComp<C, N>, N extends S
 	public final IAbstractTile tile;
 	/** the unique identifier of this component. This should be calculated from it's coordinates and never change within one instance. */
 	protected long uid;
+	public byte con = 0x3f;
 
 	public MultiblockComp(IAbstractTile tile) {
 		this.tile = tile;
@@ -30,7 +31,7 @@ public abstract class MultiblockComp<C extends MultiblockComp<C, N>, N extends S
 		if (this.uid != 0) return;
 		this.uid = uid;
 		if (network != null) {
-			network.components.remove(0);
+			network.components.remove(0L);
 			network.components.put(uid, (C)this);
 		}
 	}
@@ -40,7 +41,13 @@ public abstract class MultiblockComp<C extends MultiblockComp<C, N>, N extends S
 	 * @return true if it can connect to given side
 	 */
 	public boolean canConnect(byte side) {
-		return true;
+		return (con >> side & 1) != 0;
+	}
+
+	public void setConnect(byte side, boolean c) {
+		if (!c && canConnect(side)) network.update = true;//network.onDisconnect((C)this, side);
+		if (c) con |= 1 << side;
+		else con &= ~(1 << side);
 	}
 
 	/**

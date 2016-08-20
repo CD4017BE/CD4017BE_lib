@@ -26,6 +26,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.items.CapabilityItemHandler;
@@ -122,6 +123,8 @@ public class ModTileEntity extends TileEntity implements IAbstractTile
 
 	public int[] getSyncVariables() {return null;}
 
+	public void setSyncVariable(int i, int v) {}
+
 	public void dropStack(ItemStack stack) {
 		EntityItem ei = new EntityItem(worldObj, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, stack);
 		worldObj.spawnEntityInWorld(ei);
@@ -135,7 +138,7 @@ public class ModTileEntity extends TileEntity implements IAbstractTile
 	}
 
 	public String getName() {
-		return this.getBlockType().getUnlocalizedName().replaceFirst("tile.", "gui.cd4017be.") + ".name";
+		return I18n.translateToLocal(this.getBlockType().getUnlocalizedName().replaceFirst("tile.", "gui.") + ".name");
 	}
 
 	@Override

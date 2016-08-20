@@ -20,7 +20,7 @@ import net.minecraftforge.fluids.capability.IFluidTankProperties;
  * Fully automated template for fluid tanks, where up to 4 of them can be "listed" to have side access and other automation properties.
  * @author CD4017BE
  */
-public class TankContainer
+public class TankContainer implements ITankContainer
 {
 	/**	bits[0-47 6*4*2]: side * tank * access, bits[48-51 4*1]: tank * locked */
 	public long sideCfg = 0;
@@ -298,6 +298,26 @@ public class TankContainer
 			return fluid;
 		}
 
+	}
+
+	@Override
+	public FluidStack getTank(int i) {
+		return fluids[i];
+	}
+
+	@Override
+	public int getCapacity(int i) {
+		return tanks[i].cap;
+	}
+
+	@Override
+	public void setTank(int i, FluidStack fluid) {
+		fluids[i] = fluid;
+	}
+
+	@Override
+	public int getTanks() {
+		return tanks.length;
 	}
 
 }

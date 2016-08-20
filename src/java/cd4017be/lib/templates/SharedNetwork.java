@@ -24,7 +24,7 @@ public abstract class SharedNetwork<C extends MultiblockComp<C, N>, N extends Sh
 	 */
 	public SharedNetwork(C core) {
 		this.components = new HashMap<Long, C>();
-		this.components.put(core.getUID(), core);
+		this.components.put(core.uid, core);
 		this.core = core;
 		this.core.network = (N)this;
 	}
@@ -64,7 +64,7 @@ public abstract class SharedNetwork<C extends MultiblockComp<C, N>, N extends Sh
 	 * @param comp the component removed
 	 */
 	public void remove(C comp) {
-		components.remove(comp.getUID());
+		components.remove(comp.uid);
 		if (core == comp) core = null;
 		update = true;
 	}
@@ -120,9 +120,9 @@ public abstract class SharedNetwork<C extends MultiblockComp<C, N>, N extends Sh
 			queue.add(core);
 			while (!queue.isEmpty()) {
 				obj = queue.remove(queue.size() - 1);
-				comps.put(obj.getUID(), obj);
+				comps.put(obj.uid, obj);
 				for (byte i : sides())
-					if (obj.canConnect(i) && (obj1 = obj.getNeighbor(i)) != null && !comps.containsKey(obj1))
+					if (obj.canConnect(i) && (obj1 = obj.getNeighbor(i)) != null && !comps.containsKey(obj1.uid))
 						queue.add(obj1);
 			}
 			if (comps.size() == components.size()) return;

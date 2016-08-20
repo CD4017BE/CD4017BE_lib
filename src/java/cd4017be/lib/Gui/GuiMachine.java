@@ -29,10 +29,12 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ChatAllowedCharacters;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.translation.I18n;
 import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.items.SlotItemHandler;
 
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
@@ -43,7 +45,7 @@ import org.lwjgl.opengl.GL11;
  */
 public abstract class GuiMachine extends GuiContainer
 {
-	public static final ResourceLocation LIB_TEX = new ResourceLocation("lib", "textures/icons.png");
+	public static final ResourceLocation LIB_TEX = new ResourceLocation("cd4017be_lib", "textures/icons.png");
 	public ResourceLocation MAIN_TEX;
 	public int focus = -1, tabsX = 0, tabsY = 7, bgTexX = 0, bgTexY = 0;
 	public ArrayList<GuiComp> guiComps = new ArrayList<GuiComp>();
@@ -62,8 +64,8 @@ public abstract class GuiMachine extends GuiContainer
 				guiComps.add(new FluidTank(guiComps.size(), slot));
 			if (cont.data instanceof AutomatedTile) {
 				AutomatedTile tile = (AutomatedTile)cont.data;
-				if (tile.tanks != null) guiComps.add(new FluidSideCfg(guiComps.size(), tabsX -= tile.tanks.tanks.length * 9 + 9, tabsY, tile));
-				if (tile.inventory != null) guiComps.add(new ItemSideCfg(guiComps.size(), tabsX -= tile.inventory.groups.length * 9 + 9, tabsY, tile));
+				if (tile.tanks != null && tile.tanks.tanks.length > 0) guiComps.add(new FluidSideCfg(guiComps.size(), tabsX -= tile.tanks.tanks.length * 9 + 9, tabsY, tile));
+				if (tile.inventory != null && tile.inventory.groups.length > 0) guiComps.add(new ItemSideCfg(guiComps.size(), tabsX -= tile.inventory.groups.length * 9 + 9, tabsY, tile));
 				if (tile.energy != null) guiComps.add(new EnergySideCfg(guiComps.size(), tabsX - 18, tabsY, tile));
 			}
 		}
@@ -129,6 +131,12 @@ public abstract class GuiMachine extends GuiContainer
 		lastClickSlot = null;
 	}
 
+	@Override
+	protected void keyTyped(char typedChar, int keyCode) throws IOException {
+		if (focus >= 0) guiComps.get(focus).keyTyped(typedChar, keyCode);
+		else super.keyTyped(typedChar, keyCode);
+	}
+
 	public void drawFormatInfo(int x, int y, String key, Object... args) {
 		this.drawHoveringText(Arrays.asList(TooltipInfo.format("gui.cd4017be." + key, args).split("\n")), x, y, fontRendererObj);
 	}
@@ -152,7 +160,7 @@ public abstract class GuiMachine extends GuiContainer
 		GL11.glPushMatrix();
 		GL11.glTranslatef(x + 32, y + 32, this.zLevel + 32);
 		GL11.glScalef(16F, -16F, 16F);
-		EntityPlayer player = ((TileContainer)this.inventorySlots).player;
+		EntityPlayer player = ((DataContainer)this.inventorySlots).player;
 		GL11.glRotatef(player.rotationPitch, 1, 0, 0);
 		GL11.glRotatef(player.rotationYaw + 90, 0, 1, 0);
 		GL11.glTranslatef(-0.5F, -0.5F, 0.5F);
@@ -187,7 +195,7 @@ public abstract class GuiMachine extends GuiContainer
 
 	public void setFocus(int id) {
 		if (focus >= 0 && focus < guiComps.size()) guiComps.get(focus).unfocus();
-		focus = id > 0 && id < guiComps.size() && guiComps.get(id).focus() ? id : -1;
+		focus = id >= 0 && id < guiComps.size() && guiComps.get(id).focus() ? id : -1;
 	}
 
 	protected Object getDisplVar(int id) {return null;}
@@ -207,7 +215,7 @@ public abstract class GuiMachine extends GuiContainer
 			return this;
 		}
 		public boolean isInside(int x, int y) {
-			return x >= px && x < px + w && y >= py && y < py + w;
+			return x >= px && x < px + w && y >= py && y < py + h;
 		}
 		public void drawOverlay(int mx, int my) {
 			if (tooltip == null) return;
@@ -216,7 +224,10 @@ public abstract class GuiMachine extends GuiContainer
 				int p = tooltip.indexOf('+', 2), q = tooltip.indexOf(';', p);
 				float f = (Float)getDisplVar(id) * Float.parseFloat(tooltip.substring(2, p)) + Float.parseFloat(tooltip.substring(p + 1, q));
 				text = TooltipInfo.format(tooltip.substring(p + 1), f);
-			} else text = TooltipInfo.getLocFormat("gui.cd4017be." + tooltip.replace("#", getDisplVar(id).toString()));
+			} else {
+				Object o = getDisplVar(id);
+				text = TooltipInfo.getLocFormat("gui.cd4017be." + tooltip.replace("#", o == null ? "" : o.toString()));
+			}
 			drawHoveringText(Arrays.asList(text.split("\n")), mx - guiLeft, py + h - guiTop, fontRendererObj);
 		}
 		public void draw() {}
@@ -249,6 +260,7 @@ public abstract class GuiMachine extends GuiContainer
 				drawVerticalLine(px - 1 + fontRendererObj.getStringWidth(text.substring(0, cur)), py, py + 7, cc);
 			} else text = (String)getDisplVar(id);
 			fontRendererObj.drawString(text, px, py, tc);
+			GlStateManager.color(1, 1, 1, 1);
 		}
 
 		@Override
@@ -348,9 +360,18 @@ public abstract class GuiMachine extends GuiContainer
 		}
 
 		@Override
+		public void drawOverlay(int mx, int my) {
+			super.drawOverlay(mx, my);
+			Object o;
+			if (states >= 0 && (o = getDisplVar(id)) instanceof EnumFacing)
+				drawSideCube(-64, tabsY + 63, ((EnumFacing)o).ordinal(), (byte)states);
+		}
+
+		@Override
 		public void draw() {
-			if (states == 1) return;
-			int s = (Integer)getDisplVar(id);
+			if (states < 0) return;
+			Object o = getDisplVar(id);
+			int s = o instanceof EnumFacing ? ((EnumFacing)o).ordinal() : (Integer)o;
 			mc.renderEngine.bindTexture(MAIN_TEX);
 			drawTexturedModalRect(px, py, tx, ty + s * h, w, h);
 		}
@@ -407,7 +428,7 @@ public abstract class GuiMachine extends GuiContainer
 		public void drawOverlay(int mx, int my) {
 			int s = (my - py - 9) / 9;
 			if (s >= 0 && mx >= px + 9)
-				drawSideCube(-64, py + 63, s, (tile.energy.sideCfg >> s & 1) != 0 ? (byte)3 : 0);
+				drawSideCube(-64, py - guiTop + 63, s, (tile.energy.sideCfg >> s & 1) != 0 ? (byte)3 : 0);
 		}
 
 		@Override
@@ -450,7 +471,7 @@ public abstract class GuiMachine extends GuiContainer
 				for (TankSlot slot : ((TileContainer)inventorySlots).tankSlots)
 					if (slot.tankNumber == i)
 						drawTexturedModalRect(slot.xDisplayPosition + (slot.size >> 4 & 0xf) * 9 - 9, slot.yDisplayPosition + (slot.size & 0xf) * 18 - (s<6?10:18), 144 + dir * 16, 16, 16, s<6?8:16);
-				if(s < 6) drawSideCube(-64, py + 63, s, dir);
+				if(s < 6) drawSideCube(-64, py - guiTop + 63, s, dir);
 			}
 		}
 
@@ -502,12 +523,12 @@ public abstract class GuiMachine extends GuiContainer
 			int i = (mx - px - 9) / 9;
 			if (s >= 0 && i >= 0) {
 				mc.renderEngine.bindTexture(LIB_TEX);
-				byte dir = tile.inventory.getConfig(s, id);
-				int i0 = tile.inventory.groups[id].s, i1 = tile.inventory.groups[id].e;
+				byte dir = tile.inventory.getConfig(s, i);
+				int i0 = tile.inventory.groups[i].s, i1 = tile.inventory.groups[i].e;
 				for (Slot slot : inventorySlots.inventorySlots)
-					if (slot.getSlotIndex() >= i0 && slot.getSlotIndex() < i1)
+					if (slot instanceof SlotItemHandler && slot.getSlotIndex() >= i0 && slot.getSlotIndex() < i1)
 						drawTexturedModalRect(slot.xDisplayPosition, slot.yDisplayPosition, 144 + dir * 16, 0, 16, 16);
-				drawSideCube(-64, py + 63, s, dir);
+				drawSideCube(-64, py - guiTop + 63, s, dir);
 			}
 		}
 
@@ -544,7 +565,7 @@ public abstract class GuiMachine extends GuiContainer
 		final TankSlot slot;
 
 		public FluidTank(int id, TankSlot slot) {
-			super(id, slot.xDisplayPosition + guiLeft, slot.yDisplayPosition + guiTop, (slot.size >> 4 & 0xf) * 18 - 2, (slot.size & 0xf) * 18 - 2);
+			super(id, slot.xDisplayPosition, slot.yDisplayPosition, (slot.size >> 4 & 0xf) * 18 - 2, (slot.size & 0xf) * 18 - 2);
 			this.slot = slot;
 		}
 
@@ -553,8 +574,8 @@ public abstract class GuiMachine extends GuiContainer
 			FluidStack stack = slot.getStack();
 			ArrayList<String> info = new ArrayList<String>();
 			info.add(stack != null ? stack.getLocalizedName() : "Empty");
-			info.add(String.format("%s/%s ", Utils.formatNumber(stack != null ? (float)stack.amount / 1000F : 0F, 3), Utils.formatNumber((float)slot.inventory.tanks[slot.tankNumber].cap / 1000F, 3)) + TooltipInfo.getFluidUnit());
-			drawHoveringText(info, px, py, fontRendererObj);
+			info.add(String.format("%s/%s ", Utils.formatNumber(stack != null ? (float)stack.amount / 1000F : 0F, 3), Utils.formatNumber((float)slot.inventory.getCapacity(slot.tankNumber) / 1000F, 3)) + TooltipInfo.getFluidUnit());
+			drawHoveringText(info, px - guiLeft, py - guiTop, fontRendererObj);
 		}
 
 		@Override
@@ -565,7 +586,8 @@ public abstract class GuiMachine extends GuiContainer
 			FluidStack stack = slot.getStack();
 			if (stack != null && (res = stack.getFluid().getStill()) != null) {
 				mc.renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
-				int n = (int)((long)h * (long)stack.amount / (long)slot.inventory.tanks[slot.tankNumber].cap);
+				int c = slot.inventory.getCapacity(slot.tankNumber);
+				int n = c == 0 || stack.amount >= c ? h : (int)((long)h * (long)stack.amount / (long)c);
 				drawTexturedModalRect(px, py + h - n, mc.getTextureMapBlocks().getAtlasSprite(res.toString()), w, n);
 			}
 			mc.renderEngine.bindTexture(LIB_TEX);

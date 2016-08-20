@@ -96,7 +96,7 @@ public class BlockPipe extends TileBlock
     	double[] bb = new double[]{f1, f2, f1, f2, f1, f2};
     	for (byte s = 0; s < 6; s++)
     		if (pipe.textureForSide(s) != -1) 
-    			bb[s] = ((s & 1) == 0 ? 0D : 1D);
+    			bb[s] = (double)(s & 1);
     	return new AxisAlignedBB(bb[4], bb[0], bb[2], bb[5], bb[1], bb[3]);
 	}
 
@@ -139,6 +139,11 @@ public class BlockPipe extends TileBlock
 	}
 
 	@Override
+	public boolean isNormalCube(IBlockState state) {
+		return false;
+	}
+
+	@Override
 	public boolean isNormalCube(IBlockState state, IBlockAccess world, BlockPos pos) 
     {
     	TileEntity te = world.getTileEntity(pos);
@@ -158,6 +163,16 @@ public class BlockPipe extends TileBlock
 	@Override
 	public boolean isBlockSolid(IBlockAccess world, BlockPos pos, EnumFacing side) {
 		return this.isNormalCube(world.getBlockState(pos), world, pos);
+	}
+
+	@Override
+	public boolean isOpaqueCube(IBlockState state) {
+		return false;
+	}
+
+	@Override
+	public boolean isPassable(IBlockAccess world, BlockPos pos) {
+		return false;
 	}
 
 	@Override

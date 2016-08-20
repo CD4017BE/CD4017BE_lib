@@ -257,6 +257,11 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
 	}
 
 	@Override
+	public boolean shouldCheckWeakPower(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing side) {
+		return !redstone;
+	}
+
+	@Override
 	public int getWeakPower(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing s) {
 		if (!redstone) return 0;
         TileEntity te = world.getTileEntity(pos);

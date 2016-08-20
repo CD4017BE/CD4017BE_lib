@@ -29,6 +29,7 @@ public class DefaultItemBlock extends ItemBlock
         super(id);
         this.setRegistryName(id.getRegistryName());
         GameRegistry.register(this);
+        this.init();
     }
     
     protected void init() {

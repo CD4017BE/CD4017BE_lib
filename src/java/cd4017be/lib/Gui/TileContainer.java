@@ -1,10 +1,6 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package cd4017be.lib.Gui;
 
-import cd4017be.lib.templates.TankContainer;
+import cd4017be.lib.templates.ITankContainer;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -24,27 +20,34 @@ import net.minecraftforge.fml.relauncher.SideOnly;
  * Fully automated Container supporting items and fluids
  * @author CD4017BE
  */
-public class TileContainer extends DataContainer
-{
+public class TileContainer extends DataContainer {
 	/** assign this to do special slot click handling */
 	public ISlotClickHandler clickHandler;
 	public int invPlayerS = 0;
 	public int invPlayerE = 0;
-	public ArrayList<TankSlot> tankSlots = new ArrayList<TankSlot>();
-	public ArrayList<FluidStack> fluidStacks = new ArrayList<FluidStack>();
+	public final ArrayList<TankSlot> tankSlots;
+	public final ArrayList<FluidStack> fluidStacks;
 
 	public TileContainer(IGuiData tile, EntityPlayer player) {
 		super(tile, player);
+		this.tankSlots = new ArrayList<TankSlot>();
+		this.fluidStacks = new ArrayList<FluidStack>();
 	}
 
-	public void addPlayerInventory(int x, int y, boolean armor) {
+	public void addPlayerInventory(int x, int y) {
+		this.addPlayerInventory(x, y, false, false);
+	}
+	
+	public void addPlayerInventory(int x, int y, boolean armor, boolean lockSel) {
 		invPlayerS = this.inventorySlots.size();
 		invPlayerE = invPlayerS + (armor ? 41 : 36);
 		for (int i = 0; i < 3; i++) 
 			for (int j = 0; j < 9; j++)
 				this.addSlotToContainer(new Slot(player.inventory, i * 9 + j + 9, x + j * 18, y + i * 18));
 		for (int i = 0; i < 9; i++)
-			this.addSlotToContainer(new Slot(player.inventory, i, x + i * 18, y + 58));
+			if (lockSel && i == player.inventory.currentItem)
+				this.addSlotToContainer(new LockedSlot(player.inventory, i, x + i * 18, y + 58));
+			else this.addSlotToContainer(new Slot(player.inventory, i, x + i * 18, y + 58));
 		if (armor) {
 			this.addSlotToContainer(new Slot(player.inventory, 40, x - 18, y + 58));
 			for (int i = 0; i < 4; i++)
@@ -63,7 +66,6 @@ public class TileContainer extends DataContainer
 
 	@Override
 	protected boolean checkChanges(PacketBuffer dos) {
-		byte send = 0;
 		for (int i = 0; i < this.inventorySlots.size(); i++) {
 			ItemStack item1 = this.inventorySlots.get(i).getStack();
 			ItemStack item0 = this.inventoryItemStacks.get(i);
@@ -73,26 +75,29 @@ public class TileContainer extends DataContainer
 					listener.sendSlotContents(this, i, item0);
 			}
 		}
-		for (int i = 0; i < this.tankSlots.size(); i++) {
-			FluidStack fluid1 = this.tankSlots.get(i).getStack();
-			FluidStack fluid0 = this.fluidStacks.get(i);
-			if ((fluid1 == null ^ fluid0 == null) || (fluid1 != null && !fluid1.isFluidEqual(fluid0))) {
-				this.fluidStacks.set(i, fluid1 == null ? null : fluid1.copy());
-				send |= 1 << i;
+		byte send = 0;
+		if (!tankSlots.isEmpty()) {
+			for (int i = 0; i < this.tankSlots.size(); i++) {
+				FluidStack fluid1 = this.tankSlots.get(i).getStack();
+				FluidStack fluid0 = this.fluidStacks.get(i);
+				if ((fluid1 == null ^ fluid0 == null) || (fluid1 != null && !fluid1.isFluidEqual(fluid0))) {
+					this.fluidStacks.set(i, fluid1 == null ? null : fluid1.copy());
+					send |= 1 << i;
+				}
 			}
+			dos.writeByte(send);
+			for (byte c = send, i = 0; c != 0; c >>= 1, i++)
+				if ((c & 1) != 0) {
+					FluidStack fluid = this.fluidStacks.get(i);
+					dos.writeNBTTagCompoundToBuffer(fluid == null ? null : fluid.writeToNBT(new NBTTagCompound()));
+				}
 		}
-		dos.writeByte(send);
-		for (byte c = send, i = 0; c != 0; c >>= 1, i++)
-			if ((c & 1) != 0) {
-				FluidStack fluid = this.fluidStacks.get(i);
-				dos.writeNBTTagCompoundToBuffer(fluid == null ? null : fluid.writeToNBT(new NBTTagCompound()));
-			}
 		return super.checkChanges(dos) || send != 0;
 	}
 
 	@Override
 	public void onDataUpdate(PacketBuffer dis) {
-		try {
+		if (!this.tankSlots.isEmpty())try {
 		for (byte c = dis.readByte(), i = 0; c != 0 && i < this.tankSlots.size(); c >>= 1, i++)
 			if ((c & 1) != 0)
 				this.tankSlots.get(i).putStack(FluidStack.loadFluidStackFromNBT(dis.readNBTTagCompoundFromBuffer()));
@@ -171,9 +176,9 @@ public class TileContainer extends DataContainer
 	public static class TankSlot {
 		public final int xDisplayPosition, yDisplayPosition, tankNumber;
 		public final byte size;
-		public final TankContainer inventory;
+		public final ITankContainer inventory;
 
-		public TankSlot(TankContainer inv, int id, int x, int y, byte size) {
+		public TankSlot(ITankContainer inv, int id, int x, int y, byte size) {
 			this.inventory = inv;
 			this.tankNumber = id;
 			this.xDisplayPosition = x;
@@ -182,11 +187,11 @@ public class TileContainer extends DataContainer
 		}
 
 		public FluidStack getStack() {
-			return inventory.fluids[tankNumber];
+			return inventory.getTank(tankNumber);
 		}
 
 		public void putStack(FluidStack fluid) {
-			inventory.fluids[tankNumber] = fluid;
+			inventory.setTank(tankNumber, fluid);
 		}
 
 	}
