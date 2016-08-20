@@ -4,9 +4,6 @@
  */
 package cd4017be.lib.util;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.text.DecimalFormatSymbols;
 import java.util.HashSet;
 import java.util.Set;
@@ -42,6 +39,8 @@ public class Utils
 		{EnumFacing.NORTH, EnumFacing.SOUTH, EnumFacing.WEST, EnumFacing.EAST},
 		{EnumFacing.WEST, EnumFacing.EAST, EnumFacing.DOWN, EnumFacing.UP}
 	};
+	
+	public static final BlockPos NOWHERE = new BlockPos(0, -1, 0);
     
     public static boolean itemsEqual(ItemStack item0, ItemStack item1)
     {

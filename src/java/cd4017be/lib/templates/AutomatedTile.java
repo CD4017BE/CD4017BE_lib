@@ -1,13 +1,9 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package cd4017be.lib.templates;
 
+import cd4017be.api.Capabilities;
 import cd4017be.api.automation.AreaProtect;
 import cd4017be.api.automation.IOperatingArea;
 import cd4017be.api.automation.PipeEnergy;
-import cd4017be.api.energy.EnergyAutomation;
 import cd4017be.lib.ModTileEntity;
 import cd4017be.lib.Gui.TileContainer;
 import cd4017be.lib.templates.TankContainer;
@@ -33,8 +29,8 @@ import net.minecraftforge.items.CapabilityItemHandler;
  * The ultimate TileEntity template for lazy people
  * @author CD4017BE
  */
-public class AutomatedTile extends ModTileEntity implements ITickable
-{
+public class AutomatedTile extends ModTileEntity implements ITickable {
+
 	public Inventory inventory;
 	public TankContainer tanks;
 	public PipeEnergy energy;
@@ -97,7 +93,7 @@ public class AutomatedTile extends ModTileEntity implements ITickable
 			return tanks != null && (s == null || (tanks.sideCfg >> (s.ordinal() * 8) & 0xff) != 0);
 		else if (cap == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
 			return inventory != null && (s == null || (inventory.sideCfg >> (s.ordinal() * 10) & 0x3ff) != 0);
-		else if (cap == EnergyAutomation.ELECTRIC_CAPABILITY)
+		else if (cap == Capabilities.ELECTRIC_CAPABILITY)
 			return energy != null && (s == null || energy.isConnected(s.ordinal()));
 		//TODO add caps for GAS, HEAT
 		else return super.hasCapability(cap, s);
@@ -110,7 +106,7 @@ public class AutomatedTile extends ModTileEntity implements ITickable
 			return tanks == null ? null : (T)tanks.new Access(s);
 		else if (cap == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) 
 			return inventory == null ? null : (T)inventory.new Access(s);
-		else if (cap == EnergyAutomation.ELECTRIC_CAPABILITY)
+		else if (cap == Capabilities.ELECTRIC_CAPABILITY)
 			return energy == null || !(s == null || energy.isConnected(s.ordinal())) ? null : (T)energy;
 		else return super.getCapability(cap, s);
 	}
@@ -148,7 +144,7 @@ public class AutomatedTile extends ModTileEntity implements ITickable
 	}
 
 	public boolean transferStack(ItemStack item, int s, TileContainer container) {return false;}
-    
-    public boolean slotClick(ItemStack item, Slot s, int b, ClickType m, TileContainer container) {return false;}
+
+	public boolean slotClick(ItemStack item, Slot s, int b, ClickType m, TileContainer container) {return false;}
 
 }

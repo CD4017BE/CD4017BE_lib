@@ -5,6 +5,7 @@
 package cd4017be.lib;
 
 import cd4017be.lib.Gui.DataContainer;
+import cd4017be.api.IAbstractTile;
 import cd4017be.lib.TileBlockRegistry.TileBlockEntry;
 
 import java.io.IOException;
@@ -26,6 +27,7 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 
@@ -33,7 +35,7 @@ import net.minecraftforge.items.IItemHandler;
  *
  * @author CD4017BE
  */
-public class ModTileEntity extends TileEntity
+public class ModTileEntity extends TileEntity implements IAbstractTile
 {
 	public int dimensionId;
 
@@ -139,6 +141,11 @@ public class ModTileEntity extends TileEntity
 	@Override
 	public AxisAlignedBB getRenderBoundingBox() {
 		return new AxisAlignedBB(pos.getX(), pos.getY(), pos.getZ(), pos.getX() + 1, pos.getY() + 1, pos.getZ() + 1);
+	}
+
+	@Override
+	public ICapabilityProvider getTileOnSide(EnumFacing s) {
+		return this.getLoadedTile(pos.offset(s));
 	}
 
 }

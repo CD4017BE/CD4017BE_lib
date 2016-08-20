@@ -18,7 +18,7 @@ import net.minecraftforge.items.ItemHandlerHelper;
  *
  * @author CD4017BE
  */
-public class Inventory
+public class Inventory implements IItemHandlerModifiable
 {
 	/**	bits[0-59 6*5*2]: side * comp * access */
 	public long sideCfg = 0;
@@ -48,7 +48,7 @@ public class Inventory
 	 * @param dir preferred direction: -1 input, 0 none, 1 output
 	 * @return this for construction convenience
 	 */
-	public Inventory group(int i, int s, int e, byte dir) {
+	public Inventory group(int i, int s, int e, int dir) {
 		groups[i] = new Group(i, s, e, dir);
 		return this;
 	}
@@ -124,6 +124,46 @@ public class Inventory
 
 	public byte getConfig(int s, int id) {
 		return (byte)(sideCfg >> (10 * s + 2 * id) & 3);
+	}
+
+	@Override
+	public int getSlots() {
+		return items.length;
+	}
+
+	@Override
+	public ItemStack getStackInSlot(int i) {
+		return items[i];
+	}
+
+	@Override
+	public ItemStack insertItem(int i, ItemStack stack, boolean sim) {
+		ItemStack item;
+		int m = handler.insertAm(-1, i, item = items[i], stack);
+		if (m <= 0) return stack;
+		if (!sim) {
+			if (item == null) item = ItemHandlerHelper.copyStackWithSize(stack, m);
+			else item.stackSize += m;
+			handler.setSlot(-1, i, item);
+		}
+		return (m = stack.stackSize - m) > 0 ? ItemHandlerHelper.copyStackWithSize(stack, m) : null;
+	}
+
+	@Override
+	public ItemStack extractItem(int i, int m, boolean sim) {
+		ItemStack item;
+		if ((m = handler.extractAm(-1, i, item = items[i], m)) <= 0) return null;
+		if (!sim) {
+			if (item.stackSize == m) item = null;
+			else item.stackSize -= m;
+			handler.setSlot(-1, i, item);
+		}
+		return ItemHandlerHelper.copyStackWithSize(item, m);
+	}
+
+	@Override
+	public void setStackInSlot(int i, ItemStack stack) {
+		handler.setSlot(-1, i, stack);
 	}
 
 	public class Group {
@@ -209,50 +249,6 @@ public class Inventory
 			}
 			return ItemHandlerHelper.copyStackWithSize(item, m);
 		}
-	}
-	
-	public class SlotAccess implements IItemHandlerModifiable {
-
-		@Override
-		public int getSlots() {
-			return items.length;
-		}
-
-		@Override
-		public ItemStack getStackInSlot(int i) {
-			return items[i];
-		}
-
-		@Override
-		public ItemStack insertItem(int i, ItemStack stack, boolean sim) {
-			ItemStack item;
-			int m = handler.insertAm(-1, i, item = items[i], stack);
-			if (m <= 0) return stack;
-			if (!sim) {
-				if (item == null) item = ItemHandlerHelper.copyStackWithSize(stack, m);
-				else item.stackSize += m;
-				handler.setSlot(-1, i, item);
-			}
-			return (m = stack.stackSize - m) > 0 ? ItemHandlerHelper.copyStackWithSize(stack, m) : null;
-		}
-
-		@Override
-		public ItemStack extractItem(int i, int m, boolean sim) {
-			ItemStack item;
-			if ((m = handler.extractAm(-1, i, item = items[i], m)) <= 0) return null;
-			if (!sim) {
-				if (item.stackSize == m) item = null;
-				else item.stackSize -= m;
-				handler.setSlot(-1, i, item);
-			}
-			return ItemHandlerHelper.copyStackWithSize(item, m);
-		}
-
-		@Override
-		public void setStackInSlot(int i, ItemStack stack) {
-			handler.setSlot(-1, i, stack);
-		}
-		
 	}
 
 	public interface IAccessHandler {

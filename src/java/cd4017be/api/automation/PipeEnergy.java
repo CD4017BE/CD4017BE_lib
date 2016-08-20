@@ -4,14 +4,13 @@
  */
 package cd4017be.api.automation;
 
+import cd4017be.api.Capabilities;
+import cd4017be.api.IAbstractTile;
 import cd4017be.api.energy.EnergyAPI.IEnergyAccess;
-import cd4017be.api.energy.EnergyAutomation;
-import cd4017be.lib.ModTileEntity;
 import cd4017be.lib.TooltipInfo;
-import cd4017be.lib.util.Utils;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
+import net.minecraftforge.common.capabilities.ICapabilityProvider;
 
 /**
  *
@@ -90,13 +89,13 @@ public class PipeEnergy implements IEnergyAccess
 		return (sideCfg >> s & 1) != 0;
 	}
 
-	public void update(ModTileEntity tile) {
+	public void update(IAbstractTile tile) {
 		PipeEnergy energy;
 		for (byte i = 0, s = 0; i < 3; i++, s += 2) 
 			if ((sideCfg >> s & 1) != 0) {
-				TileEntity te = Utils.getTileOnSide(tile, s);
-				if (te != null && te.hasCapability(EnergyAutomation.ELECTRIC_CAPABILITY, EnumFacing.VALUES[s | 1])) {
-					energy = te.getCapability(EnergyAutomation.ELECTRIC_CAPABILITY, EnumFacing.VALUES[s | 1]);
+				ICapabilityProvider te = tile.getTileOnSide(EnumFacing.VALUES[s]);
+				if (te != null && te.hasCapability(Capabilities.ELECTRIC_CAPABILITY, EnumFacing.VALUES[s | 1])) {
+					energy = te.getCapability(Capabilities.ELECTRIC_CAPABILITY, EnumFacing.VALUES[s | 1]);
 					float ii = (Ucap - energy.Ucap) / Zcond;
 					float ud = (ii + Iind[i]) * 0.5F;
 					Ucap -= ud;

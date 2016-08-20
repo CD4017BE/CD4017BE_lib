@@ -25,7 +25,11 @@ public class ConfigurationFile
 	public static File init(FMLPreInitializationEvent event, String fileName, String preset, boolean versionCheck) {
 		if (configDir == null) configDir = new File(event.getModConfigurationDirectory(), "cd4017be");
 		File file = new File(configDir, fileName);
-		if (file.exists() && (!versionCheck || checkVersions(file, preset))) return file;
+		if (file.exists() && (!versionCheck || preset == null || checkVersions(file, preset))) return file;
+		if (preset == null) {
+			FMLLog.log("cd4017be_lib", Level.INFO, "The optional config file %s was not provided.", file);
+			return null;
+		}
 		try {
 			FMLLog.log("cd4017be_lib", Level.INFO, "Config file %s not existing or outdated, creating new from preset %s", file, preset);
     		copyData(preset, file);

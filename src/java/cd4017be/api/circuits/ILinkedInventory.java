@@ -1,11 +1,12 @@
 package cd4017be.api.circuits;
 
-import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.ISidedInventory;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.BlockPos;
 
-public interface ILinkedInventory extends ISidedInventory 
+public interface ILinkedInventory 
 {
-	public int[] getLinkPos();
-	public IInventory getLinkInv();
-	public byte getLinkDir();
+	public BlockPos getLinkPos();
+	public EnumFacing getLinkDir();
+	public TileEntity getLinkObj();
 }

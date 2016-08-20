@@ -284,6 +284,7 @@ public abstract class GuiMachine extends GuiContainer
 
 		@Override
 		public boolean focus() {
+			text = (String)getDisplVar(id);
 			cur = text.length();
 			return true;
 		}

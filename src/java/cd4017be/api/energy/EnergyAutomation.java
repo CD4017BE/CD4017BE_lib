@@ -5,20 +5,14 @@
 package cd4017be.api.energy;
 
 import java.util.List;
-import java.util.concurrent.Callable;
-
-import cd4017be.api.automation.PipeEnergy;
+import cd4017be.api.Capabilities;
 import cd4017be.api.energy.EnergyAPI.IEnergyAccess;
 import cd4017be.api.energy.EnergyAPI.IEnergyHandler;
 import cd4017be.lib.TooltipInfo;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.CapabilityInject;
-import net.minecraftforge.common.capabilities.CapabilityManager;
 import static cd4017be.api.energy.EnergyAPI.IA_value;
 
 /**
@@ -116,35 +110,12 @@ public class EnergyAutomation implements IEnergyHandler
 			} else return (float)this.addEnergyI(E < 0 ? (int)Math.ceil(E) : (int)Math.floor(E)) * IA_value;
 		}
 	}
-	
-	@CapabilityInject(PipeEnergy.class)
-    public static Capability<PipeEnergy> ELECTRIC_CAPABILITY = null;
-	
-	public EnergyAutomation() {
-		CapabilityManager.INSTANCE.register(PipeEnergy.class, new Capability.IStorage<PipeEnergy>() {
-			@Override
-			public NBTBase writeNBT(Capability<PipeEnergy> cap, PipeEnergy pipe, EnumFacing s) {
-				NBTTagCompound nbt = new NBTTagCompound();
-				pipe.writeToNBT(nbt, "");
-				return nbt;
-			}
-			@Override
-			public void readNBT(Capability<PipeEnergy> cap, PipeEnergy pipe, EnumFacing s, NBTBase nbt) {
-				pipe.readFromNBT((NBTTagCompound)nbt, "");
-			}
-		}, new Callable<PipeEnergy>() {
-			@Override
-			public PipeEnergy call() throws Exception {
-				return new PipeEnergy(0, 0);
-			}
-		});
-	}
-	
+
 	@Override
 	public IEnergyAccess create(TileEntity te, EnumFacing s)  {
-		return te.getCapability(ELECTRIC_CAPABILITY, s);
+		return te.getCapability(Capabilities.ELECTRIC_CAPABILITY, s);
 	}
-	
+
 	@Override
 	public IEnergyAccess create(ItemStack item, int s) {
 		return item != null && item.getItem() instanceof IEnergyItem ? new EnergyItem(item, (IEnergyItem)item.getItem(), s) : null;

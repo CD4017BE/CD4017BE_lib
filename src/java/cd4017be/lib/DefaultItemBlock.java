@@ -32,12 +32,11 @@ public class DefaultItemBlock extends ItemBlock
     }
     
     protected void init() {
-    	BlockItemRegistry.registerItemStack(new ItemStack(this), this.getRegistryName().getResourcePath());
+    	BlockItemRegistry.registerItemStack(new ItemStack(this), "tile." + this.getRegistryName().getResourcePath());
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
-    public void addInformation(ItemStack item, EntityPlayer player, List list, boolean b) {
+    public void addInformation(ItemStack item, EntityPlayer player, List<String> list, boolean b) {
         if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)) {
         	String s = this.getUnlocalizedName(item) + ".tip";
         	String s1 = TooltipInfo.getLocFormat(s);

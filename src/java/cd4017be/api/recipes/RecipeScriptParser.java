@@ -14,6 +14,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fluids.FluidRegistry;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fml.common.FMLLog;
+import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.oredict.OreDictionary;
 import cd4017be.api.recipes.RecipeAPI.IRecipeHandler;
 import cd4017be.lib.BlockItemRegistry;
@@ -24,7 +25,7 @@ import cd4017be.lib.util.ScriptCompiler;
 public class RecipeScriptParser extends ScriptCompiler {
 
 	public static HashMap<ResourceLocation, String> codeCache = new HashMap<ResourceLocation, String>(); 
-	private static final String[] functions = {"it", "fl", "ore", "hasit", "hasfl", "nore"};
+	private static final String[] functions = {"it", "fl", "ore", "hasit", "hasfl", "nore", "hasmod"};
 	private static final String[] methods = {"add"};
 	
 	public RecipeScriptParser(HashMap<String, Object> vars) {
@@ -98,20 +99,22 @@ public class RecipeScriptParser extends ScriptCompiler {
 			for (Object o: param) {
 				String name = (String)o;
 				if (name.indexOf(':') < 0) {
-					if (BlockItemRegistry.stack(name, 1) == null) return 0D;
+					if (BlockItemRegistry.stack(name, 1) == null) return false;
 				} else if (name.startsWith("ore:")) {
-					if (OreDictionary.getOres(name.substring(4)).isEmpty()) return 0D;
-				} else if (Item.getByNameOrId(name) == null) return 0D;
+					if (OreDictionary.getOres(name.substring(4)).isEmpty()) return false;
+				} else if (Item.getByNameOrId(name) == null) return false;
 			}
-			return 1D;
+			return true;
 		case 4:
 			for (Object o: param)
-				if (!FluidRegistry.isFluidRegistered((String)o)) return 0D;
-			return 1D;
+				if (!FluidRegistry.isFluidRegistered((String)o)) return false;
+			return true;
 		case 5:
 			if (param[0] instanceof String)
 				return (double)OreDictionary.getOres((String)param[0]).size();
 			else return 0D;
+		case 6:
+			return param[0] instanceof String && Loader.isModLoaded((String)param[0]);
 		}
 		return null;
 	}

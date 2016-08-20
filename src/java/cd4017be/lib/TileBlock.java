@@ -136,11 +136,13 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
 		return orient != null ? state.getValue(orient) : 0;
 	}
 
+	@SuppressWarnings("rawtypes")
 	protected void addProperties(ArrayList<IProperty> main)
     {
 		if (tmpType > 0) main.add(Orientations[tmpType]);
     }
 	
+	@SuppressWarnings("rawtypes")
 	@Override
 	protected BlockStateContainer createBlockState() {
 		ArrayList<IProperty> main = new ArrayList<IProperty>();

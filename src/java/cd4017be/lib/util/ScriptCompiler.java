@@ -92,11 +92,20 @@ public abstract class ScriptCompiler {
 					} else if (left.equals("if")) {
 						Object o = this.parameter(right, recLimit, method.line);
 						k1 = this.enclosing(method.code, k1[1], '{', '}');
-						if (o != null && !(o instanceof Double && (double)o == 0)) {
+						boolean cond = o != null && o != Boolean.FALSE && !(o instanceof Double && (double)o == 0);
+						if (cond) {
 							SubMethod ncode = new SubMethod(method.code.substring(k1[0], k1[1]), new ResourceLocation("if @l." + method.line));
 							this.run(ncode, recLimit - 1);
 						}
-						p = k1[1] + 1;
+						p = this.skipWhitespace(method.code, k1[1] + 1);
+						if (method.code.regionMatches(p, "else", 0, 4)) {
+							k1 = this.enclosing(method.code, p + 4, '{', '}');
+							if (!cond) {
+								SubMethod ncode = new SubMethod(method.code.substring(k1[0], k1[1]), new ResourceLocation("if @l." + method.line));
+								this.run(ncode, recLimit - 1);
+							}
+							p = k1[1] + 1;
+						}
 					} else if (left.equals("print")) {
 						FMLLog.log("ScriptOUT", Level.INFO, String.valueOf(this.parameter(right, recLimit, method.line)));
 						p = method.code.indexOf(';', k1[1]) + 1;
@@ -205,41 +214,54 @@ public abstract class ScriptCompiler {
 	}
 	
 	private Object function(String name, Object[] param, int line) throws CompileException {
+		Object par0 = param.length > 0 ? param[0] : null;
 		switch(name) {
 		case "-"://subtract or negate
-			if (param[0] instanceof Double) {
-				if (param.length == 1) return -(Double)param[0];
-				else return (Double)param[0] - (Double)param[1];
-			} else if (param[0] instanceof VecN) {
-				if (param.length == 1) return ((VecN)param[0]).neg();
-				else return ((VecN)param[0]).diff((VecN)param[1]);
+			if (par0 instanceof Double) {
+				if (param.length == 1) return -(Double)par0;
+				else return (Double)par0 - (Double)param[1];
+			} else if (par0 instanceof VecN) {
+				if (param.length == 1) return ((VecN)par0).neg();
+				else return ((VecN)par0).diff((VecN)param[1]);
+			} else if (par0 instanceof Boolean) {
+				boolean x = (Boolean)par0;
+				for (int i = 1; !x && i < param.length; i++) x |= (Boolean)param[i];
+				return !x;
 			} else break;
 		case "+"://sum
-			if (param[0] instanceof Double) {
-				double x = (Double)param[0];
+			if (par0 instanceof Double) {
+				double x = (Double)par0;
 				for (int i = 1; i < param.length; i++) x += (Double)param[i];
 				return x;
-			} else if (param[0] instanceof VecN) {
-				VecN x = (VecN)param[0];
+			} else if (par0 instanceof VecN) {
+				VecN x = (VecN)par0;
 				for (int i = 1; i < param.length; i++) x = x.add((VecN)param[i]);
+				return x;
+			} else if (par0 instanceof Boolean) {
+				boolean x = (Boolean)par0;
+				for (int i = 1; !x && i < param.length; i++) x |= (Boolean)param[i];
 				return x;
 			} else break;
 		case "*"://product
-			if (param[0] instanceof Double) {
-				double x = (Double)param[0];
+			if (par0 instanceof Double) {
+				double x = (Double)par0;
 				for (int i = 1; i < param.length; i++) x *= (Double)param[i];
 				return x;
-			} else if (param[0] instanceof VecN) {
-				VecN x = (VecN)param[0];
+			} else if (par0 instanceof VecN) {
+				VecN x = (VecN)par0;
 				for (int i = 1; i < param.length; i++) x = x.scale(((VecN)param[i]).x);
+				return x;
+			} else if (par0 instanceof Boolean) {
+				boolean x = (Boolean)par0;
+				for (int i = 1; x && i < param.length; i++) x &= (Boolean)param[i];
 				return x;
 			} else break;
 		case "/"://division
-			if (param[0] instanceof Double) {
-				if (param.length == 1) return 1D / (Double)param[0];
-				else return (Double)param[0] / (Double)param[1];
-			} else if (param[0] instanceof VecN) {
-				VecN x = ((VecN)param[0]).copy();
+			if (par0 instanceof Double) {
+				if (param.length == 1) return 1D / (Double)par0;
+				else return (Double)par0 / (Double)param[1];
+			} else if (par0 instanceof VecN) {
+				VecN x = ((VecN)par0).copy();
 				if (param.length == 1) {
 					for (int i = 0; i < x.x.length; i++) x.x[i] = 1D / x.x[i];
 				} else {
@@ -247,36 +269,41 @@ public abstract class ScriptCompiler {
 					for (int i = 0; i < x.x.length; i++) x.x[i] /= y.x[i];
 				}
 				return x;
+			} else if (par0 instanceof Boolean) {
+				boolean x = (Boolean)par0;
+				Object par;
+				for (int i = 1; x && i < param.length; i++) x &= (Boolean)param[i];
+				return !x;
 			} else break;
 		case "x"://cross product for Vec3
-			if (!(param[0] instanceof VecN)) break; 
-			VecN a = (VecN)param[0];
+			if (!(par0 instanceof VecN)) break; 
+			VecN a = (VecN)par0;
 			VecN b = (VecN)param[1];
 			return new VecN(a.x[1] * b.x[2] - a.x[2] * b.x[1],
 							a.x[2] * b.x[0] - a.x[0] * b.x[2],
 							a.x[0] * b.x[1] - a.x[1] * b.x[0]);
 		case "s"://scalar product for VecN
-			if (param[0] instanceof Double) return ((VecN)param[1]).scale((Double)param[0]);
-			else if (param[0] instanceof VecN)return ((VecN)param[0]).scale((VecN)param[1]);
+			if (par0 instanceof Double) return ((VecN)param[1]).scale((Double)par0);
+			else if (par0 instanceof VecN)return ((VecN)par0).scale((VecN)param[1]);
 			else break;
 		case "n":
-			if (param[0] instanceof VecN) return ((VecN)param[0]).norm();
-			else if (param[0] instanceof Double) return (double)param[0] == 0 ? 0D : 1D;
-			else break;
+			if (par0 instanceof VecN) return ((VecN)par0).norm();
+			else if (par0 instanceof Double) return (double)par0 != 0;
+			else return par0 != null;
 		case "l":
-			if (param[0] instanceof VecN) return ((VecN)param[0]).l();
-			else if (param[0] instanceof Double) return Math.abs((double)param[0]);
+			if (par0 instanceof VecN) return ((VecN)par0).l();
+			else if (par0 instanceof Double) return Math.abs((double)par0);
 			else break;
 		case ">":
-			if (param[0] instanceof Double) {
-				double x = (Double)param[0];
+			if (par0 instanceof Double) {
+				double x = (Double)par0;
 				for (int i = 1; i < param.length; i++) 
 					if (param[i] instanceof Double && (Double)param[i] < x) x = (Double)param[i];
-					else return 0D;
-				return 1D;
+					else return false;
+				return true;
 			} else break;
 		case "$":
-			if (param[0] instanceof String) return String.format((String)param[0], Arrays.copyOfRange(param, 1, param.length));
+			if (par0 instanceof String) return String.format((String)par0, Arrays.copyOfRange(param, 1, param.length));
 			else break;
 		default:
 			String[] arr = this.functions();
@@ -330,6 +357,11 @@ public abstract class ScriptCompiler {
 				n++;
 			} else if (cl1.indexOf(c) >= 0 && --n < 0) return p - 1;
 		}
+		return p;
+	}
+	
+	private int skipWhitespace(String s, int p) {
+		while(p < s.length() && Character.isWhitespace(s.charAt(p))) p++;
 		return p;
 	}
 	

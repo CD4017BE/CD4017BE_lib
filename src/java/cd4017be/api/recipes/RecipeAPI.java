@@ -9,8 +9,10 @@ import org.apache.logging.log4j.Level;
 
 import cd4017be.api.recipes.AutomationRecipes.*;
 import cd4017be.lib.ConfigurationFile;
+import cd4017be.lib.Lib;
 import cd4017be.lib.NBTRecipe;
 import cd4017be.lib.util.ScriptCompiler;
+import cd4017be.lib.util.ScriptCompiler.CompileException;
 import cd4017be.lib.util.ScriptCompiler.SubMethod;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -19,17 +21,19 @@ import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.IFuelHandler;
 import net.minecraftforge.fml.common.Loader;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.oredict.OreDictionary;
 import net.minecraftforge.oredict.ShapedOreRecipe;
 import net.minecraftforge.oredict.ShapelessOreRecipe;
 
 public class RecipeAPI {
+
 	private static final String[] phases = {"@PRE_INIT", "@INIT", "@POST_INIT"};
 	public static final int PRE_INIT = 0, INIT = 1, POST_INIT = 2;
 	public static HashMap<String, IRecipeHandler> Handlers;
 	public static HashMap<String, CachedScript> cache = new HashMap<String, CachedScript>();
-	
+
 	static {
 		Handlers = new HashMap<String, IRecipeHandler>();
 		Handlers.put("shapeless", new ShapelessCraftingHandler());
@@ -39,6 +43,7 @@ public class RecipeAPI {
 		Handlers.put("smelt", new SmeltingHandler());
 		Handlers.put("fuel", new FuelHandler());
 		Handlers.put("worldgen", new OreGenHandler());
+		Handlers.put("item", new ItemMaterialHandler());
 		if (Loader.isModLoaded("Automation")){
 			Handlers.put("compAs", new MechanicAssemblerHandler());
 			Handlers.put("advFurn", new ThermalAssemblerHandler());
@@ -48,21 +53,36 @@ public class RecipeAPI {
 			Handlers.put("heatRad", new HeatRadiatorHandler());
 		}
 	}
-	
-	public static void loadRecipes(String fileName, int ph) {
+
+	/**
+	 * Register a recipe script file and run its "@PRE_INIT" section. The "@INIT" and "@POST_INIT" section will be automatically executed later on.
+	 * @param event You can only call this in the PreInitialization phase.
+	 * @param fileName Its file name in the config directory
+	 * @param preset an optional internal file to create or update the config file from.
+	 */
+	public static void registerScript(FMLPreInitializationEvent event, String fileName, String preset) {
+		if (ConfigurationFile.init(event, fileName, preset, true) == null) return;
 		try {
-			CachedScript scr = cache.get(fileName);
-			if (scr == null && ph == 0) cache.put(fileName, scr = new CachedScript(fileName));
-			if (scr != null && scr.methods[ph] != null) scr.state.run(scr.methods[ph], ScriptCompiler.defaultRecLimit);
+			CachedScript scr = new CachedScript(fileName);
+			cache.put(fileName, scr);
+			if (scr.methods[PRE_INIT] != null)
+				scr.state.run(scr.methods[PRE_INIT], ScriptCompiler.defaultRecLimit);
 		} catch (Exception e) {
-			FMLLog.log("RECIPE_SCRIPT", Level.ERROR, e, "loading failed for %s", fileName);
-		} 
-		if (ph >= phases.length - 1) {
-			cache.remove(fileName);
-			RecipeScriptParser.codeCache.clear();
+			FMLLog.log("RECIPE_SCRIPT", Level.ERROR, e, "script loading failed for %s", fileName);
 		}
+		
 	}
-	
+
+	public static void executeScripts(int ph) {
+		for (CachedScript scr : cache.values())
+			if (scr.methods[ph] != null)
+				try {
+					scr.state.run(scr.methods[ph], ScriptCompiler.defaultRecLimit);
+				} catch (CompileException e) {
+					FMLLog.log("RECIPE_SCRIPT", Level.ERROR, e, "script execution failed for %s", scr);
+				}
+	}
+
 	static class CachedScript {
 		public CachedScript(String file) throws IOException {
 			String code = ConfigurationFile.readTextFile(ConfigurationFile.getStream(file));
@@ -138,7 +158,16 @@ public class RecipeAPI {
 			return true;
 		}
 	}
-	
+
+	public static class ItemMaterialHandler implements IRecipeHandler {
+		@Override
+		public boolean addRecipe(Object... param) {
+			if (param.length < 3 || !(param[1] instanceof Double && param[2] instanceof String)) return false;
+			Lib.materials.addMaterial(((Double)param[1]).intValue(), (String)param[2]);
+			return true;
+		}
+	}
+
 	static class SmeltingHandler implements IRecipeHandler {
 		@Override
 		public boolean addRecipe(Object... param) {

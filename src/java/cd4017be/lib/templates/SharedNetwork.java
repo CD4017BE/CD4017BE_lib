@@ -2,20 +2,18 @@ package cd4017be.lib.templates;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map.Entry;
 
 import net.minecraft.util.math.BlockPos;
-import cd4017be.lib.util.Obj2;
 
 /**
  * 
  * @author CD4017BE
- * @param <C> This is the type of components to use in this SharedNetwork.
- * @param <N> This should be the class implementing this.
+ * @param <C> the type of components to use in this SharedNetwork.
+ * @param <N> should be the class extending this, so that '(N)this' won't throw a ClassCastException.
  */
 @SuppressWarnings("unchecked")
-public abstract class SharedNetwork<C extends IComponent<C, N>, N extends SharedNetwork<C, N>> { 
+public abstract class SharedNetwork<C extends MultiblockComp<C, N>, N extends SharedNetwork<C, N>> { 
 	
 	protected C core;
 	public final HashMap<Long, C> components;
@@ -28,7 +26,7 @@ public abstract class SharedNetwork<C extends IComponent<C, N>, N extends Shared
 		this.components = new HashMap<Long, C>();
 		this.components.put(core.getUID(), core);
 		this.core = core;
-		this.core.setNetwork((N)this);
+		this.core.network = (N)this;
 	}
 	
 	protected SharedNetwork(HashMap<Long, C> comps) {
@@ -47,7 +45,7 @@ public abstract class SharedNetwork<C extends IComponent<C, N>, N extends Shared
 	 * @param network the other network
 	 */
 	public void onMerged(N network) {
-		for (C c : network.components.values()) c.setNetwork((N)this);
+		for (C c : network.components.values()) c.network = (N)this;
 		components.putAll(network.components);
 	}
 	
@@ -56,15 +54,9 @@ public abstract class SharedNetwork<C extends IComponent<C, N>, N extends Shared
 	 * @param comp
 	 */
 	public void add(C comp) {
-		N network = comp.getNetwork();
-		if (network == this) return;
-		if (components.size() >= network.components.size()) {
-			onMerged(network);
-		} else {
-			network.onMerged((N)this);
-			//for (C c : components.values()) c.setNetwork(network);
-			//network.components.putAll(components);
-		}
+		if (comp.network == this) return;
+		if (components.size() >= comp.network.components.size()) onMerged(comp.network);
+		else comp.network.onMerged((N)this);
 	}
 	
 	/**
@@ -81,11 +73,21 @@ public abstract class SharedNetwork<C extends IComponent<C, N>, N extends Shared
 	 * removes the connection between two components.
 	 * @param comp the component that disconnected
 	 * @param side the side that disconnected
-	 * @param neighbor the UID of the neighbor to disconnect
+	 * @param neighbor the neighbor component to disconnect
 	 */
-	public void onDisconnect(C comp, byte side, long neighbor) {
-		C obj = components.get(neighbor);
-		if (obj != null && obj.canConnect(side)) update = true;
+	public void onDisconnect(C comp, byte side) {
+		if (comp.getNeighbor(side) != null) update = true;
+	}
+	
+	/**
+	 * adds neighbor components to this network if they can connect
+	 * @param comp component to check for
+	 */
+	public void connect(C comp) {
+		C obj;
+		for (byte i : sides())
+			if (comp.canConnect(i) && (obj = comp.getNeighbor(i)) != null)
+				this.add(obj);
 	}
 	
 	/**
@@ -106,6 +108,8 @@ public abstract class SharedNetwork<C extends IComponent<C, N>, N extends Shared
 	 * called every tick
 	 */
 	protected void updatePhysics() {}
+	
+	protected byte[] sides() {return defaultSides;}
 
 	private void reassembleNetwork() {
 		ArrayList<C> queue = new ArrayList<C>();
@@ -117,21 +121,23 @@ public abstract class SharedNetwork<C extends IComponent<C, N>, N extends Shared
 			while (!queue.isEmpty()) {
 				obj = queue.remove(queue.size() - 1);
 				comps.put(obj.getUID(), obj);
-				for (Obj2<Long, Byte> e : (List<Obj2<Long, Byte>>)obj.getConnections()) 
-					if ((obj1 = components.get(e.objA)) != null && !comps.containsKey(e.objA) && obj1.canConnect(e.objB))
+				for (byte i : sides())
+					if (obj.canConnect(i) && (obj1 = obj.getNeighbor(i)) != null && !comps.containsKey(obj1))
 						queue.add(obj1);
 			}
 			if (comps.size() == components.size()) return;
 			N network = onSplit(comps);
 			for (Entry<Long, C> e : comps.entrySet()) {
-				e.getValue().setNetwork(network);
+				e.getValue().network = network;
 				components.remove(e.getKey());
 			}
 			for (C c : components.values()) { core = c; break; }
 		}
 	}
-	
-	private static final int spreader = 549568949; //just a random big number to create chaotic values
+
+	private static final byte[] defaultSides = {0, 1, 2, 3, 4, 5};
+	/** just a random big number to create chaotic values */
+	private static final int spreader = 549568949;
 	public static long ExtPosUID(BlockPos pos, int dimId) {
 		dimId *= spreader;
 		return pos.toLong() ^ (long)dimId << 32;
