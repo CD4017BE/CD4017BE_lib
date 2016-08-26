@@ -25,7 +25,15 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
+/**
+ * 
+ * @author CD4017BE
+ *
+ */
+@SideOnly(Side.CLIENT)
 public class SpecialModelLoader implements ICustomModelLoader {
 
 	public static final SpecialModelLoader instance = new SpecialModelLoader();
@@ -38,6 +46,8 @@ public class SpecialModelLoader implements ICustomModelLoader {
 	}
 	
 	public static void registerFluid(Fluid fluid) {
+		Block block = fluid.getBlock();
+		if (block == null || !mod.equals(block.getRegistryName().getResourceDomain())) return;
 		ModelFluid model = new ModelFluid(fluid);
 		instance.models.put(new ResourceLocation(mod, "models/block/" + fluid.getName()), model);
 		ModelLoader.setCustomStateMapper(fluid.getBlock(), stateMapper);
