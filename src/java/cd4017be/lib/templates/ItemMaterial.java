@@ -33,12 +33,13 @@ public class ItemMaterial extends DefaultItem {
 
 	@Override
 	public void getSubItems(Item item, CreativeTabs tab, List<ItemStack> subItems) {
+		subItems.add(new ItemStack(this, 1, -1));
 		for (int i : variants.keySet())
 			subItems.add(new ItemStack(item, 1, i));
 	}
 
 	public void addMaterial(int id, String name) {
-		if (variants.containsKey(id)) throw new IllegalArgumentException("Id already occupied!");
+		if (id < 0 || id >= 32768 || variants.containsKey(id)) throw new IllegalArgumentException("Id already occupied or out of range!");
 		variants.put(id, name);
 		BlockItemRegistry.registerItemStack(new ItemStack(this, 1, id), this.getRegistryName().getResourcePath() + "." + name);
 	}

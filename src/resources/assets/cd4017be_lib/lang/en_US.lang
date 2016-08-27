@@ -1,0 +1,3 @@
+itemGroup.cd4017be_lib=Crafting Materials
+item.cd4017be.m.name=Hint for modpack developers!
+item.cd4017be.m.tip=You can add simple crafting items in\nconfig/cd4017be/core.rcp using: add("item", <id>, <name>);\n<id>: unique number[0...32767] for damage value\nin en_US.lang: item.cd4017be.m:<name>.name=DisplayName\nitem.cd4017be.m:<name>.tip=Tooltip\nmodel: assets/cd4017be_lib/models/item/m/<name>.json\nin recipe declarations use: it("m.<name>")

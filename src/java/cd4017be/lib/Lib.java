@@ -6,6 +6,8 @@ import cd4017be.api.recipes.RecipeAPI;
 import cd4017be.api.recipes.RecipeScriptParser;
 import cd4017be.lib.render.ItemMaterialMeshDefinition;
 import cd4017be.lib.templates.ItemMaterial;
+import cd4017be.lib.templates.TabMaterials;
+import net.minecraft.item.ItemStack;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.Instance;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
@@ -19,11 +21,14 @@ public class Lib {
 	public static Lib instance = new Lib();
 
 	public static ItemMaterial materials;
+	public static TabMaterials creativeTab;
 
 	@Mod.EventHandler
 	public void preInit(FMLPreInitializationEvent event) {
 		Capabilities.register();
-		materials = new ItemMaterial("m");
+		creativeTab = new TabMaterials("cd4017be_lib");
+		(materials = new ItemMaterial("m")).setCreativeTab(creativeTab);
+		creativeTab.item = new ItemStack(materials, 1, -1);
 		RecipeAPI.registerScript(event, "core", null);
 	}
 

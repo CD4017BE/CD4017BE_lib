@@ -23,6 +23,6 @@ public class ItemMaterialMeshDefinition implements ItemMeshDefinition {
 		ItemMaterial item = (ItemMaterial)stack.getItem();
 		String name = item.variants.get(stack.getItemDamage());
 		if (name != null) return new ModelResourceLocation(item.getRegistryName().toString() + "/" + name, "inventory");
-		return null;
+		return new ModelResourceLocation(item.getRegistryName(), "inventory");
 	}
 }
