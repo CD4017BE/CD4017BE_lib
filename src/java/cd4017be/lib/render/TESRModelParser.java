@@ -13,44 +13,18 @@ import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
+import cd4017be.lib.util.ScriptCompiler;
 import cd4017be.lib.util.Vec2;
 import cd4017be.lib.util.VecN;
 
-public class TESRModelParser {
+public class TESRModelParser extends ScriptCompiler {
 
-	public static class CompileException extends Exception {
-		String stacktrace;
-		
-		CompileException(String message, String code, int line) {
-			super(message);
-			this.stacktrace = "\nl." + line + "> " + code;
-		}
-
-		@Override
-		public String getMessage() {
-			return super.getMessage() + stacktrace;
-		}
-
-		static CompileException of(Throwable e, String code, int line) {
-			if (e instanceof CompileException) {
-				((CompileException)e).stacktrace += "\nl." + line + "> " + code;
-				return (CompileException)e;
-			} else if (e instanceof NumberFormatException) return new CompileException("number expected", code, line);
-			else if (e instanceof ClassCastException) return new CompileException("invalid argument type", code, line);
-			else if (e instanceof ArrayIndexOutOfBoundsException) return new CompileException("vector has wrong size", code, line);
-			else if (e instanceof IndexOutOfBoundsException || e instanceof NullPointerException) return new CompileException("syntax error", code, line);
-			else if (e instanceof IOException) return new CompileException("file error: " + e.getMessage(), code, line);
-			else return new CompileException("unknown error: " + e.getMessage(), code, line);
-		}
-		
-	}
-	
 	private static class State {
 		Matrix4d matrix;
 		Vec2 uvOffset;
 		Vec2 uvScale;
 		VecN color;
-		
+
 		State copy(){
 			State state = new State();
 			state.matrix = new Matrix4d(matrix);
@@ -60,11 +34,11 @@ public class TESRModelParser {
 			return state;
 		}
 	}
-	
+
 	private static class Quad {
 		//x, y, z, u, v, r, g, b, a
 		VecN[] vertices = new VecN[4];
-		
+
 		Quad transform(State state) {
 			Quad quad = new Quad();
 			for (int i = 0; i < 4; i++) {
@@ -77,194 +51,96 @@ public class TESRModelParser {
 			return quad;
 		}
 	}
-	
+
 	private static final VecN defaultVertex = new VecN(0, 0, 0, 0, 0, 1, 1, 1, 1);
 	private static final String defaultFormat = "xyzuvrgba";
 	private static final int maxStates = 8;
-	
+
 	ArrayList<State> states = new ArrayList<State>();
 	ArrayList<Quad> quads = new ArrayList<Quad>();
-	HashMap<String, Object> variables = new HashMap<String, Object>();
-	int line;
-	
+
 	private TESRModelParser(String code, HashMap<String, Object> variables, State init, ResourceLocation res) throws CompileException {
-		this.variables = variables;
+		super(variables);
 		this.states = new ArrayList<State>();
 		this.states.add(init);
-		line = 0;
-		try {
-			this.parse(code);
-		} catch (CompileException e) {
-			e.stacktrace += "\nin file: " + res.toString();
-			throw e;
-		}
-		
 	}
-	
-	private void parse(String code) throws CompileException {
-		int p = 0, p1;
-		String left = "", right;
-		try {
-			while (p >= 0 && p < code.length()) {
-				int[] k = this.find(code, p, ";(=#");
-				if (k == null) break;
-				line++;
-				left = code.substring(p, k[0]).trim();
-				if (k[1] == 1) {
-					int[] k1 = this.enclosing(code, k[0], '(', ')');
-					right = code.substring(k1[0], k1[1]);
-					if (left.equals("for")) {
-						String[] def = right.split("<");
-						int min = ((Double)parameter(def[0])).intValue(), max = ((Double)parameter(def[2])).intValue();
-						String var = def[1].trim();
-						k1 = this.enclosing(code, k1[1], '{', '}');
-						String ncode = code.substring(k1[0], k1[1]);
-						for (int i = min; i < max; i++) {
-							variables.put(var, (double)i);
-							this.parse(ncode);
-						}
-						p = k1[1] + 1;
-						break;
-					}
-					if (left.equals("push")) {
-						if (states.size() >= maxStates) throw new CompileException("max state depth reached", left, line);
-						states.add(states.get(states.size() - 1).copy());
-					} else if (left.equals("pop")) {
-						if (states.size() <= 1) throw new CompileException("already at origin state", left, line);
-						states.remove(states.size() - 1);
-					} else if (left.equals("rotate")) {
-						VecN vec = (VecN)this.parameter(right);
-						State state = states.get(states.size() - 1);
-						vec.x[3] = Math.toRadians(vec.x[3]);
-						Matrix4d mat = new Matrix4d();
-						mat.set(new AxisAngle4d(vec.x));
-						state.matrix.mul(mat);
-					} else if (left.equals("translate")) {
-						VecN vec = (VecN)this.parameter(right);
-						State state = states.get(states.size() - 1);
-						Matrix4d mat = new Matrix4d();
-						mat.set(new Vector3d(vec.x));
-						state.matrix.mul(mat);
-					} else if (left.equals("scale")) {
-						VecN vec = (VecN)this.parameter(right);
-						State state = states.get(states.size() - 1);
-						Matrix4d mat = new Matrix4d();
-						mat.setM00(vec.x[0]);
-						mat.setM11(vec.x[1]);
-						mat.setM22(vec.x[2]);
-						state.matrix.mul(mat);
-					} else if (left.equals("offsetUV")) {
-						VecN vec = (VecN)this.parameter(right);
-						State state = states.get(states.size() - 1);
-						state.uvOffset = state.uvOffset.add(vec.x[0] * state.uvScale.x, vec.x[1] * state.uvScale.z);
-					} else if (left.equals("scaleUV")) {
-						VecN vec = (VecN)this.parameter(right);
-						State state = states.get(states.size() - 1);
-						state.uvScale = state.uvScale.scale(vec.x[0], vec.x[1]);
-					} else if (left.equals("color")) {
-						VecN vec = (VecN)this.parameter(right);
-						State state = states.get(states.size() - 1);
-						for (int i = 0; i < vec.x.length; i++) state.color.x[i] = vec.x[i];
-					} else if (left.equals("draw")) {
-						Object o = this.parameter(right);
-						State state = states.get(states.size() - 1);
-						if (o instanceof Quad) quads.add(((Quad)o).transform(state));
-						else if (o instanceof TESRModelParser)
-							for (Quad quad : ((TESRModelParser)o).quads) quads.add(quad.transform(state));
-					}
-					p = code.indexOf(';', k1[1]) + 1;
-				} else if (k[1] == 2) {
-					p1 = this.findSepEnd(code, k[0] + 1, "{", "}", ';');
-					right = code.substring(k[0] + 1, p1);
-					variables.put(left, this.parameter(right));
-					p = p1 + 1;
-				} else {
-					p = code.indexOf('\n', k[0]);//Comment
-				}
-			}
-		} catch (Throwable e) {
-			if (e instanceof CompileException) throw (CompileException)e;
-			else throw CompileException.of(e, left, line);
-		}
-	}
-	
-	private Object parameter(String s) throws CompileException {
-		try {
-		s = s.trim();
-		try { return Double.parseDouble(s); } catch (NumberFormatException e){};
-		if (s.startsWith("\"") && s.endsWith("\"")) return s.substring(1, s.length() - 1);
-		if (s.startsWith("[") && s.endsWith("]")) {
-			VecN vec = new VecN();
-			int p = 1, p1;
-			while (p < s.length()) {
-				p1 = this.findSepEnd(s, p, "([{", ")]}", ',');
-				if (p1 == s.length()) p1--;
-				Object obj = this.parameter(s.substring(p, p1));
-				if (obj instanceof Double) vec = new VecN(vec, (Double)obj);
-				else vec = new VecN(vec, ((VecN)obj).x);
-				p = p1 + 1;
-			}
-			return vec;
-		}
-		int p = s.indexOf(':');
-		int q;
-		String right = null;
-		if (p >= 0 && ((q = s.indexOf('(')) < 0 || p < q)) {
-			right = s.substring(p + 1);
-			s = s.substring(0, p);
-		}
-		Object obj = variables.get(s);
-		if (obj != null) {
-			if (right == null) return obj;
-			else if (obj instanceof VecN) return ((VecN)obj).x[Integer.parseInt(right)];
-			else if (obj instanceof TESRModelParser) return ((TESRModelParser)obj).variables.get(right);
-		}
-		int[] k = this.enclosing(s, 0, '(', ')');
-		right = s.substring(k[0], k[1]);
-		if (s.startsWith("model")) {
-			k = this.enclosing(s, k[1] + 1, '{', '}');
-			State state = new State();
-			state.matrix = new Matrix4d();
-			state.matrix.setIdentity();
-			state.uvOffset = Vec2.Def(0, 0);
-			state.uvScale = Vec2.Def(1, 1);
-			state.color = new VecN(1, 1, 1, 1);
-			TESRModelParser model;
-			if (right.trim().isEmpty()) {
-				model = new TESRModelParser(s.substring(k[0], k[1]), variables, state, new ResourceLocation("internal function line " + line));
-			} else {
-				ResourceLocation res = new ResourceLocation((String)this.parameter(right) + ".tesr");
-				HashMap<String, Object> init = new HashMap<String, Object>();
-				for (String var : s.substring(k[0], k[1]).split(";")) {
-					p = var.indexOf('=');
-					if (p < 0) continue;
-					init.put(var.substring(0, p).trim(), this.parameter(var.substring(p + 1)));
-				}
-				model = new TESRModelParser(SpecialModelLoader.instance.loadTESRModelSourceCode(res), init, state, res);
-			}
-			model.states.clear();
-			return model;
-		}
-		String left = s.substring(0, k[0] - 1);
-		ArrayList<Object> param = new ArrayList<Object>();
-		p = 0;
-		int p1;
-		if (!right.isEmpty()) while(p < right.length()) {
-			p1 = this.findSepEnd(right, p, "([{", ")]}", ',');
-			param.add(this.parameter(right.substring(p, p1)));
-			p = p1 + 1;
-		}
-		return this.function(left, param.toArray());
-		} catch (Throwable e) {
-			throw CompileException.of(e, s, line);
-		}
-	}
-	
+
 	private static final boolean[][] rect = {{false, false, true, true}, {false, true, true, false}};
-	
-	private Object function(String name, Object[] param) throws CompileException {
-		switch(name) {
-		case "quad": {//create quad
+
+	@Override
+	protected String[] methods() {
+		return new String[]{"draw", "push", "pop", "rotate", "translate", "scale", "offsetUV", "scaleUV", "color"};
+	}
+
+	@Override
+	protected void runMethod(int i, Object[] param, int line) throws CompileException {
+		switch(i) {
+		case 0:{//draw
+			Object o = param[0];
+			State state = states.get(states.size() - 1);
+			if (o instanceof Quad) quads.add(((Quad)o).transform(state));
+			else if (o instanceof TESRModelParser)
+				for (Quad quad : ((TESRModelParser)o).quads) quads.add(quad.transform(state));
+		} break;
+		case 1: {//push
+			if (states.size() >= maxStates) throw new CompileException("max state depth reached", "push", line);
+			states.add(states.get(states.size() - 1).copy());
+		} break;
+		case 2: {//pop
+			if (states.size() <= 1) throw new CompileException("already at origin state", "pop", line);
+			states.remove(states.size() - 1);
+		} break;
+		case 3: {//rotate
+			VecN vec = (VecN)param[1];
+			State state = states.get(states.size() - 1);
+			vec.x[3] = Math.toRadians((Double)param[0]);
+			Matrix4d mat = new Matrix4d();
+			mat.set(new AxisAngle4d(vec.x));
+			state.matrix.mul(mat);
+		} break;
+		case 4: {//translate
+			VecN vec = (VecN)param[0];
+			State state = states.get(states.size() - 1);
+			Matrix4d mat = new Matrix4d();
+			mat.set(new Vector3d(vec.x));
+			state.matrix.mul(mat);
+		} break;
+		case 5: {//scale
+			VecN vec = (VecN)param[0];
+			State state = states.get(states.size() - 1);
+			Matrix4d mat = new Matrix4d();
+			mat.setM00(vec.x[0]);
+			mat.setM11(vec.x[1]);
+			mat.setM22(vec.x[2]);
+			state.matrix.mul(mat);
+		} break;
+		case 6: {//offsetUV
+			VecN vec = (VecN)param[0];
+			State state = states.get(states.size() - 1);
+			state.uvOffset = state.uvOffset.add(vec.x[0] * state.uvScale.x, vec.x[1] * state.uvScale.z);
+		} break;
+		case 7: {//scaleUV
+			VecN vec = (VecN)param[0];
+			State state = states.get(states.size() - 1);
+			state.uvScale = state.uvScale.scale(vec.x[0], vec.x[1]);
+		} break;
+		case 8: {//color
+			VecN vec = (VecN)param[0];
+			State state = states.get(states.size() - 1);
+			for (int j = 0; j < vec.x.length; j++) state.color.x[j] = vec.x[j];
+		} break;
+		}
+	}
+
+	@Override
+	protected String[] functions() {
+		return new String[]{"quad", "rect"};
+	}
+
+	@Override
+	protected Object runFunction(int c, Object[] param, int line) throws CompileException {
+		switch(c) {
+		case 0: {//create quad
 			Quad quad = new Quad();
 			String format = (String)param[4];
 			if (format == null) format = defaultFormat;
@@ -277,7 +153,7 @@ public class TESRModelParser {
 				}
 			}
 			return quad;
-		} case "rect": {//create rectangle quad
+		} case 1: {//create rectangle quad
 			Quad quad = new Quad();
 			VecN pos = (VecN)param[0], tex = (VecN)param[1];
 			String format = (String)param[2];
@@ -296,101 +172,31 @@ public class TESRModelParser {
 				quad.vertices[inv ? i : 3 - i] = vert;
 			}
 			return quad;
-		} case "-"://subtract or negate
-			if (param[0] instanceof Double) {
-				if (param.length == 1) return -(Double)param[0];
-				else return (Double)param[0] - (Double)param[1];
-			} else if (param[0] instanceof VecN) {
-				if (param.length == 1) return ((VecN)param[0]).neg();
-				else return ((VecN)param[0]).diff((VecN)param[1]);
-			} else break;
-		case "+"://sum
-			if (param[0] instanceof Double) {
-				double x = (Double)param[0];
-				for (int i = 1; i < param.length; i++) x += (Double)param[i];
-				return x;
-			} else if (param[0] instanceof VecN) {
-				VecN x = (VecN)param[0];
-				for (int i = 1; i < param.length; i++) x = x.add((VecN)param[i]);
-				return x;
-			} else break;
-		case "*"://product
-			if (param[0] instanceof Double) {
-				double x = (Double)param[0];
-				for (int i = 1; i < param.length; i++) x *= (Double)param[i];
-				return x;
-			} else if (param[0] instanceof VecN) {
-				VecN x = (VecN)param[0];
-				for (int i = 1; i < param.length; i++) x = x.scale(((VecN)param[i]).x);
-				return x;
-			} else break;
-		case "/"://division
-			if (param[0] instanceof Double) {
-				if (param.length == 1) return 1D / (Double)param[0];
-				else return (Double)param[0] / (Double)param[1];
-			} else if (param[0] instanceof VecN) {
-				VecN x = ((VecN)param[0]).copy();
-				if (param.length == 1) {
-					for (int i = 0; i < x.x.length; i++) x.x[i] = 1D / x.x[i];
-				} else {
-					VecN y = (VecN)param[1];
-					for (int i = 0; i < x.x.length; i++) x.x[i] /= y.x[i];
-				}
-				return x;
-			} else break;
-		case "x"://cross product for Vec3
-			VecN a = (VecN)param[0];
-			VecN b = (VecN)param[1];
-			return new VecN(a.x[1] * b.x[2] - a.x[2] * b.x[1],
-							a.x[2] * b.x[0] - a.x[0] * b.x[2],
-							a.x[0] * b.x[1] - a.x[1] * b.x[0]);
-		case "s"://scalar product for VecN
-			if (param[0] instanceof Double) return ((VecN)param[1]).scale((Double)param[0]);
-			else return ((VecN)param[0]).scale((VecN)param[1]);
-		case "n":
-			return ((VecN)param[0]).norm();
-		case "l":
-			return ((VecN)param[0]).l();
+		} default: return null;
 		}
-		throw new CompileException("unknown method or invalid parameters (" + param.length + ")", name, line);
 	}
-	
-	private int[] find(String s, int p, String k) {
-		int m;
-		for (;p < s.length(); p++)
-			if ((m = k.indexOf(s.charAt(p))) >= 0) return new int[]{p, m};
+
+	@Override
+	protected Object indexArray(Object array, String index, int recLimit, int line) throws CompileException {
 		return null;
 	}
-	
-	private int[] enclosing(String s, int p, char cl0, char cl1) {
-		int p0 = s.indexOf(cl0, p);
-		if (p0 < p) return null;
-		p0++;
-		int n;
-		for (n = 1, p = p0; n > 0 && p < s.length(); p++) {
-			char c = s.charAt(p);
-			if (c == cl0) n++;
-			else if (c == cl1) n--;
-		}
-		return n > 0 ? null : new int[]{p0, p - 1};
+
+	@Override
+	public ScriptCompiler extScript(HashMap<String, Object> var, String filename, int reclimit) throws CompileException {
+		State state = new State();
+		state.matrix = new Matrix4d();
+		state.matrix.setIdentity();
+		state.uvOffset = Vec2.Def(0, 0);
+		state.uvScale = Vec2.Def(1, 1);
+		state.color = new VecN(1, 1, 1, 1);
+		TESRModelParser model;
+		ResourceLocation res = new ResourceLocation(filename + ".tesr");
+		HashMap<String, Object> init = new HashMap<String, Object>();
+		try {model = new TESRModelParser(SpecialModelLoader.instance.loadTESRModelSourceCode(res), init, state, res);} catch (IOException e){throw CompileException.of(e, filename + ".tesr", 0);}
+		model.states.clear();
+		return model;
 	}
-	
-	private int findSepEnd(String s, int p, String cl0, String cl1, char sep) {
-		while (p < s.length()) {
-			char c = s.charAt(p++);
-			if (c == sep) return p - 1;
-			if (cl0.indexOf(c) >= 0) break;
-		}
-		int n = 1;
-		while (p < s.length()) {
-			char c = s.charAt(p++);
-			if (c == sep && n == 0) return p - 1;
-			if (cl0.indexOf(c) >= 0) n++;
-			else if (cl1.indexOf(c) >= 0 && --n < 0) return p - 1;
-		}
-		return p;
-	}
-	
+
 	public static int[] bake(String code, ResourceLocation res) throws CompileException {
 		State state = new State();
 		state.matrix = new Matrix4d();
@@ -420,7 +226,7 @@ public class TESRModelParser {
 		}
 		return data;
 	}
-	
+
 	public static void renderWithOffsetAndBrightness(VertexBuffer render, String model, float dx, float dy, float dz, int l) {
 		int[] data = SpecialModelLoader.instance.tesrModelData.get(model);
 		if (data == null) return;
@@ -436,7 +242,7 @@ public class TESRModelParser {
 		}
 		render.addVertexData(res);
 	}
-	
+
 	public static void renderWithTOCB(VertexBuffer render, String model, TextureAtlasSprite tex, float dx, float dy, float dz, int c, int l) {
 		int[] data = SpecialModelLoader.instance.tesrModelData.get(model);
 		if (data == null) return;
