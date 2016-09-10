@@ -66,5 +66,7 @@
 	<classpathentry exported="true" kind="lib" path="C:/Users/CD4017BE/.gradle/caches/minecraft/deobfedDeps/compileDummy.jar"/>
 	<classpathentry exported="true" kind="lib" path="C:/Users/CD4017BE/.gradle/caches/minecraft/deobfedDeps/providedDummy.jar"/>
 	<classpathentry exported="true" kind="lib" path="C:/Users/CD4017BE/.gradle/caches/minecraft/net/minecraftforge/forge/1.10.2-12.18.1.2073/start"/>
+	<classpathentry kind="lib" path="libs/Tesla-1.10-1.2.0.34-deobf.jar" sourcepath="libs/src/Tesla-1.10-1.2.0.34-sources.jar"/>
+	<classpathentry kind="lib" path="libs/industrialcraft-2-2.2.825-experimental-api.jar" sourcepath="libs/industrialcraft-2-2.2.825-experimental-api.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

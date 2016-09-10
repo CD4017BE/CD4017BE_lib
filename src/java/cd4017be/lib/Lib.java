@@ -2,6 +2,7 @@ package cd4017be.lib;
 
 import cd4017be.api.Capabilities;
 import cd4017be.api.computers.ComputerAPI;
+import cd4017be.api.energy.EnergyAPI;
 import cd4017be.api.recipes.RecipeAPI;
 import cd4017be.api.recipes.RecipeScriptParser;
 import cd4017be.lib.render.ItemMaterialMeshDefinition;
@@ -26,6 +27,7 @@ public class Lib {
 	@Mod.EventHandler
 	public void preInit(FMLPreInitializationEvent event) {
 		Capabilities.register();
+		EnergyAPI.init();
 		creativeTab = new TabMaterials("cd4017be_lib");
 		(materials = new ItemMaterial("m")).setCreativeTab(creativeTab);
 		creativeTab.item = new ItemStack(materials);

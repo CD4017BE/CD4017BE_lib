@@ -6,9 +6,13 @@ package cd4017be.api.energy;
 
 import java.util.ArrayList;
 
+import org.apache.logging.log4j.Level;
+
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
+import net.minecraftforge.fml.common.FMLLog;
+import net.minecraftforge.fml.common.Loader;
 
 /**
  * This is the core class for energy exchange with other mods. 
@@ -16,15 +20,12 @@ import net.minecraft.util.EnumFacing;
  * add an instance of it to the ArrayList 'handlers' during any initialization phase.
  * @author CD4017BE
  */
-public class EnergyAPI 
-{
+public class EnergyAPI {
 	/** list of available IEnergyHandlers */
 	public static ArrayList<IEnergyHandler> handlers = new ArrayList<IEnergyHandler>();
 	/** default IEnergyAccess instance for things that don't support energy. 
 	 * It simply returns 0 for all methods.*/
 	public static final IEnergyAccess NULL = new NullAccess();
-	/** the IEnergyHandler instance for InductiveAutomation */
-	public static EnergyAutomation main = new EnergyAutomation();
 	/**[J] energy conversion factor for Item Charge*/
 	public static final float IA_value = 1000F;
 	/**[J] energy conversion factor for RedstoneFlux*/
@@ -36,10 +37,7 @@ public class EnergyAPI
 	
 	/** 
 	 * This is a wrapper used to access energy in ItemStacks or TileEntities. 
-	 * All methods take an access type as argument. Which is for TileEntities: 0-5 = block faces BTNSWE, -1 = internal.
-	 * And for ItemStacks 0 = external, -1 = internal. Don't use any other values than listed as parameters unless you know what you're doing!
-	 * Also don't expect internal access to be always supported.
-	 * */
+	 */
 	public static interface IEnergyAccess {
 		/** 
 		 * @return [J] stored energy
@@ -61,24 +59,44 @@ public class EnergyAPI
 	{
 		/**
 		 * @param te the TileEntity to create a wrapper for
+		 * @param s access side (null for internal)
 		 * @return the wrapper or null if given TileEntity is not supported by this handler
 		 */
 		public IEnergyAccess create(TileEntity te, EnumFacing s);
 		/**
 		 * @param item the ItemStack to create a wrapper for
+		 * @param s access type: 0 = external, -1 = internal
 		 * @return the wrapper or null if given ItemStack is not supported by this handler
 		 */
 		public IEnergyAccess create(ItemStack item, int s);
 	}
 	
-	static {
-		handlers.add(main);
-		handlers.add(new EnergyRedstoneFlux());
-		//TODO implement IC2 & TESLA energy
+	public static void init() {
+		if (Loader.isModLoaded("Automation")) {
+			handlers.add(new EnergyAutomation());
+			FMLLog.log("CD4017BE_lib", Level.INFO, "added Inductive Automation Energy-API");
+		}
+		if (Loader.isModLoaded("OpenComputers")) {
+			handlers.add(new EnergyOpenComputers());
+			FMLLog.log("CD4017BE_lib", Level.INFO, "added Open Computers Energy-API");
+		}
+		if (Loader.isModLoaded("Tesla")) {
+			handlers.add(new EnergyTesla());
+			FMLLog.log("CD4017BE_lib", Level.INFO, "added Tesla Energy-API");
+		}
+		if (Loader.isModLoaded("IC2")) {
+			handlers.add(new EnergyIndustrialCraft());
+			FMLLog.log("CD4017BE_lib", Level.INFO, "added IC2 Energy-API");
+		}
+		if (true) {//TODO change to weak reference if possible
+			handlers.add(new EnergyRedstoneFlux());
+			FMLLog.log("CD4017BE_lib", Level.INFO, "added Redstone Flux Energy-API");
+		}
 	}
 	
 	/**
 	 * @param te the TileEntity to get a valid wrapper for
+	 * @param s access side (null for internal)
 	 * @return the wrapper instance. Never null: if no valid handler was found this is the default instance.
 	 */
 	public static IEnergyAccess get(TileEntity te, EnumFacing s) {
@@ -93,6 +111,7 @@ public class EnergyAPI
 	
 	/**
 	 * @param te the ItemStack to get a valid wrapper for
+	 * @param s access type: 0 = external, -1 = internal. Don't use any other values than listed as parameters unless you know what you're doing!
 	 * @return the wrapper instance. Never null: if no valid handler was found this is the default instance.
 	 */
 	public static IEnergyAccess get(ItemStack item, int s) {
