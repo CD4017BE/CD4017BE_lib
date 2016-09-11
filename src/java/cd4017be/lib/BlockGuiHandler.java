@@ -130,7 +130,7 @@ public class BlockGuiHandler implements IGuiHandler {
 			PacketBuffer data = new PacketBuffer(packet.payload());
 			IGuiData te = ((DataContainer)container).data;
 			try {
-				if (te.getPos().equals(data.readBlockPos())) ((DataContainer)container).onDataUpdate(data);
+				if (te.pos().equals(data.readBlockPos())) ((DataContainer)container).onDataUpdate(data);
 			} catch (Exception e) {
 				String s = " ";
 				byte[] d = data.array();

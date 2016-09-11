@@ -151,4 +151,6 @@ public class ModTileEntity extends TileEntity implements IAbstractTile
 		return this.getLoadedTile(pos.offset(s));
 	}
 
+	public BlockPos pos() {return pos;}
+
 }

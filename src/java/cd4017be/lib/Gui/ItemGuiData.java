@@ -28,7 +28,7 @@ public class ItemGuiData implements IGuiData {
 	}
 
 	@Override
-	public BlockPos getPos() {return new BlockPos(0, -1, 0);}
+	public BlockPos pos() {return new BlockPos(0, -1, 0);}
 
 	@Override
 	public int[] getSyncVariables() {return null;}

@@ -31,7 +31,7 @@ public class DataContainer extends Container {
 
 	@Override
 	public void detectAndSendChanges() {
-		PacketBuffer dos = BlockGuiHandler.getPacketTargetData(data.getPos());
+		PacketBuffer dos = BlockGuiHandler.getPacketTargetData(data.pos());
 		if (this.checkChanges(dos)) 
 			for (IContainerListener crafter : this.listeners)
 				BlockGuiHandler.sendPacketToPlayer((EntityPlayerMP)crafter, dos);
@@ -76,7 +76,7 @@ public class DataContainer extends Container {
 	public interface IGuiData {
 		public void initContainer(DataContainer container);
 		public boolean canPlayerAccessUI(EntityPlayer player);
-		public BlockPos getPos();
+		public BlockPos pos();
 		public int[] getSyncVariables();
 		public void setSyncVariable(int i, int v);
 		public boolean detectAndSendChanges(DataContainer container, PacketBuffer dos);

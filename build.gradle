@@ -65,7 +65,8 @@ artifacts {
 
 dependencies {
 	compile files('./libs/OpenComputers-MC${mc_version}-${oc_version}-api.jar')
-    //compile files('./libs/ComputerCraft1.75.jar')
+	compile files('./libs/Tesla-${tesla_version}-deobf.jar')
+	compile files('./libs/industrialcraft-${ic2_version}-api.jar')
 }
 
 processResources
