@@ -13,11 +13,14 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 /**
  *
  * @author CD4017BE
  */
+@SideOnly(Side.CLIENT)
 public class SelectionRenderer extends TileEntitySpecialRenderer<ModTileEntity>
 {
     

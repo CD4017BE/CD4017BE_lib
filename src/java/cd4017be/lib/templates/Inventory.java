@@ -189,7 +189,7 @@ public class Inventory implements IItemHandlerModifiable
 		final byte[] dir;
 
 		public Access(EnumFacing s) {
-			int cfg = (int)(sideCfg >> (s.ordinal() * 10)) & 0x3ff, cfg1 = cfg;
+			int cfg = s != null ? (int)(sideCfg >> (s.ordinal() * 10)) & 0x3ff : 0x3ff, cfg1 = cfg;
 			int n = 0;
 			for (Group g : groups) 
 				if (((cfg1 >>= 2) & 3) != 0) n += g.e - g.s;

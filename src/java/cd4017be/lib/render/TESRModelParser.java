@@ -13,10 +13,17 @@ import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import cd4017be.lib.util.ScriptCompiler;
 import cd4017be.lib.util.Vec2;
 import cd4017be.lib.util.VecN;
 
+/**
+ * 
+ * @author CD4017BE
+ */
+@SideOnly(Side.CLIENT)
 public class TESRModelParser extends ScriptCompiler {
 
 	private static class State {

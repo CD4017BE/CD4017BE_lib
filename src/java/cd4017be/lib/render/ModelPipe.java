@@ -9,6 +9,7 @@ import cd4017be.lib.templates.BlockPipe;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
+
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -25,7 +26,10 @@ import net.minecraftforge.client.model.IModel;
 import net.minecraftforge.client.model.ModelLoaderRegistry;
 import net.minecraftforge.common.model.IModelState;
 import net.minecraftforge.common.property.IExtendedBlockState;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
+@SideOnly(Side.CLIENT)
 public class ModelPipe implements IModel {
 
 	/** core0, core1, ..., con0[B, T, N, S, W, E], con1[...], ... */

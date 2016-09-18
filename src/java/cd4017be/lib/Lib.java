@@ -15,6 +15,8 @@ import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerAboutToStartEvent;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 @Mod(modid = "CD4017BE_lib", useMetadata = true)
 public class Lib {
@@ -43,10 +45,13 @@ public class Lib {
 	@Mod.EventHandler
 	public void postInit(FMLPostInitializationEvent event) {
 		RecipeAPI.executeScripts(RecipeAPI.POST_INIT);
-		if (event.getSide().isClient()) {
-			BlockItemRegistry.registerRender(materials);
-			BlockItemRegistry.registerRender(materials, new ItemMaterialMeshDefinition(materials));
-		}
+		if (event.getSide().isClient()) clientPostInit();
+	}
+
+	@SideOnly(Side.CLIENT)
+	private static void clientPostInit() {
+		BlockItemRegistry.registerRender(materials);
+		BlockItemRegistry.registerRender(materials, new ItemMaterialMeshDefinition(materials));
 	}
 
 	@Mod.EventHandler
