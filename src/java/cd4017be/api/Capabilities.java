@@ -16,7 +16,7 @@ public class Capabilities {
 	
 	/** Capability for InductiveAutomation's electric cables */
 	@CapabilityInject(PipeEnergy.class)
-    public static Capability<PipeEnergy> ELECTRIC_CAPABILITY = null;
+	public static Capability<PipeEnergy> ELECTRIC_CAPABILITY = null;
 
 	/** Capability for AutomatedRedstone's 32-bit redstone cables */
 	@CapabilityInject(IntegerComp.class)

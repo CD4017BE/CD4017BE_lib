@@ -32,12 +32,12 @@ public class ConfigurationFile
 		}
 		try {
 			FMLLog.log("cd4017be_lib", Level.INFO, "Config file %s not existing or outdated, creating new from preset %s", file, preset);
-    		copyData(preset, file);
-    		return file;
-    	} catch(IOException e) {
-    		FMLLog.log("Automation", Level.WARN, e, "Config file creation failed!");
-    		return file.exists() ? file : null;
-    	}
+			copyData(preset, file);
+			return file;
+		} catch(IOException e) {
+			FMLLog.log("Automation", Level.WARN, e, "Config file creation failed!");
+			return file.exists() ? file : null;
+		}
 	}
 	
 	public static boolean checkVersions(File file, String refPath) {
@@ -66,13 +66,13 @@ public class ConfigurationFile
 	}
 	
 	public static String readTextFile(InputStream is) throws IOException {
-    	InputStreamReader isr = new InputStreamReader(is);
+		InputStreamReader isr = new InputStreamReader(is);
 		String s = "";
 		int n;
 		char[] buff = new char[256];
 		while((n = isr.read(buff)) > 0) s += String.valueOf(buff, 0, n);
 		return s;
-    }
+	}
 	
 	private final HashMap<String, Object> variables;
 	
@@ -89,16 +89,16 @@ public class ConfigurationFile
 	public void load(InputStream in) throws IOException
 	{
 		String k, v;
-        int p;
-        for (String s : IOUtils.readLines(in)) {
-            if (!s.isEmpty() && s.charAt(0) != '#' && (p = s.indexOf('=')) > 0 && p < s.length() - 1) {
-                k = s.substring(0, p).trim();
-                v = s.substring(p + 1).trim();
-                Object obj = this.readObj(v, k);
-                if (obj != null) this.variables.put(k, obj);
-            }
-        }
-        in.close();
+		int p;
+		for (String s : IOUtils.readLines(in)) {
+			if (!s.isEmpty() && s.charAt(0) != '#' && (p = s.indexOf('=')) > 0 && p < s.length() - 1) {
+				k = s.substring(0, p).trim();
+				v = s.substring(p + 1).trim();
+				Object obj = this.readObj(v, k);
+				if (obj != null) this.variables.put(k, obj);
+			}
+		}
+		in.close();
 	}
 	
 	public void removeEntry(String... e)
@@ -122,57 +122,57 @@ public class ConfigurationFile
 	{
 		try {
 			if (id.startsWith("B.")) {
-	        	return Boolean.parseBoolean(s);
-	        } else if (id.startsWith("W.")) {
-	        	return Byte.parseByte(s);
-	        } else if (id.startsWith("S.")) {
-	        	return Short.parseShort(s);
-	        } else if (id.startsWith("I.")) {
-	        	return Integer.parseInt(s);
-	        } else if (id.startsWith("L.")) {
-	        	return Long.parseLong(s);
-	        } else if (id.startsWith("F.")) {
-	        	return Float.parseFloat(s);
-	        } else if (id.startsWith("D.")) {
-	        	return Double.parseDouble(s);
-	        } else if (id.startsWith("T.")) {
-	        	return s;
-	        } else if (id.startsWith("A")) {
-	        	id = id.substring(1);
-	        	String[] v = s.split(",", -1);
-	        	if (id.startsWith("B.")) {
-	        		boolean[] arr = new boolean[v.length];
-	        		for (int i = 0; i < arr.length; i++) arr[i] = Boolean.parseBoolean(v[i].trim());
-	        		return arr;
-	        	} else if (id.startsWith("W.")) {
-	        		byte[] arr = new byte[v.length];
-	        		for (int i = 0; i < arr.length; i++) arr[i] = Byte.parseByte(v[i].trim());
-	        		return arr;
-	        	} else if (id.startsWith("S.")) {
-	        		short[] arr = new short[v.length];
-	        		for (int i = 0; i < arr.length; i++) arr[i] = Short.parseShort(v[i].trim());
-	        		return arr;
-	        	} else if (id.startsWith("I.")) {
-	        		int[] arr = new int[v.length];
-	        		for (int i = 0; i < arr.length; i++) arr[i] = Integer.parseInt(v[i].trim());
-	        		return arr;
-	        	} else if (id.startsWith("L.")) {
-	        		long[] arr = new long[v.length];
-	        		for (int i = 0; i < arr.length; i++) arr[i] = Long.parseLong(v[i].trim());
-	        		return arr;
-	        	} else if (id.startsWith("F.")) {
-	        		float[] arr = new float[v.length];
-	        		for (int i = 0; i < arr.length; i++) arr[i] = Float.parseFloat(v[i].trim());
-	        		return arr;
-	        	} else if (id.startsWith("D.")) {
-	        		double[] arr = new double[v.length];
-	        		for (int i = 0; i < arr.length; i++) arr[i] = Double.parseDouble(v[i].trim());
-	        		return arr;
-	        	} else if (id.startsWith("T.")) {
-	        		for (int i = 0; i < v.length; i++) v[i] = v[i].trim();
-	        		return v;
-	        	} else return null;
-	        } else return null;
+				return Boolean.parseBoolean(s);
+			} else if (id.startsWith("W.")) {
+				return Byte.parseByte(s);
+			} else if (id.startsWith("S.")) {
+				return Short.parseShort(s);
+			} else if (id.startsWith("I.")) {
+				return Integer.parseInt(s);
+			} else if (id.startsWith("L.")) {
+				return Long.parseLong(s);
+			} else if (id.startsWith("F.")) {
+				return Float.parseFloat(s);
+			} else if (id.startsWith("D.")) {
+				return Double.parseDouble(s);
+			} else if (id.startsWith("T.")) {
+				return s;
+			} else if (id.startsWith("A")) {
+				id = id.substring(1);
+				String[] v = s.split(",", -1);
+				if (id.startsWith("B.")) {
+					boolean[] arr = new boolean[v.length];
+					for (int i = 0; i < arr.length; i++) arr[i] = Boolean.parseBoolean(v[i].trim());
+					return arr;
+				} else if (id.startsWith("W.")) {
+					byte[] arr = new byte[v.length];
+					for (int i = 0; i < arr.length; i++) arr[i] = Byte.parseByte(v[i].trim());
+					return arr;
+				} else if (id.startsWith("S.")) {
+					short[] arr = new short[v.length];
+					for (int i = 0; i < arr.length; i++) arr[i] = Short.parseShort(v[i].trim());
+					return arr;
+				} else if (id.startsWith("I.")) {
+					int[] arr = new int[v.length];
+					for (int i = 0; i < arr.length; i++) arr[i] = Integer.parseInt(v[i].trim());
+					return arr;
+				} else if (id.startsWith("L.")) {
+					long[] arr = new long[v.length];
+					for (int i = 0; i < arr.length; i++) arr[i] = Long.parseLong(v[i].trim());
+					return arr;
+				} else if (id.startsWith("F.")) {
+					float[] arr = new float[v.length];
+					for (int i = 0; i < arr.length; i++) arr[i] = Float.parseFloat(v[i].trim());
+					return arr;
+				} else if (id.startsWith("D.")) {
+					double[] arr = new double[v.length];
+					for (int i = 0; i < arr.length; i++) arr[i] = Double.parseDouble(v[i].trim());
+					return arr;
+				} else if (id.startsWith("T.")) {
+					for (int i = 0; i < v.length; i++) v[i] = v[i].trim();
+					return v;
+				} else return null;
+			} else return null;
 		} catch (NumberFormatException e) {
 			return null;
 		}

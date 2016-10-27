@@ -17,11 +17,11 @@ public interface IEnergyReceiver extends IEnergyHandler {
 	 * Add energy to an IEnergyReceiver, internal distribution is left entirely to the IEnergyReceiver.
 	 *
 	 * @param from
-	 *            Orientation the energy is received from.
+	 *			Orientation the energy is received from.
 	 * @param maxReceive
-	 *            Maximum amount of energy to receive.
+	 *			Maximum amount of energy to receive.
 	 * @param simulate
-	 *            If TRUE, the charge will only be simulated.
+	 *			If TRUE, the charge will only be simulated.
 	 * @return Amount of energy that was (or would have been, if simulated) received.
 	 */
 	int receiveEnergy(EnumFacing from, int maxReceive, boolean simulate);

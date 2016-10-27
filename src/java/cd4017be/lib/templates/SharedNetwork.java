@@ -7,17 +7,18 @@ import java.util.Map.Entry;
 import net.minecraft.util.math.BlockPos;
 
 /**
- * 
- * @author CD4017BE
+ * Class template to share functionality across multi-block structures
  * @param <C> the type of components to use in this SharedNetwork.
  * @param <N> should be the class extending this, so that '(N)this' won't throw a ClassCastException.
+ * @author CD4017BE
  */
 @SuppressWarnings("unchecked")
 public abstract class SharedNetwork<C extends MultiblockComp<C, N>, N extends SharedNetwork<C, N>> { 
-	
+
 	protected C core;
 	public final HashMap<Long, C> components;
 	protected boolean update = false;
+
 	/**
 	 * creates a single component network out of the given component
 	 * @param core
@@ -28,18 +29,18 @@ public abstract class SharedNetwork<C extends MultiblockComp<C, N>, N extends Sh
 		this.core = core;
 		this.core.network = (N)this;
 	}
-	
+
 	protected SharedNetwork(HashMap<Long, C> comps) {
 		components = comps;
 	}
-	
+
 	/**
 	 * when the SharedNetwork gets split this will be called for each recreated sub network
 	 * @param comps the components contained in that sub network
 	 * @return the new SharedNetwork instance
 	 */
 	public abstract N onSplit(HashMap<Long, C> comps);
-	
+
 	/**
 	 * called when the SharedNetwork is merged with another one. 
 	 * @param network the other network
@@ -48,7 +49,7 @@ public abstract class SharedNetwork<C extends MultiblockComp<C, N>, N extends Sh
 		for (C c : network.components.values()) c.network = (N)this;
 		components.putAll(network.components);
 	}
-	
+
 	/**
 	 * adds the component to this network and merges both networks together
 	 * @param comp
@@ -58,7 +59,7 @@ public abstract class SharedNetwork<C extends MultiblockComp<C, N>, N extends Sh
 		if (components.size() >= comp.network.components.size()) onMerged(comp.network);
 		else comp.network.onMerged((N)this);
 	}
-	
+
 	/**
 	 * called when a component is removed (broken, chunk unload, etc.)
 	 * @param comp the component removed
@@ -68,33 +69,34 @@ public abstract class SharedNetwork<C extends MultiblockComp<C, N>, N extends Sh
 		if (core == comp) core = null;
 		update = true;
 	}
-	
+
 	/**
 	 * removes the connection between two components.
 	 * @param comp the component that disconnected
 	 * @param side the side that disconnected
-	 * @param neighbor the neighbor component to disconnect
 	 */
 	public void onDisconnect(C comp, byte side) {
 		if (comp.getNeighbor(side) != null) update = true;
 	}
-	
+
 	/**
-	 * adds neighbor components to this network if they can connect
-	 * @param comp component to check for
+	 * called to check if there are new neighboring blocks to connect with
+	 * @param comp
 	 */
-	public void connect(C comp) {
+	public void updateCompCon(C comp) {
 		C obj;
 		for (byte i : sides())
 			if (comp.canConnect(i) && (obj = comp.getNeighbor(i)) != null)
-				this.add(obj);
+				add(obj);
+		comp.updateCon = false;
 	}
-	
+
 	/**
 	 * should be called by each component every tick
 	 * @param comp
 	 */
 	public void updateTick(C comp) {
+		if (comp.updateCon) updateCompCon(comp);
 		if (core == null) core = comp;
 		else if (comp != core) return;
 		updatePhysics();
@@ -103,12 +105,12 @@ public abstract class SharedNetwork<C extends MultiblockComp<C, N>, N extends Sh
 			update = false;
 		}
 	}
-	
+
 	/**
 	 * called every tick
 	 */
 	protected void updatePhysics() {}
-	
+
 	protected byte[] sides() {return defaultSides;}
 
 	private void reassembleNetwork() {
@@ -145,5 +147,5 @@ public abstract class SharedNetwork<C extends MultiblockComp<C, N>, N extends Sh
 	public static long SidedPosUID(long base, int side) {
 		return base ^ (long)(side * spreader);
 	}
-	
+
 }

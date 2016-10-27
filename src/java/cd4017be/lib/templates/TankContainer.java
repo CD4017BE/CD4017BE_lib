@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package cd4017be.lib.templates;
 
 import cd4017be.lib.util.Utils;
@@ -20,8 +16,8 @@ import net.minecraftforge.fluids.capability.IFluidTankProperties;
  * Fully automated template for fluid tanks, where up to 4 of them can be "listed" to have side access and other automation properties.
  * @author CD4017BE
  */
-public class TankContainer implements ITankContainer
-{
+public class TankContainer implements ITankContainer {
+
 	/**	bits[0-47 6*4*2]: side * tank * access, bits[48-51 4*1]: tank * locked */
 	public long sideCfg = 0;
 	public final FluidStack[] fluids;
@@ -70,7 +66,7 @@ public class TankContainer implements ITankContainer
 			if (te == null || !te.hasCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, EnumFacing.VALUES[s^1])) continue;
 			access = te.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, EnumFacing.VALUES[s^1]);
 			for (int t = 0; t < tanks.length; t++, cfg >>= 2) 
-				if ((cfg & 3) == 1 && tanks[t].dir == -1) {
+				if ((cfg & 3) == 1 && tanks[t].dir == Utils.IN) {
 					if ((fluid = fluids[t]) != null) {
 						if ((fluid = access.drain(new FluidStack(fluid, tanks[t].cap - fluid.amount), true)) != null) 
 							fluids[t].amount += fluid.amount;
@@ -79,7 +75,7 @@ public class TankContainer implements ITankContainer
 					} else for (Fluid f : tanks[t].types) {
 						if ((fluids[t] = access.drain(new FluidStack(f, tanks[t].cap), true)) != null) break;
 					}
-				} else if ((cfg & 3) == 2 && tanks[t].dir == 1 && (fluid = fluids[t]) != null && fluid.amount > 0 && 
+				} else if ((cfg & 3) == 2 && tanks[t].dir == Utils.OUT && (fluid = fluids[t]) != null && fluid.amount > 0 && 
 					(fluid.amount -= access.fill(fluid.copy(), true)) <= 0 && (sideCfg >> (t + 48) & 1) == 0) 
 						fluids[t] = null;
 		}

@@ -14,11 +14,11 @@ public class ItemMaterialMeshDefinition implements ItemMeshDefinition {
 
 	public ItemMaterialMeshDefinition(ItemMaterial item) {
 		ResourceLocation[] locs = new ResourceLocation[item.variants.size()];
-    	String path = item.getRegistryName().toString() + "/";
+		String path = item.getRegistryName().toString() + "/";
 		int n = 0;
 		for (String name : item.variants.values())
-    		locs[n++] = new ResourceLocation(path + name);
-    	ModelBakery.registerItemVariants(item, locs);
+			locs[n++] = new ResourceLocation(path + name);
+		ModelBakery.registerItemVariants(item, locs);
 	}
 
 	@Override

@@ -1,24 +1,15 @@
 package cd4017be.lib.templates;
 
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraftforge.items.IItemHandlerModifiable;
+import net.minecraftforge.items.ItemHandlerHelper;
 
-public class BasicInventory implements IInventory 
-{
+public class BasicInventory implements IItemHandlerModifiable {
 
-	public ItemStack[] items;
-	
-	public BasicInventory(int slots)
-	{
+	public final ItemStack[] items;
+
+	public BasicInventory(int slots) {
 		items = new ItemStack[slots];
-	}
-	
-	@Override
-	public int getSizeInventory() 
-	{
-		return items.length;
 	}
 
 	@Override
@@ -28,90 +19,37 @@ public class BasicInventory implements IInventory
 	}
 
 	@Override
-	public ItemStack decrStackSize(int s, int n) 
-	{
-		if (items[s] == null) return null;
-		else if (items[s].stackSize <= n) {
-			ItemStack item = items[s];
-			items[s] = null;
-			return item;
-		} else return items[s].splitStack(n);
+	public int getSlots() {
+		return items.length;
 	}
 
 	@Override
-	public ItemStack removeStackFromSlot(int s) 
-	{
-		ItemStack item = items[s];
-		items[s] = null;
-		return item;
+	public ItemStack insertItem(int i, ItemStack stack, boolean sim) {
+		ItemStack item = items[i];
+		int m = Math.min(stack.getMaxStackSize() - (item == null ? 0 : item.stackSize), stack.stackSize); 
+		if (m <= 0 || (item != null && !ItemHandlerHelper.canItemStacksStack(item, stack))) return stack;
+		if (!sim) {
+			if (item == null) item = ItemHandlerHelper.copyStackWithSize(stack, m);
+			else item.stackSize += m;
+			items[i] = item;
+		}
+		return (m = stack.stackSize - m) > 0 ? ItemHandlerHelper.copyStackWithSize(stack, m) : null;
 	}
 
 	@Override
-	public void setInventorySlotContents(int s, ItemStack item) 
-	{
-		items[s] = item;
+	public ItemStack extractItem(int i, int m, boolean sim) {
+		ItemStack item = items[i];
+		if (item == null || (m = item.stackSize < m ? item.stackSize : m) <= 0) return null;
+		if (!sim) {
+			if (item.stackSize <= m) items[i] = null;
+			else items[i].stackSize -= m;
+		}
+		return ItemHandlerHelper.copyStackWithSize(item, m);
 	}
 
 	@Override
-	public ITextComponent getDisplayName() 
-	{
-		return null;
-	}
-
-	@Override
-	public int getInventoryStackLimit() 
-	{
-		return 64;
-	}
-
-	@Override
-	public void markDirty() {}
-
-	@Override
-	public boolean isUseableByPlayer(EntityPlayer player) 
-	{
-		return !player.isDead;
-	}
-
-	@Override
-	public boolean isItemValidForSlot(int s, ItemStack item) 
-	{
-		return true;
-	}
-
-	@Override
-	public String getName() {
-		return null;
-	}
-
-	@Override
-	public boolean hasCustomName() {
-		return false;
-	}
-
-	@Override
-	public void openInventory(EntityPlayer player) {}
-
-	@Override
-	public void closeInventory(EntityPlayer player) {}
-
-	@Override
-	public int getField(int id) {
-		return 0;
-	}
-
-	@Override
-	public void setField(int id, int value) {
-	}
-
-	@Override
-	public int getFieldCount() {
-		return 0;
-	}
-
-	@Override
-	public void clear() {
-		
+	public void setStackInSlot(int slot, ItemStack stack) {
+		items[slot] = stack;
 	}
 
 }

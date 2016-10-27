@@ -106,11 +106,10 @@ public class PipeEnergy implements IEnergyAccess
 		if (Ucap > Umax) Ucap = Umax;
 	}
 
-	public static String[] getEnergyInfo(float U1, float U0, float R) {
+	public static Object[] getEnergyInfo(float U1, float U0, float R) {
 		float I = (U1 - U0) / R;
 		float P = (U1 + U0) * I;
-		return TooltipInfo.format("gui.cd4017be.energyFlow", P / 1000F, I).split("\n");
-		//return new String[]{"Power:", String.format("%.1f kW", P / 1000F), String.format("@ %.0f A", I)};
+		return new Object[] {P / 1000F, I};
 	}
 
 }

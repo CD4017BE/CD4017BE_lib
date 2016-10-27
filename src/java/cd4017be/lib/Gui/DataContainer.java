@@ -59,15 +59,15 @@ public class DataContainer extends Container {
 	}
 
 	public void onDataUpdate(PacketBuffer dis) {
-        if (refInts != null) {
-        	byte[] chng = new byte[(refInts.length + 7) / 8];
-        	dis.readBytes(chng);
-        	for (int i = 0; i < chng.length; i++)
-        		for (int c = chng[i] & 0xff, j = i << 3; c != 0 && j < refInts.length; c >>= 1, j++)
-        			if ((c & 1) != 0) data.setSyncVariable(j, refInts[j] = dis.readInt());
-        }
+		if (refInts != null) {
+			byte[] chng = new byte[(refInts.length + 7) / 8];
+			dis.readBytes(chng);
+			for (int i = 0; i < chng.length; i++)
+				for (int c = chng[i] & 0xff, j = i << 3; c != 0 && j < refInts.length; c >>= 1, j++)
+					if ((c & 1) != 0) data.setSyncVariable(j, refInts[j] = dis.readInt());
+		}
 		data.updateClientChanges(this, dis);
-    }
+	}
 
 	@Override
 	@SideOnly(Side.CLIENT)
@@ -81,6 +81,7 @@ public class DataContainer extends Container {
 		public void setSyncVariable(int i, int v);
 		public boolean detectAndSendChanges(DataContainer container, PacketBuffer dos);
 		public void updateClientChanges(DataContainer container, PacketBuffer dis);
+		public String getName();
 	}
 
 }

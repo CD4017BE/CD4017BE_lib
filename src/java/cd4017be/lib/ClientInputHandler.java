@@ -16,21 +16,21 @@ public class ClientInputHandler
 	private static boolean initialized = false;
 	
 	public static void init()
-    {
+	{
 		if (initialized) return;
-        MinecraftForge.EVENT_BUS.register(instance);
-        initialized = true;
-    }
+		MinecraftForge.EVENT_BUS.register(instance);
+		initialized = true;
+	}
 	
 	@SubscribeEvent
 	public void handleMouseInput(MouseEvent e)
 	{
 		if (mc.thePlayer != null && mc.gameSettings != null && mc.thePlayer.isSneaking()) {
 			ItemStack item = mc.thePlayer.getHeldItemMainhand();
-	    	if (item != null && item.getItem() instanceof IScrollHandlerItem && (e.getDwheel() != 0 || (e.getButton() > 1 && e.isButtonstate()))) {
-	    		((IScrollHandlerItem)item.getItem()).onSneakScroll(item, mc.thePlayer, e.getDwheel());
-	    		e.setCanceled(true);
-	    	}
+			if (item != null && item.getItem() instanceof IScrollHandlerItem && (e.getDwheel() != 0 || (e.getButton() > 1 && e.isButtonstate()))) {
+				((IScrollHandlerItem)item.getItem()).onSneakScroll(item, mc.thePlayer, e.getDwheel());
+				e.setCanceled(true);
+			}
 		}
 	}
 	

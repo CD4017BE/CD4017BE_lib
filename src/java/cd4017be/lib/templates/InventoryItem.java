@@ -11,15 +11,13 @@ public class InventoryItem implements IItemHandlerModifiable {
 	private final InventoryPlayer ref;
 	private final IItemInventory inv;
 	private final ItemStack[] cache;
-	
+
 	public InventoryItem(EntityPlayer player) {
 		this.ref = player.inventory;
 		ItemStack item = ref.mainInventory[ref.currentItem];
 		if (item == null || !(item.getItem() instanceof IItemInventory)) throw new IllegalArgumentException("Held item not InventoryItem compatible!");
 		this.inv = (IItemInventory)item.getItem();
-		this.cache = new ItemStack[inv.getSlots(item)];
-		for (int i = 0; i < cache.length; i++)
-			cache[i] = inv.getStack(item, i);
+		this.cache = inv.loadInventory(item, player);
 	}
 
 	@Override
@@ -63,13 +61,20 @@ public class InventoryItem implements IItemHandlerModifiable {
 		cache[slot] = stack;
 		ItemStack item = ref.mainInventory[ref.currentItem];
 		if (item != null && item.getItem() == inv) 
-			inv.setStack(item, slot, stack);
+			inv.saveInventory(item, ref.player, cache);
+	}
+
+	public void update() {
+		ItemStack item = ref.mainInventory[ref.currentItem];
+		if (item != null && item.getItem() == inv) {
+			ItemStack[] items = inv.loadInventory(item, ref.player);
+			System.arraycopy(items, 0, cache, 0, Math.min(cache.length, items.length));
+		}
 	}
 
 	public interface IItemInventory {
-		public int getSlots(ItemStack inv);
-		public ItemStack getStack(ItemStack inv, int slot);
-		public void setStack(ItemStack inv, int slot, ItemStack stack);
+		public ItemStack[] loadInventory(ItemStack inv, EntityPlayer player);
+		public void saveInventory(ItemStack inv, EntityPlayer player, ItemStack[] items);
 	}
-	
+
 }

@@ -6,9 +6,10 @@ import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 
 /**
+ * 
+ * @param <C> should be the class extending this, so that {@code (C)this} won't throw a ClassCastException.
+ * @param <N> the implementation of {@link SharedNetwork} this should operate with.
  * @author CD4017BE
- * @param <C> should be the class extending this, so that '(C)this' won't throw a ClassCastException.
- * @param <N> the implementation of SharedNetwork this should operate with.
  */
 @SuppressWarnings("unchecked")
 public abstract class MultiblockComp<C extends MultiblockComp<C, N>, N extends SharedNetwork<C, N>> {
@@ -18,6 +19,7 @@ public abstract class MultiblockComp<C extends MultiblockComp<C, N>, N extends S
 	/** the unique identifier of this component. This should be calculated from it's coordinates and never change within one instance. */
 	protected long uid;
 	public byte con = 0x3f;
+	public boolean updateCon = true;
 
 	public MultiblockComp(IAbstractTile tile) {
 		this.tile = tile;
@@ -44,10 +46,19 @@ public abstract class MultiblockComp<C extends MultiblockComp<C, N>, N extends S
 		return (con >> side & 1) != 0;
 	}
 
+	/**
+	 * @param side usually EnumFacing index
+	 * @param c whether to connect there
+	 */
 	public void setConnect(byte side, boolean c) {
-		if (!c && canConnect(side)) network.update = true;//network.onDisconnect((C)this, side);
-		if (c) con |= 1 << side;
-		else con &= ~(1 << side);
+		boolean c0 = canConnect(side);
+		if (!c && c0) {
+			network.onDisconnect((C)this, side);
+			con &= ~(1 << side);
+		} else if (c && !c0) {
+			updateCon = true;
+			con |= 1 << side;
+		}
 	}
 
 	/**
@@ -61,6 +72,7 @@ public abstract class MultiblockComp<C extends MultiblockComp<C, N>, N extends S
 		return comp != null && comp.canConnect((byte)(side^1)) ? comp : null;
 	}
 
+	/** @return forge capability of this component */
 	public abstract Capability<C> getCap();
 
 }

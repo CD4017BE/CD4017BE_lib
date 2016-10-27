@@ -10,9 +10,9 @@ package cd4017be.api.automation;
  */
 public interface IAntimatterStorage 
 {
-    
-    public int add(int n);
-    
-    public int getDirection();
-    
+	
+	public int add(int n);
+	
+	public int getDirection();
+	
 }

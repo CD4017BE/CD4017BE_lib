@@ -182,6 +182,32 @@ public class Inventory implements IItemHandlerModifiable
 
 	}
 
+	public class SlotAccess implements IItemHandlerModifiable {
+		final int ofs, size;
+		public SlotAccess(int ofs, int size) {
+			this.ofs = ofs;
+			this.size = size;
+		}
+		@Override
+		public int getSlots() {return size;}
+		@Override
+		public ItemStack getStackInSlot(int slot) {
+			return Inventory.this.getStackInSlot(slot + ofs);
+		}
+		@Override
+		public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
+			return Inventory.this.insertItem(slot + ofs, stack, simulate);
+		}
+		@Override
+		public ItemStack extractItem(int slot, int amount, boolean simulate) {
+			return Inventory.this.extractItem(slot + ofs, amount, simulate);
+		}
+		@Override
+		public void setStackInSlot(int slot, ItemStack stack) {
+			Inventory.this.setStackInSlot(slot + ofs, stack);
+		}
+	}
+
 	public class Access implements IItemHandler {
 
 		final int[] slots;

@@ -9,16 +9,10 @@ import net.minecraftforge.common.capabilities.Capability;
 public class MutiblockTile<C extends MultiblockComp<C, N>, N extends SharedNetwork<C, N>> extends ModTileEntity implements ITickable {
 
 	protected C comp;
-	public boolean updateCon = true;
 
 	@Override
 	public void update() {
-		if (comp.network == null) return;
-		comp.network.updateTick(comp);
-		if (updateCon) {
-			comp.network.connect(comp);
-			updateCon = false;
-		}
+		if (comp.network != null) comp.network.updateTick(comp);
 	}
 
 	@Override
@@ -36,7 +30,7 @@ public class MutiblockTile<C extends MultiblockComp<C, N>, N extends SharedNetwo
 
 	@Override
 	public void onNeighborTileChange(BlockPos pos) {
-		updateCon = true;
+		comp.updateCon = true;
 	}
 
 	@Override

@@ -55,10 +55,10 @@ public class BlockPipe extends TileBlock
 	
 	public float size = 0.25F;
 	
-    public BlockPipe(String id, Material m, SoundType sound, int type)
-    {
-        super(id, m, sound, type);
-    }
+	public BlockPipe(String id, Material m, SoundType sound, int type)
+	{
+		super(id, m, sound, type);
+	}
 
 	@Override
 	protected BlockStateContainer createBlockState() {
@@ -87,42 +87,42 @@ public class BlockPipe extends TileBlock
 	public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess world, BlockPos pos) {
 		TileEntity te = world.getTileEntity(pos);
 		if (te != null && te instanceof IPipe && ((IPipe)te).getCover() == null)
-            return this.outerBox((IPipe)te);
+			return this.outerBox((IPipe)te);
 		else return FULL_BLOCK_AABB;
 	}
 	
 	private AxisAlignedBB outerBox(IPipe pipe) {
 		final double f1 = (1D - (double)size) / 2D, f2 = (1D + (double)size) / 2D;
-    	double[] bb = new double[]{f1, f2, f1, f2, f1, f2};
-    	for (byte s = 0; s < 6; s++)
-    		if (pipe.textureForSide(s) != -1) 
-    			bb[s] = (double)(s & 1);
-    	return new AxisAlignedBB(bb[4], bb[0], bb[2], bb[5], bb[1], bb[3]);
+		double[] bb = new double[]{f1, f2, f1, f2, f1, f2};
+		for (byte s = 0; s < 6; s++)
+			if (pipe.textureForSide(s) != -1) 
+				bb[s] = (double)(s & 1);
+		return new AxisAlignedBB(bb[4], bb[0], bb[2], bb[5], bb[1], bb[3]);
 	}
 
-    @Override
+	@Override
 	public void addCollisionBoxToList(IBlockState state, World world, BlockPos pos, AxisAlignedBB area, List<AxisAlignedBB> list, Entity entity) 
-    {
-    	AxisAlignedBB box;
-    	TileEntity te = world.getTileEntity(pos);
-    	if (te == null || !(te instanceof IPipe) || ((IPipe)te).getCover() != null) {
-    		box = FULL_BLOCK_AABB.offset(pos);
+	{
+		AxisAlignedBB box;
+		TileEntity te = world.getTileEntity(pos);
+		if (te == null || !(te instanceof IPipe) || ((IPipe)te).getCover() != null) {
+			box = FULL_BLOCK_AABB.offset(pos);
 			if (area.intersectsWith(box))list.add(box);
 			return;
-    	}
-    	AxisAlignedBB box0 = this.outerBox((IPipe)te);
+		}
+		AxisAlignedBB box0 = this.outerBox((IPipe)te);
 		double x = pos.getX(), y = pos.getY(), z = pos.getZ();
 		final double d0 = (double)((1F - size) / 2F), d1 = (double)((1F + size) / 2F);
-    	box = new AxisAlignedBB(x + box0.minX, y + d0, z + d0, x + box0.maxX, y + d1, z + d1);
-    	if (box.intersectsWith(area)) list.add(box);
-    	if (box0.minY < d0 || box0.maxY > d1) {
-    		box = new AxisAlignedBB(x + d0, y + box0.minY, z + d0, x + d1, y + box0.maxY, z + d1);
-    		if (box.intersectsWith(area)) list.add(box);
-    	}
-    	if (box0.minZ < d0 || box0.maxZ > d1) {
-    		box = new AxisAlignedBB(x + d0, y + d0, z + box0.minZ, x + d1, y + d1, z + box0.maxZ);
-    		if (box.intersectsWith(area)) list.add(box);
-    	}
+		box = new AxisAlignedBB(x + box0.minX, y + d0, z + d0, x + box0.maxX, y + d1, z + d1);
+		if (box.intersectsWith(area)) list.add(box);
+		if (box0.minY < d0 || box0.maxY > d1) {
+			box = new AxisAlignedBB(x + d0, y + box0.minY, z + d0, x + d1, y + box0.maxY, z + d1);
+			if (box.intersectsWith(area)) list.add(box);
+		}
+		if (box0.minZ < d0 || box0.maxZ > d1) {
+			box = new AxisAlignedBB(x + d0, y + d0, z + box0.minZ, x + d1, y + d1, z + box0.maxZ);
+			if (box.intersectsWith(area)) list.add(box);
+		}
 	}
 
 	@Override
@@ -145,14 +145,14 @@ public class BlockPipe extends TileBlock
 
 	@Override
 	public boolean isNormalCube(IBlockState state, IBlockAccess world, BlockPos pos) 
-    {
-    	TileEntity te = world.getTileEntity(pos);
-        return te != null && te instanceof IPipe && ((IPipe)te).getCover() != null;
+	{
+		TileEntity te = world.getTileEntity(pos);
+		return te != null && te instanceof IPipe && ((IPipe)te).getCover() != null;
 	}
 
-    @Override
+	@Override
 	public boolean isSideSolid(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing side) {
-        return this.isNormalCube(state, world, pos);
+		return this.isNormalCube(state, world, pos);
 	}
 
 	@Override
@@ -178,45 +178,45 @@ public class BlockPipe extends TileBlock
 	@Override
 	public boolean doesSideBlockRendering(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing face) {
 		TileEntity te = world.getTileEntity(pos);
-        if (te != null && te instanceof IPipe) {
-            IPipe.Cover cover = ((IPipe)te).getCover();
-            if (cover != null) {
-            	return cover.block.isOpaqueCube();
-            }
-        }
-        return false;
+		if (te != null && te instanceof IPipe) {
+			IPipe.Cover cover = ((IPipe)te).getCover();
+			if (cover != null) {
+				return cover.block.isOpaqueCube();
+			}
+		}
+		return false;
 	}
 
 	@Override
-    public float getBlockHardness(IBlockState state, World world, BlockPos pos) 
-    {
-        float h = this.blockHardness;
-        TileEntity te = world.getTileEntity(pos);
-        if (te != null && te instanceof IPipe) {
-            IPipe.Cover cover = ((IPipe)te).getCover();
-            if (cover != null) {
-            	float h1 = cover.block.getBlockHardness(world, new BlockPos(0, -1, 0));
-                if (h1 < 0) h = -1;
-                else h += h1;
-            }
-        }
-        return h;
-    }
+	public float getBlockHardness(IBlockState state, World world, BlockPos pos) 
+	{
+		float h = this.blockHardness;
+		TileEntity te = world.getTileEntity(pos);
+		if (te != null && te instanceof IPipe) {
+			IPipe.Cover cover = ((IPipe)te).getCover();
+			if (cover != null) {
+				float h1 = cover.block.getBlockHardness(world, new BlockPos(0, -1, 0));
+				if (h1 < 0) h = -1;
+				else h += h1;
+			}
+		}
+		return h;
+	}
 
-    @Override
-    public float getExplosionResistance(World world, BlockPos pos, Entity ex, Explosion expl) 
-    {
-        float h = this.getExplosionResistance(ex);
-        TileEntity te = world.getTileEntity(pos);
-        if (te != null && te instanceof IPipe) {
-            IPipe.Cover cover = ((IPipe)te).getCover();
-            if (cover != null) {
-                Block block = cover.block.getBlock();
-                if (block != null) h += block.getExplosionResistance(ex);
-            }
-        }
-        return h;
-    }
+	@Override
+	public float getExplosionResistance(World world, BlockPos pos, Entity ex, Explosion expl) 
+	{
+		float h = this.getExplosionResistance(ex);
+		TileEntity te = world.getTileEntity(pos);
+		if (te != null && te instanceof IPipe) {
+			IPipe.Cover cover = ((IPipe)te).getCover();
+			if (cover != null) {
+				Block block = cover.block.getBlock();
+				if (block != null) h += block.getExplosionResistance(ex);
+			}
+		}
+		return h;
+	}
 
 	@Override
 	public float getAmbientOcclusionLightValue(IBlockState state) {
@@ -228,5 +228,5 @@ public class BlockPipe extends TileBlock
 	{
 		return this.isNormalCube(state, world, pos) ? 255 : 0;
 	}
-    
+	
 }

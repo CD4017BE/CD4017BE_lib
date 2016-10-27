@@ -15,16 +15,16 @@ import net.minecraftforge.fluids.FluidStack;
  */
 public class ModFluid extends Fluid
 {
-    
-    public ModFluid(String name, String tex)
-    {
-        super(name, new ResourceLocation(tex), new ResourceLocation(tex));
-    }
+	
+	public ModFluid(String name, String tex)
+	{
+		super(name, new ResourceLocation(tex), new ResourceLocation(tex));
+	}
 
-    @Override
-    public String getLocalizedName(FluidStack stack)
-    {
-        return I18n.translateToLocal(this.getUnlocalizedName() + ".name");
-    }
-    
+	@Override
+	public String getLocalizedName(FluidStack stack)
+	{
+		return I18n.translateToLocal(this.getUnlocalizedName() + ".name");
+	}
+	
 }

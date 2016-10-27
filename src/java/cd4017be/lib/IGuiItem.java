@@ -32,25 +32,25 @@ public interface IGuiItem
 	 * @param z
 	 * @return The server gui object
 	 */
-    public Container getContainer(World world, EntityPlayer player, int x, int y, int z);
-    
-    @SideOnly(Side.CLIENT)
-    /**
-     * @param world
-     * @param player
-     * @param x
-     * @param y
-     * @param z
-     * @return The client gui object
-     */
-    public GuiContainer getGui(World world, EntityPlayer player, int x, int y, int z);
-    
-    /**
-     * Called on server after BlockGuiHandler.sendPacketToPlayer is called on client
-     * @param item
-     * @param player
-     * @param data
-     * @throws IOException
-     */
-    public void onPlayerCommand(ItemStack item, EntityPlayer player, PacketBuffer data);
+	public Container getContainer(World world, EntityPlayer player, int x, int y, int z);
+	
+	@SideOnly(Side.CLIENT)
+	/**
+	 * @param world
+	 * @param player
+	 * @param x
+	 * @param y
+	 * @param z
+	 * @return The client gui object
+	 */
+	public GuiContainer getGui(World world, EntityPlayer player, int x, int y, int z);
+	
+	/**
+	 * Called on server after BlockGuiHandler.sendPacketToPlayer is called on client
+	 * @param item
+	 * @param player
+	 * @param data
+	 * @throws IOException
+	 */
+	public void onPlayerCommand(ItemStack item, EntityPlayer player, PacketBuffer data);
 }

@@ -22,13 +22,13 @@ public class OreDictStack {
 	
 	public static OreDictStack deserialize(String s) {
 		int p = s.indexOf('*');
-    	short n = 1;
-    	if (p > 0) {
-    		try {n = Short.parseShort(s.substring(0, p));} catch (NumberFormatException e){}
-    		s = s.substring(p + 1);
-    		if (n <= 0) n = 1;
-    	}
-    	if (s.isEmpty()) return null;
+		short n = 1;
+		if (p > 0) {
+			try {n = Short.parseShort(s.substring(0, p));} catch (NumberFormatException e){}
+			s = s.substring(p + 1);
+			if (n <= 0) n = 1;
+		}
+		if (s.isEmpty()) return null;
 		return new OreDictStack(s, n);
 	}
 	
@@ -44,7 +44,7 @@ public class OreDictStack {
 		if (item == null || item.getItem() == null) return false;
 		int ore = OreDictionary.getOreID(id);
 		for (int id : OreDictionary.getOreIDs(item))
-    		if (id == ore) return true;
+			if (id == ore) return true;
 		return false;
 	}
 	

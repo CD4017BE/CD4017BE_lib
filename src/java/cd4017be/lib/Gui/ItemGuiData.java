@@ -8,11 +8,13 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.BlockPos;
 import cd4017be.lib.Gui.DataContainer.IGuiData;
+import cd4017be.lib.templates.InventoryItem;
 
 public class ItemGuiData implements IGuiData {
 
 	protected final Item item;
 	private ItemStack lastState;
+	protected InventoryItem inv;
 
 	public ItemGuiData(Item item) {
 		this.item = item;
@@ -52,6 +54,21 @@ public class ItemGuiData implements IGuiData {
 			ItemStack item = dis.readItemStackFromBuffer();
 			if (item.getItem() == this.item) container.player.inventory.mainInventory[container.player.inventory.currentItem] = item;
 		} catch (IOException e) {}
+	}
+
+	public static void updateInventory(EntityPlayer player, int slot) {
+		if (player.inventory.currentItem == slot && player.openContainer instanceof TileContainer) {
+			TileContainer cont = (TileContainer)player.openContainer;
+			if (cont.data instanceof ItemGuiData) {
+				ItemGuiData data = (ItemGuiData)cont.data;
+				if (data.inv != null) data.inv.update();
+			}
+		}
+	}
+
+	@Override
+	public String getName() {
+		return item.getUnlocalizedName();
 	}
 
 }

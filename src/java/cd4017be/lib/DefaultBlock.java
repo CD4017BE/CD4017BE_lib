@@ -15,17 +15,17 @@ import net.minecraftforge.fml.common.registry.GameRegistry;
  */
 public class DefaultBlock extends Block
 {
-    
-    public DefaultBlock(String id, Material m) {
-        super(m);
-        this.setRegistryName(id);
-        GameRegistry.register(this);
-        this.setUnlocalizedName("cd4017be." + id);
-    }
+	
+	public DefaultBlock(String id, Material m) {
+		super(m);
+		this.setRegistryName(id);
+		GameRegistry.register(this);
+		this.setUnlocalizedName("cd4017be." + id);
+	}
 
 	@Override
 	public String getLocalizedName() {
 		return I18n.translateToLocal(this.getUnlocalizedName() + ".name");
 	}
-    
+	
 }

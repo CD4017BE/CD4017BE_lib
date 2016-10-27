@@ -20,17 +20,17 @@ import static cd4017be.api.energy.EnergyAPI.RF_value;
  */
 public class EnergyRedstoneFlux implements EnergyAPI.IEnergyHandler
 {
-    
-    static class EnergyTile implements IEnergyAccess {
-    	
-    	final IEnergyHandler energy;
-    	final EnumFacing s;
-    	
-    	EnergyTile(IEnergyHandler tile, EnumFacing s) {
-    		this.energy = tile;
-    		this.s = s;
-    	}
-    	
+	
+	static class EnergyTile implements IEnergyAccess {
+		
+		final IEnergyHandler energy;
+		final EnumFacing s;
+		
+		EnergyTile(IEnergyHandler tile, EnumFacing s) {
+			this.energy = tile;
+			this.s = s;
+		}
+		
 		@Override
 		public float getStorage() {
 			return (float)energy.getEnergyStored(s) * RF_value;
@@ -49,19 +49,19 @@ public class EnergyRedstoneFlux implements EnergyAPI.IEnergyHandler
 				return (float)((IEnergyProvider)energy).extractEnergy(s, (int)Math.floor(e / -RF_value), false) * -RF_value;
 			else return 0;
 		}
-    	
-    }
-    
-    static class EnergyItem implements IEnergyAccess {
-    	
-    	final ItemStack item;
-    	final IEnergyContainerItem energy;
-    	
-    	EnergyItem(ItemStack item, IEnergyContainerItem energy) {
-    		this.item = item;
-    		this.energy = energy;
-    	}
-    	
+		
+	}
+	
+	static class EnergyItem implements IEnergyAccess {
+		
+		final ItemStack item;
+		final IEnergyContainerItem energy;
+		
+		EnergyItem(ItemStack item, IEnergyContainerItem energy) {
+			this.item = item;
+			this.energy = energy;
+		}
+		
 		@Override
 		public float getStorage() {
 			return (float)energy.getEnergyStored(item) * RF_value;
@@ -80,17 +80,17 @@ public class EnergyRedstoneFlux implements EnergyAPI.IEnergyHandler
 				return (float)energy.extractEnergy(item, (int)Math.floor(e / -RF_value), false) * -RF_value;
 			else return 0;
 		}
-    	
-    }
+		
+	}
 
-    @Override
-    public IEnergyAccess create(TileEntity te, EnumFacing s) {
-        return te instanceof IEnergyHandler ? new EnergyTile((IEnergyHandler)te, s) : null;
-    }
-    
+	@Override
+	public IEnergyAccess create(TileEntity te, EnumFacing s) {
+		return te instanceof IEnergyHandler ? new EnergyTile((IEnergyHandler)te, s) : null;
+	}
+	
 	@Override
 	public IEnergyAccess create(ItemStack item, int s) {
 		return item.getItem() instanceof IEnergyContainerItem ? new EnergyItem(item, (IEnergyContainerItem)item.getItem()) : null;
 	}
-    
+	
 }

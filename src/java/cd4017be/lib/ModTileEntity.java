@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package cd4017be.lib;
 
 import cd4017be.lib.Gui.DataContainer;
@@ -26,7 +22,6 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.items.CapabilityItemHandler;
@@ -36,8 +31,8 @@ import net.minecraftforge.items.IItemHandler;
  *
  * @author CD4017BE
  */
-public class ModTileEntity extends TileEntity implements IAbstractTile
-{
+public class ModTileEntity extends TileEntity implements IAbstractTile {
+
 	public int dimensionId;
 
 	@Override
@@ -126,6 +121,7 @@ public class ModTileEntity extends TileEntity implements IAbstractTile
 	public void setSyncVariable(int i, int v) {}
 
 	public void dropStack(ItemStack stack) {
+		if (stack == null) return;
 		EntityItem ei = new EntityItem(worldObj, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, stack);
 		worldObj.spawnEntityInWorld(ei);
 	}
@@ -138,7 +134,7 @@ public class ModTileEntity extends TileEntity implements IAbstractTile
 	}
 
 	public String getName() {
-		return I18n.translateToLocal(this.getBlockType().getUnlocalizedName().replaceFirst("tile.", "gui.") + ".name");
+		return this.getBlockType().getLocalizedName();
 	}
 
 	@Override

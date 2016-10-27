@@ -93,7 +93,7 @@ public class SpecialModelLoader implements ICustomModelLoader {
 	}
 	
 	@SubscribeEvent
-    public void bakeModels(ModelBakeEvent event) {
+	public void bakeModels(ModelBakeEvent event) {
 		tesrModelData.clear();
 		for (String s : tesrRegistry) {
 			try {
@@ -105,7 +105,7 @@ public class SpecialModelLoader implements ICustomModelLoader {
 			}
 		}
 		tesrModelCode.clear();
-    }
+	}
 	
 	@Override
 	public void onResourceManagerReload(IResourceManager resourceManager) {

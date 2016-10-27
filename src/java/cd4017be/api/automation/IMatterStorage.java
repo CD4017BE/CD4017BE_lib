@@ -17,8 +17,8 @@ import net.minecraft.item.ItemStack;
  */
 public interface IMatterStorage 
 {
-    public ItemStack getFirstItem();
-    public ArrayList<ItemStack> getAllItems();
-    public ItemStack removeItems(int n);
-    public ArrayList<ItemStack> addItems(List<ItemStack> items);
+	public ItemStack getFirstItem();
+	public ArrayList<ItemStack> getAllItems();
+	public ItemStack removeItems(int n);
+	public ArrayList<ItemStack> addItems(List<ItemStack> items);
 }

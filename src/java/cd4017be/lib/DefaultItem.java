@@ -21,31 +21,31 @@ import org.lwjgl.input.Keyboard;
  */
 public class DefaultItem extends Item
 {
-    
-    public DefaultItem(String id)
-    {
-        super();
-        this.setRegistryName(id);
-        this.setUnlocalizedName("cd4017be." + id);
-        GameRegistry.register(this);
-        this.init();
-    }
-    
-    protected void init() {
-    	BlockItemRegistry.registerItemStack(new ItemStack(this), "item." + this.getRegistryName().getResourcePath());
-    }
+	
+	public DefaultItem(String id)
+	{
+		super();
+		this.setRegistryName(id);
+		this.setUnlocalizedName("cd4017be." + id);
+		GameRegistry.register(this);
+		this.init();
+	}
+	
+	protected void init() {
+		BlockItemRegistry.registerItemStack(new ItemStack(this), "item." + this.getRegistryName().getResourcePath());
+	}
 
 	@Override
-    public void addInformation(ItemStack item, EntityPlayer player, List<String> list, boolean b) 
-    {
-        if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)) {
-        	String s = this.getUnlocalizedName(item) + ".tip";
-        	String s1 = TooltipInfo.getLocFormat(s);
-            if (!s1.equals(s)) list.addAll(Arrays.asList(s1.split("\n")));
-        } else list.add(TooltipInfo.getShiftHint());
-        super.addInformation(item, player, list, b);
-    }
-    
+	public void addInformation(ItemStack item, EntityPlayer player, List<String> list, boolean b) 
+	{
+		if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)) {
+			String s = this.getUnlocalizedName(item) + ".tip";
+			String s1 = TooltipInfo.getLocFormat(s);
+			if (!s1.equals(s)) list.addAll(Arrays.asList(s1.split("\n")));
+		} else list.add(TooltipInfo.getShiftHint());
+		super.addInformation(item, player, list, b);
+	}
+	
 	@Override
 	public String getUnlocalizedName(ItemStack item) {
 		String s = super.getUnlocalizedName(item);
@@ -56,5 +56,5 @@ public class DefaultItem extends Item
 	public String getItemStackDisplayName(ItemStack item) {
 		return I18n.translateToLocal(this.getUnlocalizedName(item) + ".name");
 	}
-    
+	
 }
