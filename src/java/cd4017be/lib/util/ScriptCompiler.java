@@ -101,14 +101,14 @@ public abstract class ScriptCompiler {
 						if (method.code.regionMatches(p, "else", 0, 4)) {
 							k1 = this.enclosing(method.code, p + 4, '{', '}');
 							if (!cond) {
-								SubMethod ncode = new SubMethod(method.code.substring(k1[0], k1[1]), new ResourceLocation("if @l." + method.line));
+								SubMethod ncode = new SubMethod(method.code.substring(k1[0], k1[1]), new ResourceLocation("if else @l." + method.line));
 								this.run(ncode, recLimit - 1);
 							}
 							p = k1[1] + 1;
 						}
 					} else if (left.equals("print")) {
 						FMLLog.log("ScriptOUT", Level.INFO, String.valueOf(this.parameter(right, recLimit, method.line)));
-						p = method.code.indexOf(';', k1[1]) + 1;
+						p = this.gotoSemicolon(method, k[0], k1[1]);
 					} else {
 						String[] arr = this.methods();
 						int m = -1;
@@ -127,7 +127,7 @@ public abstract class ScriptCompiler {
 							}
 							this.runMethod(m, params.toArray(), method.line);
 						}
-						p = method.code.indexOf(';', k1[1]) + 1;
+						p = this.gotoSemicolon(method, k[0], k1[1]);
 					}
 				} else if (k[1] == 2) {
 					p1 = this.findSepEnd(method.code, k[0] + 1, "\"{", "\"}", ';');
@@ -144,7 +144,13 @@ public abstract class ScriptCompiler {
 			throw ex;
 		}
 	}
-	
+
+	public int gotoSemicolon(SubMethod method, int p0, int p1) throws CompileException {
+		int p = method.code.indexOf(';', p1);
+		if (p < 0 || !method.code.substring(p1 + 1, p).trim().isEmpty()) throw new CompileException("missing semicolon:", method.code.substring(p0, p >= 0 ? p : p1), method.line);
+		return p + 1;
+	}
+
 	public Object parameter(String s, int recLimit, int line) throws CompileException {
 		try {
 		s = s.trim();
@@ -158,8 +164,15 @@ public abstract class ScriptCompiler {
 				p1 = this.findSepEnd(s, p, "\"([{", "\")]}", ',');
 				if (p1 == s.length()) p1--;
 				Object o = this.parameter(s.substring(p, p1), recLimit, line);
-				comps.add(o);
-				num &= o instanceof Double;
+				if (o instanceof Object[]) {
+					for (Object o1 : (Object[])o) comps.add(o1);
+					num = false;
+				} else if (o instanceof VecN)
+					for (double o1 : ((VecN)o).x) comps.add(o1);
+				else {
+					comps.add(o);
+					num &= o instanceof Double;
+				}
 			}
 			if (!num) return comps.toArray();
 			VecN vec = new VecN(comps.size());
@@ -186,6 +199,7 @@ public abstract class ScriptCompiler {
 		right = s.substring(k[0], k[1]);
 		if (s.startsWith("script")) {
 			k = this.enclosing(s, k[1] + 1, '{', '}');
+			if (!s.substring(k[1] + 1).trim().isEmpty()) throw new CompileException("end of method expected:", s.substring(k[1] + 1).trim(), line);
 			if (right.trim().isEmpty()) {
 				return new SubMethod(s.substring(k[0], k[1]), new ResourceLocation("method @l." + line));
 			} else {
@@ -197,7 +211,7 @@ public abstract class ScriptCompiler {
 				}
 				return this.extScript(init, (String)this.parameter(right, recLimit, line), recLimit - 1);
 			}
-		}
+		} else if (!s.substring(k[1] + 1).trim().isEmpty()) throw new CompileException("end of expression expected:", s.substring(k[1] + 1).trim(), line);
 		String left = s.substring(0, k[0] - 1);
 		ArrayList<Object> param = new ArrayList<Object>();
 		p = 0;
@@ -271,7 +285,6 @@ public abstract class ScriptCompiler {
 				return x;
 			} else if (par0 instanceof Boolean) {
 				boolean x = (Boolean)par0;
-				Object par;
 				for (int i = 1; x && i < param.length; i++) x &= (Boolean)param[i];
 				return !x;
 			} else break;
@@ -310,7 +323,9 @@ public abstract class ScriptCompiler {
 			for (int i = 0; i < arr.length; i++) 
 				if (arr[i].equals(name)) return this.runFunction(i, param, line);
 		}
-		throw new CompileException("unknown function or invalid parameters (" + param.length + ")", name, line);
+		String msg = "unknown function or invalid parameters (";
+		for (Object o : param) msg += o == null ? "null, " : o.getClass().getName() + ", ";
+		throw new CompileException(param.length > 0 ? msg.substring(0, msg.length() - 2) + ")" : msg, name, line);
 	}
 	
 	private int[] find(String s, int p, String k) {

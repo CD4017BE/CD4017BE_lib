@@ -228,6 +228,7 @@ public class BlockGuiHandler implements IGuiHandler {
 		if (g.inventorySlots instanceof DataContainer) {
 			DataContainer c = (DataContainer)g.inventorySlots;
 			c.data.initContainer(c);
+			c.refInts = c.data.getSyncVariables();
 		}
 		return g;
 	}

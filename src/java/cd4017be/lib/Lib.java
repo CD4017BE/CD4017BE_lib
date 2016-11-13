@@ -17,6 +17,7 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerAboutToStartEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraftforge.oredict.RecipeSorter;
 
 @Mod(modid = "CD4017BE_lib", useMetadata = true)
 public class Lib {
@@ -30,6 +31,7 @@ public class Lib {
 	public void preInit(FMLPreInitializationEvent event) {
 		Capabilities.register();
 		EnergyAPI.init();
+		RecipeSorter.register("cd4017be_lib:shapedNBT", NBTRecipe.class, RecipeSorter.Category.SHAPED, "after:minecraft:shaped before:minecraft:shapeless");
 		creativeTab = new TabMaterials("cd4017be_lib");
 		(materials = new ItemMaterial("m")).setCreativeTab(creativeTab);
 		creativeTab.item = new ItemStack(materials);

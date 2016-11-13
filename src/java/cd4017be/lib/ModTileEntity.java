@@ -22,6 +22,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.items.CapabilityItemHandler;
@@ -134,7 +135,7 @@ public class ModTileEntity extends TileEntity implements IAbstractTile {
 	}
 
 	public String getName() {
-		return this.getBlockType().getLocalizedName();
+		return I18n.translateToLocal(this.getBlockType().getUnlocalizedName().replace("tile.", "gui.").concat(".name"));
 	}
 
 	@Override

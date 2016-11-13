@@ -66,7 +66,7 @@ public class TESRModelParser extends ScriptCompiler {
 	ArrayList<State> states = new ArrayList<State>();
 	ArrayList<Quad> quads = new ArrayList<Quad>();
 
-	private TESRModelParser(String code, HashMap<String, Object> variables, State init, ResourceLocation res) throws CompileException {
+	private TESRModelParser(HashMap<String, Object> variables, State init) {
 		super(variables);
 		this.states = new ArrayList<State>();
 		this.states.add(init);
@@ -88,6 +88,8 @@ public class TESRModelParser extends ScriptCompiler {
 			if (o instanceof Quad) quads.add(((Quad)o).transform(state));
 			else if (o instanceof TESRModelParser)
 				for (Quad quad : ((TESRModelParser)o).quads) quads.add(quad.transform(state));
+			else if (o instanceof Object[]) 
+				for (Object o1 : (Object[])o) quads.add(((Quad)o1).transform(state));
 		} break;
 		case 1: {//push
 			if (states.size() >= maxStates) throw new CompileException("max state depth reached", "push", line);
@@ -98,9 +100,9 @@ public class TESRModelParser extends ScriptCompiler {
 			states.remove(states.size() - 1);
 		} break;
 		case 3: {//rotate
-			VecN vec = (VecN)param[1];
+			VecN vec = (VecN)param[0];
 			State state = states.get(states.size() - 1);
-			vec.x[3] = Math.toRadians((Double)param[0]);
+			vec.x[3] = Math.toRadians(vec.x[3]);
 			Matrix4d mat = new Matrix4d();
 			mat.set(new AxisAngle4d(vec.x));
 			state.matrix.mul(mat);
@@ -196,10 +198,11 @@ public class TESRModelParser extends ScriptCompiler {
 		state.uvOffset = Vec2.Def(0, 0);
 		state.uvScale = Vec2.Def(1, 1);
 		state.color = new VecN(1, 1, 1, 1);
-		TESRModelParser model;
+		TESRModelParser model = new TESRModelParser(var, state);
 		ResourceLocation res = new ResourceLocation(filename + ".tesr");
-		HashMap<String, Object> init = new HashMap<String, Object>();
-		try {model = new TESRModelParser(SpecialModelLoader.instance.loadTESRModelSourceCode(res), init, state, res);} catch (IOException e){throw CompileException.of(e, filename + ".tesr", 0);}
+		SubMethod m;
+		try {m = new SubMethod(SpecialModelLoader.instance.loadTESRModelSourceCode(res), res);} catch (IOException e){throw CompileException.of(e, filename + ".tesr", 0);}
+		model.run(m, reclimit);
 		model.states.clear();
 		return model;
 	}
@@ -212,7 +215,8 @@ public class TESRModelParser extends ScriptCompiler {
 		state.uvScale = Vec2.Def(1, 1);
 		state.color = new VecN(1, 1, 1, 1);
 		HashMap<String, Object> variables = new HashMap<String, Object>();
-		TESRModelParser model = new TESRModelParser(code, variables, state, res);
+		TESRModelParser model = new TESRModelParser(variables, state);
+		model.run(new SubMethod(code, res), defaultRecLimit);
 		int[] data = new int[28 * model.quads.size()];
 		for (int i = 0; i < model.quads.size(); i++) {
 			Quad quad = model.quads.get(i);

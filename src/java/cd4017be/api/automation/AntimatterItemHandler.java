@@ -1,9 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package cd4017be.api.automation;
 
 import java.util.List;
@@ -21,7 +15,7 @@ public class AntimatterItemHandler
 		public String getAntimatterTag(ItemStack item);
 	}
 	
-	public static void addInformation(ItemStack item, List list)
+	public static void addInformation(ItemStack item, List<String> list)
 	{
 		if (isAntimatterItem(item)) {
 			list.add(String.format("Antimatter: %d / %d ng", getAntimatter(item), ((IAntimatterItem)item.getItem()).getAmCapacity(item)));

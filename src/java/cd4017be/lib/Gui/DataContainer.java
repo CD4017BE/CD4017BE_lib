@@ -7,6 +7,7 @@ import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IContainerListener;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -29,6 +30,8 @@ public class DataContainer extends Container {
 		this.player = player;
 	}
 
+	private boolean firstTick = true;
+
 	@Override
 	public void detectAndSendChanges() {
 		PacketBuffer dos = BlockGuiHandler.getPacketTargetData(data.pos());
@@ -39,16 +42,19 @@ public class DataContainer extends Container {
 
 	protected boolean checkChanges(PacketBuffer dos) {
 		boolean send = false;
-		if (refInts != null) {
-			byte[] chng = new byte[(refInts.length + 7) / 8];
-			int[] arr = data.getSyncVariables();
+		int[] arr = data.getSyncVariables();
+		if (arr != null) {
+			byte[] chng = new byte[(arr.length + 7) / 8];
+			boolean init = refInts == null;
+			if (init) refInts = new int[arr.length];
 			for (int i = 0; i < refInts.length; i++)
-				if (arr[i] != refInts[i]) chng[i >> 3] |= 1 << (i & 7);
+				if (init || arr[i] != refInts[i]) {
+					chng[i >> 3] |= 1 << (i & 7);
+					send = true;
+				}
 			dos.writeBytes(chng);
 			for (int i = 0; i < refInts.length; i++)
-				if (arr[i] != refInts[i]) dos.writeInt(refInts[i] = arr[i]);
-			for (byte b : chng)
-				if (b != 0) {send = true; break;}
+				if (init || arr[i] != refInts[i]) dos.writeInt(refInts[i] = arr[i]);
 		}
 		return data.detectAndSendChanges(this, dos) || send;
 	}

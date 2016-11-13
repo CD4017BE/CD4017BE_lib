@@ -27,7 +27,7 @@ public abstract class SharedNetwork<C extends MultiblockComp<C, N>, N extends Sh
 		this.components = new HashMap<Long, C>();
 		this.components.put(core.uid, core);
 		this.core = core;
-		this.core.network = (N)this;
+		core.network = (N)this;
 	}
 
 	protected SharedNetwork(HashMap<Long, C> comps) {

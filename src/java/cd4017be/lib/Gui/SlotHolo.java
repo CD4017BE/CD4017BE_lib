@@ -31,7 +31,7 @@ public class SlotHolo extends SlotItemHandler {
 
 	@Override
 	public int getSlotStackLimit() {
-		return stack ? 64 : 1;
+		return stack ? 127 : 1;
 	}
 
 }

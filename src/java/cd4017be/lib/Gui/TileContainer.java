@@ -1,6 +1,7 @@
 package cd4017be.lib.Gui;
 
 import cd4017be.lib.templates.ITankContainer;
+
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -19,6 +20,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.ItemHandlerHelper;
+import net.minecraftforge.items.SlotItemHandler;
 
 /**
  * Fully automated Container supporting items and fluids
@@ -77,7 +79,7 @@ public class TileContainer extends DataContainer {
 			for (int i = 0; i < this.tankSlots.size(); i++) {
 				FluidStack fluid1 = this.tankSlots.get(i).getStack();
 				FluidStack fluid0 = this.fluidStacks.get(i);
-				if ((fluid1 == null ^ fluid0 == null) || (fluid1 != null && !fluid1.isFluidEqual(fluid0))) {
+				if ((fluid1 == null ^ fluid0 == null) || (fluid1 != null && !fluid1.isFluidStackIdentical(fluid0))) {
 					this.fluidStacks.set(i, fluid1 == null ? null : fluid1.copy());
 					send |= 1 << i;
 				}
@@ -99,7 +101,7 @@ public class TileContainer extends DataContainer {
 			ItemStack item1 = slot.getStack();
 			ItemStack item0 = this.inventoryItemStacks.get(i);
 			if (!ItemStack.areItemStacksEqual(item0, item1)) {
-				this.inventoryItemStacks.set(i, item0 = item1 == null ? null : item1.copy());
+				this.inventoryItemStacks.set(i, item0 = (item1 == null ? null : item1.copy()));
 				if (slot instanceof GlitchSaveSlot) {
 					dos.writeByte(i);
 					dos.writeShort(Item.getIdFromItem(item0 != null ? item0.getItem() : null));
@@ -175,10 +177,11 @@ public class TileContainer extends DataContainer {
 					if (item != null && item.isItemEqual(curItem)) {
 						item.stackSize += b == 1 ? 1 : curItem.stackSize;
 					} else {
-						curItem = curItem.copy();
-						if (b == 1) curItem.stackSize = 1;
-						slot.putStack(curItem);
+						item = curItem.copy();
+						if (b == 1) item.stackSize = 1;
 					}
+					if (item.stackSize > slot.getSlotStackLimit()) item.stackSize = slot.getSlotStackLimit();
+					slot.putStack(item);
 				} else if (curItem == null && item != null && slot.canTakeStack(player)){
 					slot.decrStackSize(b == 0 ? slot.getSlotStackLimit() : 1);
 				} else return null;
@@ -195,6 +198,7 @@ public class TileContainer extends DataContainer {
 				if (boost) {
 					ItemStack rem = acc.insertItem(p, ItemHandlerHelper.copyStackWithSize(curItem, 65536), true);
 					int n = rem != null ? 65536 - rem.stackSize : 65536, n1 = 0;
+					if (n <= 0) return null;
 					if (b == 0) {
 						if (n < curItem.stackSize) curItem.stackSize -= n1 = n;
 						else {
@@ -214,13 +218,17 @@ public class TileContainer extends DataContainer {
 			} else if (item != null) {
 				int n = boost ? (b == 0 ? item.getMaxStackSize() : 65536) : (b == 0 ? 1 : 8);
 				if ((item = acc.extractItem(p, n, true)) == null) return null;
-				int rem = putInPlayerInv(item, player.inventory);
+				int rem = putInPlayerInv(item.copy(), player.inventory);
 				acc.extractItem(p, item.stackSize - rem, false);
 			}
 			return null;
 		} else if (clickHandler != null && clickHandler.slotClick(item == null ? null : item.copy(), slot, b, m, this)) {
 			return item == null || item.stackSize <= 0 ? null : item;
-		} else return super.slotClick(s, b, m, player);
+		} else {
+			ItemStack ret = super.slotClick(s, b, m, player);
+			if (slot instanceof SlotItemHandler && slot.getStack() == item) slot.putStack(slot.getStack());
+			return ret;
+		}
 	}
 
 	public static int putInPlayerInv(ItemStack item, InventoryPlayer inv) {

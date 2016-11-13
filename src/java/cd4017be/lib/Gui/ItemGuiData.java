@@ -1,12 +1,12 @@
 package cd4017be.lib.Gui;
 
 import java.io.IOException;
-
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.translation.I18n;
 import cd4017be.lib.Gui.DataContainer.IGuiData;
 import cd4017be.lib.templates.InventoryItem;
 
@@ -68,7 +68,7 @@ public class ItemGuiData implements IGuiData {
 
 	@Override
 	public String getName() {
-		return item.getUnlocalizedName();
+		return I18n.translateToLocal(item.getUnlocalizedName() + ".name");
 	}
 
 }

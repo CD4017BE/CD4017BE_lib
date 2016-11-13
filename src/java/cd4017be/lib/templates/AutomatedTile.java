@@ -40,7 +40,7 @@ public class AutomatedTile extends ModTileEntity implements ITickable {
 	public void update() {
 		if (worldObj.isRemote) return;
 		if (inventory != null) inventory.update(this);
-		if (tanks != null) tanks.update(this);
+		if (tanks != null) tanks.update(this, inventory);
 		if (energy != null) energy.update(this);
 	}
 
@@ -73,12 +73,12 @@ public class AutomatedTile extends ModTileEntity implements ITickable {
 			long dcfg = dis.readLong();
 			if ((tanks.sideCfg & 0xf000000000000L & ~dcfg) != 0)
 				for (int i = 0; i < tanks.tanks.length; i++)
-					if (!tanks.canUnlock(i)) dcfg |= 1 << (i + 48);
+					if (!tanks.canUnlock(i)) dcfg |= 1L << (i + 48);
 			tanks.sideCfg = dcfg;
 			this.markUpdate();
 		} else if (cmd == 2 && tanks != null){
 			int id = dis.readByte();
-			if (id > 0 && id < tanks.tanks.length) tanks.setFluid(id, null);
+			if (id >= 0 && id < tanks.tanks.length) tanks.setFluid(id, null);
 		} else if (cmd == 3 && energy != null) {
 			energy.sideCfg = dis.readByte();
 			this.markUpdate();
@@ -96,7 +96,6 @@ public class AutomatedTile extends ModTileEntity implements ITickable {
 			return inventory != null && (s == null || (inventory.sideCfg >> (s.ordinal() * 10) & 0x3ff) != 0);
 		else if (cap == Capabilities.ELECTRIC_CAPABILITY)
 			return energy != null && (s == null || energy.isConnected(s.ordinal()));
-		//TODO add caps for GAS, HEAT
 		else return super.hasCapability(cap, s);
 	}
 

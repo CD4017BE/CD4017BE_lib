@@ -62,9 +62,8 @@ public class RecipeScriptParser extends ScriptCompiler {
 					name = name.substring(4);
 					List<ItemStack> list = OreDictionary.getOres(name);
 					if (list.isEmpty()) throw new CompileException("empty OreDictionary type:", name, line);
-					else return list.get(0);
-				}
-				else item = new ItemStack(Item.getByNameOrId(name));
+					item = list.get(0).copy();
+				} else item = new ItemStack(Item.getByNameOrId(name));
 				if (item == null || item.getItem() == null) throw new CompileException("invalid item name:", name, line);
 			} else if (param[0] instanceof ItemStack) item = ((ItemStack)param[0]).copy();
 			else if (param[0] instanceof OreDictStack) {

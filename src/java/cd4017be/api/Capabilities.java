@@ -34,10 +34,7 @@ public class Capabilities {
 			public void readNBT(Capability<PipeEnergy> cap, PipeEnergy pipe, EnumFacing s, NBTBase nbt) {
 				pipe.readFromNBT((NBTTagCompound)nbt, "");
 			}
-		}, new Callable<PipeEnergy>() {
-			@Override
-			public PipeEnergy call() throws Exception {throw NotSupported;}
-		});
+		}, new EmptyCallable<PipeEnergy>());
 		
 		CapabilityManager.INSTANCE.register(IntegerComp.class, new Capability.IStorage<IntegerComp>() {
 			@Override
@@ -50,9 +47,22 @@ public class Capabilities {
 			public void readNBT(Capability<IntegerComp> cap, IntegerComp pipe, EnumFacing s, NBTBase nbt) {
 				pipe.readFromNBT((NBTTagCompound)nbt);
 			}
-		}, new Callable<IntegerComp>(){
-			@Override
-			public IntegerComp call() throws Exception {throw NotSupported;}
-		});
+		}, new EmptyCallable<IntegerComp>());
+	}
+
+	public static class EmptyStorage<T> implements Capability.IStorage<T> {
+		@Override
+		public NBTBase writeNBT(Capability<T> capability, T instance, EnumFacing side) {
+			return new NBTTagCompound();
+		}
+		@Override
+		public void readNBT(Capability<T> capability, T instance, EnumFacing side, NBTBase nbt) {}
+	}
+
+	public static class EmptyCallable<T> implements Callable<T> {
+		@Override
+		public T call() throws Exception {
+			throw NotSupported;
+		}
 	}
 }

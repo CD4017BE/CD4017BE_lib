@@ -7,6 +7,10 @@ import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.FluidUtil;
+import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.fluids.capability.IFluidTankProperties;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
 
@@ -32,7 +36,7 @@ public class ItemFluidUtil {
 
 	public static NBTTagList saveInventory(ItemStack[] inv) {
 		NBTTagList list = new NBTTagList();
-		for (int i = 0; i < 9; i++)
+		for (int i = 0; i < inv.length; i++)
 			if (inv[i] != null) {
 				NBTTagCompound tag = new NBTTagCompound();
 				inv[i].writeToNBT(tag);
@@ -129,6 +133,61 @@ public class ItemFluidUtil {
 			return stack;
 		}
 		return null;
+	}
+
+	public static class StackedFluidAccess implements IFluidHandler {
+
+		public final IFluidHandler acc;
+		private final ItemStack item;
+		private final int n;
+
+		public StackedFluidAccess(ItemStack item) {
+			this.n = item != null ? item.stackSize : 0;
+			if (n > 0) {
+				this.acc = FluidUtil.getFluidHandler(item);
+				if (this.acc != null) item.stackSize = 1;
+				this.item = item;
+			} else {
+				this.acc = null;
+				this.item = null;
+			}
+		}
+
+		public boolean valid() {
+			return acc != null;
+		}
+
+		@Override
+		public IFluidTankProperties[] getTankProperties() {
+			return acc.getTankProperties();
+		}
+
+		@Override
+		public int fill(FluidStack resource, boolean doFill) {
+			if (n > 1) resource = new FluidStack(resource, resource.amount / n);
+			return acc.fill(resource, doFill) * n;
+		}
+
+		@Override
+		public FluidStack drain(FluidStack resource, boolean doDrain) {
+			if (n > 1) resource = new FluidStack(resource, resource.amount / n);
+			FluidStack stack = acc.drain(resource, doDrain);
+			if (stack != null) stack.amount *= n;
+			return stack;
+		}
+
+		@Override
+		public FluidStack drain(int maxDrain, boolean doDrain) {
+			FluidStack stack = acc.drain(maxDrain / n, doDrain);
+			if (stack != null) stack.amount *= n;
+			return stack;
+		}
+
+		public ItemStack result() {
+			item.stackSize *= n;
+			return item.stackSize > 0 && item.getItem() != null ? item : null;
+		}
+
 	}
 
 }

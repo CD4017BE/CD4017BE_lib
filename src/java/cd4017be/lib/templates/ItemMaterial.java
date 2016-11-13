@@ -1,5 +1,6 @@
 package cd4017be.lib.templates;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -34,8 +35,11 @@ public class ItemMaterial extends DefaultItem {
 	@Override
 	public void getSubItems(Item item, CreativeTabs tab, List<ItemStack> subItems) {
 		subItems.add(new ItemStack(this, 1, 0));
-		for (int i : variants.keySet())
-			subItems.add(new ItemStack(item, 1, i));
+		int[] ids = new int[variants.size()];
+		int n = 0;
+		for (int i : variants.keySet()) ids[n++] = i;
+		Arrays.sort(ids);
+		for (int i : ids) subItems.add(new ItemStack(item, 1, i));
 	}
 
 	public void addMaterial(int id, String name) {

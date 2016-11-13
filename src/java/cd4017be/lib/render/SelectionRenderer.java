@@ -24,7 +24,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class SelectionRenderer extends TileEntitySpecialRenderer<ModTileEntity>
 {
 	
-	private void renderSelection(int[] area, double ofsX, double ofsY, double ofsZ)
+	private void renderSelection(int[] area, double ofsX, double ofsY, double ofsZ)//TODO use GlStateManager
 	{
 		if (area == null) return;
 		//save state

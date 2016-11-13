@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package cd4017be.lib.templates;
 
 import cd4017be.lib.util.Utils;
@@ -18,8 +14,8 @@ import net.minecraftforge.items.ItemHandlerHelper;
  *
  * @author CD4017BE
  */
-public class Inventory implements IItemHandlerModifiable
-{
+public class Inventory implements IItemHandlerModifiable {
+
 	/**	bits[0-59 6*5*2]: side * comp * access */
 	public long sideCfg = 0;
 	public final ItemStack[] items;
@@ -123,7 +119,10 @@ public class Inventory implements IItemHandlerModifiable
 	}
 
 	public byte getConfig(int s, int id) {
-		return (byte)(sideCfg >> (10 * s + 2 * id) & 3);
+		if (s >= 0) return (byte)(sideCfg >> (10 * s + 2 * id) & 3);
+		if (id < 0 || id >= groups.length) return 0;
+		byte dir = groups[id].dir;
+		return dir < 0 ? (byte)1 : dir > 0 ? (byte)2 : (byte)3;
 	}
 
 	@Override
@@ -215,21 +214,23 @@ public class Inventory implements IItemHandlerModifiable
 		final byte[] dir;
 
 		public Access(EnumFacing s) {
-			int cfg = s != null ? (int)(sideCfg >> (s.ordinal() * 10)) & 0x3ff : 0x3ff, cfg1 = cfg;
+			int cfg = s != null ? (int)(sideCfg >> (s.ordinal() * 10)) & 0x3ff : 0x3ff;
 			int n = 0;
 			for (Group g : groups) 
-				if (((cfg1 >>= 2) & 3) != 0) n += g.e - g.s;
+				if ((cfg >> (2 * g.idx) & 3) != 0) n += g.e - g.s;
 			slots = new int[n];
 			dir = new byte[n];
 			n = 0;
 			byte d;
-			for (Group g : groups)
-				if (((cfg >>= 2) & 3) != 0) {
+			for (Group g : groups) {
+				if ((cfg & 3) != 0) {
 					d = (byte)(g.idx | cfg << 6);
 					for (int i = g.s; i < g.e; i++) {
 						slots[n] = i; dir[n++] = d;
 					}
 				}
+				cfg >>= 2;
+			}
 		}
 
 		public Access(int g) {

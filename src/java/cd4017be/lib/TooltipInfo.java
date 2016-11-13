@@ -118,7 +118,7 @@ public class TooltipInfo
 		try {
 			return String.format(s, args);
 		} catch (IllegalFormatException e) {
-			return s;
+			return s + "\n" + e.toString();
 		}
 	}
 	
