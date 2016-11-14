@@ -1,7 +1,6 @@
 package cd4017be.api.circuits;
 
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
@@ -14,9 +13,8 @@ public interface ISensor {
 	 * Perform a measurement on a Block
 	 * @param sensor the sensor module ItemStack
 	 * @param world the World
-	 * @param pos the Block to inspect
-	 * @param side access side to inspect the Block from
+	 * @param pos sensor block location
 	 * @return the result 
 	 */
-	public float measure(ItemStack sensor, World world, BlockPos pos, EnumFacing side);
+	public float measure(ItemStack sensor, World world, BlockPos pos);
 }

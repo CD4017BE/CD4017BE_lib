@@ -9,6 +9,8 @@ package cd4017be.lib;
 import java.util.ArrayList;
 import java.util.IllegalFormatException;
 
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.translation.I18n;
 import cd4017be.lib.util.Utils;
 
@@ -22,6 +24,7 @@ public class TooltipInfo
 	private static String FluidDispUnit;
 	private static String EnergyDispUnit;
 	private static String PowerDispUnit;
+	private static String LinkPosFormat;
 	
 	public static String getShiftHint() {
 		if (ShiftHint == null){
@@ -53,6 +56,16 @@ public class TooltipInfo
 			if (PowerDispUnit == "cd4017be.powerUnit") PowerDispUnit = "kW";
 		}
 		return PowerDispUnit;
+	}
+
+	public static String[] sides = new String[]{"B", "T", "N", "S", "W", "E"};
+
+	public static String formatLink(BlockPos pos, EnumFacing side) {
+		if (LinkPosFormat == null) {
+			LinkPosFormat = I18n.translateToLocal("cd4017be.linkPos");
+			if (LinkPosFormat == "cd4017be.linkPos") LinkPosFormat = "Link: x=%d y=%d z=%d %s";
+		}
+		return String.format(LinkPosFormat, pos.getX(), pos.getY(), pos.getZ(), side != null ? sides[side.ordinal()] : "");
 	}
 	
 	public static void addConfigReference(ConfigurationFile cfg)
