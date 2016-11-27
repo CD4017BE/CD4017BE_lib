@@ -319,7 +319,7 @@ public abstract class GuiMachine extends GuiContainer {
 	public class TextField extends GuiComp {
 		public final int maxL;
 		public int tc = 0xff404040, cc = 0xff800000;
-		public String text;
+		public String text = "";
 		public int cur;
 
 		public TextField(int id, int x, int y, int w, int h, int max) {
@@ -345,22 +345,42 @@ public abstract class GuiMachine extends GuiContainer {
 		@Override
 		public void keyTyped(char c, int k) {
 			try {
-				if (k == Keyboard.KEY_LEFT && cur > 0) cur--;
-				else if (k == Keyboard.KEY_RIGHT && cur < text.length()) cur++;
-				else if (k == Keyboard.KEY_DELETE && cur < text.length()){
-					text = text.substring(0, cur).concat(text.substring(cur + 1));
-				} else if (k == Keyboard.KEY_BACK && cur > 0) {
-					cur--;
-					text = text.substring(0, cur).concat(text.substring(cur + 1));
-				} else if (k == Keyboard.KEY_RETURN) {
-					setFocus(-1);
-				} else if (k == Keyboard.KEY_UP) {
-					setFocus(id - 1);
-				} else if (k == Keyboard.KEY_DOWN) {
-					setFocus(id + 1);
-				} else if (ChatAllowedCharacters.isAllowedCharacter(c) && cur < maxL){
-					text = text.substring(0, cur).concat("" + c).concat(text.substring(cur, Math.min(text.length(), maxL - 1)));
-					cur++;
+				boolean ctr = isCtrlKeyDown() && !isShiftKeyDown() && !isAltKeyDown();
+				switch(k) {
+				case Keyboard.KEY_LEFT: if (cur > 0) cur--; break;
+				case Keyboard.KEY_RIGHT: if (cur < text.length()) cur++; break;
+				case Keyboard.KEY_DELETE: if (cur < text.length()) {
+						text = text.substring(0, cur).concat(text.substring(cur + 1));
+					} break;
+				case Keyboard.KEY_BACK: if (cur > 0) {
+						cur--;
+						text = text.substring(0, cur).concat(text.substring(cur + 1));
+					} break;
+				case Keyboard.KEY_RETURN: setFocus(-1); break;
+				case Keyboard.KEY_UP: setFocus(id - 1); break;
+				case Keyboard.KEY_DOWN: setFocus(id + 1); break;
+				case Keyboard.KEY_C: if (ctr) {
+						setClipboardString(text);
+						break;
+					}
+				case Keyboard.KEY_V: if (ctr) {
+						String s = getClipboardString();
+						text = text.substring(0, cur).concat(s).concat(text.substring(cur, text.length()));
+						cur += s.length();
+						if (text.length() > maxL) {
+							text = text.substring(0, maxL);
+							cur = maxL;
+						}
+						break;
+					}
+				case Keyboard.KEY_D: if (ctr) {
+						text = "";
+						break;
+					}
+				default: if (ChatAllowedCharacters.isAllowedCharacter(c) && cur < maxL){
+						text = text.substring(0, cur).concat("" + c).concat(text.substring(cur, Math.min(text.length(), maxL - 1)));
+						cur++;
+					}
 				}
 			} catch (IndexOutOfBoundsException e) {
 				if (cur < 0) cur = 0;
