@@ -13,10 +13,16 @@ import net.minecraftforge.items.SlotItemHandler;
 public class GlitchSaveSlot extends SlotItemHandler {
 
 	public final int index;
+	public final boolean clientInteract;
 
 	public GlitchSaveSlot(IItemHandler itemHandler, int index, int xPosition, int yPosition) {
+		this(itemHandler, index, xPosition, yPosition, true);
+	}
+
+	public GlitchSaveSlot(IItemHandler itemHandler, int index, int xPosition, int yPosition, boolean client) {
 		super(itemHandler, index, xPosition, yPosition);
 		this.index = index;
+		this.clientInteract = client;
 	}
 
 	// prevent vanilla from synchronizing with low stack size resolution and other unwanted things like other mods's inventory sorting mechanisms messing up everything. //

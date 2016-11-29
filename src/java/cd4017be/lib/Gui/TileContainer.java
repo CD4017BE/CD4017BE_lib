@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.ClickType;
 import net.minecraft.inventory.IContainerListener;
@@ -33,7 +34,8 @@ public class TileContainer extends DataContainer {
 	public int invPlayerE = 0;
 	public final ArrayList<TankSlot> tankSlots;
 	public final ArrayList<FluidStack> fluidStacks;
-	private boolean specialInvSync = false;
+	/** flag 1: special slot synchronizing, flag 2: hard inventory update required */
+	private byte specialInvSync = 0;
 
 	public TileContainer(IGuiData tile, EntityPlayer player) {
 		super(tile, player);
@@ -64,7 +66,7 @@ public class TileContainer extends DataContainer {
 
 	public void addItemSlot(Slot slot) {
 		this.addSlotToContainer(slot);
-		if (slot instanceof GlitchSaveSlot) specialInvSync = true;
+		if (slot instanceof GlitchSaveSlot) specialInvSync |= 1;
 	}
 
 	public void addTankSlot(TankSlot slot) {
@@ -92,9 +94,13 @@ public class TileContainer extends DataContainer {
 				}
 		}
 		int p = -1, n = 0;
-		if (specialInvSync) {
+		if ((specialInvSync & 1) != 0) {
 			p = dos.writerIndex();
 			dos.writeByte(n);
+		}
+		if ((specialInvSync & 2) != 0 && player instanceof EntityPlayerMP) {
+			((EntityPlayerMP)player).isChangingQuantityOnly = false;
+			specialInvSync &= 0xfd;
 		}
 		for (int i = 0; i < this.inventorySlots.size(); i++) {
 			Slot slot = this.inventorySlots.get(i);
@@ -126,11 +132,12 @@ public class TileContainer extends DataContainer {
 			for (byte c = dis.readByte(), i = 0; c != 0 && i < this.tankSlots.size(); c >>= 1, i++)
 				if ((c & 1) != 0)
 					this.tankSlots.get(i).putStack(FluidStack.loadFluidStackFromNBT(dis.readNBTTagCompoundFromBuffer()));
-		if (specialInvSync)
+		if ((specialInvSync & 1) != 0)
 			for (int n = dis.readUnsignedByte(); n > 0; n--) {
 				int s = dis.readUnsignedByte();
 				int id = dis.readShort();
-				ItemStack item = id == 0 ? null : new ItemStack(Item.getItemById(id), dis.readInt(), dis.readShort(), dis.readNBTTagCompoundFromBuffer());
+				ItemStack item = id == 0 ? null : new ItemStack(Item.getItemById(id), dis.readInt(), dis.readShort());
+				if (item != null) item.setTagCompound(dis.readNBTTagCompoundFromBuffer());
 				Slot slot; IItemHandler acc;
 				if (s < inventorySlots.size() && (slot = inventorySlots.get(s)) instanceof GlitchSaveSlot && (acc = ((GlitchSaveSlot)slot).getItemHandler()) instanceof IItemHandlerModifiable)
 					((IItemHandlerModifiable)acc).setStackInSlot(((GlitchSaveSlot)slot).index, item);
@@ -141,12 +148,65 @@ public class TileContainer extends DataContainer {
 
 	@Override
 	public boolean mergeItemStack(ItemStack item, int ss, int se, boolean d) {
-		return super.mergeItemStack(item, ss, se, d);
+		ItemStack item1 = item.copy();
+		if (item1.isStackable())
+			for (int i = se - ss; i > 0 && item1.stackSize > 0; i--) {
+				Slot slot = inventorySlots.get(d ? i + ss - 1 : se - i);
+				ItemStack stack = slot.getStack();
+				if (stack == null) continue;
+				if (slot instanceof GlitchSaveSlot) {
+					GlitchSaveSlot gss = (GlitchSaveSlot)slot;
+					if ((item1 = gss.getItemHandler().insertItem(gss.index, item1, false)) == null) {
+						item.stackSize = 0;
+						return true;
+					}
+				} else if (ItemHandlerHelper.canItemStacksStack(stack, item1)) {
+					int j = stack.stackSize + item1.stackSize;
+					int mxs = Math.min(item1.getMaxStackSize(), slot.getSlotStackLimit());
+					if (j <= mxs) {
+						item.stackSize = 0;
+						stack.stackSize = j;
+						slot.onSlotChanged();
+						return true;
+					} else if (stack.stackSize < mxs) {
+						item1.stackSize -= mxs - stack.stackSize;
+						stack.stackSize = mxs;
+						slot.onSlotChanged();
+					}
+				}
+			}
+		if (item1.stackSize > 0)
+			for (int i = se - ss; i > 0; i--) {
+				Slot slot = inventorySlots.get(d ? i + ss - 1 : se - i);
+				if (slot.getStack() != null) continue;
+				if (slot instanceof GlitchSaveSlot) {
+					GlitchSaveSlot gss = (GlitchSaveSlot)slot;
+					if ((item1 = gss.getItemHandler().insertItem(gss.index, item1, false)) == null) {
+						item.stackSize = 0;
+						return true;
+					}
+				} else if (slot.isItemValid(item1)) {
+					int mxs = slot.getItemStackLimit(item1);
+					if (item1.stackSize <= mxs) {
+						slot.putStack(item1.copy());
+						slot.onSlotChanged();
+						item.stackSize = 0;
+						return true;
+					} else {
+						slot.putStack(item1.splitStack(mxs));
+						slot.onSlotChanged();
+					}
+				}
+			}
+		if (item1.stackSize != item.stackSize) {
+			item.stackSize = item1.stackSize;
+			return true;
+		} else return false;
 	}
 
 	@Override
 	public ItemStack transferStackInSlot(EntityPlayer player, int id) {
-		Slot slot = (Slot)inventorySlots.get(id);
+		Slot slot = inventorySlots.get(id);
 		if (slot == null || !slot.getHasStack()) return null;
 		ItemStack stack = slot.getStack();
 		ItemStack item = stack.copy();
@@ -155,7 +215,7 @@ public class TileContainer extends DataContainer {
 			if (id < invPlayerS || id >= invPlayerE) {s = invPlayerS; e = invPlayerE;}
 			else if (invPlayerS > 0) {s = 0; e = invPlayerS;}
 			else return null;
-			if(!super.mergeItemStack(stack, s, e, false)) return null;
+			if(!mergeItemStack(stack, s, e, false)) return null;
 		}
 		if (stack.stackSize == item.stackSize) return null;
 		slot.onSlotChange(stack, item);
@@ -191,8 +251,13 @@ public class TileContainer extends DataContainer {
 		} else if (slot instanceof GlitchSaveSlot) {
 			if (m != ClickType.PICKUP && m != ClickType.QUICK_MOVE) return null;
 			boolean boost = m == ClickType.QUICK_MOVE;
-			IItemHandler acc = ((GlitchSaveSlot)slot).getItemHandler();
-			int p = ((GlitchSaveSlot)slot).index;
+			GlitchSaveSlot gss = (GlitchSaveSlot)slot;
+			if (!gss.clientInteract) {
+				if (player.worldObj.isRemote) return null;
+				specialInvSync |= 2;
+			}
+			IItemHandler acc = gss.getItemHandler();
+			int p = gss.index;
 			ItemStack curItem = player.inventory.getItemStack();
 			if (curItem != null) {
 				if (boost) {

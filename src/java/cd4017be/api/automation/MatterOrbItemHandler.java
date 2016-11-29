@@ -8,6 +8,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
 
 /**
@@ -150,7 +151,7 @@ public class MatterOrbItemHandler {
 		if (!item.getTagCompound().hasKey(tag)) item.getTagCompound().setTag(tag, new NBTTagList());
 	}
 
-	public static class Access implements IItemHandlerModifiable {
+	public static class Access implements IItemHandler {
 		public final InventoryPlayer inv;
 		public int slot;
 		public int tool;
@@ -170,7 +171,7 @@ public class MatterOrbItemHandler {
 		public ItemStack getStackInSlot(int s) {
 			if (s == 0) return null;
 			ItemStack stack = getItem(inv.mainInventory[tool], slot);
-			if (stack != null && stack.stackSize > stack.getMaxStackSize()) stack.stackSize = stack.getMaxStackSize();
+			if (stack != null) stack.stackSize = 1;
 			return stack;
 		}
 
@@ -185,18 +186,11 @@ public class MatterOrbItemHandler {
 		@Override
 		public ItemStack extractItem(int s, int amount, boolean simulate) {
 			if (s == 0) return null;
-			return decrStackSize(inv.mainInventory[tool], slot, amount);
-		}
-
-		@Override
-		public void setStackInSlot(int s, ItemStack stack) {
-			if (s != 0) {
-				ItemStack item = getItem(inv.mainInventory[tool], slot);
-				if (item != null) decrStackSize(inv.mainInventory[tool], slot, item.getMaxStackSize());
-			}
-			if (stack != null) 
-				for (ItemStack item : addItemStacks(inv.mainInventory[tool], stack.copy())) 
-					inv.player.dropItem(item, false);
+			if (simulate) {
+				ItemStack stack = getItem(inv.mainInventory[tool], slot);
+				if(stack.stackSize > amount) stack.stackSize = amount;
+				return stack;
+			} else return decrStackSize(inv.mainInventory[tool], slot, amount);
 		}
 
 	}
