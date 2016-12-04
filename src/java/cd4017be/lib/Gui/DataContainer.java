@@ -7,7 +7,6 @@ import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IContainerListener;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -30,14 +29,12 @@ public class DataContainer extends Container {
 		this.player = player;
 	}
 
-	private boolean firstTick = true;
-
 	@Override
 	public void detectAndSendChanges() {
 		PacketBuffer dos = BlockGuiHandler.getPacketTargetData(data.pos());
 		if (this.checkChanges(dos)) 
 			for (IContainerListener crafter : this.listeners)
-				BlockGuiHandler.sendPacketToPlayer((EntityPlayerMP)crafter, dos);
+				if(crafter instanceof EntityPlayerMP) BlockGuiHandler.sendPacketToPlayer((EntityPlayerMP)crafter, dos);
 	}
 
 	protected boolean checkChanges(PacketBuffer dos) {

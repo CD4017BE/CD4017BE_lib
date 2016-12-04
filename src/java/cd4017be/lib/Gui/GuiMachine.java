@@ -66,9 +66,10 @@ public abstract class GuiMachine extends GuiContainer {
 				guiComps.add(new FluidTank(guiComps.size(), slot));
 			if (cont.data instanceof AutomatedTile) {
 				AutomatedTile tile = (AutomatedTile)cont.data;
-				if (tile.tanks != null && tile.tanks.tanks.length > 0) guiComps.add(new FluidSideCfg(guiComps.size(), tabsX -= tile.tanks.tanks.length * 9 + 9, tabsY, tile));
-				if (tile.inventory != null && tile.inventory.groups.length > 0) guiComps.add(new ItemSideCfg(guiComps.size(), tabsX -= tile.inventory.groups.length * 9 + 9, tabsY, tile));
-				if (tile.energy != null) guiComps.add(new EnergySideCfg(guiComps.size(), tabsX - 18, tabsY, tile));
+				int xPos = tabsX;
+				if (tile.tanks != null && tile.tanks.tanks.length > 0) guiComps.add(new FluidSideCfg(guiComps.size(), xPos -= tile.tanks.tanks.length * 9 + 9, tabsY, tile));
+				if (tile.inventory != null && tile.inventory.groups.length > 0) guiComps.add(new ItemSideCfg(guiComps.size(), xPos -= tile.inventory.groups.length * 9 + 9, tabsY, tile));
+				if (tile.energy != null) guiComps.add(new EnergySideCfg(guiComps.size(), xPos - 18, tabsY, tile));
 			}
 		}
 	}
@@ -514,7 +515,7 @@ public abstract class GuiMachine extends GuiContainer {
 			super.drawOverlay(mx, my);
 			Object o;
 			if (states >= 0 && (o = getDisplVar(id)) instanceof EnumFacing)
-				drawSideCube(-64, tabsY + 63, ((EnumFacing)o).ordinal(), (byte)states);
+				drawSideCube(tabsX - 64, tabsY + 63, ((EnumFacing)o).ordinal(), (byte)states);
 		}
 
 		@Override
@@ -585,7 +586,7 @@ public abstract class GuiMachine extends GuiContainer {
 		public void drawOverlay(int mx, int my) {
 			int s = (my - py) / 9 - 1;
 			if (s >= 0)
-				drawSideCube(-64, py - guiTop + 63, s, (tile.energy.sideCfg >> s & 1) != 0 ? (byte)3 : 0);
+				drawSideCube(tabsX - 64, py - guiTop + 63, s, (tile.energy.sideCfg >> s & 1) != 0 ? (byte)3 : 0);
 		}
 
 		@Override
@@ -630,7 +631,7 @@ public abstract class GuiMachine extends GuiContainer {
 					if (slot.tankNumber == i)
 						drawTexturedModalRect(slot.xDisplayPosition + (slot.size >> 4 & 0xf) * 9 - 9, slot.yDisplayPosition + (slot.size & 0xf) * 18 - (s<6?10:18), 144 + dir * 16, 16, 16, s<6?8:16);
 			}
-			if(s >= 0 && s < 6) drawSideCube(-64, py - guiTop + 63, s, dir);
+			if(s >= 0 && s < 6) drawSideCube(tabsX - 64, py - guiTop + 63, s, dir);
 		}
 
 		@Override
@@ -688,7 +689,7 @@ public abstract class GuiMachine extends GuiContainer {
 					if (slot instanceof SlotItemHandler && slot.getSlotIndex() >= i0 && slot.getSlotIndex() < i1)
 						drawTexturedModalRect(slot.xDisplayPosition, slot.yDisplayPosition, 144 + dir * 16, 0, 16, 16);
 			}
-			if (s >= 0) drawSideCube(-64, py - guiTop + 63, s, dir);
+			if (s >= 0) drawSideCube(tabsX - 64, py - guiTop + 63, s, dir);
 		}
 
 		@Override

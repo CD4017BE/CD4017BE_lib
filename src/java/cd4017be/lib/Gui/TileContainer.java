@@ -66,12 +66,18 @@ public class TileContainer extends DataContainer {
 
 	public void addItemSlot(Slot slot) {
 		this.addSlotToContainer(slot);
-		if (slot instanceof GlitchSaveSlot) specialInvSync |= 1;
+		if (slot instanceof GlitchSaveSlot) {
+			specialInvSync |= 1;
+			GlitchSaveSlot gss = (GlitchSaveSlot)slot;
+			if(player.worldObj.isRemote && gss.getItemHandler() instanceof IItemHandlerModifiable)
+				((IItemHandlerModifiable)gss.getItemHandler()).setStackInSlot(gss.index, null);
+		}
 	}
 
 	public void addTankSlot(TankSlot slot) {
 		this.tankSlots.add(slot);
 		this.fluidStacks.add((FluidStack)null);
+		if (player.worldObj.isRemote) slot.putStack(null);
 	}
 
 	@Override

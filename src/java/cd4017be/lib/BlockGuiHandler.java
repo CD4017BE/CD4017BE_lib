@@ -204,6 +204,9 @@ public class BlockGuiHandler implements IGuiHandler {
 			TileBlockEntry entry = TileBlockRegistry.getBlockEntry(world.getBlockState(pos).getBlock());
 			TileEntity te = world.getTileEntity(pos);
 			if (entry != null && entry.gui != null && te != null && entry.tileEntity.isInstance(te)) {
+				if(player.openContainer != null && player.openContainer instanceof DataContainer && ((DataContainer)player.openContainer).data == te) {
+					return Minecraft.getMinecraft().currentScreen;
+				}
 				try {
 					g = entry.gui.getConstructor(entry.tileEntity, EntityPlayer.class).newInstance(entry.tileEntity.cast(te), player);
 				} catch (NoSuchMethodException ex) {
@@ -229,6 +232,9 @@ public class BlockGuiHandler implements IGuiHandler {
 			DataContainer c = (DataContainer)g.inventorySlots;
 			c.data.initContainer(c);
 			c.refInts = c.data.getSyncVariables();
+			if(c.refInts != null && c.data instanceof ModTileEntity) 
+				for (int i = 0; i < c.refInts.length; i++)
+					c.data.setSyncVariable(i, 0);
 		}
 		return g;
 	}
