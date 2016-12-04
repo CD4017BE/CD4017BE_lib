@@ -272,9 +272,11 @@ public class Inventory implements IItemHandlerModifiable {
 			int d = dir[i], s;
 			if ((d & 0x80) == 0 || (m = handler.extractAm(d & 7, s = slots[i], item = items[s], m)) <= 0) return null;
 			if (!sim) {
-				if (item.stackSize == m) item = null;
-				else item.stackSize -= m;
-				handler.setSlot(d & 0x87, s, item);
+				if (item.stackSize == m) handler.setSlot(d & 0x87, s, null);
+				else {
+					item.stackSize -= m;
+					handler.setSlot(d & 0x87, s, item);
+				}
 			}
 			return ItemHandlerHelper.copyStackWithSize(item, m);
 		}
