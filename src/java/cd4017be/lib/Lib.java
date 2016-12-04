@@ -35,7 +35,7 @@ public class Lib {
 		creativeTab = new TabMaterials("cd4017be_lib");
 		(materials = new ItemMaterial("m")).setCreativeTab(creativeTab);
 		creativeTab.item = new ItemStack(materials);
-		RecipeAPI.registerScript(event, "core", null);
+		RecipeAPI.registerScript(event, "core.rcp", null);
 	}
 
 	@Mod.EventHandler
