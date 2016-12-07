@@ -57,8 +57,8 @@ public class Inventory implements IItemHandlerModifiable {
 		int cfg;
 		IItemHandler access;
 		for (byte s = 0; s < 6; s++) {
-			cfg = (int)(sideCfg >> (s * 10));
-			if((cfg & 0x15) == (cfg & 0x2a) >> 1) continue; //all connections are blocked or passive
+			cfg = (int)(sideCfg >> (long)(s * 10));
+			if((cfg & 0x155) == (cfg & 0x2aa) >> 1) continue; //all connections are blocked or passive
 			TileEntity te = Utils.getTileOnSide(tile, s);
 			if (te == null || !te.hasCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, EnumFacing.VALUES[s^1])) continue;
 			access = te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, EnumFacing.VALUES[s^1]);
