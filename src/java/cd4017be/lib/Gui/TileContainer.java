@@ -166,6 +166,14 @@ public class TileContainer extends DataContainer {
 						item.stackSize = 0;
 						return true;
 					}
+				} else if (slot instanceof SlotHolo) {
+					if (slot.isItemValid(item1) && ItemHandlerHelper.canItemStacksStack(stack, item1)) {
+						stack.stackSize += item1.stackSize;
+						if (stack.stackSize > slot.getSlotStackLimit()) stack.stackSize = slot.getSlotStackLimit();
+						slot.putStack(stack);
+						item.stackSize = item1.stackSize;
+						return true;
+					}
 				} else if (ItemHandlerHelper.canItemStacksStack(stack, item1)) {
 					int j = stack.stackSize + item1.stackSize;
 					int mxs = Math.min(item1.getMaxStackSize(), slot.getSlotStackLimit());
@@ -189,6 +197,12 @@ public class TileContainer extends DataContainer {
 					GlitchSaveSlot gss = (GlitchSaveSlot)slot;
 					if ((item1 = gss.getItemHandler().insertItem(gss.index, item1, false)) == null) {
 						item.stackSize = 0;
+						return true;
+					}
+				} else if (slot instanceof SlotHolo) {
+					if (slot.isItemValid(item1)) {
+						slot.putStack(item1);
+						item.stackSize = item1.stackSize;
 						return true;
 					}
 				} else if (slot.isItemValid(item1)) {

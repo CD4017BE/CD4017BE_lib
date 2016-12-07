@@ -30,4 +30,9 @@ public class SlotStaticItem extends Slot {
 		return false;
 	}
 
+	@Override
+	public int getSlotStackLimit() {
+		return 0;
+	}
+
 }
