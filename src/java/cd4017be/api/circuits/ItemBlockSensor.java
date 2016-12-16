@@ -49,9 +49,9 @@ public abstract class ItemBlockSensor extends DefaultItem implements ISensor {
 	}
 
 	@Override
-	public float measure(ItemStack sensor, World world, BlockPos src) {
+	public double measure(ItemStack sensor, World world, BlockPos src) {
 		NBTTagCompound nbt = sensor.getTagCompound();
-		if (nbt == null) return 0F;
+		if (nbt == null) return 0D;
 		BlockPos pos = BlockPos.fromLong(nbt.getLong("link"));
 		if (pos.getY() < 0 || pos.getY() >= 256 || pos.distanceSq(src) > RangeSQ || !world.isBlockLoaded(pos)) return nbt.getFloat("cache");
 		EnumFacing side = EnumFacing.getFront(nbt.getByte("side"));

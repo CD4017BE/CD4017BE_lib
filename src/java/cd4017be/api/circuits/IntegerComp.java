@@ -40,7 +40,10 @@ public class IntegerComp extends MultiblockComp<IntegerComp, SharedInteger> {
 				}
 		if (newIn != inputState) {
 			inputState = newIn;
-			network.updateState = true;
+			if (!network.updateState) {
+				network.updateState = true;
+				network.updatePhysics();
+			}
 		}
 	}
 

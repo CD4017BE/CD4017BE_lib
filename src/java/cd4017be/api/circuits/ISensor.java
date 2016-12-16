@@ -16,5 +16,5 @@ public interface ISensor {
 	 * @param pos sensor block location
 	 * @return the result 
 	 */
-	public float measure(ItemStack sensor, World world, BlockPos pos);
+	public double measure(ItemStack sensor, World world, BlockPos pos);
 }
