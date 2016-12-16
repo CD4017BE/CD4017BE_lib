@@ -80,9 +80,12 @@ public abstract class GuiMachine extends GuiContainer {
 		GlStateManager.disableDepth();
 		GlStateManager.disableAlpha();
 		GlStateManager.enableBlend();
+		GlStateManager.pushMatrix();
+		GlStateManager.translate(-guiLeft, -guiTop, 0);
 		for (GuiComp comp : guiComps)
 			if (comp.isInside(mx, my))
 				comp.drawOverlay(mx, my);
+		GlStateManager.popMatrix();
 	}
 
 	@Override
@@ -248,7 +251,7 @@ public abstract class GuiMachine extends GuiContainer {
 				Object o = getDisplVar(id);
 				text = TooltipInfo.getLocFormat("gui.cd4017be." + tooltip.replace("#", o == null ? "" : o.toString()));
 			}
-			drawHoveringText(Arrays.asList(text.split("\n")), mx - guiLeft, py + h + 12 - guiTop, fontRendererObj);
+			drawHoveringText(Arrays.asList(text.split("\n")), mx, py + h + 12, fontRendererObj);
 		}
 		public void draw() {}
 		public void keyTyped(char c, int k) {}
@@ -273,7 +276,7 @@ public abstract class GuiMachine extends GuiContainer {
 			Object obj = getDisplVar(id);
 			Object[] objA = obj instanceof Object[] ? (Object[])obj : new Object[]{obj};
 			String s = tooltip.startsWith("\\") ? String.format(tooltip.substring(1), objA) : TooltipInfo.format("gui.cd4017be." + tooltip, objA);
-			drawHoveringText(Arrays.asList(s.split("\n")), mx - guiLeft, my - guiTop, fontRendererObj);
+			drawHoveringText(Arrays.asList(s.split("\n")), mx, my, fontRendererObj);
 		}
 
 	}
@@ -515,7 +518,7 @@ public abstract class GuiMachine extends GuiContainer {
 			super.drawOverlay(mx, my);
 			Object o;
 			if (states >= 0 && (o = getDisplVar(id)) instanceof EnumFacing)
-				drawSideCube(tabsX - 64, tabsY + 63, ((EnumFacing)o).ordinal(), (byte)states);
+				drawSideCube(tabsX - 64, tabsY + 63, ((EnumFacing)o).ordinal(), (byte)states);//TODO check render pos
 		}
 
 		@Override
@@ -586,7 +589,7 @@ public abstract class GuiMachine extends GuiContainer {
 		public void drawOverlay(int mx, int my) {
 			int s = (my - py) / 9 - 1;
 			if (s >= 0)
-				drawSideCube(tabsX - 64, py - guiTop + 63, s, (tile.energy.sideCfg >> s & 1) != 0 ? (byte)3 : 0);
+				drawSideCube(guiLeft + tabsX - 64, py + 63, s, (tile.energy.sideCfg >> s & 1) != 0 ? (byte)3 : 0);
 		}
 
 		@Override
@@ -629,9 +632,9 @@ public abstract class GuiMachine extends GuiContainer {
 				mc.renderEngine.bindTexture(LIB_TEX);
 				for (TankSlot slot : ((TileContainer)inventorySlots).tankSlots)
 					if (slot.tankNumber == i)
-						drawTexturedModalRect(slot.xDisplayPosition + (slot.size >> 4 & 0xf) * 9 - 9, slot.yDisplayPosition + (slot.size & 0xf) * 18 - (s<6?10:18), 144 + dir * 16, 16, 16, s<6?8:16);
+						drawTexturedModalRect(guiLeft + slot.xDisplayPosition + (slot.size >> 4 & 0xf) * 9 - 9, guiTop + slot.yDisplayPosition + (slot.size & 0xf) * 18 - (s<6?10:18), 144 + dir * 16, 16, 16, s<6?8:16);
 			}
-			if(s >= 0 && s < 6) drawSideCube(tabsX - 64, py - guiTop + 63, s, dir);
+			if(s >= 0 && s < 6) drawSideCube(guiLeft + tabsX - 64, py + 63, s, dir);
 		}
 
 		@Override
@@ -687,9 +690,9 @@ public abstract class GuiMachine extends GuiContainer {
 				int i0 = tile.inventory.groups[i].s, i1 = tile.inventory.groups[i].e;
 				for (Slot slot : inventorySlots.inventorySlots)
 					if (slot instanceof SlotItemHandler && slot.getSlotIndex() >= i0 && slot.getSlotIndex() < i1)
-						drawTexturedModalRect(slot.xDisplayPosition, slot.yDisplayPosition, 144 + dir * 16, 0, 16, 16);
+						drawTexturedModalRect(guiLeft + slot.xDisplayPosition, guiTop + slot.yDisplayPosition, 144 + dir * 16, 0, 16, 16);
 			}
-			if (s >= 0) drawSideCube(tabsX - 64, py - guiTop + 63, s, dir);
+			if (s >= 0) drawSideCube(guiLeft + tabsX - 64, py + 63, s, dir);
 		}
 
 		@Override
@@ -736,7 +739,7 @@ public abstract class GuiMachine extends GuiContainer {
 			ArrayList<String> info = new ArrayList<String>();
 			info.add(stack != null ? stack.getLocalizedName() : "Empty");
 			info.add(String.format("%s/%s ", Utils.formatNumber(stack != null ? (float)stack.amount / 1000F : 0F, 3), Utils.formatNumber((float)slot.inventory.getCapacity(slot.tankNumber) / 1000F, 3)) + TooltipInfo.getFluidUnit());
-			drawHoveringText(info, mx - guiLeft, my - guiTop, fontRendererObj);
+			drawHoveringText(info, mx, my, fontRendererObj);
 		}
 
 		@Override
