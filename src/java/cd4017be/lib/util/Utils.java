@@ -1,13 +1,10 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package cd4017be.lib.util;
 
 import java.text.DecimalFormatSymbols;
 import java.util.HashSet;
 import java.util.Set;
 
+import cd4017be.api.circuits.IQuickRedstoneHandler;
 import cd4017be.lib.ModTileEntity;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
@@ -21,33 +18,26 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
-import net.minecraftforge.fluids.FluidContainerRegistry;
+import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.fluids.FluidRegistry;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.IFluidBlock;
-import net.minecraftforge.fluids.IFluidContainerItem;
 import net.minecraftforge.oredict.OreDictionary;
 
 /**
  *
  * @author CD4017BE
  */
-public class Utils 
-{
-	public static EnumFacing[][] AXIS_Rad = {
-		{EnumFacing.DOWN, EnumFacing.UP, EnumFacing.NORTH, EnumFacing.SOUTH},
-		{EnumFacing.NORTH, EnumFacing.SOUTH, EnumFacing.WEST, EnumFacing.EAST},
-		{EnumFacing.WEST, EnumFacing.EAST, EnumFacing.DOWN, EnumFacing.UP}
-	};
-	
+public class Utils {
+
 	public static final BlockPos NOWHERE = new BlockPos(0, -1, 0);
 	public static final byte IN = -1, OUT = 1, ACC = 0;
-	
+
 	public static boolean itemsEqual(ItemStack item0, ItemStack item1)
 	{
 		return (item0 == null && item1 == null) || (item0 != null && item1 != null && item0.isItemEqual(item1) && ItemStack.areItemStackTagsEqual(item0, item1));
 	}
-	
+
 	public static boolean oresEqual(ItemStack item0, ItemStack item1)
 	{
 		if (itemsEqual(item0, item1)) return true;
@@ -58,14 +48,6 @@ public class Utils
 				for (int id0 : ids) if (id0 == id1) return true;
 			return false;
 		}
-	}
-	
-	public static boolean fluidsEqual(FluidStack fluid0, FluidStack fluid1, boolean am)
-	{
-		if (fluid0 == null && fluid1 == null) return true;
-		else if (fluid0 != null && fluid1 != null) {
-			return am ? fluid0.isFluidStackIdentical(fluid1) : fluid0.isFluidEqual(fluid1);
-		} else return false;
 	}
 
 	/**
@@ -86,290 +68,9 @@ public class Utils
 		}
 	}
 
-	/**
-	 * Fills items into the given slots of an inventory
-	 * @param inv the inventory to fill in
-	 * @param side the side to fill from
-	 * @param s the slots that should be filled
-	 * @param items the items to fill
-	 * @return the remaining items that could not be filled
-	 */
-	public static ItemStack[] fill(IInventory inv, int side, int[] s, ItemStack... items) {
-		ISidedInventory si = inv instanceof ISidedInventory ? (ISidedInventory) inv : null;
-		boolean action = false;
-		int pn = -1;
-		for (int i = 0; i < s.length; i++) {
-			ItemStack stack = inv.getStackInSlot(s[i]);
-			if (stack == null) {
-				if (pn < 0) {
-					pn = i;
-				}
-			} else if (si == null || si.canInsertItem(s[i], stack, EnumFacing.VALUES[side])) {
-				stack = stack.copy();
-				boolean f = false;
-				int m = Math.min(stack.getMaxStackSize(), inv.getInventoryStackLimit());
-				for (int j = 0; j < items.length && stack.stackSize < m; j++) {
-					if (items[j] != null && Utils.itemsEqual(items[j], stack)) {
-						if (items[j].stackSize <= m - stack.stackSize) {
-							stack.stackSize += items[j].stackSize;
-							items[j] = null;
-						} else {
-							items[j].stackSize -= m - stack.stackSize;
-							stack.stackSize = m;
-						}
-						f = true;
-					}
-				}
-				if (f) {
-					inv.setInventorySlotContents(s[i], stack);
-					action = true;
-				}
-			}
-		}
-		ItemStack[] array = new ItemStack[items.length];
-		int n = 0;
-		if (pn < 0) {
-			pn = s.length;
-		}
-		for (int i = 0; i < items.length; i++) {
-			int m = items[i] == null ? 0 : Math.min(items[i].getMaxStackSize(), inv.getInventoryStackLimit());
-			while (items[i] != null && pn < s.length) {
-				if (inv.getStackInSlot(s[pn]) == null && (si == null || si.canInsertItem(s[pn], items[i], EnumFacing.VALUES[side]))) {
-					if (items[i].stackSize <= m) {
-						inv.setInventorySlotContents(s[pn], items[i]);
-						items[i] = null;
-					} else {
-						inv.setInventorySlotContents(s[pn], items[i].splitStack(m));
-					}
-					action = true;
-				}
-				pn++;
-			}
-			if (items[i] != null) {
-				array[n++] = items[i];
-			}
-		}
-		items = new ItemStack[n];
-		if (action) {
-			inv.markDirty();
-		}
-		System.arraycopy(array, 0, items, 0, n);
-		return items;
-	}
-	
-	public static ItemStack fillStack(IInventory inv, int side, int[] s, ItemStack item)
-	{
-		ISidedInventory si = inv instanceof ISidedInventory ? (ISidedInventory) inv : null;
-		int m = Math.min(item.getMaxStackSize(), inv.getInventoryStackLimit());
-		boolean action = false;
-		int pn = -1;
-		for (int i = 0; i < s.length && item != null; i++) {
-			ItemStack stack = inv.getStackInSlot(s[i]);
-			if (stack == null) {
-				if (pn < 0) {
-					pn = i;
-				}
-			} else if (stack.stackSize < m && stack.isItemEqual(item) && (si == null || si.canInsertItem(s[i], item, EnumFacing.VALUES[side]))) {
-				if (item.stackSize <= m - stack.stackSize) {
-					stack.stackSize += item.stackSize;
-					item = null;
-				} else {
-					item.stackSize -= m - stack.stackSize;
-					stack.stackSize = m;
-				}
-				inv.setInventorySlotContents(s[i], stack);
-				action = true;
-			}
-		}
-		if (pn < 0) {
-			pn = s.length;
-		}
-		while (item != null && pn < s.length) {
-			if (inv.getStackInSlot(s[pn]) == null && (si == null || si.canInsertItem(s[pn], item, EnumFacing.VALUES[side]))) {
-				if (item.stackSize <= m) {
-				  	inv.setInventorySlotContents(s[pn], item);
-				   	item = null;
-				} else {
-				   	inv.setInventorySlotContents(s[pn], item.splitStack(m));
-				}
-				action = true;
-			}
-			pn++;
-		}
-		if (action) inv.markDirty();
-		return item;
-	}
-	
-	public static Obj2<int[], ItemStack[]> getFilledSlots(IInventory inv, int[] slots, int side, boolean fill)
-	{
-		ISidedInventory invS = inv instanceof ISidedInventory ? (ISidedInventory)inv : null;
-		int[] outS = new int[slots.length];
-		ItemStack[] outI = new ItemStack[slots.length];
-		int n = 0;
-		ItemStack item;
-		for (int s : slots) {
-			item = inv.getStackInSlot(s);
-			if (item != null && (!fill || item.stackSize < item.getMaxStackSize()) && (invS == null || (fill ? invS.canExtractItem(s, item, EnumFacing.VALUES[side]) : invS.canInsertItem(s, item, EnumFacing.VALUES[side])))) {
-				outS[n] = s; 
-				outI[n++] = item;
-			}
-		}
-		if (n == 0) return null;
-		Obj2<int[], ItemStack[]> ret = new Obj2<int[], ItemStack[]>(new int[n], new ItemStack[n]);
-		System.arraycopy(outS, 0, ret.objA, 0, n);
-		System.arraycopy(outI, 0, ret.objB, 0, n);
-		return ret;
-	}
-	
-	public static int getEmptySlot(IInventory inv, int[] slots, int side, ItemStack type)
-	{
-		ISidedInventory invS = inv instanceof ISidedInventory ? (ISidedInventory)inv : null;
-		ItemStack item;
-		for (int s : slots) {
-			item = inv.getStackInSlot(s);
-			if (item == null && (invS == null || invS.canInsertItem(s, item, EnumFacing.VALUES[side]))) return s;
-		}
-		return -1;
-	}
-
-	/**
-	 * Transfer items from one inventory to another
-	 * @param src the source inventory
-	 * @param sideS the source access side
-	 * @param sS the slots to use as source (may be modified)
-	 * @param dst the destination inventory
-	 * @param sideD the destination access side
-	 * @param sD the slots to use as destination
-	 * @param type the type of items to transfer
-	 */
-	public static void transfer(IInventory src, int sideS, int[] sS, IInventory dst, int sideD, int[] sD, ItemType type) {
-		ISidedInventory srcS = src instanceof ISidedInventory ? (ISidedInventory) src : null;
-		ISidedInventory dstS = dst instanceof ISidedInventory ? (ISidedInventory) dst : null;
-		boolean done;
-		for (int i : sS) {
-			ItemStack curItem = src.getStackInSlot(i);
-			if (curItem != null && type.matches(curItem) && (srcS == null || srcS.canExtractItem(i, curItem, EnumFacing.VALUES[sideS]))) {
-				int m = Math.min(curItem.getMaxStackSize(), dst.getInventoryStackLimit());
-				int p = -1;
-				done = false;
-				for (int j : sD) {
-					ItemStack stack = dst.getStackInSlot(j);
-					if (stack == null && p == -1 && (dstS == null || dstS.canInsertItem(j, curItem, EnumFacing.VALUES[sideD]))) p = j;
-					else if (Utils.itemsEqual(curItem, stack) && stack.stackSize < m) {
-						done = true;
-						int n = m - stack.stackSize;
-						ItemStack item = src.decrStackSize(i, n);
-						stack = dst.getStackInSlot(j);
-						if (item != null) item.stackSize += stack == null ? 0 : stack.stackSize;
-						else break;
-						dst.setInventorySlotContents(j, item);
-						curItem = src.getStackInSlot(i);
-						if (curItem == null) break;
-					}
-				}
-				if (p >= 0) {
-					dst.setInventorySlotContents(p, src.decrStackSize(i, m));
-					done = true;
-				}
-				if (done) {
-					src.markDirty();
-					dst.markDirty();
-					return;
-				}
-			}
-		}
-	}
-
-	/**
-	 * Drains only from one stack of the given slots of the inventory that has the highest stacksize and matches type
-	 * @param inv the inventory to drain
-	 * @param side the side to drain from
-	 * @param s the slots that should be drained
-	 * @param type the alowed type
-	 * @param am the total amount of items to drain
-	 * @return
-	 */
-	public static ItemStack drainStack(IInventory inv, int side, int[] s, ItemType type, int am) {
-		ISidedInventory si = inv instanceof ISidedInventory ? (ISidedInventory) inv : null;
-		int max = 0;
-		int pos = -1;
-		for (int i = 0; i < s.length; i++) {
-			ItemStack stack = inv.getStackInSlot(s[i]);
-			if (stack != null && type.matches(stack) && (si == null || si.canExtractItem(s[i], stack, EnumFacing.VALUES[side]) && stack.stackSize > max)) {
-				pos = s[i];
-				max = stack.stackSize;
-			}
-		}
-		if (pos >= 0) {
-			ItemStack stack = inv.decrStackSize(pos, am);
-			inv.markDirty();
-			return stack;
-		} else {
-			return null;
-		}
-	}
-
-	/**
-	 * Drains items from the given slots of the inventory
-	 * @param inv the inventory to drain
-	 * @param side the side to drain from
-	 * @param s the slots that should be drained
-	 * @param am the total amout of items to drain
-	 * @param type the alowed type
-	 * @return the drained items (these may form stacks of more than maxStackSize)
-	 */
-	public static ItemStack[] drain(IInventory inv, int side, int[] s, ItemType type, int am) {
-		ISidedInventory si = inv instanceof ISidedInventory ? (ISidedInventory) inv : null;
-		ItemStack[] array = new ItemStack[s.length];
-		int n = 0;
-		for (int i : s) {
-			ItemStack stack = inv.getStackInSlot(i);
-			if (type.matches(stack) && (si == null || si.canExtractItem(i, stack, EnumFacing.VALUES[side]))) {
-				ItemStack item = inv.decrStackSize(i, am);
-				am -= item.stackSize;
-				for (int j = 0; j < array.length; j++) {
-					if (array[j] == null) {
-						array[j] = item;
-						if (j > n) {
-							n = j;
-						}
-						break;
-					} else if (Utils.itemsEqual(array[j], item)) {
-						array[j].stackSize += item.stackSize;
-						break;
-					}
-				}
-				if (am <= 0) {
-					break;
-				}
-			}
-		}
-		ItemStack[] items = new ItemStack[n];
-		System.arraycopy(array, 0, items, 0, n);
-		return items;
-	}
-
 	public static TileEntity getTileOnSide(ModTileEntity tileEntity, byte s) {
-		if (tileEntity == null) {
-			return null;
-		}
-		int x = tileEntity.getPos().getX();
-		int y = tileEntity.getPos().getY();
-		int z = tileEntity.getPos().getZ();
-		if (s == 0) {
-			y--;
-		} else if (s == 1) {
-			y++;
-		} else if (s == 2) {
-			z--;
-		} else if (s == 3) {
-			z++;
-		} else if (s == 4) {
-			x--;
-		} else if (s == 5) {
-			x++;
-		}
-		return tileEntity.getLoadedTile(new BlockPos(x, y, z));
+		if (tileEntity == null) return null;
+		return tileEntity.getLoadedTile(tileEntity.getPos().offset(EnumFacing.VALUES[s]));
 	}
 	
 	public static class ItemType {
@@ -518,63 +219,7 @@ public class Utils
 		else if (block == Blocks.LAVA|| block == Blocks.FLOWING_LAVA) return source || !sourceOnly ? new FluidStack(FluidRegistry.LAVA, source ? 1000 : 0) : null;
 		else return null;
 	}
-	
-	public static FluidStack getFluid(ItemStack item)
-	{
-		if (item == null) return null;
-		FluidStack fluid;
-		if (item.getItem() instanceof IFluidContainerItem) fluid = ((IFluidContainerItem)item.getItem()).getFluid(item);
-		else  fluid = FluidContainerRegistry.getFluidForFilledItem(item);
-		if (fluid != null) fluid.amount *= item.stackSize;
-		return fluid;
-	}
-	
-	public static Obj2<ItemStack, FluidStack> drainFluid(ItemStack item, int am)
-	{
-		if (item == null || item.stackSize == 0) return new Obj2<ItemStack, FluidStack>();
-		Obj2<ItemStack, FluidStack> ret = new Obj2<ItemStack, FluidStack>(item.copy(), null);
-		int n = item.stackSize;
-		am /= n;
-		if (am <= 0) return ret;
-		if(item.getItem() instanceof IFluidContainerItem) {
-			IFluidContainerItem cont = (IFluidContainerItem)item.getItem();
-			ret.objB = cont.drain(ret.objA, am, true);
-			if (ret.objB != null) ret.objB.amount *= n;
-			if (ret.objA.stackSize <= 0) ret.objA = null;
-		} else {
-			ret.objB = FluidContainerRegistry.getFluidForFilledItem(item);
-			if (ret.objB != null && ret.objB.amount <= am) {
-				ret.objA = FluidContainerRegistry.drainFluidContainer(item);
-				if (ret.objA != null) ret.objA.stackSize *= n;
-				ret.objB.amount *= n;
-			} else ret.objB = null;
-		}
-		return ret;
-	}
-	
-	public static Obj2<ItemStack, Integer> fillFluid(ItemStack item, FluidStack fluid)
-	{
-		if (item == null || item.stackSize == 0) return new Obj2<ItemStack, Integer>(null, 0);
-		Obj2<ItemStack, Integer> ret = new Obj2<ItemStack, Integer>(item.copy(), 0);
-		int n = item.stackSize;
-		if (fluid == null || fluid.amount < n) return ret;
-		FluidStack stack = fluid.copy();
-		stack.amount /= n;
-		if(item.getItem() instanceof IFluidContainerItem) {
-			IFluidContainerItem cont = (IFluidContainerItem)item.getItem();
-			ret.objB = cont.fill(ret.objA, stack, true) * n;
-			if (ret.objA.stackSize <= 0) ret.objA = null;
-		} else if (FluidContainerRegistry.isEmptyContainer(item)){
-			ret.objB = FluidContainerRegistry.getContainerCapacity(stack, item);
-			if (ret.objB != 0 && ret.objB <= stack.amount) {
-				ret.objA = FluidContainerRegistry.fillFluidContainer(stack, item);
-				if (ret.objA != null) ret.objA.stackSize *= n;
-				ret.objB *= n;
-			} else ret.objB = 0;
-		}
-		return ret;
-	}
-	
+
 	public static int findStack(ItemStack item, IInventory inv, int[] s, int start)
 	{
 		if (item == null) return -1;
@@ -604,5 +249,11 @@ public class Utils
 		if (d == 2) return 3;
 		return 4;
 	}
-	
+
+	public static void updateRedstoneOnSide(ModTileEntity te, int value, EnumFacing side) {
+		ICapabilityProvider cp = te.getTileOnSide(side);
+		if (cp != null && cp instanceof IQuickRedstoneHandler) ((IQuickRedstoneHandler)cp).onRedstoneStateChange(side.getOpposite(), value, te);
+		else te.getWorld().notifyBlockOfStateChange(te.getPos().offset(side), te.getBlockType());
+	}
+
 }

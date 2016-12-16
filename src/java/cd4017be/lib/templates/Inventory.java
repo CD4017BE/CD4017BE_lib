@@ -1,5 +1,6 @@
 package cd4017be.lib.templates;
 
+import cd4017be.lib.ModTileEntity;
 import cd4017be.lib.util.Utils;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
@@ -165,6 +166,11 @@ public class Inventory implements IItemHandlerModifiable {
 	@Override
 	public void setStackInSlot(int i, ItemStack stack) {
 		handler.setSlot(-1, i, stack);
+	}
+
+	public void dropItems(ModTileEntity te, int s0, int s1) {
+		for (int i = s0; i < s1; i++)
+			te.dropStack(items[i]);
 	}
 
 	public class Group {
