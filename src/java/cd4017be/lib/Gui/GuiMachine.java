@@ -518,7 +518,7 @@ public abstract class GuiMachine extends GuiContainer {
 			super.drawOverlay(mx, my);
 			Object o;
 			if (states >= 0 && (o = getDisplVar(id)) instanceof EnumFacing)
-				drawSideCube(tabsX - 64, tabsY + 63, ((EnumFacing)o).ordinal(), (byte)states);//TODO check render pos
+				drawSideCube(tabsX + guiLeft - 64, tabsY + guiTop + 63, ((EnumFacing)o).ordinal(), (byte)states);//TODO check render pos
 		}
 
 		@Override
