@@ -256,4 +256,54 @@ public class Utils {
 		else te.getWorld().notifyBlockOfStateChange(te.getPos().offset(side), te.getBlockType());
 	}
 
+	/**
+	 * forward or backward cycle a number stored in some sub-bits of an integer
+	 * @param cfg storage integer
+	 * @param i start bit index
+	 * @param m bit mask
+	 * @param r number range
+	 * @param incr true to increase, false to decrease
+	 * @return edited storage integer
+	 */
+	public static int cycleState(int cfg, int i, int m, int r, boolean incr) {
+		return cfg & ~(m << i) | ((cfg >> i & m) + (incr ? 1 : r - 1)) % r << i;
+	}
+
+	/**
+	 * set a number stored in some sub-bits of an integer
+	 * @param cfg storage integer
+	 * @param i start bit index
+	 * @param m bit mask
+	 * @param x number to store
+	 * @return edited storage integer
+	 */
+	public static int setState(int cfg, int i, int m, int x) {
+		return cfg & ~(m << i) | (x & m) << i;
+	}
+
+	/**
+	 * forward or backward cycle a number stored in some sub-bits of an long
+	 * @param cfg storage long
+	 * @param i start bit index
+	 * @param m bit mask
+	 * @param r number range
+	 * @param incr true to increase, false to decrease
+	 * @return edited storage long
+	 */
+	public static long cycleState(long cfg, int i, long m, int r, boolean incr) {
+		return cfg & ~(m << i) | (long)(((int)(cfg >> i & m) + (incr ? 1 : r - 1)) % r) << i;
+	}
+
+	/**
+	 * set a number stored in some sub-bits of an long
+	 * @param cfg storage long
+	 * @param i start bit index
+	 * @param m bit mask
+	 * @param x number to store
+	 * @return edited storage long
+	 */
+	public static long setState(long cfg, int i, long m, int x) {
+		return cfg & ~(m << i) | ((long)x & m) << i;
+	}
+
 }
