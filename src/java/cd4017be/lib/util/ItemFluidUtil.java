@@ -1,5 +1,7 @@
 package cd4017be.lib.util;
 
+import java.util.ArrayList;
+
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
@@ -70,6 +72,24 @@ public class ItemFluidUtil {
 		return list;
 	}
 
+	public static NBTTagList saveFluids(FluidStack[] fluids) {
+		NBTTagList list = new NBTTagList();
+		for (FluidStack fluid : fluids)
+			if (fluid != null) {
+				NBTTagCompound tag = new NBTTagCompound();
+				fluid.writeToNBT(tag);
+				list.appendTag(tag);
+			}
+		return list;
+	}
+
+	public static FluidStack[] loadFluids(NBTTagList list) {
+		FluidStack[] fluids = new FluidStack[list.tagCount()];
+		for (int i = 0; i < fluids.length; i++)
+			fluids[i] = FluidStack.loadFluidStackFromNBT(list.getCompoundTagAt(i));
+		return fluids;
+	}
+
 	public static InventoryCrafting craftingInventory(ItemStack[] grid, int size) {
 		InventoryCrafting icr = new InventoryCrafting(CraftContDummy, size, size);
 		int m = Math.min(grid.length, icr.getSizeInventory());
@@ -120,6 +140,37 @@ public class ItemFluidUtil {
 				if (stack != null) m += stack.stackSize;
 			}
 		return m;
+	}
+
+	public static int drain(IItemHandler inv, OreDictStack ore, ArrayList<ItemStack> buffer) {
+		int n = ore.stacksize, m = 0;
+		for (int i = 0; i < inv.getSlots() && m < n; i++) 
+			if (ore.isEqual(inv.getStackInSlot(i))) {
+				ItemStack stack = inv.extractItem(i, n - m, false);
+				if (stack != null) {
+					m += stack.stackSize;
+					addToList(buffer, stack);
+				}
+			}
+		return m;
+	}
+
+	public static void addToList(ArrayList<ItemStack> list, ItemStack item) {
+		for (ItemStack stack : list)
+			if (item.isItemEqual(stack)) {
+				stack.stackSize += item.stackSize;
+				return;
+			}
+		list.add(item);
+	}
+
+	public static void addToList(ArrayList<FluidStack> list, FluidStack fluid) {
+		for (FluidStack stack : list)
+			if (fluid.isFluidEqual(stack)) {
+				stack.amount += fluid.amount;
+				return;
+			}
+		list.add(fluid);
 	}
 
 	public static ItemStack drain(IItemHandler inv, int am) {

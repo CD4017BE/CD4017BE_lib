@@ -17,7 +17,7 @@ public abstract class SharedNetwork<C extends MultiblockComp<C, N>, N extends Sh
 
 	protected C core;
 	public final HashMap<Long, C> components;
-	protected boolean update = false;
+	public boolean update = false;
 
 	/**
 	 * creates a single component network out of the given component

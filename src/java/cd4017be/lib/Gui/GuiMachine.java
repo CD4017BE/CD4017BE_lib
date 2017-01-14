@@ -215,6 +215,11 @@ public abstract class GuiMachine extends GuiContainer {
 		this.itemRender.zLevel = 0.0F;
 	}
 
+	public static void color(int c) {
+		GlStateManager.enableBlend();
+		GlStateManager.color((float)(c >> 16 & 0xff) / 255F, (float)(c >> 8 & 0xff) / 255F, (float)(c & 0xff) / 255F, (float)(c >> 24 & 0xff) / 255F);
+	}
+
 	public void setFocus(int id) {
 		if (focus >= 0 && focus < guiComps.size()) guiComps.get(focus).unfocus();
 		focus = id >= 0 && id < guiComps.size() && guiComps.get(id).focus() ? id : -1;

@@ -8,14 +8,17 @@ import net.minecraftforge.oredict.OreDictionary;
 public class OreDictStack {
 	
 	public String id;
+	public int ID;
 	public int stacksize;
 	
 	public OreDictStack(String id, int n) {
 		this.id = id;
 		this.stacksize = n;
+		this.ID = OreDictionary.getOreID(id);
 	}
 	
 	public OreDictStack(int id, int n) {
+		this.ID = id;
 		this.id = OreDictionary.getOreName(id);
 		this.stacksize = n;
 	}
@@ -42,9 +45,8 @@ public class OreDictStack {
 	
 	public boolean isEqual(ItemStack item) {
 		if (item == null || item.getItem() == null) return false;
-		int ore = OreDictionary.getOreID(id);
 		for (int id : OreDictionary.getOreIDs(item))
-			if (id == ore) return true;
+			if (id == ID) return true;
 		return false;
 	}
 	
@@ -60,7 +62,7 @@ public class OreDictStack {
 	}
 
 	public OreDictStack copy() {
-		return new OreDictStack(id, stacksize);
+		return new OreDictStack(ID, stacksize);
 	}
 	
 }
