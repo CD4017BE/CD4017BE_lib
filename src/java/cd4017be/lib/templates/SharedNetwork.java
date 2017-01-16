@@ -56,6 +56,7 @@ public abstract class SharedNetwork<C extends MultiblockComp<C, N>, N extends Sh
 	 */
 	public void add(C comp) {
 		if (comp.network == this) return;
+		if (comp.invalid()) {comp.updateCon = true; return;}
 		if (components.size() >= comp.network.components.size()) onMerged(comp.network);
 		else comp.network.onMerged((N)this);
 	}
@@ -66,6 +67,7 @@ public abstract class SharedNetwork<C extends MultiblockComp<C, N>, N extends Sh
 	 */
 	public void remove(C comp) {
 		components.remove(comp.uid);
+		comp.network = null;
 		if (core == comp) core = null;
 		update = true;
 	}

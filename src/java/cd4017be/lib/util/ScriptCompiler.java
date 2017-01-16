@@ -30,9 +30,9 @@ public abstract class ScriptCompiler {
 				((CompileException)e).stacktrace += "\nl." + line + "> " + code;
 				return (CompileException)e;
 			} else if (e instanceof NumberFormatException) return new CompileException("number expected", code, line);
-			else if (e instanceof ClassCastException) return new CompileException("invalid argument type", code, line);
-			else if (e instanceof ArrayIndexOutOfBoundsException) return new CompileException("vector has wrong size", code, line);
-			else if (e instanceof IndexOutOfBoundsException || e instanceof NullPointerException) return new CompileException("syntax error", code, line);
+			else if (e instanceof ClassCastException) return new CompileException("invalid argument type: " + e.getMessage(), code, line);
+			else if (e instanceof ArrayIndexOutOfBoundsException) return new CompileException("vector has wrong size: " + e.getMessage(), code, line);
+			else if (e instanceof IndexOutOfBoundsException || e instanceof NullPointerException) return new CompileException("syntax error: " + e.getMessage(), code, line);
 			else if (e instanceof IOException) return new CompileException("file error: " + e.getMessage(), code, line);
 			else return new CompileException("unknown error: " + e.getMessage(), code, line);
 		}

@@ -1,11 +1,6 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package cd4017be.lib;
 
-import cd4017be.lib.TileBlockRegistry.TileBlockEntry;
-
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -151,16 +146,26 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
 	}
 
 	@Override
-	public TileEntity createNewTileEntity(World world, int id) 
-	{
-		TileBlockEntry entry = TileBlockRegistry.getBlockEntry(this);
-		if (entry != null && entry.tileEntity != null) {
+	public boolean hasTileEntity(IBlockState state) {
+		return tileEntity != null;
+	}
+
+	@Override
+	public TileEntity createTileEntity(World world, IBlockState state) {
+		if (tileEntity != null) {
 			try {
-				return entry.tileEntity.newInstance();
+				try {
+					return tileEntity.getConstructor(IBlockState.class).newInstance(state);
+				} catch (NoSuchMethodException e) {
+					return tileEntity.newInstance();
+				}
 			} catch (InstantiationException ex) {
 				ex.printStackTrace();
 				return null;
 			} catch (IllegalAccessException ex) {
+				ex.printStackTrace();
+				return null;
+			} catch (InvocationTargetException ex) {
 				ex.printStackTrace();
 				return null;
 			}
@@ -170,6 +175,7 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
 	public int machineId;
 	public boolean registered;
 	public final Orientation orient;
+	public Class<? extends TileEntity> tileEntity;
 	private boolean redstone;
 	private boolean opaque;
 	private EnumBlockRenderType renderType;
@@ -177,26 +183,29 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
 
 	@Override
 	public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumHand hand, ItemStack item, EnumFacing s, float X, float Y, float Z) {
+		if (tileEntity == null) return false;
 		TileEntity te = world.getTileEntity(pos);
 		if (te != null && te instanceof ModTileEntity) return ((ModTileEntity)te).onActivated(player, hand, item, s, X, Y, Z);
-		else return false;
+		return false;
 	}
 
 	@Override
-	public void onBlockClicked(World world, BlockPos pos, EntityPlayer player) 
-	{
+	public void onBlockClicked(World world, BlockPos pos, EntityPlayer player) {
+		if (tileEntity == null) return;
 		TileEntity te = world.getTileEntity(pos);
 		if (te != null && te instanceof ModTileEntity) ((ModTileEntity)te).onClicked(player);
 	}
 
 	@Override
 	public void neighborChanged(IBlockState state, World world, BlockPos pos, Block b) {
+		if (tileEntity == null) return;
 		TileEntity te = world.getTileEntity(pos);
 		if (te != null && te instanceof ModTileEntity) ((ModTileEntity)te).onNeighborBlockChange(b);
 	}
 
 	@Override
 	public void breakBlock(World world, BlockPos pos, IBlockState state) {
+		if (tileEntity == null) return;
 		TileEntity te = world.getTileEntity(pos);
 		if (te != null && te instanceof ModTileEntity) ((ModTileEntity)te).breakBlock();
 		super.breakBlock(world, pos, state);
@@ -204,6 +213,7 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
 
 	@Override
 	public void onNeighborChange(IBlockAccess world, BlockPos pos, BlockPos npos) {
+		if (tileEntity == null) return;
 		TileEntity te = world.getTileEntity(pos);
 		if (te != null && te instanceof ModTileEntity) ((ModTileEntity)te).onNeighborTileChange(npos);
 	}
@@ -263,7 +273,7 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
 
 	@Override
 	public int getWeakPower(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing s) {
-		if (!redstone) return 0;
+		if (!redstone || tileEntity == null) return 0;
 		TileEntity te = world.getTileEntity(pos);
 		if (te != null && te instanceof ModTileEntity) return ((ModTileEntity)te).redstoneLevel(s.getIndex() ^ 1, false);
 		else return 0;
@@ -271,7 +281,7 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
 
 	@Override
 	public int getStrongPower(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing s) {
-		if (!redstone) return 0;
+		if (!redstone || tileEntity == null) return 0;
 		TileEntity te = world.getTileEntity(pos);
 		if (te != null && te instanceof ModTileEntity) return ((ModTileEntity)te).redstoneLevel(s.getIndex() ^ 1, true);
 		else return 0;
@@ -279,12 +289,14 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
 
 	@Override
 	public void onBlockPlacedBy(World world, BlockPos pos, IBlockState state, EntityLivingBase entity, ItemStack item) {
+		if (tileEntity == null) return;
 		TileEntity te = world.getTileEntity(pos);
 		if (te != null && te instanceof ModTileEntity) ((ModTileEntity)te).onPlaced(entity, item);
 	}
 
 	@Override
 	public void onEntityCollidedWithBlock(World world, BlockPos pos, IBlockState state, Entity entity) {
+		if (tileEntity == null) return;
 		TileEntity te = world.getTileEntity(pos);
 		if (te != null && te instanceof ModTileEntity) ((ModTileEntity)te).onEntityCollided(entity);
 	}
@@ -324,7 +336,7 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
 
 	@Override
 	public List<ItemStack> getDrops(IBlockAccess world, BlockPos pos, IBlockState state, int fortune) {
-		if (drop) return super.getDrops(world, pos, state, fortune);
+		if (drop || tileEntity == null) return super.getDrops(world, pos, state, fortune);
 		TileEntity te = world.getTileEntity(pos);
 		if (te != null && te instanceof ModTileEntity) return ((ModTileEntity)te).dropItem(state, fortune);
 		else return super.getDrops(world, pos, state, fortune);
@@ -349,5 +361,9 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
 	public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess source, BlockPos pos) {
 		return boundingBox;
 	}
-	
+
+	@Override
+	public TileEntity createNewTileEntity(World world, int meta) {
+		return createTileEntity(world, getStateFromMeta(meta));
+	}
 }

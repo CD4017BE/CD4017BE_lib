@@ -24,6 +24,7 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.World;
+import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
@@ -86,8 +87,18 @@ public class ModTileEntity extends TileEntity implements IAbstractTile {
 	}
 
 	public TileEntity getLoadedTile(BlockPos pos) {
-		if (!worldObj.isBlockLoaded(pos)) return null;
-		else return worldObj.getTileEntity(pos);
+		if (worldObj.isBlockLoaded(pos)) return worldObj.getTileEntity(pos);
+		else return null;
+	}
+
+	public <C> C getNeighborCap(Capability<C> cap, EnumFacing side) {
+		BlockPos pos = this.pos.offset(side);
+		if (worldObj.isBlockLoaded(pos)) {
+			TileEntity te = worldObj.getTileEntity(pos);
+			if (te != null)
+				return te.getCapability(cap, side.getOpposite());
+		}
+		return null;
 	}
 
 	public void markUpdate() {
@@ -149,5 +160,10 @@ public class ModTileEntity extends TileEntity implements IAbstractTile {
 	}
 
 	public BlockPos pos() {return pos;}
+
+	@Override
+	public boolean invalid() {
+		return tileEntityInvalid;
+	}
 
 }
