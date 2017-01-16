@@ -1,6 +1,7 @@
 package cd4017be.lib.templates;
 
 import cd4017be.api.IAbstractTile;
+import cd4017be.lib.util.ICachableInstance;
 import net.minecraft.util.EnumFacing;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
@@ -12,7 +13,7 @@ import net.minecraftforge.common.capabilities.ICapabilityProvider;
  * @author CD4017BE
  */
 @SuppressWarnings("unchecked")
-public abstract class MultiblockComp<C extends MultiblockComp<C, N>, N extends SharedNetwork<C, N>> {
+public abstract class MultiblockComp<C extends MultiblockComp<C, N>, N extends SharedNetwork<C, N>> implements ICachableInstance {
 
 	public N network;
 	public final IAbstractTile tile;
@@ -74,5 +75,9 @@ public abstract class MultiblockComp<C extends MultiblockComp<C, N>, N extends S
 
 	/** @return forge capability of this component */
 	public abstract Capability<C> getCap();
+
+	public boolean invalid() {
+		return network == null || tile.invalid();
+	}
 
 }

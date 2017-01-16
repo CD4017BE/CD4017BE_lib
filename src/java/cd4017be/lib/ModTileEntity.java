@@ -150,4 +150,9 @@ public class ModTileEntity extends TileEntity implements IAbstractTile {
 
 	public BlockPos pos() {return pos;}
 
+	@Override
+	public boolean invalid() {
+		return tileEntityInvalid;
+	}
+
 }
