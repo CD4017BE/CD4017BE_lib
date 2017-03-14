@@ -299,7 +299,7 @@ public class ConfigurationFile
 	{
 		InputStream in = ConfigurationFile.class.getResourceAsStream(resourcePath);
 		target.getParentFile().mkdirs();
-		target.createNewFile();
+		if (!target.createNewFile()) target.renameTo(new File(target.getPath() + ".old"));
 		OutputStream out = new DataOutputStream(new FileOutputStream(target));
 		IOUtils.copy(in, out);
 	}

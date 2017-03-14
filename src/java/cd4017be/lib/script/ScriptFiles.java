@@ -90,7 +90,7 @@ public class ScriptFiles {
 		}
 	}
 	
-	public static Script[] loadPackage(File in, HashMap<String, Integer> versions) throws IOException {
+	public static Script[] loadPackage(File in, HashMap<String, Version> versions) throws IOException {
 		DataInputStream dis = new DataInputStream(new FileInputStream(in));
 		try {
 			File dir = in.getParentFile();
@@ -103,10 +103,10 @@ public class ScriptFiles {
 				File f = new File(dir, name + ".scr");
 				outdated |= s.editDate < f.lastModified();
 				s.version = dis.readInt();
-				Integer v = versions.get(name);
-				if (v != null && s.version >= v) versions.remove(name);
+				Version v = versions.get(name);
+				if (v != null && s.version >= v.version) versions.remove(name);
 			}
-			if (outdated || !versions.isEmpty()) return null;
+			if (outdated || !versions.isEmpty()) return null;//TODO copy fallback
 			for (Script s : scripts) {
 				int n = dis.readShort();
 				for (int i = 0; i < n; i++) {
@@ -132,6 +132,13 @@ public class ScriptFiles {
 		} finally {
 			dis.close();
 		}
+	}
+
+	public static class Version {
+		public final int version;
+		public final String fallback, name;
+		public Version(String name, int version, String fallback) {this.name = name; this.version = version; this.fallback = fallback;}
+		public Version(String name) {this(name, 0, null);}
 	}
 
 }

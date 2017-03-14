@@ -6,19 +6,19 @@ import javax.script.ScriptException;
 
 public class Context implements Module {
 
-	public static final HashMap<String, Function<Object[], Object>> basicFunctions;
-	static {
-		basicFunctions = new HashMap<String, Function<Object[], Object>>();
-		basicFunctions.put("print", (p) -> {System.out.println(p[0]); return null;});
-		basicFunctions.put("time", (p) -> (double)System.currentTimeMillis());
-	}
+	private static final Function<Object[], Object>
+		PRINT = (p) -> {
+			System.out.println(p[0]);
+			return null;
+		}, TIME = (p) -> (double)System.currentTimeMillis();
 	
 	public HashMap<String, Module> modules = new HashMap<String, Module>();
 	public HashMap<String, Function<Object[], Object>> defFunc = new HashMap<String, Function<Object[], Object>>();
 	public int recursion = 0;
 	
 	public Context() {
-		defFunc.putAll(basicFunctions);
+		defFunc.put("print", PRINT);
+		defFunc.put("time", TIME);
 	}
 	
 	private String[] split(String name) {
@@ -61,5 +61,9 @@ public class Context implements Module {
 
 	@Override
 	public String addToContext(Context cont) {return null;}
-	
+
+	public void reset() {
+		recursion = 0;
+	}
+
 }

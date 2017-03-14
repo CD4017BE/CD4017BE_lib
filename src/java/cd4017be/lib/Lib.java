@@ -3,9 +3,9 @@ package cd4017be.lib;
 import cd4017be.api.Capabilities;
 import cd4017be.api.computers.ComputerAPI;
 import cd4017be.api.energy.EnergyAPI;
-import cd4017be.api.recipes.RecipeAPI;
-import cd4017be.api.recipes.RecipeScriptParser;
+import cd4017be.api.recipes.RecipeScriptContext;
 import cd4017be.lib.render.ItemMaterialMeshDefinition;
+import cd4017be.lib.script.ScriptFiles.Version;
 import cd4017be.lib.templates.ItemMaterial;
 import cd4017be.lib.templates.TabMaterials;
 import net.minecraft.item.ItemStack;
@@ -26,6 +26,12 @@ public class Lib {
 
 	public static ItemMaterial materials;
 	public static TabMaterials creativeTab;
+	
+	private RecipeScriptContext scriptCont;
+
+	public Lib() {
+		RecipeScriptContext.scriptRegistry.add(new Version("core"));
+	}
 
 	@Mod.EventHandler
 	public void preInit(FMLPreInitializationEvent event) {
@@ -35,18 +41,20 @@ public class Lib {
 		creativeTab = new TabMaterials("cd4017be_lib");
 		(materials = new ItemMaterial("m")).setCreativeTab(creativeTab);
 		creativeTab.item = new ItemStack(materials);
-		RecipeAPI.registerScript(event, "core.rcp", null);
+		scriptCont = new RecipeScriptContext();
+		scriptCont.setup(event);
+		scriptCont.run("PRE_INIT");
 	}
 
 	@Mod.EventHandler
 	public void init(FMLInitializationEvent event) {
 		ComputerAPI.register();
-		RecipeAPI.executeScripts(RecipeAPI.INIT);
+		scriptCont.run("INIT");
 	}
 
 	@Mod.EventHandler
 	public void postInit(FMLPostInitializationEvent event) {
-		RecipeAPI.executeScripts(RecipeAPI.POST_INIT);
+		scriptCont.run("POST_INIT");
 		if (event.getSide().isClient()) clientPostInit();
 	}
 
@@ -58,9 +66,9 @@ public class Lib {
 
 	@Mod.EventHandler
 	public void afterStart(FMLServerAboutToStartEvent event) {
-		//remove unnecessary stuff from memory that was cached for other mods during loading phase.
-		RecipeAPI.cache.clear();
-		RecipeScriptParser.codeCache.clear();
-		System.gc();//Why not
+		//trash stuff that's not needed anymore
+		scriptCont = null;
+		cd4017be.lib.script.Compiler.deallocate();
+		System.gc();
 	}
 }
