@@ -64,6 +64,7 @@ public class TileBlockRegistry
 		if (container != null && !IGuiData.class.isAssignableFrom(tileEntity)) throw new IllegalArgumentException(String.format("%s doesn't implement %s !", tileEntity.getName(), IGuiData.class.getName()));
 		TileBlockEntry entry = new TileBlockEntry(block);
 		entry.tileEntity = tileEntity;
+		block.tileEntity = tileEntity;
 		GameRegistry.registerTileEntity(tileEntity, block.getUnlocalizedName());
 		entry.container = container;
 		registry.put(block, entry);

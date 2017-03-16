@@ -61,6 +61,14 @@ public class OreDictStack {
 		return items;
 	}
 
+	public ItemStack asItem() {
+		List<ItemStack> list = OreDictionary.getOres(id);
+		if (list.isEmpty()) return null;
+		ItemStack item = list.get(0).copy();
+		item.stackSize = stacksize;
+		return item;
+	}
+
 	public OreDictStack copy() {
 		return new OreDictStack(ID, stacksize);
 	}
