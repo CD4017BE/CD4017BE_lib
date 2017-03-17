@@ -44,22 +44,19 @@ public class Function {
 		ByteBuffer code = ByteBuffer.wrap(this.code);
 		int n = 0;
 		try {
-			//System.out.println(name + ">");//TODO DEBUG
 			while(code.hasRemaining()) {
 				if (++n > TICK_LIMIT) throw new Exception("ran for more than " + TICK_LIMIT + " cycles: infinite loop?");
 				Operator lo = Operator.operators[code.get()];
-				//System.out.println(stack.toString() + " " + lo.name());//TODO DEBUG
 				lo.eval(code, stack, script);
 			}
-			//System.out.println("<" + (hasReturn ? stack.get().toString() : ""));//TODO DEBUG
 			return hasReturn ? stack.rem() : null;
 		} catch (ScriptException ex) {
 			throw ex;
 		} catch (Exception ex) {
-			ex.printStackTrace();
 			int p = Arrays.binarySearch(codeIndices, (short)code.position());
 			p = p == -1 ? lineOfs : lineOfs + lineNumbers[p < 0 ? -2 - p : p];
-			throw new ScriptException(ex.getMessage(), name, p);
+			String msg = ex.getMessage();
+			throw new ScriptException(ex.getClass().getSimpleName() + (msg == null ? "" : ": " + msg), name, p);
 		}
 	}
 

@@ -3,12 +3,14 @@ package cd4017be.lib.script;
 import java.util.HashMap;
 import java.util.function.Function;
 import javax.script.ScriptException;
+import org.apache.logging.log4j.Level;
+import net.minecraftforge.fml.common.FMLLog;
 
 public class Context implements Module {
 
 	private static final Function<Parameters, Object>
 		PRINT = (p) -> {
-			System.out.println(p.get(0));
+			FMLLog.log("RECIPE_SCRIPT", Level.INFO, "> %s", p.get(0));
 			return null;
 		}, TIME = (p) -> (double)System.currentTimeMillis(),
 		REPL = (p) -> p.getString(0).replaceFirst(p.getString(1), p.getString(2));

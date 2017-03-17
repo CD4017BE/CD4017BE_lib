@@ -295,11 +295,14 @@ public class ConfigurationFile
 		else return (String[])obj;
 	}
 	
-	public static void copyData(String resourcePath, File target) throws IOException
-	{
+	public static void copyData(String resourcePath, File target) throws IOException {
+		FMLLog.log(Level.INFO, "File copy: %s -> %s", resourcePath, target);
 		InputStream in = ConfigurationFile.class.getResourceAsStream(resourcePath);
 		target.getParentFile().mkdirs();
-		if (!target.createNewFile()) target.renameTo(new File(target.getPath() + ".old"));
+		if (!target.createNewFile()) {
+			File old = new File(target.getPath() + ".old");
+			if (!old.exists()) target.renameTo(old);
+		}
 		OutputStream out = new DataOutputStream(new FileOutputStream(target));
 		IOUtils.copy(in, out);
 	}
