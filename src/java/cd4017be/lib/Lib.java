@@ -5,7 +5,6 @@ import cd4017be.api.computers.ComputerAPI;
 import cd4017be.api.energy.EnergyAPI;
 import cd4017be.api.recipes.RecipeScriptContext;
 import cd4017be.lib.render.ItemMaterialMeshDefinition;
-import cd4017be.lib.script.ScriptFiles.Version;
 import cd4017be.lib.templates.ItemMaterial;
 import cd4017be.lib.templates.TabMaterials;
 import net.minecraft.item.ItemStack;
@@ -26,12 +25,6 @@ public class Lib {
 
 	public static ItemMaterial materials;
 	public static TabMaterials creativeTab;
-	
-	private RecipeScriptContext scriptCont;
-
-	public Lib() {
-		RecipeScriptContext.scriptRegistry.add(new Version("core"));
-	}
 
 	@Mod.EventHandler
 	public void preInit(FMLPreInitializationEvent event) {
@@ -41,20 +34,20 @@ public class Lib {
 		creativeTab = new TabMaterials("cd4017be_lib");
 		(materials = new ItemMaterial("m")).setCreativeTab(creativeTab);
 		creativeTab.item = new ItemStack(materials);
-		scriptCont = new RecipeScriptContext();
-		scriptCont.setup(event);
-		scriptCont.run("PRE_INIT");
+		RecipeScriptContext.instance = new RecipeScriptContext();
+		RecipeScriptContext.instance.setup(event);
+		RecipeScriptContext.instance.run("core.PRE_INIT");
 	}
 
 	@Mod.EventHandler
 	public void init(FMLInitializationEvent event) {
 		ComputerAPI.register();
-		scriptCont.run("INIT");
+		RecipeScriptContext.instance.runAll("INIT");
 	}
 
 	@Mod.EventHandler
 	public void postInit(FMLPostInitializationEvent event) {
-		scriptCont.run("POST_INIT");
+		RecipeScriptContext.instance.runAll("POST_INIT");
 		if (event.getSide().isClient()) clientPostInit();
 	}
 
@@ -67,7 +60,7 @@ public class Lib {
 	@Mod.EventHandler
 	public void afterStart(FMLServerAboutToStartEvent event) {
 		//trash stuff that's not needed anymore
-		scriptCont = null;
+		RecipeScriptContext.instance = null;
 		cd4017be.lib.script.Compiler.deallocate();
 		System.gc();
 	}

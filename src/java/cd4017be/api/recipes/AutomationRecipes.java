@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package cd4017be.api.recipes;
 
 import cd4017be.lib.templates.Inventory;
@@ -15,6 +11,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
+import net.minecraft.item.ItemBlock;
+import net.minecraft.item.ItemFood;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -606,5 +604,51 @@ public class AutomationRecipes
 	public static void addRadiatorRecipe(FluidStack in, FluidStack out) {
 		radiatorRecipes.put(in.getFluid(), new Obj2<Integer, FluidStack>(in.amount, out));
 	}
-	
+
+	public static List<BioEntry> bioList = new ArrayList<BioEntry>();
+	public static float Lnutrients_healAmount = 20;
+
+	public static List<BioEntry> getBioFuels() {
+		return bioList;
+	}
+
+	public static int[] getLnutrients(ItemStack item) {
+		if (item == null) return null;
+		if (item.getItem() instanceof ItemFood) {
+			ItemFood food = (ItemFood)item.getItem();
+			return new int[]{(int)Math.ceil((food.getSaturationModifier(item) + food.getHealAmount(item)) * Lnutrients_healAmount), 0};
+		} else {
+			for (BioEntry entry : bioList)
+				if (entry.matches(item)) return new int[]{entry.nutrients, entry.algae};
+			return null;
+		}
+	}
+
+	public static class BioEntry {
+		public final Object item;
+		public final int nutrients;
+		public final int algae;
+
+		public BioEntry(Object item, int n) {
+			this(item, n, 0);
+		}
+
+		public BioEntry(Object item, int n, int a) {
+			this.item = item;
+			this.nutrients = n;
+			this.algae = a;
+		}
+
+		@SuppressWarnings("rawtypes")
+		public boolean matches(ItemStack item) {
+			if (this.item instanceof ItemStack) return ((ItemStack)this.item).isItemEqual(item);
+			else if (this.item instanceof OreDictStack){
+				return ((OreDictStack)this.item).isEqual(item);
+			} else if (this.item instanceof Class) {
+				if (item.getItem() instanceof ItemBlock) return ((Class)this.item).isInstance(((ItemBlock)item.getItem()).block);
+				else return ((Class)this.item).isInstance(item.getItem());
+			} else return false;
+		}
+	}
+
 }

@@ -8,7 +8,6 @@ import com.google.common.base.Predicate;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.block.state.pattern.BlockMatcher;
-import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
@@ -20,7 +19,7 @@ import net.minecraft.world.gen.feature.WorldGenMinable;
 import net.minecraftforge.fml.common.IWorldGenerator;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 import cd4017be.api.recipes.RecipeAPI.IRecipeHandler;
-import cd4017be.lib.util.VecN;
+import cd4017be.lib.script.Parameters;
 
 public class OreGenHandler implements IRecipeHandler, IWorldGenerator{
 	
@@ -38,17 +37,16 @@ public class OreGenHandler implements IRecipeHandler, IWorldGenerator{
 	}
 
 	@Override
-	public boolean addRecipe(Object... param) {
-		if (param.length < 5 || !(param[1] instanceof String && param[2] instanceof ItemStack && param[3] instanceof Double && param[4] instanceof VecN)) return false;
-		ItemStack is = (ItemStack)param[2];
+	public void addRecipe(Parameters p) {
+		ItemStack is = p.get(2, ItemStack.class);
 		Item i = is.getItem();
-		VecN vec = (VecN)param[4];
-		if (!(i instanceof ItemBlock && vec.x.length >= 3)) return false;
+		if (!(i instanceof ItemBlock)) throw new IllegalArgumentException("supplied item has no registered block equivalent");
+		double[] vec = p.getVector(4);
+		if (vec.length != 3) throw new IllegalArgumentException("height parameter must have 3 elements");
 		IBlockState out = ((ItemBlock)i).block.getStateFromMeta(i.getMetadata(is.getMetadata()));
-		Block in = Block.getBlockFromName((String)param[1]);
-		if (in == null) in = Blocks.STONE;
-		generators.add(new OreGen(out, is.stackSize, ((Double)param[3]).intValue(), (int)vec.x[0], (int)vec.x[1], (int)vec.x[2], BlockMatcher.forBlock(in)));
-		return true;
+		Block in = Block.getBlockFromName(p.getString(1));
+		if (in == null) throw new IllegalArgumentException("block type does not exists");
+		generators.add(new OreGen(out, is.stackSize, (int)p.getNumber(3), (int)vec[0], (int)vec[1], (int)vec[2], BlockMatcher.forBlock(in)));
 	}
 
 	class OreGen extends WorldGenMinable{

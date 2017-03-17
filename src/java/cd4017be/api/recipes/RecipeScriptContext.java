@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 import javax.script.ScriptException;
 
@@ -25,6 +26,7 @@ import cd4017be.api.recipes.RecipeAPI.IRecipeHandler;
 import cd4017be.lib.BlockItemRegistry;
 import cd4017be.lib.ConfigurationFile;
 import cd4017be.lib.script.Context;
+import cd4017be.lib.script.Parameters;
 import cd4017be.lib.script.Script;
 import cd4017be.lib.script.ScriptFiles;
 import cd4017be.lib.script.ScriptFiles.Version;
@@ -32,11 +34,12 @@ import cd4017be.lib.util.OreDictStack;
 
 public class RecipeScriptContext extends Context {
 
-	private static final Function<Object[], Object>
+	private static final Function<Parameters, Object>
 		IT = (p) -> {
 			ItemStack item = null;
-			if (p[0] instanceof String) {
-				String name = (String)p[0];
+			Object o = p.get(0);
+			if (o instanceof String) {
+				String name = (String)o;
 				if (name.indexOf(':') < 0) item = BlockItemRegistry.stack(name, 1);
 				else if (name.startsWith("ore:")) {
 					name = name.substring(4);
@@ -45,37 +48,43 @@ public class RecipeScriptContext extends Context {
 					item = list.get(0).copy();
 				} else item = new ItemStack(Item.getByNameOrId(name));
 				if (item == null || item.getItem() == null) throw new IllegalArgumentException("invalid item name: " + name);
-			} else if (p[0] instanceof ItemStack) item = ((ItemStack)p[0]).copy();
-			else if (p[0] instanceof OreDictStack) {
-				ItemStack[] arr = ((OreDictStack)p[0]).getItems();
+			} else if (o instanceof ItemStack) item = ((ItemStack)o).copy();
+			else if (o instanceof OreDictStack) {
+				ItemStack[] arr = ((OreDictStack)o).getItems();
 				return Arrays.copyOf(arr, arr.length, Object[].class);
+			} else throw new IllegalArgumentException("expected String, ItemStack or OreDictStack @ 0");
+			switch(p.param.length) {
+			case 4: item.setTagCompound(p.get(3, NBTTagCompound.class));
+			case 3: item.setItemDamage((int)p.getNumber(2));
+			case 2: item.stackSize = (int)p.getNumber(1);
+			default: return item;
 			}
-			int n = 1;
-			if (p.length > n && p[n] instanceof Double) item.stackSize = ((Double)p[n++]).intValue();
-			if (p.length > n && p[n] instanceof Double) item.setItemDamage(((Double)p[n++]).intValue());
-			if (p.length > n && p[n] instanceof NBTTagCompound) item.setTagCompound((NBTTagCompound)p[n++]);
-			return item;
 		}, FL = (p) -> {
 			FluidStack fluid = null;
-			if (p[0] instanceof String) {
-				String name = (String)p[0];
+			Object o = p.get(0);
+			if (o instanceof String) {
+				String name = (String)o;
 				fluid = FluidRegistry.getFluidStack(name, 0);
 				if (fluid == null) throw new IllegalArgumentException("invalid fluid name: " + name);
-			} else if (p[0] instanceof FluidStack) fluid = ((FluidStack)p[0]).copy();
-			int n = 1;
-			if (p.length > n && p[n] instanceof Double) fluid.amount = ((Double)p[n++]).intValue();
-			if (p.length > n && p[n] instanceof NBTTagCompound) fluid.tag = (NBTTagCompound)p[n++];
-			return fluid;
+			} else if (o instanceof FluidStack) fluid = ((FluidStack)o).copy();
+			else throw new IllegalArgumentException("expected String or FluidStack @ 0");
+			switch(p.param.length) {
+			case 3: fluid.tag = p.get(2, NBTTagCompound.class);
+			case 2: fluid.amount = (int)p.getNumber(1);
+			default: return fluid;
+			}
 		}, ORE = (p) -> {
 			OreDictStack ore = null;
-			if (p[0] instanceof String) {
-				String name = (String)p[0];
+			Object o = p.get(0);
+			if (o instanceof String) {
+				String name = (String)o;
 				ore = new OreDictStack(name, 1);
-			} else if (p[0] instanceof OreDictStack) ore = ((OreDictStack)p[0]).copy();
-			if (p.length > 1 && p[1] instanceof Double) ore.stacksize = ((Double)p[1]).intValue();
+			} else if (o instanceof OreDictStack) ore = ((OreDictStack)o).copy();
+			else throw new IllegalArgumentException("expected String or OreDictStack @ 0");
+			if (p.param.length == 2) ore.stacksize = (int)p.getNumber(1);
 			return ore;
 		}, HASIT = (p) -> {
-			for (Object o: p) {
+			for (Object o: p.param) {
 				String name = (String)o;
 				if (name.indexOf(':') < 0) {
 					if (BlockItemRegistry.stack(name, 1) == null) return false;
@@ -85,23 +94,29 @@ public class RecipeScriptContext extends Context {
 			}
 			return true;
 		}, HASFL = (p) -> {
-			for (Object o: p)
+			for (Object o: p.param)
 				if (!FluidRegistry.isFluidRegistered((String)o)) return false;
 			return true;
-		}, ORES = (p) -> {
-			if (p[0] instanceof String)
-				return OreDictionary.getOres((String)p[0]).toArray();
-			else return null;
-		}, HASMOD = (p) -> {
-			return p[0] instanceof String && Loader.isModLoaded((String)p[0]);
-		}, ADD = (p) -> {
-			IRecipeHandler h = RecipeAPI.Handlers.get(p[0]);
-			if (h == null) FMLLog.log("cd4017be_lib", Level.WARN, "recipe Handler \"%s\" does'nt exist!", p[0]);
-			if (!h.addRecipe(p)) FMLLog.log("cd4017be_lib", Level.WARN, "adding recipe failed: \n%s", p);
+		}, ORES = (p) -> OreDictionary.getOres(p.getString(0)).toArray()
+		, HASMOD = (p) -> Loader.isModLoaded(p.getString(0))
+		, ADD = (p) -> {
+			IRecipeHandler h = RecipeAPI.Handlers.get(p.getString(0));
+			if (h == null) throw new IllegalArgumentException(String.format("recipe Handler \"%s\" does'nt exist!", p.param[0]));
+			h.addRecipe(p);
 			return null;
+		}, LISTORE = (p) -> {
+			Pattern filter = Pattern.compile(p.getString(0));
+			ArrayList<String> list = new ArrayList<String>();
+			for (String name : OreDictionary.getOreNames())
+				if (filter.matcher(name).matches()) list.add(name);
+			return list.toArray();
 		};
 
 	public static final List<Version> scriptRegistry = new ArrayList<Version>();
+	static {
+		scriptRegistry.add(new Version("core"));
+	}
+	public static RecipeScriptContext instance;
 
 	public RecipeScriptContext() {
 		defFunc.put("it", IT);
@@ -112,6 +127,7 @@ public class RecipeScriptContext extends Context {
 		defFunc.put("ores", ORES);
 		defFunc.put("hasmod", HASMOD);
 		defFunc.put("add", ADD);
+		defFunc.put("listore", LISTORE);
 	}
 
 	public void setup(FMLPreInitializationEvent event) {
@@ -123,27 +139,33 @@ public class RecipeScriptContext extends Context {
 		Script[] scripts;
 		try {
 			scripts = ScriptFiles.loadPackage(new File(dir, "compiled.dat"), versions);
-			for (Version v : versions.values())
-				ConfigurationFile.copyData(v.fallback, new File(dir, v.name + ".scr"));
 		} catch (IOException e) {
 			scripts = null;
 			FMLLog.log(Level.ERROR, e, "loading compiled config scripts failed!");
 		}
+		for (Version v : versions.values())
+			try {
+				ConfigurationFile.copyData(v.fallback, new File(dir, v.name + ".rcp"));
+			} catch (IOException e) {
+				FMLLog.log(Level.ERROR, e, "copying script preset failed!");
+			}
 		if (scripts == null) scripts = ScriptFiles.createCompiledPackage(new File(dir, "compiled.dat"));
-		for (Script s : scripts) modules.put(s.fileName, s);
+		if (scripts != null) for (Script s : scripts) add(s);
 	}
 
-	public void run(String ph) {
-		for (Version v : scriptRegistry) {
-			reset();
-			String func = v.name + "." + ph;
-			try {
-				invoke(func);
-			} catch (NoSuchMethodException e) {
-				FMLLog.log("RECIPE_SCRIPT", Level.INFO, "skipped %s", func);
-			} catch (ScriptException e) {
-				FMLLog.log("RECIPE_SCRIPT", Level.ERROR, e, "script execution failed for %s", v.name);
-			}
+	public void runAll(String p) {
+		for (Version v : scriptRegistry)
+			run(v.name + "." + p);
+	}
+
+	public void run(String name) {
+		reset();
+		try {
+			invoke(name, new Parameters());
+		} catch (NoSuchMethodException e) {
+			FMLLog.log("RECIPE_SCRIPT", Level.INFO, "skipped %s", name);
+		} catch (ScriptException e) {
+			FMLLog.log("RECIPE_SCRIPT", Level.ERROR, e, "script execution failed for %s", name);
 		}
 	}
 

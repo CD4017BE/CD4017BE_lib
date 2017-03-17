@@ -7,6 +7,8 @@ import java.util.HashMap;
 import cd4017be.api.recipes.AutomationRecipes.*;
 import cd4017be.lib.Lib;
 import cd4017be.lib.NBTRecipe;
+import cd4017be.lib.script.Parameters;
+import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fluids.FluidStack;
@@ -19,110 +21,73 @@ import net.minecraftforge.oredict.ShapelessOreRecipe;
 
 public class RecipeAPI {
 
+	public static interface IRecipeHandler {
+		public void addRecipe(Parameters param);
+	}
+
 	public static HashMap<String, IRecipeHandler> Handlers;
 
 	static {
 		Handlers = new HashMap<String, IRecipeHandler>();
-		Handlers.put("shapeless", new ShapelessCraftingHandler());
-		Handlers.put("shaped", new ShapedCraftingHandler());
-		Handlers.put("shapedNBT", new NBTCraftingHandler());
-		Handlers.put("ore", new OreDictionaryHandler());
-		Handlers.put("smelt", new SmeltingHandler());
+		Handlers.put("shaped", (p) -> {
+			String[] pattern = p.getString(2).split("/");
+			int n = p.param.length - 3;
+			Object[] arr = new Object[n * 2 + pattern.length];
+			for (int i = 0; i < pattern.length; i++) arr[i] = pattern[i];
+			for (int i = 0; i < n; i++) {
+				arr[pattern.length + i * 2] = Character.forDigit(i, 9);
+				arr[pattern.length + i * 2 + 1] = p.param[i + 3];
+			}
+			GameRegistry.addRecipe(new ShapedOreRecipe(p.get(1, ItemStack.class), arr));
+		});
+		Handlers.put("shapedNBT", (p) -> {
+			String[] pattern = p.getString(3).split("/");
+			int n = p.param.length - 4;
+			Object[] arr = new Object[n * 2 + pattern.length];
+			for (int i = 0; i < pattern.length; i++) arr[i] = pattern[i];
+			for (int i = 0; i < n; i++) {
+				arr[pattern.length + i * 2] = Character.forDigit(i, 9);
+				arr[pattern.length + i * 2 + 1] = p.param[i + 4];
+			}
+			GameRegistry.addRecipe(new NBTRecipe(p.get(2, ItemStack.class), p.getString(1), arr));
+		});
+		Handlers.put("ore", (p) -> {
+			String name = p.getString(1);
+			for (int i = 2; i < p.param.length; i++)
+				OreDictionary.registerOre(name, p.get(i, ItemStack.class));
+		});
+		Handlers.put("shapeless", (p) -> GameRegistry.addRecipe(new ShapelessOreRecipe(p.get(1, ItemStack.class), Arrays.copyOfRange(p.param, 2, p.param.length))));
+		Handlers.put("smelt", (p) -> GameRegistry.addSmelting(p.get(1, ItemStack.class), p.get(2, ItemStack.class), p.param.length > 3 ? (float)p.getNumber(3) : 0F));
 		Handlers.put("fuel", new FuelHandler());
 		Handlers.put("worldgen", new OreGenHandler());
-		Handlers.put("item", new ItemMaterialHandler());
+		Handlers.put("item", (p) -> Lib.materials.addMaterial((int)p.getNumber(1), p.getString(2)));
 		if (Loader.isModLoaded("Automation")) {
-			Handlers.put("compAs", new MechanicAssemblerHandler());
-			Handlers.put("advFurn", new ThermalAssemblerHandler());
-			Handlers.put("electr", new ElectrolyserHandler());
-			Handlers.put("cool", new DecompCoolHandler());
-			Handlers.put("trash", new GravitationalCondHandler());
-			Handlers.put("heatRad", new HeatRadiatorHandler());
-		}
-	}
-	
-	public static interface IRecipeHandler {
-		public boolean addRecipe(Object... param);
-	}
-	
-	static class ShapelessCraftingHandler implements IRecipeHandler {
-		@Override
-		public boolean addRecipe(Object... param) {
-			if (param.length < 3 || !(param[1] instanceof ItemStack)) return false;
-			GameRegistry.addRecipe(new ShapelessOreRecipe((ItemStack)param[1], Arrays.copyOfRange(param, 2, param.length)));
-			return true;
-		}
-	}
-	
-	static class ShapedCraftingHandler implements IRecipeHandler {
-		@Override
-		public boolean addRecipe(Object... param) {
-			if (param.length < 4 || !(param[1] instanceof ItemStack && param[2] instanceof String)) return false;
-			String[] pattern = ((String)param[2]).split("/");
-			int n = param.length - 3;
-			Object[] arr = new Object[n * 2 + pattern.length];
-			for (int i = 0; i < pattern.length; i++) arr[i] = pattern[i];
-			for (int i = 0; i < n; i++) {
-				arr[pattern.length + i * 2] = Character.forDigit(i, 9);
-				arr[pattern.length + i * 2 + 1] = param[i + 3];
-			}
-			GameRegistry.addRecipe(new ShapedOreRecipe((ItemStack)param[1], arr));
-			return true;
-		}
-	}
-	
-	static class NBTCraftingHandler implements IRecipeHandler {
-		@Override
-		public boolean addRecipe(Object... param) {
-			if (param.length < 5 || !(param[1] instanceof String && param[2] instanceof ItemStack && param[3] instanceof String)) return false;
-			String[] pattern = ((String)param[3]).split("/");
-			int n = param.length - 4;
-			Object[] arr = new Object[n * 2 + pattern.length];
-			for (int i = 0; i < pattern.length; i++) arr[i] = pattern[i];
-			for (int i = 0; i < n; i++) {
-				arr[pattern.length + i * 2] = Character.forDigit(i, 9);
-				arr[pattern.length + i * 2 + 1] = param[i + 4];
-			}
-			GameRegistry.addRecipe(new NBTRecipe((ItemStack)param[2], (String)param[1], arr));
-			return true;
-		}
-	}
-	
-	static class OreDictionaryHandler implements IRecipeHandler {
-		@Override
-		public boolean addRecipe(Object... param) {
-			if (param.length < 3 || !(param[1] instanceof String)) return false;
-			for (int i = 2; i < param.length; i++) {
-				if (!(param[i] instanceof ItemStack)) return false;
-				OreDictionary.registerOre((String)param[1], (ItemStack)param[i]);
-			}
-			return true;
+			Handlers.put("advFurn", (p) -> {
+				FluidStack Fin = null;
+				FluidStack Fout = null;
+				ArrayList<Object> Iin = new ArrayList<Object>();
+				ArrayList<ItemStack> Iout = new ArrayList<ItemStack>();
+				for (Object o : p.getArray(1)) {
+					if (o instanceof FluidStack) Fin = (FluidStack)o;
+					else Iin.add(o);
+				}
+				for (Object o : p.getArray(2)) {
+					if (o instanceof FluidStack) Fout = (FluidStack)o;
+					else if (o instanceof ItemStack) Iout.add((ItemStack)o);
+					else throw new IllegalArgumentException("expected ItemStack or FluidStack as element of array @ 2");
+				}
+				AutomationRecipes.addRecipe(new LFRecipe(Fin, Iin.isEmpty() ? null : Iin.toArray(new Object[Iin.size()]), Fout, Iout.isEmpty() ? null : Iout.toArray(new ItemStack[Iout.size()]), (float)p.getNumber(3)));
+			});
+			Handlers.put("compAs", (p) -> AutomationRecipes.addCmpRecipe(p.get(1, ItemStack.class), Arrays.copyOfRange(p.param, 2, p.param.length)));
+			Handlers.put("electr", (p) -> AutomationRecipes.addRecipe(new ElRecipe(p.get(1), p.get(2), p.get(3), (float)p.getNumber(4))));
+			Handlers.put("cool", (p) -> AutomationRecipes.addRecipe(new CoolRecipe(p.get(1), p.get(2), p.get(3), p.get(4), (float)p.getNumber(5))));
+			Handlers.put("trash", (p) -> AutomationRecipes.addRecipe(new GCRecipe(p.get(1, ItemStack.class), p.get(2, ItemStack.class), (int)p.getNumber(3))));
+			Handlers.put("heatRad", (p) -> AutomationRecipes.addRadiatorRecipe(p.get(1, FluidStack.class), p.get(2, FluidStack.class)));
+			Handlers.put("algae", (p) -> AutomationRecipes.bioList.add(new BioEntry(p.get(1), (int)p.getNumber(2), (int)p.getNumber(3))));
 		}
 	}
 
-	public static class ItemMaterialHandler implements IRecipeHandler {
-		@Override
-		public boolean addRecipe(Object... param) {
-			if (param.length < 3 || !(param[1] instanceof Double && param[2] instanceof String)) return false;
-			Lib.materials.addMaterial(((Double)param[1]).intValue(), (String)param[2]);
-			return true;
-		}
-	}
-
-	static class SmeltingHandler implements IRecipeHandler {
-		@Override
-		public boolean addRecipe(Object... param) {
-			if (param.length < 3 || !(param[1] instanceof ItemStack && param[2] instanceof ItemStack)) return false;
-			float xp;
-			if (param.length < 4) xp = 0;
-			else if (param[3] instanceof Double) xp = ((Double)param[3]).floatValue();
-			else return false;
-			GameRegistry.addSmelting((ItemStack)param[1], (ItemStack)param[2], xp);
-			return true;
-		}
-	}
-	
-	static class FuelHandler implements IRecipeHandler, IFuelHandler {
+	private static class FuelHandler implements IRecipeHandler, IFuelHandler {
 		HashMap<Integer, Integer> fuelList;
 		public FuelHandler() {
 			fuelList = new HashMap<Integer, Integer>();
@@ -132,10 +97,8 @@ public class RecipeAPI {
 			return Item.getIdFromItem(item.getItem()) & 0xffff | (item.getItemDamage() & 0xffff) << 16;
 		}
 		@Override
-		public boolean addRecipe(Object... param) {
-			if (param.length != 3 || !(param[1] instanceof ItemStack && param[2] instanceof Double)) return false;
-			fuelList.put(key((ItemStack)param[1]), ((Double)param[2]).intValue());
-			return true;
+		public void addRecipe(Parameters p) {
+			fuelList.put(key(p.get(1, ItemStack.class)), (int)p.getNumber(2));
 		}
 		@Override
 		public int getBurnTime(ItemStack fuel) {
@@ -143,72 +106,18 @@ public class RecipeAPI {
 			return val == null ? 0 : val;
 		}
 	}
-	
-	static class MechanicAssemblerHandler implements IRecipeHandler {
-		@Override
-		public boolean addRecipe(Object... param) {
-			if (param.length < 3 || param.length > 6 || !(param[1] instanceof ItemStack)) return false;
-			AutomationRecipes.addCmpRecipe((ItemStack)param[1], Arrays.copyOfRange(param, 2, param.length));
-			return true;
-		}
-	}
-	
-	static class ThermalAssemblerHandler implements IRecipeHandler {
-		@Override
-		public boolean addRecipe(Object... param) {
-			if (param.length < 4 || !(param[1] instanceof Object[] && param[2] instanceof Object[] && param[3] instanceof Double)) return false;
-			FluidStack Fin = null;
-			FluidStack Fout = null;
-			ArrayList<Object> Iin = new ArrayList<Object>();
-			ArrayList<ItemStack> Iout = new ArrayList<ItemStack>();
-			for (Object o : (Object[])param[1]) {
-				if (o instanceof FluidStack) Fin = (FluidStack)o;
-				else Iin.add(o);
-			}
-			for (Object o : (Object[])param[2]) {
-				if (o instanceof FluidStack) Fout = (FluidStack)o;
-				else if (o instanceof ItemStack) Iout.add((ItemStack)o);
-				else return false;
-			}
-			AutomationRecipes.addRecipe(new LFRecipe(Fin, Iin.isEmpty() ? null : Iin.toArray(new Object[Iin.size()]), Fout, Iout.isEmpty() ? null : Iout.toArray(new ItemStack[Iout.size()]), ((Double)param[3]).floatValue()));
-			return true;
-		}
-	}
-	
-	static class ElectrolyserHandler implements IRecipeHandler {
-		@Override
-		public boolean addRecipe(Object... param) {
-			if (param.length < 5 || !(param[4] instanceof Double)) return false;
-			AutomationRecipes.addRecipe(new ElRecipe(param[1], param[2], param[3], ((Double)param[4]).floatValue()));
-			return true;
-		}
-	}
-	
-	static class DecompCoolHandler implements IRecipeHandler {
-		@Override
-		public boolean addRecipe(Object... param) {
-			if (param.length < 6 || !(param[5] instanceof Double)) return false;
-			AutomationRecipes.addRecipe(new CoolRecipe(param[1], param[2], param[3], param[4], ((Double)param[5]).floatValue()));
-			return true;
-		}
-	}
-	
-	static class GravitationalCondHandler implements IRecipeHandler {
-		@Override
-		public boolean addRecipe(Object... param) {
-			if (param.length < 4 || !(param[1] instanceof ItemStack && param[2] instanceof ItemStack && param[3] instanceof Double)) return false;
-			AutomationRecipes.addRecipe(new GCRecipe((ItemStack)param[1], (ItemStack)param[2], ((Double)param[3]).intValue()));
-			return true;
-		}
-	}
-	
-	static class HeatRadiatorHandler implements IRecipeHandler {
-		@Override
-		public boolean addRecipe(Object... param) {
-			if (param.length < 3 || !(param[1] instanceof FluidStack && param[2] instanceof FluidStack)) return false;
-			AutomationRecipes.addRadiatorRecipe((FluidStack)param[1], (FluidStack)param[2]);
-			return true;
-		}
+
+	public static void createOreDictEntries(Class<?> c, String name) {
+		if (Block.class.isAssignableFrom(c)) {
+			Item item;
+			for (Block block : Block.REGISTRY)
+				if (c.isInstance(block) && (item = Item.getItemFromBlock(block)) != null)
+					OreDictionary.registerOre(name, item);
+		} else if (Item.class.isAssignableFrom(c)) {
+			for (Item item : Item.REGISTRY)
+				if (c.isInstance(item))
+					OreDictionary.registerOre(name, item);
+		} 
 	}
 
 }
