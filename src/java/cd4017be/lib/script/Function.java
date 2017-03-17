@@ -37,21 +37,21 @@ public class Function {
 	private final short[] codeIndices, lineNumbers;
 	public Script script;
 	
-	public Object apply(Object[] param) throws ScriptException {
-		if (param.length != Nparam) throw new ScriptException("wrong number of parameters!", name, lineOfs);
+	public Object apply(Parameters param) throws ScriptException {
+		if (param.param.length != Nparam) throw new ScriptException("wrong number of parameters!", name, lineOfs);
 		Stack<Object> stack = new Stack<Object>(Nstack);
-		stack.fill(param);
+		stack.fill(param.param);
 		ByteBuffer code = ByteBuffer.wrap(this.code);
 		int n = 0;
 		try {
-			System.out.println(name + ">");//TODO DEBUG
+			//System.out.println(name + ">");//TODO DEBUG
 			while(code.hasRemaining()) {
 				if (++n > TICK_LIMIT) throw new Exception("ran for more than " + TICK_LIMIT + " cycles: infinite loop?");
 				Operator lo = Operator.operators[code.get()];
 				//System.out.println(stack.toString() + " " + lo.name());//TODO DEBUG
 				lo.eval(code, stack, script);
 			}
-			System.out.println("<" + (hasReturn ? stack.get().toString() : ""));//TODO DEBUG
+			//System.out.println("<" + (hasReturn ? stack.get().toString() : ""));//TODO DEBUG
 			return hasReturn ? stack.rem() : null;
 		} catch (ScriptException ex) {
 			throw ex;
@@ -190,7 +190,7 @@ public class Function {
 				Object[] param = new Object[n & 0x7f];
 				stack.drain(param);
 				Module m = name.indexOf('.') < 0 ? cont : cont.context;
-				Object ret = m.invoke(name, param);
+				Object ret = m.invoke(name, new Parameters(param));
 				if ((n & 0x80) != 0) stack.add(ret);
 				cont.context.recursion--;
 			}
@@ -205,7 +205,7 @@ public class Function {
 				stack.drain(param);
 				Module m = name.indexOf('.') < 0 ? cont : cont.context;
 				try {
-					Object ret = m.invoke(name, param);
+					Object ret = m.invoke(name, new Parameters(param));
 					if ((n & 0x80) != 0) stack.add(ret);
 					stack.add(true);
 				} catch (Exception e) {

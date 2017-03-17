@@ -375,7 +375,7 @@ public class Compiler {
 				if (!state.continuePos.isEmpty()) {
 					if (!st) {
 						state.op(Operator.clear, null);
-						buffer.put((byte)state.lastId);
+						buffer.put((byte)(state.lastId - 1));
 					}
 					int p2 = buffer.position() - 2;
 					for (int i : state.continuePos) buffer.putShort(i, (short)p2);
@@ -386,7 +386,7 @@ public class Compiler {
 				buffer.putShort(p1, (short)p2);
 				if (!state.breakPos.isEmpty()) {
 					state.op(Operator.clear, null);
-					buffer.put((byte)state.lastId);
+					buffer.put((byte)(state.lastId - 1));
 					for (int i : state.breakPos) buffer.putShort(i, (short)p2);
 				}
 				state.breakPos = breakPos;
@@ -421,7 +421,7 @@ public class Compiler {
 		int p = buffer.position();
 		if (buffer.get(p - 2) == Operator.clear.ordinal()) buffer.position(p - 1);
 		else state.op(Operator.clear, null);
-		buffer.put((byte)variables);
+		buffer.put((byte)(variables - 1));
 		state.lastId = variables;
 		return true;
 	}

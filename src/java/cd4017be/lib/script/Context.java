@@ -6,19 +6,21 @@ import javax.script.ScriptException;
 
 public class Context implements Module {
 
-	private static final Function<Object[], Object>
+	private static final Function<Parameters, Object>
 		PRINT = (p) -> {
-			System.out.println(p[0]);
+			System.out.println(p.get(0));
 			return null;
-		}, TIME = (p) -> (double)System.currentTimeMillis();
+		}, TIME = (p) -> (double)System.currentTimeMillis(),
+		REPL = (p) -> p.getString(0).replaceFirst(p.getString(1), p.getString(2));
 	
 	public HashMap<String, Module> modules = new HashMap<String, Module>();
-	public HashMap<String, Function<Object[], Object>> defFunc = new HashMap<String, Function<Object[], Object>>();
+	public HashMap<String, Function<Parameters, Object>> defFunc = new HashMap<String, Function<Parameters, Object>>();
 	public int recursion = 0;
 	
 	public Context() {
 		defFunc.put("print", PRINT);
 		defFunc.put("time", TIME);
+		defFunc.put("repl", REPL);
 	}
 	
 	private String[] split(String name) {
@@ -28,10 +30,10 @@ public class Context implements Module {
 	}
 	
 	@Override
-	public Object invoke(String name, Object... args) throws NoSuchMethodException, ScriptException {
+	public Object invoke(String name, Parameters args) throws NoSuchMethodException, ScriptException {
 		String[] s = split(name);
 		if (s[0] == null) {
-			Function<Object[], Object> f = defFunc.get(s[1]);
+			Function<Parameters, Object> f = defFunc.get(s[1]);
 			if (f != null) return f.apply(args);
 		} else {
 			Module m = modules.get(s[0]);

@@ -23,10 +23,10 @@ public class Script implements Module {
 	}
 
 	@Override
-	public Object invoke(String name, Object... args) throws NoSuchMethodException, ScriptException {
+	public Object invoke(String name, Parameters args) throws NoSuchMethodException, ScriptException {
 		Function f = methods.get(name);
 		if (f != null) return f.apply(args);
-		java.util.function.Function<Object[], Object> f1 = context.defFunc.get(name);
+		java.util.function.Function<Parameters, Object> f1 = context.defFunc.get(name);
 		if (f1 != null) return f1.apply(args);
 		throw new NoSuchMethodException();
 	}

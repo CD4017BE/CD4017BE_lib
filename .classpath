@@ -2,7 +2,7 @@
 <classpath>
 	<classpathentry kind="src" path="src/java"/>
 	<classpathentry kind="src" path="src/resources"/>
-	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
 	<classpathentry exported="true" kind="lib" path="C:/Users/CD4017BE/Minecraft Modding/Mods-1.7.10/CD4017BE_lib/.gradle/minecraft/forgeSrc-1.10.2-12.18.1.2073-PROJECT(CD4017BE_lib).jar" sourcepath="C:/Users/CD4017BE/Minecraft Modding/Mods-1.7.10/CD4017BE_lib/.gradle/minecraft/forgeSrc-1.10.2-12.18.1.2073-PROJECT(CD4017BE_lib)-sources.jar"/>
 	<classpathentry exported="true" kind="lib" path="C:/Users/CD4017BE/.gradle/caches/modules-2/files-2.1/com.google.code.findbugs/jsr305/3.0.1/f7be08ec23c21485b9b5a1cf1654c2ec8c58168d/jsr305-3.0.1.jar" sourcepath="C:/Users/CD4017BE/.gradle/caches/modules-2/files-2.1/com.google.code.findbugs/jsr305/3.0.1/a2926c057ca3b662b9db194c869bdbe7d3bb8aef/jsr305-3.0.1-sources.jar"/>
 	<classpathentry exported="true" kind="lib" path="C:/Users/CD4017BE/.gradle/caches/modules-2/files-2.1/com.mojang/netty/1.6/4b75825a06139752bd800d9e29c5fd55b8b1b1e4/netty-1.6.jar" sourcepath="C:/Users/CD4017BE/.gradle/caches/modules-2/files-2.1/com.mojang/netty/1.6/cd01cc3788bac1b1eb9cf2cda02fc7698a5ca1cc/netty-1.6-sources.jar"/>

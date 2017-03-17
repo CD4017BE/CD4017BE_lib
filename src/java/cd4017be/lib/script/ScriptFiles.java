@@ -17,7 +17,7 @@ public class ScriptFiles {
 		File[] files = out.getParentFile().listFiles();
 		ArrayList<File> in = new ArrayList<File>();
 		for (File f : files)
-			if (f.getName().endsWith(".scr"))
+			if (f.getName().endsWith(".rcp"))
 				in.add(f);
 		if (in.isEmpty()) {
 			System.out.println("no valid files found!");
@@ -100,13 +100,14 @@ public class ScriptFiles {
 				String name = dis.readUTF();
 				Script s = new Script(name, new HashMap<String, Function>(), new HashMap<String, Object>());
 				s.editDate = dis.readLong();
-				File f = new File(dir, name + ".scr");
-				outdated |= s.editDate < f.lastModified();
+				File f = new File(dir, name + ".rcp");
+				outdated |= f.exists() && s.editDate < f.lastModified();
 				s.version = dis.readInt();
 				Version v = versions.get(name);
 				if (v != null && s.version >= v.version) versions.remove(name);
+				scripts[i] = s;
 			}
-			if (outdated || !versions.isEmpty()) return null;//TODO copy fallback
+			if (outdated || !versions.isEmpty()) return null;
 			for (Script s : scripts) {
 				int n = dis.readShort();
 				for (int i = 0; i < n; i++) {
@@ -116,8 +117,8 @@ public class ScriptFiles {
 					case 0: obj = null; break;
 					case 1: obj = false; break;
 					case 2: obj = true; break;
-					case 3: obj = dis.readDouble();
-					case 4: obj = dis.readUTF();
+					case 3: obj = dis.readDouble(); break;
+					case 4: obj = dis.readUTF(); break;
 					default: return null;
 					}
 					s.variables.put(name, obj);
@@ -125,7 +126,9 @@ public class ScriptFiles {
 				n = dis.readShort();
 				for (int i = 0; i < n; i++) {
 					String name = dis.readUTF();
-					s.methods.put(name, new Function(s.fileName + "." + name, dis));
+					Function f = new Function(s.fileName + "." + name, dis);
+					s.methods.put(name, f);
+					f.script = s;
 				}
 			}
 			return scripts;
