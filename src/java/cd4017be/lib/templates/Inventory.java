@@ -17,12 +17,13 @@ import net.minecraftforge.items.ItemHandlerHelper;
  */
 public class Inventory implements IItemHandlerModifiable {
 
+	public static int ticks = 1;
 	/**	bits[0-59 6*5*2]: side * comp * access */
 	public long sideCfg = 0;
 	public final ItemStack[] items;
 	public final Group[] groups;
 	public final IAccessHandler handler;
-	public int shift = 0;
+	public int shift = 0, timer = 0;
 
 	/**
 	 * @param l amount of item slots
@@ -55,6 +56,8 @@ public class Inventory implements IItemHandlerModifiable {
 	 * @param tile the TileEntity owning this
 	 */
 	public void update(AutomatedTile tile) {
+		if (timer++ < ticks) return;
+		timer = 0;
 		int cfg;
 		IItemHandler access;
 		for (byte s = 0; s < 6; s++) {

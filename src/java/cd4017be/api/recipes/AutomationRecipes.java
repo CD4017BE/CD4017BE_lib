@@ -26,9 +26,6 @@ import net.minecraftforge.oredict.OreDictionary;
  */
 public class AutomationRecipes
 {
-	public static float LFEmult = 1F;
-	public static float CoolEmult = 1F;
-	public static float ElEmult = 1F;
 	
 	public static class LFRecipe
 	{
@@ -50,7 +47,7 @@ public class AutomationRecipes
 			} else this.Iinput = new Object[0];
 			if (Ioutput != null) this.Ioutput = Ioutput;
 			else this.Ioutput = new ItemStack[0];
-			this.energy = energy * LFEmult;
+			this.energy = energy;
 		}
 		
 		private LFRecipe() {}
@@ -243,7 +240,7 @@ public class AutomationRecipes
 			this.out0 = out0;
 			this.in1 = in1;
 			this.out1 = out1;
-			this.energy = energy * CoolEmult;
+			this.energy = energy;
 		}
 		
 		public boolean matches(ItemStack[] inv, int s, FluidStack in0, FluidStack in1)
@@ -401,7 +398,7 @@ public class AutomationRecipes
 			this.in = in;
 			this.out0 = out0;
 			this.out1 = out1;
-			this.energy = e * ElEmult;
+			this.energy = e;
 		}
 		
 		public boolean matches(ItemStack[] inv, int s, FluidStack in)

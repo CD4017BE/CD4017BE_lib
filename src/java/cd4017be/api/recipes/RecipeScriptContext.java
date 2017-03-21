@@ -132,15 +132,17 @@ public class RecipeScriptContext extends Context {
 
 	public void setup(FMLPreInitializationEvent event) {
 		File dir = new File(event.getModConfigurationDirectory(), "cd4017be");
+		File comp = new File(dir, "compiled.dat");
 		HashMap<String, Version> versions = new HashMap<String, Version>();
 		for (Version v : scriptRegistry)
 			if (v.fallback != null)
 				versions.put(v.name, v);
 		Script[] scripts;
+		boolean reload = true;
 		try {
-			scripts = ScriptFiles.loadPackage(new File(dir, "compiled.dat"), versions);
+			scripts = ScriptFiles.loadPackage(comp, versions, true);
 		} catch (IOException e) {
-			scripts = null;
+			scripts = null; reload = false;
 			FMLLog.log(Level.ERROR, e, "loading compiled config scripts failed!");
 		}
 		for (Version v : versions.values())
@@ -149,7 +151,13 @@ public class RecipeScriptContext extends Context {
 			} catch (IOException e) {
 				FMLLog.log(Level.ERROR, e, "copying script preset failed!");
 			}
-		if (scripts == null) scripts = ScriptFiles.createCompiledPackage(new File(dir, "compiled.dat"));
+		if (scripts == null) {
+			scripts = ScriptFiles.createCompiledPackage(comp);
+			if (scripts == null && reload) try {
+				FMLLog.log(Level.INFO, "Falling back to old scripts");
+				scripts = ScriptFiles.loadPackage(comp, versions, false);
+			} catch (IOException e) { FMLLog.log(Level.ERROR, e, "loading compiled config scripts failed!"); }
+		}
 		if (scripts != null) for (Script s : scripts) add(s);
 	}
 

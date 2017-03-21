@@ -90,7 +90,7 @@ public class ScriptFiles {
 		}
 	}
 	
-	public static Script[] loadPackage(File in, HashMap<String, Version> versions) throws IOException {
+	public static Script[] loadPackage(File in, HashMap<String, Version> versions, boolean check) throws IOException {
 		DataInputStream dis = new DataInputStream(new FileInputStream(in));
 		try {
 			File dir = in.getParentFile();
@@ -107,7 +107,7 @@ public class ScriptFiles {
 				if (v != null && s.version >= v.version) versions.remove(name);
 				scripts[i] = s;
 			}
-			if (outdated || !versions.isEmpty()) return null;
+			if (check && (outdated || !versions.isEmpty())) return null;
 			for (Script s : scripts) {
 				int n = dis.readShort();
 				for (int i = 0; i < n; i++) {
