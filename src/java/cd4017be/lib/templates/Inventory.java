@@ -56,7 +56,7 @@ public class Inventory implements IItemHandlerModifiable {
 	 * @param tile the TileEntity owning this
 	 */
 	public void update(AutomatedTile tile) {
-		if (timer++ < ticks) return;
+		if (++timer < ticks) return;
 		timer = 0;
 		int cfg;
 		IItemHandler access;
