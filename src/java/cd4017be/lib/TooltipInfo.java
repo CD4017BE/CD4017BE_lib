@@ -1,9 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package cd4017be.lib;
 
 import java.util.ArrayList;
@@ -20,12 +14,12 @@ import cd4017be.lib.util.Utils;
  */
 public class TooltipInfo 
 {
-	private static String ShiftHint;
+	private static String ShiftHint, AltHint;
 	private static String FluidDispUnit;
 	private static String EnergyDispUnit;
 	private static String PowerDispUnit;
 	private static String LinkPosFormat;
-	
+
 	public static String getShiftHint() {
 		if (ShiftHint == null){
 			ShiftHint = I18n.translateToLocal("cd4017be.shiftHint");
@@ -33,7 +27,15 @@ public class TooltipInfo
 		}
 		return ShiftHint;
 	}
-	
+
+	public static String getAltHint() {
+		if (AltHint == null){
+			AltHint = I18n.translateToLocal("cd4017be.altHint");
+			if (AltHint == "cd4017be.altHint") AltHint = "<ALT for extra>";
+		}
+		return AltHint;
+	}
+
 	public static String getFluidUnit() {
 		if (FluidDispUnit == null){
 			FluidDispUnit = I18n.translateToLocal("cd4017be.fluidUnit");

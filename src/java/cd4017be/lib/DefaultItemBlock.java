@@ -1,9 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package cd4017be.lib;
 
 import java.util.Arrays;
@@ -38,12 +32,18 @@ public class DefaultItemBlock extends ItemBlock
 
 	@Override
 	public void addInformation(ItemStack item, EntityPlayer player, List<String> list, boolean b) {
+		String s = this.getUnlocalizedName(item) + ".tip";
 		if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)) {
-			String s = this.getUnlocalizedName(item) + ".tip";
 			String s1 = TooltipInfo.getLocFormat(s);
-			if (s1.equals(s) && this.hasSubtypes) s1 = TooltipInfo.getLocFormat(s = this.block.getUnlocalizedName() + ".tip");
 			if (!s1.equals(s)) list.addAll(Arrays.asList(s1.split("\n")));
-		} else list.add(TooltipInfo.getShiftHint());
+		} else if (Keyboard.isKeyDown(Keyboard.KEY_LMENU) || Keyboard.isKeyDown(Keyboard.KEY_RMENU)) {
+			String sA = s + "A";
+			String s1 = TooltipInfo.getLocFormat(sA);
+			if (!s1.equals(sA)) list.addAll(Arrays.asList(s1.split("\n")));
+		} else {
+			if (I18n.canTranslate(s)) list.add(TooltipInfo.getShiftHint());
+			if (I18n.canTranslate(s + "A")) list.add(TooltipInfo.getAltHint());
+		}
 		super.addInformation(item, player, list, b);
 	}
 
