@@ -1,13 +1,13 @@
 package cd4017be.lib.templates;
 
 import net.minecraft.item.ItemStack;
-import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.IItemHandlerModifiable;
 import static net.minecraftforge.items.ItemHandlerHelper.*;
 
 import java.util.function.ObjIntConsumer;
 import java.util.function.IntFunction;
 
-public class LinkedInventory implements IItemHandler {
+public class LinkedInventory implements IItemHandlerModifiable {
 
 	private final int slots;
 	private final IntFunction<ItemStack> get;
@@ -57,17 +57,24 @@ public class LinkedInventory implements IItemHandler {
 	}
 
 	@Override
-	public ItemStack extractItem(int slot, int amount, boolean simulate) {
+	public ItemStack extractItem(int slot, int amount, boolean sim) {
 		ItemStack item = get.apply(slot);
 		if (item == null) return null;
 		if (amount >= item.stackSize) {
-			set.accept(null, slot);
+			if (!sim) set.accept(null, slot);
 			return item;
 		} else {
-			item.stackSize -= amount;
-			set.accept(item, slot);
+			if (!sim) {
+				item.stackSize -= amount;
+				set.accept(item, slot);
+			}
 			return copyStackWithSize(item, amount);
 		}
+	}
+
+	@Override
+	public void setStackInSlot(int slot, ItemStack stack) {
+		set.accept(stack, slot);
 	}
 
 }
