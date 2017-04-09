@@ -6,6 +6,7 @@ import cd4017be.lib.TileBlockRegistry.TileBlockEntry;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
@@ -82,7 +83,7 @@ public class ModTileEntity extends TileEntity implements IAbstractTile {
 
 	public void onEntityCollided(Entity entity) {}
 
-	public ArrayList<ItemStack> dropItem(IBlockState state, int fortune) {
+	public List<ItemStack> dropItem(IBlockState state, int fortune) {
 		return new ArrayList<ItemStack>();
 	}
 

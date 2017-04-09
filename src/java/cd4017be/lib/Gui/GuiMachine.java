@@ -506,7 +506,7 @@ public abstract class GuiMachine extends GuiContainer {
 		@Override
 		public void draw() {
 			mc.renderEngine.bindTexture(MAIN_TEX);
-			int f = (int)(get.get() * (float)l - 0.5F * (float)(hor?tw:th));
+			int f = (int)(get.get() * (float)l) - (hor?tw:th) / 2;
 			drawTexturedModalRect(hor? px + f : px, hor? py : py + f, tx, ty, tw, th);
 		}
 
@@ -515,7 +515,7 @@ public abstract class GuiMachine extends GuiContainer {
 			float f = d == 3 ? get.get() + (float)b * scrollStep + 1e-5F : ((float)(hor? x - px : y - py) + 0.5F) / (float)l;
 			if (f < 0) f = 0;
 			else if (f > 1) f = 1;
-			set.accept(f);
+			(d == 3 ? update : set).accept(f);
 			if (d == 2) setFocus(-1);
 			return true;
 		}

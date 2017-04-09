@@ -1,5 +1,6 @@
 package cd4017be.api.circuits;
 
+import cd4017be.lib.util.ICachableInstance;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 
@@ -7,7 +8,7 @@ import net.minecraft.util.EnumFacing;
  * TileEntities can implement this to improve performance by receiving redstone signals directly without block updates.
  * @author CD4017BE
  */
-public interface IQuickRedstoneHandler {
+public interface IQuickRedstoneHandler extends ICachableInstance {
 
 	/**
 	 * Can be called instead of a block update by another TileEntity to notify a redstone state change.
