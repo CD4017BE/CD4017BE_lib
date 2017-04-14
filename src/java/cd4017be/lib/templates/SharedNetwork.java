@@ -69,7 +69,7 @@ public abstract class SharedNetwork<C extends MultiblockComp<C, N>, N extends Sh
 		components.remove(comp.uid);
 		comp.network = null;
 		if (core == comp) core = null;
-		update = true;
+		markDirty();
 	}
 
 	/**
@@ -78,7 +78,7 @@ public abstract class SharedNetwork<C extends MultiblockComp<C, N>, N extends Sh
 	 * @param side the side that disconnected
 	 */
 	public void onDisconnect(C comp, byte side) {
-		if (comp.getNeighbor(side) != null) update = true;
+		if (comp.getNeighbor(side) != null) markDirty();
 	}
 
 	/**
@@ -108,6 +108,10 @@ public abstract class SharedNetwork<C extends MultiblockComp<C, N>, N extends Sh
 		}
 	}
 
+	public void markDirty() {
+		update = true;
+	}
+
 	/**
 	 * called every tick
 	 */
@@ -115,7 +119,7 @@ public abstract class SharedNetwork<C extends MultiblockComp<C, N>, N extends Sh
 
 	protected byte[] sides() {return defaultSides;}
 
-	private void reassembleNetwork() {
+	protected void reassembleNetwork() {
 		ArrayList<C> queue = new ArrayList<C>();
 		C obj, obj1;
 		while (this.components.size() > 1) {
