@@ -3,7 +3,6 @@ package cd4017be.api;
 import java.util.concurrent.Callable;
 
 import cd4017be.api.automation.PipeEnergy;
-import cd4017be.api.circuits.IntegerComp;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumFacing;
@@ -18,10 +17,6 @@ public class Capabilities {
 	@CapabilityInject(PipeEnergy.class)
 	public static Capability<PipeEnergy> ELECTRIC_CAPABILITY = null;
 
-	/** Capability for AutomatedRedstone's 32-bit redstone cables */
-	@CapabilityInject(IntegerComp.class)
-	public static Capability<IntegerComp> RS_INTEGER_CAPABILITY = null;
-
 	public static void register() {
 		CapabilityManager.INSTANCE.register(PipeEnergy.class, new Capability.IStorage<PipeEnergy>() {
 			@Override
@@ -35,19 +30,10 @@ public class Capabilities {
 				pipe.readFromNBT((NBTTagCompound)nbt, "");
 			}
 		}, new EmptyCallable<PipeEnergy>());
-		
-		CapabilityManager.INSTANCE.register(IntegerComp.class, new Capability.IStorage<IntegerComp>() {
-			@Override
-			public NBTBase writeNBT(Capability<IntegerComp> cap, IntegerComp pipe, EnumFacing s) {
-				NBTTagCompound nbt = new NBTTagCompound();
-				pipe.writeToNBT(nbt);
-				return nbt;
-			}
-			@Override
-			public void readNBT(Capability<IntegerComp> cap, IntegerComp pipe, EnumFacing s, NBTBase nbt) {
-				pipe.readFromNBT((NBTTagCompound)nbt);
-			}
-		}, new EmptyCallable<IntegerComp>());
+	}
+
+	public static <T>  void registerIntern(Class<T> cap) {
+		CapabilityManager.INSTANCE.register(cap, new EmptyStorage<T>(), new EmptyCallable<T>());
 	}
 
 	public static class EmptyStorage<T> implements Capability.IStorage<T> {
