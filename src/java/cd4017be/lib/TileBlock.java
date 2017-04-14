@@ -83,7 +83,7 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
 	}
 	
 	protected static int tmpType;
-	protected AxisAlignedBB boundingBox;
+	protected AxisAlignedBB[] boundingBox;
 	/**
 	 * @param type 0xf = {0 = none; 1 = NSWE; 2 = BTNSWE; 3 = NSWE + BT rotated}; 
 	 * 0x10 = redstoneOut 
@@ -115,7 +115,7 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
 		this.drop = (type & 64) == 0;
 		this.fullBlock = (type & 128) == 0;
 		this.renderType = EnumBlockRenderType.MODEL;
-		this.boundingBox = FULL_BLOCK_AABB;
+		this.boundingBox = new AxisAlignedBB[]{FULL_BLOCK_AABB};
 		if (orient != null) this.setDefaultState(this.blockState.getBaseState().withProperty(this.orient, orient.values.get(0)));
 	}
 
@@ -176,10 +176,10 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
 	public boolean registered;
 	public final Orientation orient;
 	public Class<? extends TileEntity> tileEntity;
-	private boolean redstone;
-	private boolean opaque;
-	private EnumBlockRenderType renderType;
-	private boolean drop;
+	protected boolean redstone;
+	protected boolean opaque;
+	protected EnumBlockRenderType renderType;
+	protected boolean drop;
 
 	@Override
 	public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumHand hand, ItemStack item, EnumFacing s, float X, float Y, float Z) {
@@ -225,25 +225,31 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
 	}
 
 	@Override
+	public boolean isFullCube(IBlockState state) {
+		return boundingBox[0] == FULL_BLOCK_AABB;
+	}
+
+	@Override
 	public boolean isNormalCube(IBlockState state) {
-		return boundingBox == FULL_BLOCK_AABB;
+		return boundingBox[0] == FULL_BLOCK_AABB;
 	}
 
 	@Override
 	public boolean isNormalCube(IBlockState state, IBlockAccess world, BlockPos pos) {
-		return boundingBox == FULL_BLOCK_AABB;
+		return boundingBox[0] == FULL_BLOCK_AABB;
 	}
 
 	@Override
 	public boolean isSideSolid(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing side) {
-		if (boundingBox == FULL_BLOCK_AABB) return true;
+		AxisAlignedBB box = getBoundingBox(state, world, pos);
+		if (box == FULL_BLOCK_AABB) return true;
 		switch (side) {
-		case DOWN: return boundingBox.minY == FULL_BLOCK_AABB.minY;
-		case UP: return boundingBox.maxY == FULL_BLOCK_AABB.maxY;
-		case NORTH: return boundingBox.minZ == FULL_BLOCK_AABB.minZ;
-		case SOUTH: return boundingBox.maxZ == FULL_BLOCK_AABB.maxZ;
-		case WEST: return boundingBox.minX == FULL_BLOCK_AABB.minX;
-		case EAST: return boundingBox.maxX == FULL_BLOCK_AABB.maxX;
+		case DOWN: return box.minY == FULL_BLOCK_AABB.minY;
+		case UP: return box.maxY == FULL_BLOCK_AABB.maxY;
+		case NORTH: return box.minZ == FULL_BLOCK_AABB.minZ;
+		case SOUTH: return box.maxZ == FULL_BLOCK_AABB.maxZ;
+		case WEST: return box.minX == FULL_BLOCK_AABB.minX;
+		case EAST: return box.maxX == FULL_BLOCK_AABB.maxX;
 		default: return true;
 		}
 	}
@@ -353,17 +359,32 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
 	}
 
 	public TileBlock setBlockBounds(AxisAlignedBB box) {
-		this.boundingBox = box;
+		if (orient == null) boundingBox[0] = box;
+		else
+			switch(orient.type) {
+			case 2: break;//TODO support advanced orient mode
+			default: boundingBox = new AxisAlignedBB[]{
+				null, null,
+				new AxisAlignedBB(box.minX, box.minZ, 1.0 - box.maxY, box.maxX, box.maxZ, 1.0 - box.minY),
+				new AxisAlignedBB(box.minX, 1.0 - box.maxZ, box.minY, box.maxX, 1.0 - box.minZ, box.maxY),
+				box,
+				new AxisAlignedBB(1.0 - box.maxX, box.minY, 1.0 - box.maxZ, 1.0 - box.minX, box.maxY, 1.0 - box.minZ),
+				new AxisAlignedBB(box.minZ, box.minY, 1.0 - box.maxX, box.maxZ, box.maxY, 1.0 - box.minX),
+				new AxisAlignedBB(1.0 - box.maxZ, box.minY, box.minX, 1.0 - box.minZ, box.maxY, box.maxX)
+			};
+			}
 		return this;
 	}
-	
+
 	@Override
 	public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess source, BlockPos pos) {
-		return boundingBox;
+		return orient == null || boundingBox.length == 1 ? boundingBox[0] : boundingBox[state.getValue(orient)];
 	}
 
 	@Override
 	public TileEntity createNewTileEntity(World world, int meta) {
 		return createTileEntity(world, getStateFromMeta(meta));
 	}
+
+	
 }

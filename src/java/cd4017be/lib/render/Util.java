@@ -19,13 +19,13 @@ public class Util {
 		float[][] main = {
 			{//BOTTOM
 				 1, 0, 0, 0,
-				 0, 0, 1, 0,
-				 0,-1, 0, 0,
+				 0, 0, -1, 0,
+				 0, 1, 0, 0,
 				 0, 0, 0, 1
 			}, {//TOP
 				 1, 0, 0, 0,
-				 0, 0,-1, 0,
-				 0, 1, 0, 0,
+				 0, 0, 1, 0,
+				 0, -1, 0, 0,
 				 0, 0, 0, 1
 			}, {//NORTH
 				 1, 0, 0, 0,
@@ -63,12 +63,27 @@ public class Util {
 		GL11.glMultMatrix(mat);
 	}
 
+	public static void rotateTo(int dir) {
+		FloatBuffer mat = matrices[dir];
+		mat.rewind();
+		GL11.glMultMatrix(mat);
+	}
+
 	public static final Util instance = new Util();
 	public static int RenderFrame = 0;
 
 	@SubscribeEvent
 	public void renderTick(TickEvent.RenderTickEvent event) {
 		RenderFrame++;
+	}
+
+	public static int[] texturedRect(float x, float y, float z, float w, float h, float tx, float ty, float tw, float th) {
+		return new int[] {
+			Float.floatToIntBits(x), Float.floatToIntBits(y), Float.floatToIntBits(z), Float.floatToIntBits(tx), Float.floatToIntBits(ty),
+			Float.floatToIntBits(x + w), Float.floatToIntBits(y), Float.floatToIntBits(z), Float.floatToIntBits(tx + tw), Float.floatToIntBits(ty),
+			Float.floatToIntBits(x + w), Float.floatToIntBits(y + h), Float.floatToIntBits(z), Float.floatToIntBits(tx + tw), Float.floatToIntBits(ty + th),
+			Float.floatToIntBits(x), Float.floatToIntBits(y + h), Float.floatToIntBits(z), Float.floatToIntBits(tx), Float.floatToIntBits(ty + th)
+		};
 	}
 
 }

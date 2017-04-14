@@ -152,6 +152,10 @@ public class BlockPipe extends TileBlock
 
 	@Override
 	public boolean isSideSolid(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing side) {
+		if (redstone) return true;/*{
+			TileEntity te = world.getTileEntity(pos);
+			if (te != null && te instanceof IPipe) return ((IPipe)te).getCover() != null || ((IPipe)te).textureForSide((byte)side.ordinal()) >= 0;
+		}*/
 		return this.isNormalCube(state, world, pos);
 	}
 
