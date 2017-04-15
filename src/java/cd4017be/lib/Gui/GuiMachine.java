@@ -530,7 +530,7 @@ public abstract class GuiMachine extends GuiContainer {
 	}
 
 	public class NumberSel extends GuiComp<Integer> {
-		public boolean hor = false;
+		public boolean hor = false, above = false;
 		public int ts = 4, tc = 0xff404040, nb = 1, min, max, exp;
 		public final String form;
 
@@ -558,6 +558,11 @@ public abstract class GuiMachine extends GuiContainer {
 			return this;
 		}
 
+		public NumberSel around() {
+			above = true;
+			return this;
+		}
+
 		@Override
 		public void draw() {
 			String s = String.format(form, get.get());
@@ -571,16 +576,28 @@ public abstract class GuiMachine extends GuiContainer {
 			int ofs;
 			if (d == 3) ofs = b;
 			else if (d == 0) {
-				int pw = (hor ? w : h) / 2, p = (hor ? x - px : py + h - 1 - y) - pw;
-				if (p < -ts) {
-					p = (-p - ts) * nb / (pw - ts) * 2 + b;
-					ofs = -1;
-					for (int i = 0; i < p; i++) ofs *= exp;
-				} else if (p >= ts) {
-					p = (p - ts) * nb / (pw - ts) * 2 + b;
-					ofs = 1;
-					for (int i = 0; i < p; i++) ofs *= exp;
-				} else ofs = 0;
+				if (above) {
+					int p = (px + w - 1 - x) * nb / w + b;
+					y -= py + h / 2;
+					if (y < -ts) {
+						ofs = 1;
+						for (int i = 0; i < p; i++) ofs *= exp;
+					} else if (y >= ts) {
+						ofs = -1;
+						for (int i = 0; i < p; i++) ofs *= exp;
+					} else ofs = 0;
+				} else {
+					int pw = (hor ? w : h) / 2, p = (hor ? x - px : py + h - 1 - y) - pw;
+					if (p < -ts) {
+						p = (-p - ts) * nb / (pw - ts) * 2 + b;
+						ofs = -1;
+						for (int i = 0; i < p; i++) ofs *= exp;
+					} else if (p >= ts) {
+						p = (p - ts) * nb / (pw - ts) * 2 + b;
+						ofs = 1;
+						for (int i = 0; i < p; i++) ofs *= exp;
+					} else ofs = 0;
+				}
 			} else return true;
 			if (ofs != 0)
 				update.accept(Math.max(min, Math.min(max, get.get() + ofs)));
