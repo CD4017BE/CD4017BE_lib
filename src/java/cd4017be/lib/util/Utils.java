@@ -180,13 +180,13 @@ public class Utils {
 		if (p < 0) return "0";
 		else if (p > DecScale.length) return "" + (s == -1 ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY);
 		x *= Math.pow(0.001, p - ofsDecScale);
-		String tex = String.format("%." + n + "f", x) + DecScale[p];
+		String tex = String.format("%." + n + "f", x);
 		String ds = "" + DecimalFormatSymbols.getInstance().getDecimalSeparator();
 		if (tex.contains(ds)) {
 			while(tex.endsWith("0")) tex = tex.substring(0, tex.length() - 1);
 			if (tex.endsWith(ds)) tex = tex.substring(0, tex.length() - 1);
 		}
-		return tex;
+		return tex + DecScale[p];
 	}
 	
 	/**
