@@ -16,8 +16,6 @@ public class Script implements Module {
 	public Script(String name, HashMap<String, Function> methods, HashMap<String, Object> vars) {
 		this.fileName = name;
 		this.methods = methods;
-		Object v = vars.remove("VERSION");
-		this.version = v != null && v instanceof Double ? ((Double)v).intValue() : 0;
 		this.variables = vars;
 		for (Function f : methods.values()) f.script = this;
 	}
