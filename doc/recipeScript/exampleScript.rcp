@@ -1,0 +1,82 @@
+!this is a comment and will be ignored by the compiler.
+
+myGlobalVar = "init value"; !defines a global variable, initialized with a string value.
+
+!this function is called during 'pre-init' mod loading phase
+PRE_INIT() {
+	myGlobalVar = "different"; !global variables also can be manipulated
+	anotherGlobalVar = 256; !or created during execution
+	
+	Loc id = 1024, name = "test"; !defines local variables.
+
+	add("item", id, name); !register a new crafting material item
+	
+	Loc item = it("cd4017be_lib:m", 1, 1024); !creating an itemstack with: id, amount, metadata
+	item = it("m.test"); !or use the shortcut version for items owned by this mod  
+	
+	Loc oreName = [name, "Ore", "Entry"]$; !string concatenation
+	add("ore", oreName, item); !register our new item with an OreDictionary entry
+	
+	Loc a = 5 * 22 + 17; !you can also calculate here (with double precision floating point numbers)
+	Loc text = $ "5 * 22 + 17 = %.0f" a; !string formatting (only accepts format string literal followed by one argument)
+	print(text); !write a message to the console (usually for debugging)
+}
+
+!this function is called during 'init' mod loading phase
+INIT() {
+	Loc testItem = it("m.test");
+	{ !local variables only exist within the {} brackets they are defined
+		Loc array = ["cobblestone", "dirt", "gravel", "sand"]; !array creation
+		
+		for(element : array) { !iterating over an array (element acts as local variable)
+			element = it(["minecraft:", element]$); !manipulating the array elements
+		}
+		Loc n = #array; !array length
+		for(i : n) { !iterate i from 0 (inclusive) to n (exclusive)
+			Loc ingred0 = array:i, !access elements using indices
+				ingred1 = "ingotIron", !ingredients can be either itemstacks or oredictionary names
+				result = testItem,
+				pattern = "010/ 0 / 0 "; !shaped recipe pattern: '0'-'8'= ingredient argument 0-8, '/'= next line
+			add("shaped", result, pattern, ingred0, ingred1); !create a shaped crafting recipe
+		}
+	}
+	!The whole thing more compact:
+	for (ingred : ["cobblestone", "dirt", "gravel", "sand"]) {
+		add("shaped", testItem, "010/ 0 / 0 ", it(["minecraft:", ingred]$), "ingotIron");
+	}
+	
+	add("shapeless", it("minecraft:sand", 2), it("minecraft:dirt", 6)) !create a shapeless crafting recipe: 6x dirt -> 2x sand
+	add("smelt", testItem, it("minecraft:coal")); !create smelting recipe: testItem -> 1x coal
+	add("fuel", it("minecraft:diamond"), 100000); !register diamonds as furnace fuel with 100000 burn ticks
+	
+	Loc blocksPerVein = 4, veinsPerChunk = 1;
+	Loc heights = [5, 32, 128]#; !nummeric vector with: min height, highest density height, max height
+	add("worldgen", "minecraft:netherack", it("minecraft:diamond_block", blocksPerVein), veinsPerChunk, heights); !create worldgen for diamond blocks in the nether
+	
+	Loc emptyContainer = nil; !nil means 'nothing' (equivalent to null in java)
+	add("fluidCont", fl("lava", 666), testItem, emptyContainer); !register testItem as filled fluid container for 666mB lava
+}
+
+!this function is called during 'post-init' mod loading phase
+POST_INIT() {
+	!condition based recipes
+	
+	if(hasmod("Automation")) { !add an advaced furnace recipe only if Inductive Automation is installed
+		add("advFurn", [it("minecraft:cobblestone", 32), fl("lava", 500)], [it("minecraft:stone", 64)], 4000); !32x cobblestone + 500mB lava -> 64x stone using 4000kJ energy
+	}
+	
+	if(hasfl("biomass")) { !regsiter some fluid container pair only if the fluid 'biomass' exists
+		add("fluidCont", fl("biomass", 1000), it("minecraft:grass"), it("minecraft:sand"));
+	}
+	
+	if(hasit("ore:steel")) { !create a steel recipe only if there is al least one item registered for it in OreDictionary
+		add("shapeless", it("ore:steel"), "ingotIron", it("minecraft:coal", 1, 32767)); !ore:steel picks the first item registered as steel, and metadata 32767 means accept any metadata 
+	}
+	
+	!adding recipes for all ingot types to craft them into their dust using fancy regular expressions
+	for(type : listore("ingot\\w+")) {!iterate over all oredictionary entries matching the regular expression
+		Loc dst = ["ore:", repl(type, "ingot(\\w+)", "dust$1")]$; !convert the entry name using regular expressions again
+		if (hasit(dst)) {add("shaped", it(dst), "01", it(["ore:", type]$), it("minecraft:flint"));} !if new entry exists create a recipe
+	}
+	!(backslashes must be doubled because they are also escape characters)
+}
