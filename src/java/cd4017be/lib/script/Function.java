@@ -6,6 +6,9 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
+import java.util.function.Predicate;
+
 import javax.script.ScriptException;
 
 import cd4017be.lib.util.Stack;
@@ -442,11 +445,152 @@ public class Function {
 			public void eval(ByteBuffer code, Stack<Object> stack, Script cont) throws Exception {
 				stack.setPos(code.get());
 			}
+		}, iterate(-1) {
+			@Override
+			public void eval(ByteBuffer code, Stack<Object> stack, Script cont) throws Exception {
+				Object arr = stack.get();
+				Iterator it;
+				if (arr instanceof Iterator) it = (Iterator)arr;
+				else if (arr instanceof Object[]) stack.set(it = new ArrayIterator((Object[])arr));
+				else if (arr instanceof double[]) stack.set(it = new VectIterator((double[])arr));
+				else stack.set(it = new NumIterator((Double)arr));
+				int p = code.getShort() & 0xffff;
+				if (it.next()) {
+					stack.add(it.get());
+				} else {
+					stack.rem();
+					code.position(p);
+				}
+			}
+		}, end(0) {
+			@Override
+			public void eval(ByteBuffer code, Stack<Object> stack, Script cont) throws Exception {
+				stack.setPos(code.get());
+				Object val = stack.rem();
+				Iterator it = (Iterator)stack.get();
+				it.set(val);
+				code.position(code.getShort() & 0xffff);
+			}
 		};
 		public final int stack;
 		private Operator(int stack) {this.stack = stack;}
 		public abstract void eval(ByteBuffer code, Stack<Object> stack, Script cont) throws Exception;
 		public static final Operator[] operators = values();
+	}
+
+	public interface Iterator {
+		public Object get();
+		public void set(Object o);
+		public boolean next();
+		public void reset();
+	}
+
+	private static class NumIterator implements Iterator {
+		public NumIterator(double max) {this.max = max; idx = -1;}
+		private final double max;
+		private double idx;
+		@Override
+		public Object get() {
+			return idx;
+		}
+		@Override
+		public void set(Object o) {
+			idx = (Double)o;
+		}
+		@Override
+		public boolean next() {
+			return ++idx < max;
+		}
+		@Override
+		public void reset() {
+			idx = -1;
+		}
+	}
+
+	private static class VectIterator implements Iterator {
+		public VectIterator(double[] vec) {this.vec = vec; idx = -1;}
+		private final double[] vec;
+		private int idx;
+		@Override
+		public Object get() {
+			return vec[idx];
+		}
+		@Override
+		public void set(Object o) {
+			vec[idx] = (Double)o;
+		}
+		@Override
+		public boolean next() {
+			return ++idx < vec.length;
+		}
+		@Override
+		public void reset() {
+			idx = -1;
+		}
+	}
+
+	public static class ArrayIterator implements Iterator {
+		public ArrayIterator(Object[] arr) {this.arr = arr; idx = -1;}
+		private final Object[] arr;
+		private int idx;
+		@Override
+		public Object get() {
+			return arr[idx];
+		}
+		@Override
+		public void set(Object o) {
+			arr[idx] = o;
+		}
+		@Override
+		public boolean next() {
+			return ++idx < arr.length;
+		}
+		@Override
+		public void reset() {
+			idx = -1;
+		}
+	}
+
+	public static class ListIterator<T> implements Iterator {
+		public ListIterator(List<T> arr) {this.arr = arr; idx = -1;}
+		private final List<T> arr;
+		private int idx;
+		@Override
+		public Object get() {
+			return arr.get(idx);
+		}
+		@SuppressWarnings("unchecked")
+		@Override
+		public void set(Object o) {
+			arr.set(idx, (T)o);
+		}
+		@Override
+		public boolean next() {
+			return ++idx < arr.size();
+		}
+		@Override
+		public void reset() {
+			idx = -1;
+		}
+	}
+
+	public static class FilteredIterator implements Iterator {
+		public FilteredIterator(Iterator it, Predicate<Object> key) {this.it = it; this.key = key;}
+		private final Iterator it;
+		private final Predicate<Object> key;
+		@Override
+		public Object get() {return it.get();}
+		@Override
+		public void set(Object o) {it.set(o);}
+		@Override
+		public boolean next() {
+			while(it.next())
+				if (key.test(it.get()))
+					return true;
+			return false;
+		}
+		@Override
+		public void reset() {it.reset();}
 	}
 
 }

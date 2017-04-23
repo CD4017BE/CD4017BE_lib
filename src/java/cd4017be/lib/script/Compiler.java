@@ -10,7 +10,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
+
 import javax.script.ScriptException;
+
 import cd4017be.lib.script.Function.Operator;
 
 public class Compiler {
@@ -182,9 +184,15 @@ public class Compiler {
 	public Script compile() throws ScriptException {
 		while (code.hasNext()) {
 			Comp c = code.next();
-			check(c, Type.id);
-			if (((Identifier)c).com) throw new ScriptException("invalid identifier", fileName, c.line, c.col);
 			try {
+				if (c.type == Type.B_block) {
+					Function func = compFunc(fileName, true);
+					func.script = new Script(fileName, new HashMap<String, Function>(), globals);
+					func.apply(new Parameters());
+					continue;
+				}
+				check(c, Type.id);
+				if (((Identifier)c).com) throw new ScriptException("invalid identifier", fileName, c.line, c.col);
 				String name = ((Identifier)c).id;
 				Comp c1 = code.next();
 				if (c1.type == Type.op_asn) {
@@ -193,29 +201,35 @@ public class Compiler {
 					globals.put(name, ((ConstValue)c1).val);
 					check(code.next(), Type.sep_cmd);
 				} else if (c1.type == Type.B_par) {
-					functions.put(name, compFunc(fileName + "." + name));
+					functions.put(name, compFunc(fileName + "." + name, false));
 				} else throw new ScriptException("exp. assignment or function header", fileName, c1.line, c1.col);
 			} catch(NoSuchElementException e) {
 				throw new ScriptException("unexpected end of file!", fileName, c.line, c.col);
 			}
 		}
-		return new Script(fileName, functions, globals);
+		Script script = new Script(fileName, functions, globals);
+		Object v = globals.remove("VERSION");
+		if (v != null && v instanceof Double) script.version = ((Double)v).intValue();
+		return script;
 	}
 
-	private Function compFunc(String name) throws ScriptException {
+	private Function compFunc(String name, boolean root) throws ScriptException {
 		State state = new State(name);
-		while(true) {
-			Comp id = code.next();
-			if (id.type == Type.E_par) break;
-			check(id, Type.id);
-			if (((Identifier)id).com) state.err("invalid identifier", id);
-			state.regVar(((Identifier)id).id);
-			Comp sep = code.next();
-			if (sep.type == Type.E_par) break;
-			check(sep, Type.sep_par);
+		if (root) state.lineOfs = 0;
+		else {
+			while(true) {
+				Comp id = code.next();
+				if (id.type == Type.E_par) break;
+				check(id, Type.id);
+				if (((Identifier)id).com) state.err("invalid identifier", id);
+				state.regVar(((Identifier)id).id);
+				Comp sep = code.next();
+				if (sep.type == Type.E_par) break;
+				check(sep, Type.sep_par);
+			}
+			Comp c = state.next(Type.B_block);
+			state.lineOfs = c.line;
 		}
-		Comp c = state.next(Type.B_block);
-		state.lineOfs = c.line;
 		int param = state.lastId;
 		buffer.rewind();
 		boolean st = compBlock(state);
@@ -361,34 +375,41 @@ public class Compiler {
 				}
 			} break;
 			case K_for: {
+				//state backup
 				ArrayList<Integer> breakPos = state.breakPos;
 				state.breakPos = new ArrayList<Integer>();
 				ArrayList<Integer> continuePos = state.continuePos;
 				state.continuePos = new ArrayList<Integer>();
+				//header
 				state.next(Type.B_par);
-				int p = buffer.position();
+				Identifier c1 = (Identifier)state.next(Type.id);
+				if (c1.com) throw state.err("invalid identifier", c1);
+				state.next(Type.op_ind);
 				check(eval(state, null), Type.E_par);
-				state.op(Operator.goifn, state.next(Type.B_block));
+				state.lastId++;
+				state.regVar(c1.id);
+				int p = buffer.position();
+				state.op(Operator.iterate, state.next(Type.B_block));
 				int p1 = buffer.position();
 				buffer.position(p1 + 2);
+				//body
 				boolean st = compBlock(state);
-				if (!state.continuePos.isEmpty()) {
-					if (!st) {
-						state.op(Operator.clear, null);
-						buffer.put((byte)(state.lastId - 1));
-					}
-					int p2 = buffer.position() - 2;
-					for (int i : state.continuePos) buffer.putShort(i, (short)p2);
-				}
-				state.op(Operator.go, null);
-				buffer.putShort((short)p);
 				int p2 = buffer.position();
+				if (st) buffer.position(p2 -= 2);
+				for (int i : state.continuePos) buffer.putShort(i, (short)p2);
+				state.op(Operator.end, null);
+				buffer.put((byte)(state.lastId - 1));
+				buffer.putShort((short)p);
+				state.varIds.remove(c1.id);
+				state.lastId -= 2;
+				p2 = buffer.position();
 				buffer.putShort(p1, (short)p2);
 				if (!state.breakPos.isEmpty()) {
 					state.op(Operator.clear, null);
 					buffer.put((byte)(state.lastId - 1));
 					for (int i : state.breakPos) buffer.putShort(i, (short)p2);
 				}
+				//reset state
 				state.breakPos = breakPos;
 				state.continuePos = continuePos;
 			} break;
@@ -661,7 +682,9 @@ public class Compiler {
 
 	private static class Identifier extends Comp {
 		Identifier(String s, boolean com) {super(Type.id); this.com = com; this.id = s;}
+		/**is combined (containing '.') */
 		boolean com;
+		/**identifier string */
 		String id;
 	}
 

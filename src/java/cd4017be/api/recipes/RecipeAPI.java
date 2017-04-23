@@ -2,15 +2,27 @@ package cd4017be.api.recipes;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.ConcurrentModificationException;
 import java.util.HashMap;
+import java.util.List;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 import cd4017be.api.recipes.AutomationRecipes.*;
 import cd4017be.lib.Lib;
 import cd4017be.lib.NBTRecipe;
+import cd4017be.lib.script.Function.Iterator;
+import cd4017be.lib.script.Function.ArrayIterator;
+import cd4017be.lib.script.Function.ListIterator;
+import cd4017be.lib.script.Function.FilteredIterator;
 import cd4017be.lib.script.Parameters;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.crafting.CraftingManager;
+import net.minecraft.item.crafting.IRecipe;
+import net.minecraft.item.crafting.ShapedRecipes;
+import net.minecraft.item.crafting.ShapelessRecipes;
 import net.minecraftforge.fluids.FluidContainerRegistry;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fml.common.IFuelHandler;
@@ -27,10 +39,17 @@ public class RecipeAPI {
 		public void addRecipe(Parameters param);
 	}
 
-	public static HashMap<String, IRecipeHandler> Handlers;
+	public static interface IRecipeList {
+		public Iterator list(Parameters param);
+	}
+
+	public static final HashMap<String, IRecipeHandler> Handlers;
+	public static final HashMap<String, IRecipeList> Lists;
 
 	static {
 		Handlers = new HashMap<String, IRecipeHandler>();
+		Lists = new HashMap<String, IRecipeList>();
+		
 		Handlers.put("shaped", (p) -> {
 			String[] pattern = p.getString(2).split("/");
 			int n = p.param.length - 3;
@@ -58,6 +77,9 @@ public class RecipeAPI {
 			for (int i = 2; i < p.param.length; i++)
 				OreDictionary.registerOre(name, p.get(i, ItemStack.class));
 		});
+		Lists.put("ore", (p) -> new FilteredIterator(new ArrayIterator(OreDictionary.getOreNames()), new RegexFilter(p.getString(1))));
+		Lists.put("craftIng", (p) -> new CraftingRecipeIterator(getFilter(p.get(1)), false));
+		Lists.put("craftRes", (p) -> new CraftingRecipeIterator(getFilter(p.get(1)), true));
 		Handlers.put("shapeless", (p) -> GameRegistry.addRecipe(new ShapelessOreRecipe(p.get(1, ItemStack.class), Arrays.copyOfRange(p.param, 2, p.param.length))));
 		Handlers.put("smelt", (p) -> GameRegistry.addSmelting(p.get(1, ItemStack.class), p.get(2, ItemStack.class), p.param.length > 3 ? (float)p.getNumber(3) : 0F));
 		Handlers.put("fuel", new FuelHandler());
@@ -108,6 +130,88 @@ public class RecipeAPI {
 			Integer val = fuelList.get(key(fuel));
 			return val == null ? 0 : val;
 		}
+	}
+
+	public static Predicate<Object> getFilter(Object o) {
+		if (o instanceof String) return new RegexFilter((String)o);
+		else if (o instanceof ItemStack) return (p) -> p instanceof ItemStack && ((ItemStack)o).isItemEqual((ItemStack)p);
+		else if (o instanceof FluidStack) return (p) -> p instanceof FluidStack && ((FluidStack)o).isFluidEqual((FluidStack)p);
+		else if (o == null) return (p) -> p == null;
+		else return (p) -> o.equals(p);
+	}
+
+	public static class RegexFilter implements Predicate<Object> {
+		public RegexFilter(String expr) {
+			pattern = Pattern.compile(expr);
+		}
+		private final Pattern pattern;
+		@Override
+		public boolean test(Object o) {
+			return o != null && pattern.matcher(o.toString()).matches();
+		}
+	}
+
+	private static class CraftingRecipeIterator implements Iterator {
+		private final List<IRecipe> list;
+		private final Predicate<Object> key;
+		private final boolean out;
+		private int idx;
+		private Object[] curElement;
+		private IRecipe curRecipe;
+
+		public CraftingRecipeIterator(Predicate<Object> key, boolean res) {
+			this.key = key;
+			this.list = CraftingManager.getInstance().getRecipeList();
+			this.out = res;
+			this.idx = -1;
+		}
+
+		@Override
+		public Object get() {
+			return curElement;
+		}
+
+		@Override
+		public void set(Object o) {
+			if (list.get(idx) != curRecipe) throw new ConcurrentModificationException();
+			if (o == null) list.remove(idx--);
+			else if (o == curElement && curElement[0] != curRecipe.getRecipeOutput()) {
+				if (!(curElement[0] instanceof ItemStack)) throw new IllegalArgumentException("ItemStack expected");
+				ItemStack item = (ItemStack)curElement[0];
+				//TODO create new recipe
+				list.set(idx, curRecipe);
+			}
+		}
+
+		@Override
+		public boolean next() {
+			int l = list.size();
+			while (++idx < l) {
+				curRecipe = list.get(idx);
+				ItemStack result = curRecipe.getRecipeOutput();
+				if (out && !key.test(result)) continue;
+				Iterator ingred;
+				if (curRecipe instanceof ShapedOreRecipe) ingred = new ArrayIterator(((ShapedOreRecipe)curRecipe).getInput());
+				else if (curRecipe instanceof ShapedRecipes) ingred = new ArrayIterator(((ShapedRecipes)curRecipe).recipeItems);
+				else if (curRecipe instanceof ShapelessOreRecipe) ingred = new ListIterator<Object>(((ShapelessOreRecipe)curRecipe).getInput());
+				else if (curRecipe instanceof ShapelessRecipes) ingred = new ListIterator<ItemStack>(((ShapelessRecipes)curRecipe).recipeItems);
+				else continue;
+				if (!out) {
+					ingred = new FilteredIterator(ingred, key);
+					if (ingred.next()) ingred.reset();
+					else continue;
+				}
+				curElement = new Object[]{result, ingred};
+				return true;
+			}
+			return false;
+		}
+
+		@Override
+		public void reset() {
+			idx = -1;
+		}
+
 	}
 
 	public static void createOreDictEntries(Class<?> c, String name) {
