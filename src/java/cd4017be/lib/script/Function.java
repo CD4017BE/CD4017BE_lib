@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
+import java.util.function.Predicate;
 
 import javax.script.ScriptException;
 
@@ -480,6 +482,7 @@ public class Function {
 		public Object get();
 		public void set(Object o);
 		public boolean next();
+		public void reset();
 	}
 
 	private static class NumIterator implements Iterator {
@@ -497,6 +500,10 @@ public class Function {
 		@Override
 		public boolean next() {
 			return ++idx < max;
+		}
+		@Override
+		public void reset() {
+			idx = -1;
 		}
 	}
 
@@ -516,9 +523,13 @@ public class Function {
 		public boolean next() {
 			return ++idx < vec.length;
 		}
+		@Override
+		public void reset() {
+			idx = -1;
+		}
 	}
 
-	private static class ArrayIterator implements Iterator {
+	public static class ArrayIterator implements Iterator {
 		public ArrayIterator(Object[] arr) {this.arr = arr; idx = -1;}
 		private final Object[] arr;
 		private int idx;
@@ -534,6 +545,52 @@ public class Function {
 		public boolean next() {
 			return ++idx < arr.length;
 		}
+		@Override
+		public void reset() {
+			idx = -1;
+		}
+	}
+
+	public static class ListIterator<T> implements Iterator {
+		public ListIterator(List<T> arr) {this.arr = arr; idx = -1;}
+		private final List<T> arr;
+		private int idx;
+		@Override
+		public Object get() {
+			return arr.get(idx);
+		}
+		@SuppressWarnings("unchecked")
+		@Override
+		public void set(Object o) {
+			arr.set(idx, (T)o);
+		}
+		@Override
+		public boolean next() {
+			return ++idx < arr.size();
+		}
+		@Override
+		public void reset() {
+			idx = -1;
+		}
+	}
+
+	public static class FilteredIterator implements Iterator {
+		public FilteredIterator(Iterator it, Predicate<Object> key) {this.it = it; this.key = key;}
+		private final Iterator it;
+		private final Predicate<Object> key;
+		@Override
+		public Object get() {return it.get();}
+		@Override
+		public void set(Object o) {it.set(o);}
+		@Override
+		public boolean next() {
+			while(it.next())
+				if (key.test(it.get()))
+					return true;
+			return false;
+		}
+		@Override
+		public void reset() {it.reset();}
 	}
 
 }
