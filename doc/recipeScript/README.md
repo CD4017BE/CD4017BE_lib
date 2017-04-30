@@ -31,6 +31,9 @@ Console output: `print(text)`
 *   OreDictStack: creation = `ore(name) ore(name, amount)`, list items [array] = `ores(name)`
 *   OreDictionary iterator: usage = `for(entryName : listore(regexFilter)){...}`
 *   Recipe list iterator: usage = `for(recipe : list(handlerName, regexFilter)){...}`, recipe removal: `for(recipe : ...) {recipe = nil;}`
+*   ItemStack matcher: usage = `something == isit(compareItem)`, a damage value of 32768 will ignore damage, a stack size <= 0 will ignore stack size, nbt is always ignored
+*   FluidStack matcher: usage = `something == isfl(compareFluid)`, an amount <= 0 will ignore amount, nbt is always ignored
+*   OreDictStack already has a built in matcher so you can just do `something == compareOre`
 
 Checking if a mod is loaded: `hasmod(modName)`
 
@@ -68,7 +71,8 @@ By default there is a script file for all installed mods using this feature. If 
 
 Optionally you can create an additional script file named 'core.rcp' for your own purposes.
 
-Scripts are executed via the `PRE_INIT()`, `INIT()` and `POST_INIT()` functions that run during the different mod initialization phases. These functions can be defined in all script files that are registered by the individual mods (including core.cfg). Other arbitrary script files you might add won't be executed automatically, but you can call their functions from within another script:
+All global variable assignments outside of functions are already done during compile time. In case these assignments require actual code and not just directly assign values by literals, these have to be put within `{...}` brackets. You can even put complicated code in there but no function calls are allowed.
+Scripts are later executed via the `PRE_INIT()`, `INIT()` and `POST_INIT()` functions that run during the different mod initialization phases. These functions can be defined in all script files that are registered by the individual mods (including core.cfg). Other arbitrary script files you might add won't be executed automatically, but you can call their functions from within another script:
 
 	INIT() {
 		...
@@ -93,7 +97,9 @@ This makes that item variant show up in this mod's Crafting Materials creative t
 
 Also check out the ExampleResourcePack.
 
-**Using script variables in tool tips:** **(not available yet!)**  
+**Using script variables in tool tips:**
 Simply put `\<varName>` into a tool tip entry and it will be replaced by the value of the global variable 'varName' in your script as string (with some fancy magnitude order formatting for numbers).
 If that variable is an array you can also use `\<varName:index>` to get the array element at 'index'.  
 *This feature is mainly used internally to make something like machine power consumption show accurate values in tool tips based on config settings*
+
+Note: If your .lang file uses `#PARSE_ESCAPES` in its first line then you have to double the backslashes (doing something like `\\<varName>` instead).

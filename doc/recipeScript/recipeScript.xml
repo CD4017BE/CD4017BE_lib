@@ -27,7 +27,7 @@
             <Keywords name="Keywords1">NaN nil true false</Keywords>
             <Keywords name="Keywords2">fail if else for continue break return Loc</Keywords>
             <Keywords name="Keywords3">print time repl</Keywords>
-            <Keywords name="Keywords4">it fl ore ores hasit hasfl hasmod add listore</Keywords>
+            <Keywords name="Keywords4">it fl ore ores hasit hasfl hasmod add listore list isit isfl</Keywords>
             <Keywords name="Keywords5">PRE_INIT INIT POST_INIT VERSION</Keywords>
             <Keywords name="Keywords6"></Keywords>
             <Keywords name="Keywords7"></Keywords>
