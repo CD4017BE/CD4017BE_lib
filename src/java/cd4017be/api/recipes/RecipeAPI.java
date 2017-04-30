@@ -16,6 +16,7 @@ import cd4017be.lib.script.Function.ArrayIterator;
 import cd4017be.lib.script.Function.ListIterator;
 import cd4017be.lib.script.Function.FilteredIterator;
 import cd4017be.lib.script.Parameters;
+import cd4017be.lib.util.OreDictStack;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -134,9 +135,19 @@ public class RecipeAPI {
 
 	public static Predicate<Object> getFilter(Object o) {
 		if (o instanceof String) return new RegexFilter((String)o);
-		else if (o instanceof ItemStack) return (p) -> p instanceof ItemStack && ((ItemStack)o).isItemEqual((ItemStack)p);
-		else if (o instanceof FluidStack) return (p) -> p instanceof FluidStack && ((FluidStack)o).isFluidEqual((FluidStack)p);
-		else if (o == null) return (p) -> p == null;
+		else if (o instanceof ItemStack) {
+			final ItemStack item = (ItemStack)o;
+			return (p) -> p instanceof ItemStack && item.isItemEqual((ItemStack)p);
+		} else if (o instanceof FluidStack) {
+			final FluidStack fluid = (FluidStack)o;
+			return (p) -> p instanceof FluidStack && fluid.isFluidEqual((FluidStack)p);
+		} else if (o instanceof OreDictStack) {
+			final OreDictStack ore = (OreDictStack)o;
+			return (p) ->
+				p instanceof OreDictStack ? ore.ID == ((OreDictStack)p).ID :
+				p instanceof String ? ore.id.equals((String)p) :
+				p instanceof ItemStack && ore.isEqual((ItemStack)p);
+		} else if (o == null) return (p) -> p == null;
 		else return (p) -> o.equals(p);
 	}
 
@@ -154,7 +165,7 @@ public class RecipeAPI {
 	private static class CraftingRecipeIterator implements Iterator {
 		private final List<IRecipe> list;
 		private final Predicate<Object> key;
-		private final boolean out;
+		private final boolean in;
 		private int idx;
 		private Object[] curElement;
 		private IRecipe curRecipe;
@@ -162,7 +173,7 @@ public class RecipeAPI {
 		public CraftingRecipeIterator(Predicate<Object> key, boolean res) {
 			this.key = key;
 			this.list = CraftingManager.getInstance().getRecipeList();
-			this.out = res;
+			this.in = !res;
 			this.idx = -1;
 		}
 
@@ -178,8 +189,13 @@ public class RecipeAPI {
 			else if (o == curElement && curElement[0] != curRecipe.getRecipeOutput()) {
 				if (!(curElement[0] instanceof ItemStack)) throw new IllegalArgumentException("ItemStack expected");
 				ItemStack item = (ItemStack)curElement[0];
-				//TODO create new recipe
-				list.set(idx, curRecipe);
+				ItemStack res = curRecipe.getRecipeOutput();
+				if (res != null) {
+					res.setItem(item.getItem());
+					res.setItemDamage(item.getItemDamage());
+					res.setTagCompound(item.getTagCompound());
+					res.stackSize = item.stackSize;
+				}
 			}
 		}
 
@@ -189,15 +205,19 @@ public class RecipeAPI {
 			while (++idx < l) {
 				curRecipe = list.get(idx);
 				ItemStack result = curRecipe.getRecipeOutput();
-				if (out && !key.test(result)) continue;
+				if (!(in || key.test(result))) continue;
 				Iterator ingred;
-				if (curRecipe instanceof ShapedOreRecipe) ingred = new ArrayIterator(((ShapedOreRecipe)curRecipe).getInput());
-				else if (curRecipe instanceof ShapedRecipes) ingred = new ArrayIterator(((ShapedRecipes)curRecipe).recipeItems);
-				else if (curRecipe instanceof ShapelessOreRecipe) ingred = new ListIterator<Object>(((ShapelessOreRecipe)curRecipe).getInput());
-				else if (curRecipe instanceof ShapelessRecipes) ingred = new ListIterator<ItemStack>(((ShapelessRecipes)curRecipe).recipeItems);
+				if (curRecipe instanceof ShapedOreRecipe) ingred = new ShapedIngredients((ShapedOreRecipe)curRecipe, in ? key : null);
+				else if (curRecipe instanceof ShapelessOreRecipe) ingred = new ShapelessIngredients((ShapelessOreRecipe)curRecipe, in ? key : null);
+				else if (curRecipe instanceof ShapedRecipes) {
+					ingred = new ArrayIterator(((ShapedRecipes)curRecipe).recipeItems);
+					if (in) ingred = new FilteredIterator(ingred, key);
+				} else if (curRecipe instanceof ShapelessRecipes) {
+					ingred = new ListIterator<ItemStack>(((ShapelessRecipes)curRecipe).recipeItems);
+					if (in) ingred = new FilteredIterator(ingred, key);
+				}
 				else continue;
-				if (!out) {
-					ingred = new FilteredIterator(ingred, key);
+				if (in) {
 					if (ingred.next()) ingred.reset();
 					else continue;
 				}
@@ -212,6 +232,95 @@ public class RecipeAPI {
 			idx = -1;
 		}
 
+	}
+
+	private static class ShapelessIngredients extends ListIterator<Object> {
+		private final Predicate<Object> key;
+		private Object curElement;
+
+		public ShapelessIngredients(ShapelessOreRecipe rcp, Predicate<Object> key) {
+			super(rcp.getInput());
+			this.key = key;
+		}
+
+		@Override
+		public Object get() {
+			return curElement;
+		}
+
+		@Override
+		public void set(Object o) {
+			if (o == curElement) return;
+			if (o instanceof ItemStack) arr.set(idx, o);
+			else if (o instanceof OreDictStack) arr.set(idx, OreDictionary.getOres(((OreDictStack)o).id));
+			else if (o == null) arr.remove(idx--);
+			else throw new IllegalArgumentException("exp. ItemStack or OreDictStack");
+		}
+
+		@Override
+		public boolean next() {
+			while (++idx < arr.size()) {
+				curElement = arr.get(idx);
+				if (curElement instanceof List) {
+					List<?> list = (List<?>)curElement;
+					if (list.isEmpty()) continue;
+					if (key == null) {
+						curElement = list.get(0);
+						return true;
+					}
+					for (Object o : list)
+						if (key.test(o)) {
+							curElement = o;
+							return true;
+						}
+				} else if (key == null || key.test(curElement)) return true;
+			}
+			return false;
+		}
+	}
+
+	private static class ShapedIngredients extends ArrayIterator {
+		private final Predicate<Object> key;
+		private Object curElement;
+
+		public ShapedIngredients(ShapedOreRecipe rcp, Predicate<Object> key) {
+			super(rcp.getInput());
+			this.key = key;
+		}
+
+		@Override
+		public Object get() {
+			return curElement;
+		}
+
+		@Override
+		public void set(Object o) {
+			if (o == curElement) return;
+			if (o == null || o instanceof ItemStack) arr[idx] = o;
+			else if (o instanceof OreDictStack) arr[idx] = OreDictionary.getOres(((OreDictStack)o).id);
+			else throw new IllegalArgumentException("exp. ItemStack or OreDictStack");
+		}
+
+		@Override
+		public boolean next() {
+			while (++idx < arr.length) {
+				curElement = arr[idx];
+				if (curElement instanceof List) {
+					List<?> list = (List<?>)curElement;
+					if (list.isEmpty()) continue;
+					if (key == null) {
+						curElement = list.get(0);
+						return true;
+					}
+					for (Object o : list)
+						if (key.test(o)) {
+							curElement = o;
+							return true;
+						}
+				} else if (key == null || key.test(curElement)) return true;
+			}
+			return false;
+		}
 	}
 
 	public static void createOreDictEntries(Class<?> c, String name) {

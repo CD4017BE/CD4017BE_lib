@@ -72,5 +72,23 @@ public class OreDictStack {
 	public OreDictStack copy() {
 		return new OreDictStack(ID, stacksize);
 	}
-	
+
+	/**
+	 * Symmetric and transitive conditions only matched if given obj is a OreDictStack!<br>
+	 * Otherwise also checks match against ItemStack and String objects
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == this) return true;
+		else if (obj instanceof OreDictStack) {
+			OreDictStack stack = (OreDictStack)obj;
+			return stack.ID == ID && stack.stacksize == stacksize;
+		} else if (obj instanceof ItemStack) {
+			ItemStack stack = (ItemStack)obj;
+			return isEqual(stack) && stack.stackSize == stacksize;
+		} else if (obj instanceof String) {
+			return id.equals(obj);
+		} else return false;
+	}
+
 }

@@ -367,13 +367,13 @@ public class Function {
 			@Override
 			public void eval(ByteBuffer code, Stack<Object> stack, Script cont) throws Exception {
 				Object b = stack.rem(), a = stack.rem();
-				stack.add(a == null ? b == null : a.equals(b));
+				stack.add(a == null ? b == null : b.equals(a));
 			}
 		}, neq(-1) {
 			@Override
 			public void eval(ByteBuffer code, Stack<Object> stack, Script cont) throws Exception {
 				Object b = stack.rem(), a = stack.rem();
-				stack.add(a == null ? b != null : !a.equals(b));
+				stack.add(a == null ? b != null : !b.equals(a));
 			}
 		}, ls(-1) {
 			@Override
@@ -531,8 +531,8 @@ public class Function {
 
 	public static class ArrayIterator implements Iterator {
 		public ArrayIterator(Object[] arr) {this.arr = arr; idx = -1;}
-		private final Object[] arr;
-		private int idx;
+		protected final Object[] arr;
+		protected int idx;
 		@Override
 		public Object get() {
 			return arr[idx];
@@ -553,8 +553,8 @@ public class Function {
 
 	public static class ListIterator<T> implements Iterator {
 		public ListIterator(List<T> arr) {this.arr = arr; idx = -1;}
-		private final List<T> arr;
-		private int idx;
+		protected final List<T> arr;
+		protected int idx;
 		@Override
 		public Object get() {
 			return arr.get(idx);
