@@ -1,7 +1,7 @@
 package cd4017be.lib.Gui;
 
 import net.minecraft.item.ItemStack;
-import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
+import net.minecraftforge.fluids.FluidUtil;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.SlotItemHandler;
 
@@ -17,7 +17,7 @@ public class SlotTank extends SlotItemHandler {
 
 	@Override
 	public boolean isItemValid(ItemStack item) {
-		return item.hasCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, null);
+		return FluidUtil.getFluidHandler(item) != null;
 	}
 
 }
