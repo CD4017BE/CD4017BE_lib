@@ -74,7 +74,7 @@ public class ConfigurationFile
 		return s;
 	}
 	
-	private final HashMap<String, Object> variables;
+	public final HashMap<String, Object> variables;
 	
 	public ConfigurationFile()
 	{

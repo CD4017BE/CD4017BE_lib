@@ -48,6 +48,7 @@ public class Lib {
 	@Mod.EventHandler
 	public void postInit(FMLPostInitializationEvent event) {
 		RecipeScriptContext.instance.runAll("POST_INIT");
+		TooltipInfo.addScriptVariables();
 		if (event.getSide().isClient()) clientPostInit();
 	}
 

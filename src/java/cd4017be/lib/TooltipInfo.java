@@ -1,19 +1,26 @@
 package cd4017be.lib;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.IllegalFormatException;
+import java.util.Map.Entry;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.translation.I18n;
+import cd4017be.api.recipes.RecipeScriptContext;
+import cd4017be.lib.script.Script;
+import cd4017be.lib.script.ScriptFiles.Version;
 import cd4017be.lib.util.Utils;
 
 /**
  *
  * @author CD4017BE
  */
-public class TooltipInfo 
-{
+public class TooltipInfo {
+
 	private static String ShiftHint, AltHint;
 	private static String FluidDispUnit;
 	private static String EnergyDispUnit;
@@ -43,7 +50,7 @@ public class TooltipInfo
 		}
 		return FluidDispUnit;
 	}
-	
+
 	public static String getEnergyUnit() {
 		if (EnergyDispUnit == null){
 			EnergyDispUnit = I18n.translateToLocal("cd4017be.energyUnit");
@@ -51,7 +58,7 @@ public class TooltipInfo
 		}
 		return EnergyDispUnit;
 	}
-	
+
 	public static String getPowerUnit() {
 		if (PowerDispUnit == null){
 			PowerDispUnit = I18n.translateToLocal("cd4017be.powerUnit");
@@ -69,47 +76,101 @@ public class TooltipInfo
 		}
 		return String.format(LinkPosFormat, pos.getX(), pos.getY(), pos.getZ(), side != null ? sides[side.ordinal()] : "");
 	}
-	
-	public static void addConfigReference(ConfigurationFile cfg)
-	{
-		configurations.add(cfg);
-	}
-	
-	private static String formatReference(String id, ConfigurationFile cfg)
-	{
-		if (id.startsWith("A")) {
-			try {
-				int p = id.indexOf(":");
-				String k = id.substring(3, p);
-				int idx = Integer.parseInt(id.substring(p + 1));
-				if (id.startsWith("AB.")) return Boolean.toString(cfg.getBooleanArray(k)[idx]);
-				else if (id.startsWith("AW.")) return Byte.toString(cfg.getByteArray(k)[idx]);
-				else if (id.startsWith("AS.")) return Short.toString(cfg.getShortArray(k)[idx]);
-				else if (id.startsWith("AI.")) return Integer.toString(cfg.getIntArray(k)[idx]);
-				else if (id.startsWith("AL.")) return Long.toString(cfg.getLongArray(k)[idx]);
-				else if (id.startsWith("AF.")) return Utils.formatNumber(cfg.getFloatArray(k)[idx], 3, 0);
-				else if (id.startsWith("AD.")) return Utils.formatNumber(cfg.getDoubleArray(k)[idx], 3, 0);
-				else if (id.startsWith("AT.")) return cfg.getStringArray(k)[idx];
-			} catch(Exception e) {}
-		} else {
-			String k = id.substring(2);
-			if (id.startsWith("B.")) return Boolean.toString(cfg.getBoolean(k, false));
-			else if (id.startsWith("W.")) return Byte.toString(cfg.getByte(k, (byte)0));
-			else if (id.startsWith("S.")) return Short.toString(cfg.getShort(k, (short)0));
-			else if (id.startsWith("I.")) return Integer.toString(cfg.getInt(k, 0));
-			else if (id.startsWith("L.")) return Long.toString(cfg.getLong(k, 0L));
-			else if (id.startsWith("F.")) return Utils.formatNumber(cfg.getFloat(k, 0F), 3, 0);
-			else if (id.startsWith("D.")) return Utils.formatNumber(cfg.getDouble(k, 0D), 3, 0);
-			else if (id.startsWith("T.")) return cfg.getString(k, "");
+
+	public static void addConfigReference(ConfigurationFile cfg) {
+		for (Entry<String, Object> var : cfg.variables.entrySet()) {
+			String id = var.getKey();
+			Object val = var.getValue();
+			String text;
+			switch(id.charAt(0)) {
+			case 'A':
+				switch(id.charAt(1)) {
+				case 'B': {
+					boolean[] arr = (boolean[])val;
+					for (int i = 0; i < arr.length; i++) variables.put(id + ":" + i, "" + arr[i]);
+				} break;
+				case 'W': {
+					byte[] arr = (byte[])val;
+					for (int i = 0; i < arr.length; i++) variables.put(id + ":" + i, "" + arr[i]);
+				} break;
+				case 'S': {
+					short[] arr = (short[])val;
+					for (int i = 0; i < arr.length; i++) variables.put(id + ":" + i, "" + arr[i]);
+				} break;
+				case 'I': {
+					int[] arr = (int[])val;
+					for (int i = 0; i < arr.length; i++) variables.put(id + ":" + i, "" + arr[i]);
+				} break;
+				case 'L': {
+					long[] arr = (long[])val;
+					for (int i = 0; i < arr.length; i++) variables.put(id + ":" + i, "" + arr[i]);
+				} break;
+				case 'F': {
+					float[] arr = (float[])val;
+					for (int i = 0; i < arr.length; i++)
+						variables.put(id + ":" + i, Utils.formatNumber(arr[i], 3, 0));
+				} break;
+				case 'D': {
+					double[] arr = (double[])val;
+					for (int i = 0; i < arr.length; i++)
+						variables.put(id + ":" + i, Utils.formatNumber(arr[i], 3, 0));
+				} break;
+				case 'T': {
+					String[] arr = (String[])val;
+					for (int i = 0; i < arr.length; i++) variables.put(id + ":" + i, arr[i]);
+				} break;
+				} continue;
+			case 'F': text = Utils.formatNumber((Float)val, 3, 0); break;
+			case 'D': text = Utils.formatNumber((Double)val, 3, 0); break;
+			default: text = val.toString();
+			}
+			variables.put(id, text);
 		}
-		return "";
 	}
-	
-	private static final ArrayList<ConfigurationFile> configurations = new ArrayList<ConfigurationFile>();
-	
-	public static String getLocFormat(String s)
-	{
+
+	public static void addScriptVariables() {
+		RecipeScriptContext cont = RecipeScriptContext.instance;
+		for (Version v : RecipeScriptContext.scriptRegistry) {
+			Script m = (Script)cont.modules.get(v.name);
+			if (m != null)
+				for (Entry<String, Object> var : m.variables.entrySet())
+					addVar(var.getKey(), var.getValue());
+		}
+	}
+
+	private static void addVar(String name, Object o) {
+		if (o instanceof Double) {
+			variables.put(name, Utils.formatNumber((Double)o, 4, 0));
+		} else if (o instanceof double[]) {
+			double[] arr = (double[])o;
+			for (int i = 0; i < arr.length; i++)
+				variables.put(name + ":" + i, Utils.formatNumber(arr[i], 4, 0));
+		} else if (o instanceof Object[]) {
+			Object[] arr = (Object[])o;
+			for (int i = 0; i < arr.length; i++)
+				addVar(name + ":" + i, arr[i]);
+		} else if (o instanceof ItemStack) {
+			ItemStack item = (ItemStack)o;
+			variables.put(name, (item.stackSize > 1 ? item.stackSize + "x " : "") + item.getDisplayName());
+		} else if (o != null) variables.put(name, o.toString());
+	}
+
+	private static final HashMap<String, String> variables = new HashMap<String, String>();
+	private static final Pattern varInsertion = Pattern.compile("\\\\<([\\w:]+)>");
+
+	public static String getLocFormat(String s) {
 		s = I18n.translateToLocal(s).trim().replace("\\n", "\n");
+		Matcher m = varInsertion.matcher(s);
+		String s1 = "";
+		while (m.find()) {
+			String var = variables.get(m.group(1));
+			if (var != null) {
+				s1 += s.substring(0, m.start()) + var;
+				m.reset(s = s.substring(m.end()));
+			}
+		}
+		return s1 + s;
+		/*
 		int p = 0, q, x;
 		String id, repl;
 		while ((q = s.indexOf("\\<", p)) >= p && (p = s.indexOf(">", q)) > q) {
@@ -125,10 +186,10 @@ public class TooltipInfo
 			p = q + repl.length();
 		}
 		return s;
+		*/
 	}
-	
-	public static String format(String s, Object... args)
-	{
+
+	public static String format(String s, Object... args) {
 		s = I18n.translateToLocal(s).trim().replace("\\n", "\n");
 		try {
 			return String.format(s, args);
@@ -136,5 +197,5 @@ public class TooltipInfo
 			return s + "\n" + e.toString();
 		}
 	}
-	
+
 }

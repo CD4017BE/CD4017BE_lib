@@ -23,9 +23,11 @@ import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.oredict.OreDictionary;
 import cd4017be.api.recipes.RecipeAPI.IRecipeHandler;
+import cd4017be.api.recipes.RecipeAPI.IRecipeList;
 import cd4017be.lib.BlockItemRegistry;
 import cd4017be.lib.ConfigurationFile;
 import cd4017be.lib.script.Context;
+import cd4017be.lib.script.Module;
 import cd4017be.lib.script.Parameters;
 import cd4017be.lib.script.Script;
 import cd4017be.lib.script.ScriptFiles;
@@ -110,6 +112,18 @@ public class RecipeScriptContext extends Context {
 			for (String name : OreDictionary.getOreNames())
 				if (filter.matcher(name).matches()) list.add(name);
 			return list.toArray();
+		}, LIST = (p) -> {
+			IRecipeList l = RecipeAPI.Lists.get(p.getString(0));
+			if (l == null) throw new IllegalArgumentException(String.format("recipe List \"%s\" does'nt exist!", p.param[0]));
+			return l.list(p);
+		}, ISIT = (p) -> new ItemMatcher(p.get(0, ItemStack.class))
+		, ISFL = (p) -> new FluidMatcher(p.get(0, FluidStack.class))
+		, N = (p) -> {
+			Object o = p.get(0);
+			if (o instanceof ItemStack) return ((ItemStack)o).stackSize;
+			else if (o instanceof FluidStack) return ((FluidStack)o).amount;
+			else if (o instanceof OreDictStack) return ((OreDictStack)o).stacksize;
+			else return 0;
 		};
 
 	public static final List<Version> scriptRegistry = new ArrayList<Version>();
@@ -128,6 +142,10 @@ public class RecipeScriptContext extends Context {
 		defFunc.put("hasmod", HASMOD);
 		defFunc.put("add", ADD);
 		defFunc.put("listore", LISTORE);
+		defFunc.put("list", LIST);
+		defFunc.put("isit", ISIT);
+		defFunc.put("isfl", ISFL);
+		defFunc.put("n", N);
 	}
 
 	public void setup(FMLPreInitializationEvent event) {
@@ -174,6 +192,123 @@ public class RecipeScriptContext extends Context {
 			FMLLog.log("RECIPE_SCRIPT", Level.INFO, "skipped %s", name);
 		} catch (ScriptException e) {
 			FMLLog.log("RECIPE_SCRIPT", Level.ERROR, e, "script execution failed for %s", name);
+		}
+	}
+
+	public static class ItemMatcher {
+		private final ItemStack ref;
+		private final boolean ignDmg, ignAm;
+		public ItemMatcher(ItemStack stack) {
+			ref = stack;
+			ignDmg = stack.getItemDamage() == OreDictionary.WILDCARD_VALUE;
+			ignAm = stack.stackSize <= 0;
+		}
+		@Override
+		public boolean equals(Object obj) {
+			if (!(obj instanceof ItemStack)) return false;
+			ItemStack item = (ItemStack)obj;
+			return item.getItem() == ref.getItem() && (ignDmg || item.getItemDamage() == ref.getItemDamage()) && (ignAm || item.stackSize == ref.stackSize);
+		}
+	}
+
+	public static class FluidMatcher {
+		private final FluidStack ref;
+		private final boolean ignAm;
+		public FluidMatcher(FluidStack stack) {
+			ref = stack;
+			ignAm = stack.amount <= 0;
+		}
+		@Override
+		public boolean equals(Object obj) {
+			if (!(obj instanceof FluidStack)) return false;
+			FluidStack fluid = (FluidStack)obj;
+			return fluid.getFluid() == ref.getFluid() && (ignAm || fluid.amount == ref.amount);
+		}
+	}
+
+	public static class ConfigConstants {
+		private final Module m;
+		public ConfigConstants(Module m) {this.m = m;}
+
+		public double getNumber(String name, double fallback) {
+			Object o = m.read(name);
+			if (o instanceof Double) return (Double)o;
+			m.assign(name, fallback);
+			return fallback;
+		}
+
+		public double[] getVect(String name, double[] pre) {
+			Object o = m.read(name);
+			if (o instanceof double[]) {
+				double[] vec = (double[])o;
+				int n = Math.min(vec.length, pre.length);
+				for (int i = 0; i < n; i++) pre[i] = vec[i];
+				if (n < pre.length) {
+					m.assign(name, vec = Arrays.copyOf(vec, pre.length));
+					for (int i = n; i < vec.length; i++) vec[i] = pre[i];
+				}
+				return pre;
+			}
+			double[] vec = new double[pre.length];
+			for (int i = 0; i < vec.length; i++) vec[i] = pre[i];
+			m.assign(name, vec);
+			return pre;
+		}
+
+		public int[] getVect(String name, int[] pre) {
+			Object o = m.read(name);
+			if (o instanceof double[]) {
+				double[] vec = (double[])o;
+				int n = Math.min(vec.length, pre.length);
+				for (int i = 0; i < n; i++) pre[i] = (int)vec[i];
+				if (n < pre.length) {
+					m.assign(name, vec = Arrays.copyOf(vec, pre.length));
+					for (int i = n; i < vec.length; i++) vec[i] = pre[i];
+				}
+				return pre;
+			}
+			double[] vec = new double[pre.length];
+			for (int i = 0; i < vec.length; i++) vec[i] = pre[i];
+			m.assign(name, vec);
+			return pre;
+		}
+
+		public float[] getVect(String name, float[] pre) {
+			Object o = m.read(name);
+			if (o instanceof double[]) {
+				double[] vec = (double[])o;
+				int n = Math.min(vec.length, pre.length);
+				for (int i = 0; i < n; i++) pre[i] = (float)vec[i];
+				if (n < pre.length) {
+					m.assign(name, vec = Arrays.copyOf(vec, pre.length));
+					for (int i = n; i < vec.length; i++) vec[i] = pre[i];
+				}
+				return pre;
+			}
+			double[] vec = new double[pre.length];
+			for (int i = 0; i < vec.length; i++) vec[i] = pre[i];
+			m.assign(name, vec);
+			return pre;
+		}
+
+		public <T> T get(String name, Class<T> type, T fallback) {
+			Object o = m.read(name);
+			if (type.isInstance(o)) return type.cast(o);
+			m.assign(name, fallback);
+			return fallback;
+		}
+
+		public Object[] getArray(String name, int size) {
+			Object o = m.read(name);
+			if (o instanceof Object[]) {
+				Object[] vec = (Object[])o;
+				if (vec.length < size)
+					m.assign(name, vec = Arrays.copyOf(vec, size));
+				return vec;
+			}
+			Object[] vec = new Object[size];
+			m.assign(name, vec);
+			return vec;
 		}
 	}
 

@@ -64,18 +64,7 @@ public class ScriptFiles {
 				dos.writeShort(s.variables.size());
 				for (Entry<String, Object> e : s.variables.entrySet()) {
 					dos.writeUTF(e.getKey());
-					Object v = e.getValue();
-					if (v instanceof Boolean) {
-						dos.writeByte((Boolean)v ? 2 : 1);
-					} else if (v instanceof Double) {
-						dos.writeByte(3);
-						dos.writeDouble((Double)v);
-					} else if (v instanceof String) {
-						dos.writeByte(4);
-						dos.writeUTF((String)v);
-					} else {
-						dos.writeByte(0);
-					}
+					serialize(e.getValue(), dos);
 				}
 				dos.writeShort(s.methods.size());
 				for (Entry<String, Function> e : s.methods.entrySet()) {
@@ -89,7 +78,7 @@ public class ScriptFiles {
 			dos.close();
 		}
 	}
-	
+
 	public static Script[] loadPackage(File in, HashMap<String, Version> versions, boolean check) throws IOException {
 		DataInputStream dis = new DataInputStream(new FileInputStream(in));
 		try {
@@ -112,16 +101,7 @@ public class ScriptFiles {
 				int n = dis.readShort();
 				for (int i = 0; i < n; i++) {
 					String name = dis.readUTF();
-					Object obj;
-					switch(dis.readByte()) {
-					case 0: obj = null; break;
-					case 1: obj = false; break;
-					case 2: obj = true; break;
-					case 3: obj = dis.readDouble(); break;
-					case 4: obj = dis.readUTF(); break;
-					default: return null;
-					}
-					s.variables.put(name, obj);
+					s.variables.put(name, deserialize(dis));
 				}
 				n = dis.readShort();
 				for (int i = 0; i < n; i++) {
@@ -134,6 +114,48 @@ public class ScriptFiles {
 			return scripts;
 		} finally {
 			dis.close();
+		}
+	}
+
+	private static void serialize(Object v, DataOutputStream dos) throws IOException {
+		if (v instanceof Boolean) {
+			dos.writeByte((Boolean)v ? 2 : 1);
+		} else if (v instanceof Double) {
+			dos.writeByte(3);
+			dos.writeDouble((Double)v);
+		} else if (v instanceof String) {
+			dos.writeByte(4);
+			dos.writeUTF((String)v);
+		} else if (v instanceof double[]) {
+			dos.writeByte(5);
+			double[] vec = (double[])v;
+			dos.writeByte(vec.length);
+			for (double d : vec) dos.writeDouble(d);
+		} else if (v instanceof Object[]) {
+			dos.writeByte(6);
+			Object[] arr = (Object[])v;
+			dos.writeByte(arr.length);
+			for (Object o : arr) serialize(o, dos);
+		} else {
+			dos.writeByte(0);
+		}
+	}
+
+	private static Object deserialize(DataInputStream dis) throws IOException {
+		switch(dis.readByte()) {
+		case 1: return false;
+		case 2: return true;
+		case 3: return dis.readDouble();
+		case 4: return dis.readUTF();
+		case 5: 
+			double[] vec = new double[dis.readByte() & 0xff];
+			for (int i = 0; i < vec.length; i++) vec[i] = dis.readDouble();
+			return vec;
+		case 6:
+			Object[] arr = new Object[dis.readByte() & 0xff];
+			for (int i = 0; i < arr.length; i++) arr[i] = deserialize(dis);
+			return arr;
+		default: return null;
 		}
 	}
 
