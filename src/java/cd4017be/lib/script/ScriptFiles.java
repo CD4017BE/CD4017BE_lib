@@ -41,7 +41,7 @@ public class ScriptFiles {
 			}
 			saveCompiledPackage(out, scripts);
 			t = System.currentTimeMillis() - t;
-			System.out.printf("done in %.3f s", (float)t / 1000F);
+			System.out.printf("done in %.3f s\n", (float)t / 1000F);
 			return scripts;
 		} catch (Exception e) {
 			System.out.println("> failed: " + e.getClass().getName() + "\n" + e.getMessage());
