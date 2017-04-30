@@ -15,7 +15,7 @@ import cd4017be.lib.TooltipInfo;
 
 public abstract class ItemBlockSensor extends DefaultItem implements ISensor {
 
-	private final double RangeSQ;
+	public double RangeSQ;
 
 	public ItemBlockSensor(String id, float range) {
 		super(id);
