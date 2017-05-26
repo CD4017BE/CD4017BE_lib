@@ -19,6 +19,7 @@ import li.cil.oc.api.network.Visibility;
 import org.apache.logging.log4j.Level;
 
 import cpw.mods.fml.common.FMLLog;
+import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.Optional;
 import dan200.computercraft.api.peripheral.IPeripheral;
 import dan200.computercraft.api.peripheral.IPeripheralProvider;
@@ -29,6 +30,7 @@ import net.minecraft.world.World;
  *
  * @author CD4017BE
  */
+@SuppressWarnings("rawtypes")
 @Optional.Interface(iface = "dan200.computercraft.api.peripheral.IPeripheralProvider", modid = "ComputerCraft")
 public class ComputerAPI implements IPeripheralProvider
 {
@@ -39,42 +41,46 @@ public class ComputerAPI implements IPeripheralProvider
     public static Method CCevent;
     public static Method OCevent;
     
-    public static void register()
+    @SuppressWarnings("unchecked")
+	public static void register()
     {
     	if (registered) return;
         //ComputerCraft
-    	try {
-        	CCapi = Class.forName("dan200.computercraft.api.ComputerCraftAPI");
-			CCcomp = Class.forName("dan200.computercraft.api.peripheral.IComputerAccess");
-			CCperProv = Class.forName("dan200.computercraft.api.peripheral.IPeripheralProvider");
-			FMLLog.log("CD4017BE_lib", Level.INFO, "ComputerCraft API found");
-		} catch (ClassNotFoundException e) {
-			FMLLog.log("CD4017BE_lib", Level.INFO, "ComputerCraft API not available!");
-			CCapi = null;
-			CCcomp = null;
-			CCperProv = null;
+		if (Loader.isModLoaded("ComputerCraft")) {
+			try {
+				CCapi = Class.forName("dan200.computercraft.api.ComputerCraftAPI");
+				CCcomp = Class.forName("dan200.computercraft.api.peripheral.IComputerAccess");
+				CCperProv = Class.forName("dan200.computercraft.api.peripheral.IPeripheralProvider");
+				FMLLog.log("CD4017BE_lib", Level.INFO, "ComputerCraft API found");
+			} catch (Throwable e) {
+				FMLLog.log("CD4017BE_lib", Level.INFO, "ComputerCraft API not available!");
+				CCapi = CCcomp = CCperProv = null;
+			}
+			if (CCapi != null)
+				try {
+					CCapi.getMethod("registerPeripheralProvider", CCperProv).invoke(null, instance);
+					CCevent = CCcomp.getMethod("queueEvent", String.class, Object[].class);
+				} catch (Throwable e) {
+					FMLLog.log("CD4017BE_lib", Level.ERROR, e, "can't get API methods:");
+					CCapi = CCcomp = CCperProv = null;
+				}
 		}
-        if (CCapi != null)
-			try {
-				CCapi.getMethod("registerPeripheralProvider", CCperProv).invoke(null, instance);
-				CCevent = CCcomp.getMethod("queueEvent", String.class, Object[].class);
-			} catch (Exception e) {
-				FMLLog.log("CD4017BE_lib", Level.ERROR, e, "can't get API methods:");
-			}
         //OpenComputers
-        try {
-        	OCcomp = Class.forName("li.cil.oc.api.machine.Context");
-        	FMLLog.log("CD4017BE_lib", Level.INFO, "OpenComputers API found");
-        } catch (ClassNotFoundException e) {
-        	FMLLog.log("CD4017BE_lib", Level.INFO, "OpenComputers API not available!");
-        }
-        if (OCcomp != null)
+		if (Loader.isModLoaded("OpenComputers")) {
 			try {
-				OCevent = OCcomp.getMethod("signal", String.class, Object[].class);
-			} catch (Exception e) {
-				FMLLog.log("CD4017BE_lib", Level.ERROR, e, "can't get API methods:");
+				OCcomp = Class.forName("li.cil.oc.api.machine.Context");
+				FMLLog.log("CD4017BE_lib", Level.INFO, "OpenComputers API found");
+			} catch (Throwable e) {
+				FMLLog.log("CD4017BE_lib", Level.INFO, "OpenComputers API not available!");
 			}
-        
+			if (OCcomp != null)
+				try {
+					OCevent = OCcomp.getMethod("signal", String.class, Object[].class);
+				} catch (Throwable e) {
+					FMLLog.log("CD4017BE_lib", Level.ERROR, e, "can't get API methods:");
+					OCcomp = null;
+				}
+		}
     	registered = true;
     }
     
@@ -82,9 +88,9 @@ public class ComputerAPI implements IPeripheralProvider
     {
     	if (obj == null) return;
     	try {
-    		if (OCcomp.isInstance(obj)) OCevent.invoke(obj, name, args);
-        	else if (CCcomp.isInstance(obj)) CCevent.invoke(obj, name, args);
-		} catch (Exception e) {
+    		if (OCcomp != null && OCcomp.isInstance(obj)) OCevent.invoke(obj, name, args);
+        	else if (CCcomp != null && CCcomp.isInstance(obj)) CCevent.invoke(obj, name, args);
+		} catch (Throwable e) {
 			FMLLog.log(Level.ERROR, e, "can't send event to computer!");
 		}
     }
