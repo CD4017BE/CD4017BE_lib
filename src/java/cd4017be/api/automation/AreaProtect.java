@@ -51,7 +51,7 @@ public class AreaProtect implements ForgeChunkManager.LoadingCallback, IProtecti
 	public void handlePlayerInteract(PlayerInteractEvent event)
 	{
 		if (permissions < 0 || event.getSide() == Side.CLIENT) return;
-		ProtectLvl pl = this.getPlayerAccess(event.getEntityPlayer().getGameProfile(), event.getEntityPlayer().worldObj, event.getPos().getX() >> 4, event.getPos().getZ() >> 4);
+		ProtectLvl pl = this.getPlayerAccess(event.getEntityPlayer().getGameProfile(), event.getEntityPlayer().world, event.getPos().getX() >> 4, event.getPos().getZ() >> 4);
 		if (pl == ProtectLvl.Free) return;
 		if (event instanceof LeftClickBlock || event.getItemStack() != null || 
 				pl == ProtectLvl.NoAcces || pl == ProtectLvl.NoInventory) event.setCanceled(true);

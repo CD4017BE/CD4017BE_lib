@@ -155,7 +155,7 @@ public class BlockGuiHandler implements IGuiHandler {
 				ItemStack item = player.getHeldItemMainhand();
 				if (item != null && item.getItem() instanceof IGuiItem) ((IGuiItem)item.getItem()).onPlayerCommand(item, player, data);
 			} else {
-				TileEntity te = player.worldObj.getTileEntity(pos);
+				TileEntity te = player.world.getTileEntity(pos);
 				if (te != null && te instanceof ModTileEntity) ((ModTileEntity)te).onPlayerCommand(data, player);
 			}
 		} catch (IOException e) {

@@ -38,7 +38,7 @@ public class AutomatedTile extends ModTileEntity implements ITickable {
 
 	@Override
 	public void update() {
-		if (worldObj.isRemote) return;
+		if (world.isRemote) return;
 		if (inventory != null) inventory.update(this);
 		if (tanks != null) tanks.update(this, inventory);
 		if (energy != null) energy.update(this);
@@ -64,7 +64,7 @@ public class AutomatedTile extends ModTileEntity implements ITickable {
 
 	@Override
 	public void onPlayerCommand(PacketBuffer dis, EntityPlayerMP player) throws IOException {
-		if (!AreaProtect.interactingAllowed(player.getGameProfile(), worldObj, pos.getX() >> 4, pos.getZ() >> 4)) return;
+		if (!AreaProtect.interactingAllowed(player.getGameProfile(), world, pos.getX() >> 4, pos.getZ() >> 4)) return;
 		byte cmd = dis.readByte();
 		if (cmd == 0 && inventory != null) {
 			inventory.sideCfg = dis.readLong();

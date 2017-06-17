@@ -69,7 +69,7 @@ public class TileContainer extends DataContainer {
 		if (slot instanceof GlitchSaveSlot) {
 			specialInvSync |= 1;
 			GlitchSaveSlot gss = (GlitchSaveSlot)slot;
-			if(player.worldObj.isRemote && gss.getItemHandler() instanceof IItemHandlerModifiable)
+			if(player.world.isRemote && gss.getItemHandler() instanceof IItemHandlerModifiable)
 				((IItemHandlerModifiable)gss.getItemHandler()).setStackInSlot(gss.index, null);
 		}
 	}
@@ -77,7 +77,7 @@ public class TileContainer extends DataContainer {
 	public void addTankSlot(TankSlot slot) {
 		this.tankSlots.add(slot);
 		this.fluidStacks.add((FluidStack)null);
-		if (player.worldObj.isRemote) slot.putStack(null);
+		if (player.world.isRemote) slot.putStack(null);
 	}
 
 	@Override
@@ -273,7 +273,7 @@ public class TileContainer extends DataContainer {
 			boolean boost = m == ClickType.QUICK_MOVE;
 			GlitchSaveSlot gss = (GlitchSaveSlot)slot;
 			if (!gss.clientInteract) {
-				if (player.worldObj.isRemote) return null;
+				if (player.world.isRemote) return null;
 				specialInvSync |= 2;
 			}
 			IItemHandler acc = gss.getItemHandler();

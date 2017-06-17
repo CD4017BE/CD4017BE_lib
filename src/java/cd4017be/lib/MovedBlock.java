@@ -180,16 +180,16 @@ public class MovedBlock
 	 */
 	public static void moveEntity(Entity entity, int dim, double x, double y, double z)
 	{
-		int dimO = entity.worldObj.provider.getDimension();
+		int dimO = entity.world.provider.getDimension();
 		if (dim != dimO) {
-			MinecraftServer server = ((WorldServer)entity.worldObj).getMinecraftServer();
+			MinecraftServer server = ((WorldServer)entity.world).getMinecraftServer();
 			WorldServer worldO = server.worldServerForDimension(dimO);
 			WorldServer worldN = server.worldServerForDimension(dim);
 			if (entity instanceof EntityPlayerMP) {
 				server.getPlayerList().transferPlayerToDimension((EntityPlayerMP)entity, dim, new Teleporter(worldN, x, y, z));
 			} else {
 				entity.dimension = dim;
-				entity.worldObj.removeEntity(entity);
+				entity.world.removeEntity(entity);
 				entity.isDead = false;
 				server.getPlayerList().transferEntityToWorld(entity, 0, worldO, worldN, new Teleporter(worldN, x, y, z));
 			}

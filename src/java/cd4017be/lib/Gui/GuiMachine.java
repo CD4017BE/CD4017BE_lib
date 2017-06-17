@@ -193,7 +193,7 @@ public abstract class GuiMachine extends GuiContainer {
 		GL11.glRotatef(player.rotationYaw + 90, 0, 1, 0);
 		GL11.glTranslatef(-0.5F, -0.5F, 0.5F);
 		IGuiData tile = ((DataContainer)this.inventorySlots).data;
-		this.mc.getBlockRendererDispatcher().renderBlockBrightness(tile.pos().getY() >= 0 ? player.worldObj.getBlockState(tile.pos()) : Blocks.GLASS.getDefaultState(), 1);
+		this.mc.getBlockRendererDispatcher().renderBlockBrightness(tile.pos().getY() >= 0 ? player.world.getBlockState(tile.pos()) : Blocks.GLASS.getDefaultState(), 1);
 		//GL11.glRotatef(-90, 0, 1, 0);
 		this.mc.renderEngine.bindTexture(LIB_TEX);
 		Vec3 p = Vec3.Def(0.5, 0.5, 0.5), a, b;

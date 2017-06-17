@@ -46,7 +46,7 @@ public class ModTileEntity extends TileEntity implements IAbstractTile {
 	public boolean onActivated(EntityPlayer player, EnumHand hand, ItemStack item, EnumFacing s, float X, float Y, float Z) {
 		TileBlockEntry entry = TileBlockRegistry.getBlockEntry(this.getBlockType());
 		if (entry != null && entry.container != null && !player.isSneaking()) {
-			BlockGuiHandler.openGui(player, this.worldObj, pos.getX(), pos.getY(), pos.getZ());
+			BlockGuiHandler.openGui(player, this.world, pos.getX(), pos.getY(), pos.getZ());
 			return true;
 		} else return false;
 	}
@@ -88,14 +88,14 @@ public class ModTileEntity extends TileEntity implements IAbstractTile {
 	}
 
 	public TileEntity getLoadedTile(BlockPos pos) {
-		if (worldObj.isBlockLoaded(pos)) return worldObj.getTileEntity(pos);
+		if (world.isBlockLoaded(pos)) return world.getTileEntity(pos);
 		else return null;
 	}
 
 	public <C> C getNeighborCap(Capability<C> cap, EnumFacing side) {
 		BlockPos pos = this.pos.offset(side);
-		if (worldObj.isBlockLoaded(pos)) {
-			TileEntity te = worldObj.getTileEntity(pos);
+		if (world.isBlockLoaded(pos)) {
+			TileEntity te = world.getTileEntity(pos);
 			if (te != null)
 				return te.getCapability(cap, side.getOpposite());
 		}
@@ -103,13 +103,13 @@ public class ModTileEntity extends TileEntity implements IAbstractTile {
 	}
 
 	public void markUpdate() {
-		IBlockState state = worldObj.getBlockState(pos);
-		this.worldObj.notifyBlockUpdate(pos, state, state, 3);
+		IBlockState state = world.getBlockState(pos);
+		this.world.notifyBlockUpdate(pos, state, state, 3);
 	}
 
 	@Override
-	public void setWorldObj(World world) {
-		super.setWorldObj(world);
+	public void setWorld(World world) {
+		super.setWorld(world);
 		this.dimensionId = world.provider.getDimension();
 	}
 
@@ -135,8 +135,8 @@ public class ModTileEntity extends TileEntity implements IAbstractTile {
 
 	public void dropStack(ItemStack stack) {
 		if (stack == null) return;
-		EntityItem ei = new EntityItem(worldObj, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, stack);
-		worldObj.spawnEntityInWorld(ei);
+		EntityItem ei = new EntityItem(world, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, stack);
+		world.spawnEntityInWorld(ei);
 	}
 
 	/**
