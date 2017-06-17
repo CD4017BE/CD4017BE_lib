@@ -235,7 +235,7 @@ public class ItemFluidUtil {
 		}
 
 		public ItemStack result() {
-			item.getCount() *= n;
+			item.setCount(item.getCount() * n);
 			return item.getCount() > 0 && item.getItem() != null ? item : null;
 		}
 

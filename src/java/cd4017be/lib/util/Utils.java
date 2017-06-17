@@ -253,7 +253,7 @@ public class Utils {
 	public static void updateRedstoneOnSide(ModTileEntity te, int value, EnumFacing side) {
 		ICapabilityProvider cp = te.getTileOnSide(side);
 		if (cp != null && cp instanceof IQuickRedstoneHandler) ((IQuickRedstoneHandler)cp).onRedstoneStateChange(side.getOpposite(), value, te);
-		else te.getWorld().notifyBlockOfStateChange(te.getPos().offset(side), te.getBlockType());
+		else te.getWorld().neighborChanged(te.getPos().offset(side), te.getBlockType(), te.getPos());
 	}
 
 	/**

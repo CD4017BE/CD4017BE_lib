@@ -225,10 +225,10 @@ public class TESRModelParser extends ScriptCompiler {
 				data[p] = Float.floatToIntBits((float)quad.vertices[j].x[0]);
 				data[p + 1] = Float.floatToIntBits((float)quad.vertices[j].x[1]);
 				data[p + 2] = Float.floatToIntBits((float)quad.vertices[j].x[2]);
-				int r = MathHelper.clamp_int((int)(quad.vertices[j].x[5] * 255F), 0, 255);
-				int g = MathHelper.clamp_int((int)(quad.vertices[j].x[6] * 255F), 0, 255);
-				int b = MathHelper.clamp_int((int)(quad.vertices[j].x[7] * 255F), 0, 255);
-				int a = MathHelper.clamp_int((int)(quad.vertices[j].x[8] * 255F), 0, 255);
+				int r = MathHelper.clamp((int)(quad.vertices[j].x[5] * 255F), 0, 255);
+				int g = MathHelper.clamp((int)(quad.vertices[j].x[6] * 255F), 0, 255);
+				int b = MathHelper.clamp((int)(quad.vertices[j].x[7] * 255F), 0, 255);
+				int a = MathHelper.clamp((int)(quad.vertices[j].x[8] * 255F), 0, 255);
 				data[p + 3] = a << 24 | r << 16 | g << 8 | b;
 				data[p + 4] = Float.floatToIntBits((float)quad.vertices[j].x[3]);
 				data[p + 5] = Float.floatToIntBits((float)quad.vertices[j].x[4]);
