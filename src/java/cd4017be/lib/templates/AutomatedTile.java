@@ -148,11 +148,11 @@ public class AutomatedTile extends ModTileEntity implements ITickable {
 	public boolean slotClick(ItemStack item, Slot s, int b, ClickType m, TileContainer container) {return false;}
 
 	public int insertAm(int g, int s, ItemStack item, ItemStack insert) {
-		int m = Math.min(insert.getMaxStackSize() - (item == null ? 0 : item.stackSize), insert.stackSize); 
+		int m = Math.min(insert.getMaxStackSize() - (item == null ? 0 : item.getCount()), insert.getCount()); 
 		return item == null || ItemHandlerHelper.canItemStacksStack(item, insert) ? m : 0;
 	}
 
 	public int extractAm(int g, int s, ItemStack item, int extract) {
-		return item == null ? 0 : item.stackSize < extract ? item.stackSize : extract;
+		return item == null ? 0 : item.getCount() < extract ? item.getCount() : extract;
 	}
 }

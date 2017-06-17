@@ -46,7 +46,7 @@ public class OreGenHandler implements IRecipeHandler, IWorldGenerator{
 		IBlockState out = ((ItemBlock)i).block.getStateFromMeta(i.getMetadata(is.getMetadata()));
 		Block in = Block.getBlockFromName(p.getString(1));
 		if (in == null) throw new IllegalArgumentException("block type does not exists");
-		generators.add(new OreGen(out, is.stackSize, (int)p.getNumber(3), (int)vec[0], (int)vec[1], (int)vec[2], BlockMatcher.forBlock(in)));
+		generators.add(new OreGen(out, is.getCount(), (int)p.getNumber(3), (int)vec[0], (int)vec[1], (int)vec[2], BlockMatcher.forBlock(in)));
 	}
 
 	class OreGen extends WorldGenMinable{

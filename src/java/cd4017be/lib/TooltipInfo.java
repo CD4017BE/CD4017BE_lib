@@ -151,7 +151,7 @@ public class TooltipInfo {
 				addVar(name + ":" + i, arr[i]);
 		} else if (o instanceof ItemStack) {
 			ItemStack item = (ItemStack)o;
-			variables.put(name, (item.stackSize > 1 ? item.stackSize + "x " : "") + item.getDisplayName());
+			variables.put(name, (item.getCount() > 1 ? item.getCount() + "x " : "") + item.getDisplayName());
 		} else if (o != null) variables.put(name, o.toString());
 	}
 

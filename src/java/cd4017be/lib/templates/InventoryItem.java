@@ -33,23 +33,23 @@ public class InventoryItem implements IItemHandlerModifiable {
 	@Override
 	public ItemStack insertItem(int slot, ItemStack stack, boolean sim) {
 		ItemStack item = cache[slot];
-		int m = Math.min(stack.getMaxStackSize() - (item == null ? 0 : item.stackSize), stack.stackSize); 
+		int m = Math.min(stack.getMaxStackSize() - (item == null ? 0 : item.getCount()), stack.getCount()); 
 		if (m <= 0 || !(item == null || ItemHandlerHelper.canItemStacksStack(item, stack))) return stack;
 		if (!sim) {
 			if (item != null) item.shrink(m);
 			else item = ItemHandlerHelper.copyStackWithSize(stack, m);
 			this.setStackInSlot(slot, item);
 		}
-		return (m = stack.stackSize - m) > 0 ? ItemHandlerHelper.copyStackWithSize(stack, m) : null;
+		return (m = stack.getCount() - m) > 0 ? ItemHandlerHelper.copyStackWithSize(stack, m) : null;
 	}
 
 	@Override
 	public ItemStack extractItem(int slot, int amount, boolean sim) {
 		ItemStack item = this.getStackInSlot(slot);
 		if (item == null) return null;
-		int m = Math.min(item.stackSize, amount);
+		int m = Math.min(item.getCount(), amount);
 		if (!sim) {
-			if (item.stackSize <= m) this.setStackInSlot(slot, null);
+			if (item.getCount() <= m) this.setStackInSlot(slot, null);
 			else {
 				item.shrink(m);
 				this.setStackInSlot(slot, item);

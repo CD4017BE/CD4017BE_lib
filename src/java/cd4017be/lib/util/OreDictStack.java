@@ -39,7 +39,7 @@ public class OreDictStack {
 		if (item == null || item.getItem() == null) return null;
 		int[] i = OreDictionary.getOreIDs(item);
 		OreDictStack[] stacks = new OreDictStack[i.length];
-		for (int j = 0; j < i.length; j++) stacks[j] = new OreDictStack(i[j], item.stackSize);
+		for (int j = 0; j < i.length; j++) stacks[j] = new OreDictStack(i[j], item.getCount());
 		return stacks;
 	}
 	
@@ -85,7 +85,7 @@ public class OreDictStack {
 			return stack.ID == ID && stack.stacksize == stacksize;
 		} else if (obj instanceof ItemStack) {
 			ItemStack stack = (ItemStack)obj;
-			return isEqual(stack) && stack.stackSize == stacksize;
+			return isEqual(stack) && stack.getCount() == stacksize;
 		} else if (obj instanceof String) {
 			return id.equals(obj);
 		} else return false;

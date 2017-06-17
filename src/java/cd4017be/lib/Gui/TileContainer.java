@@ -118,7 +118,7 @@ public class TileContainer extends DataContainer {
 					dos.writeByte(i);
 					dos.writeShort(Item.getIdFromItem(item0 != null ? item0.getItem() : null));
 					if (item0 != null && item0.getItem() != null) {
-						dos.writeInt(item0.stackSize);
+						dos.writeInt(item0.getCount());
 						dos.writeShort(item0.getItemDamage());
 						dos.writeNBTTagCompoundToBuffer(item0.getTagCompound());
 					}
@@ -156,7 +156,7 @@ public class TileContainer extends DataContainer {
 	public boolean mergeItemStack(ItemStack item, int ss, int se, boolean d) {
 		ItemStack item1 = item.copy();
 		if (item1.isStackable())
-			for (int i = se - ss; i > 0 && item1.stackSize > 0; i--) {
+			for (int i = se - ss; i > 0 && item1.getCount() > 0; i--) {
 				Slot slot = inventorySlots.get(d ? i + ss - 1 : se - i);
 				ItemStack stack = slot.getStack();
 				if (stack == null) continue;
@@ -168,28 +168,28 @@ public class TileContainer extends DataContainer {
 					}
 				} else if (slot instanceof SlotHolo) {
 					if (slot.isItemValid(item1) && ItemHandlerHelper.canItemStacksStack(stack, item1)) {
-						stack.grow(item1.stackSize);
-						if (stack.stackSize > slot.getSlotStackLimit()) stack.setCount(slot.getSlotStackLimit());
+						stack.grow(item1.getCount());
+						if (stack.getCount() > slot.getSlotStackLimit()) stack.setCount(slot.getSlotStackLimit());
 						slot.putStack(stack);
-						item.setCount(item1.stackSize);
+						item.setCount(item1.getCount());
 						return true;
 					}
 				} else if (ItemHandlerHelper.canItemStacksStack(stack, item1)) {
-					int j = stack.stackSize + item1.stackSize;
+					int j = stack.getCount() + item1.getCount();
 					int mxs = Math.min(item1.getMaxStackSize(), slot.getSlotStackLimit());
 					if (j <= mxs) {
 						item.setCount(0);
 						stack.setCount(j);
 						slot.onSlotChanged();
 						return true;
-					} else if (stack.stackSize < mxs) {
-						item1.shrink(mxs - stack.stackSize);
+					} else if (stack.getCount() < mxs) {
+						item1.shrink(mxs - stack.getCount());
 						stack.setCount(mxs);
 						slot.onSlotChanged();
 					}
 				}
 			}
-		if (item1.stackSize > 0)
+		if (item1.getCount() > 0)
 			for (int i = se - ss; i > 0; i--) {
 				Slot slot = inventorySlots.get(d ? i + ss - 1 : se - i);
 				if (slot.getStack() != null) continue;
@@ -202,12 +202,12 @@ public class TileContainer extends DataContainer {
 				} else if (slot instanceof SlotHolo) {
 					if (slot.isItemValid(item1)) {
 						slot.putStack(item1);
-						item.setCount(item1.stackSize);
+						item.setCount(item1.getCount());
 						return true;
 					}
 				} else if (slot.isItemValid(item1)) {
 					int mxs = slot.getItemStackLimit(item1);
-					if (item1.stackSize <= mxs) {
+					if (item1.getCount() <= mxs) {
 						slot.putStack(item1.copy());
 						slot.onSlotChanged();
 						item.setCount(0);
@@ -218,8 +218,8 @@ public class TileContainer extends DataContainer {
 					}
 				}
 			}
-		if (item1.stackSize != item.stackSize) {
-			item.setCount(item1.stackSize);
+		if (item1.getCount() != item.getCount()) {
+			item.setCount(item1.getCount());
 			return true;
 		} else return false;
 	}
@@ -237,9 +237,9 @@ public class TileContainer extends DataContainer {
 			else return null;
 			if(!mergeItemStack(stack, s, e, false)) return null;
 		}
-		if (stack.stackSize == item.stackSize) return null;
+		if (stack.getCount() == item.getCount()) return null;
 		slot.onSlotChange(stack, item);
-		if (stack.stackSize == 0) slot.putStack((ItemStack)null);
+		if (stack.getCount() == 0) slot.putStack((ItemStack)null);
 		else slot.onSlotChanged();
 		slot.onPickupFromSlot(player, stack);
 		return item;
@@ -255,12 +255,12 @@ public class TileContainer extends DataContainer {
 				ItemStack curItem = player.inventory.getItemStack();
 				if (curItem != null && slot.isItemValid(curItem)) {
 					if (item != null && item.isItemEqual(curItem)) {
-						item.grow(b == 1 ? 1 : curItem.stackSize);
+						item.grow(b == 1 ? 1 : curItem.getCount());
 					} else {
 						item = curItem.copy();
 						if (b == 1) item.setCount(1);
 					}
-					if (item.stackSize > slot.getSlotStackLimit()) item.setCount(slot.getSlotStackLimit());
+					if (item.getCount() > slot.getSlotStackLimit()) item.setCount(slot.getSlotStackLimit());
 					slot.putStack(item);
 				} else if (curItem == null && item != null && slot.canTakeStack(player)){
 					slot.decrStackSize(b == 0 ? slot.getSlotStackLimit() : 1);
@@ -282,12 +282,12 @@ public class TileContainer extends DataContainer {
 			if (curItem != null) {
 				if (boost) {
 					ItemStack rem = acc.insertItem(p, ItemHandlerHelper.copyStackWithSize(curItem, 65536), true);
-					int n = rem != null ? 65536 - rem.stackSize : 65536, n1 = 0;
+					int n = rem != null ? 65536 - rem.getCount() : 65536, n1 = 0;
 					if (n <= 0) return null;
 					if (b == 0) {
-						if (n < curItem.stackSize) curItem.shrink(n1 = n);
+						if (n < curItem.getCount()) curItem.shrink(n1 = n);
 						else {
-							n1 = curItem.stackSize;
+							n1 = curItem.getCount();
 							player.inventory.setItemStack(null);
 						}
 					}
@@ -295,20 +295,20 @@ public class TileContainer extends DataContainer {
 						n1 += getFromPlayerInv(ItemHandlerHelper.copyStackWithSize(curItem, n - n1), player.inventory);
 					acc.insertItem(p, ItemHandlerHelper.copyStackWithSize(curItem, n1), false);
 				} else {
-					int n = b == 0 ? curItem.stackSize : 1;
+					int n = b == 0 ? curItem.getCount() : 1;
 					ItemStack rem = acc.insertItem(p, ItemHandlerHelper.copyStackWithSize(curItem, n), false);
-					curItem.shrink(n - (rem != null ? rem.stackSize : 0));
-					if (curItem.stackSize <= 0) player.inventory.setItemStack(null);
+					curItem.shrink(n - (rem != null ? rem.getCount() : 0));
+					if (curItem.getCount() <= 0) player.inventory.setItemStack(null);
 				}
 			} else if (item != null) {
 				int n = boost ? (b == 0 ? item.getMaxStackSize() : 65536) : (b == 0 ? 1 : 8);
 				if ((item = acc.extractItem(p, n, true)) == null) return null;
 				int rem = putInPlayerInv(item.copy(), player.inventory);
-				acc.extractItem(p, item.stackSize - rem, false);
+				acc.extractItem(p, item.getCount() - rem, false);
 			}
 			return null;
 		} else if (clickHandler != null && clickHandler.slotClick(item == null ? null : item.copy(), slot, b, m, this)) {
-			return item == null || item.stackSize <= 0 ? null : item;
+			return item == null || item.getCount() <= 0 ? null : item;
 		} else {
 			ItemStack ret = super.slotClick(s, b, m, player);
 			if (slot instanceof SlotItemHandler && slot.getStack() == item) slot.putStack(slot.getStack());
@@ -321,24 +321,24 @@ public class TileContainer extends DataContainer {
 		int es = inv.mainInventory.length;
 		for (int i = 0; i < inv.mainInventory.length; i++) {
 			ItemStack stack = inv.mainInventory[i];
-			if (stack != null && stack.stackSize < m && stack.isItemEqual(item)) {
-				if (item.stackSize <= m - stack.stackSize) {
-					stack.grow(item.stackSize);
+			if (stack != null && stack.getCount() < m && stack.isItemEqual(item)) {
+				if (item.getCount() <= m - stack.getCount()) {
+					stack.grow(item.getCount());
 					return 0;
 				} else {
-					item.shrink(m - stack.stackSize);
+					item.shrink(m - stack.getCount());
 					stack.setCount(m);
 				}
 			} else if (stack == null && i < es) es = i;
 		}
 		for (int i = es; i < inv.mainInventory.length; i++)
 			if (inv.mainInventory[i] == null) {
-				if (item.stackSize <= m) {
+				if (item.getCount() <= m) {
 					inv.mainInventory[i] = item;
 					return 0;
 				} else inv.mainInventory[i] = item.splitStack(m);
 			}
-		return item.stackSize;
+		return item.getCount();
 	}
 
 	public static int getFromPlayerInv(ItemStack item, InventoryPlayer inv) {
@@ -346,13 +346,13 @@ public class TileContainer extends DataContainer {
 		for (int i = 0; i < inv.mainInventory.length; i++) {
 			ItemStack stack = inv.mainInventory[i];
 			if (item.isItemEqual(stack)) {
-				n += stack.stackSize;
-				if (n <= item.stackSize) {
+				n += stack.getCount();
+				if (n <= item.getCount()) {
 					inv.mainInventory[i] = null;
-					if (n == item.stackSize) return n;
+					if (n == item.getCount()) return n;
 				} else {
-					stack.setCount(n - item.stackSize);
-					return item.stackSize;
+					stack.setCount(n - item.getCount());
+					return item.getCount();
 				}
 			}
 		}

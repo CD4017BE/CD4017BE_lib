@@ -26,22 +26,22 @@ public class BasicInventory implements IItemHandlerModifiable {
 	@Override
 	public ItemStack insertItem(int i, ItemStack stack, boolean sim) {
 		ItemStack item = items[i];
-		int m = Math.min(stack.getMaxStackSize() - (item == null ? 0 : item.stackSize), stack.stackSize); 
+		int m = Math.min(stack.getMaxStackSize() - (item == null ? 0 : item.getCount()), stack.getCount()); 
 		if (m <= 0 || (item != null && !ItemHandlerHelper.canItemStacksStack(item, stack))) return stack;
 		if (!sim) {
 			if (item == null) item = ItemHandlerHelper.copyStackWithSize(stack, m);
 			else item.grow(m);
 			items[i] = item;
 		}
-		return (m = stack.stackSize - m) > 0 ? ItemHandlerHelper.copyStackWithSize(stack, m) : null;
+		return (m = stack.getCount() - m) > 0 ? ItemHandlerHelper.copyStackWithSize(stack, m) : null;
 	}
 
 	@Override
 	public ItemStack extractItem(int i, int m, boolean sim) {
 		ItemStack item = items[i];
-		if (item == null || (m = item.stackSize < m ? item.stackSize : m) <= 0) return null;
+		if (item == null || (m = item.getCount() < m ? item.getCount() : m) <= 0) return null;
 		if (!sim) {
-			if (item.stackSize <= m) items[i] = null;
+			if (item.getCount() <= m) items[i] = null;
 			else items[i].shrink(m);
 		}
 		return ItemHandlerHelper.copyStackWithSize(item, m);

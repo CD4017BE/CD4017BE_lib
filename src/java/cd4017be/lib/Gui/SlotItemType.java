@@ -29,7 +29,7 @@ public class SlotItemType extends SlotItemHandler {
 	public int getItemStackLimit(ItemStack item) {
 		for (ItemStack comp : allowed)
 			if (item.getItem() == comp.getItem() && !(item.getHasSubtypes() && item.getItemDamage() != comp.getItemDamage()))
-				return comp.stackSize;
+				return comp.getCount();
 		return 0;
 	}
 

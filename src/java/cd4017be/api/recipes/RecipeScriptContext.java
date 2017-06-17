@@ -120,7 +120,7 @@ public class RecipeScriptContext extends Context {
 		, ISFL = (p) -> new FluidMatcher(p.get(0, FluidStack.class))
 		, N = (p) -> {
 			Object o = p.get(0);
-			if (o instanceof ItemStack) return ((ItemStack)o).stackSize;
+			if (o instanceof ItemStack) return ((ItemStack)o).getCount();
 			else if (o instanceof FluidStack) return ((FluidStack)o).amount;
 			else if (o instanceof OreDictStack) return ((OreDictStack)o).stacksize;
 			else return 0;
@@ -201,13 +201,13 @@ public class RecipeScriptContext extends Context {
 		public ItemMatcher(ItemStack stack) {
 			ref = stack;
 			ignDmg = stack.getItemDamage() == OreDictionary.WILDCARD_VALUE;
-			ignAm = stack.stackSize <= 0;
+			ignAm = stack.getCount() <= 0;
 		}
 		@Override
 		public boolean equals(Object obj) {
 			if (!(obj instanceof ItemStack)) return false;
 			ItemStack item = (ItemStack)obj;
-			return item.getItem() == ref.getItem() && (ignDmg || item.getItemDamage() == ref.getItemDamage()) && (ignAm || item.stackSize == ref.stackSize);
+			return item.getItem() == ref.getItem() && (ignDmg || item.getItemDamage() == ref.getItemDamage()) && (ignAm || item.getCount() == ref.getCount());
 		}
 	}
 

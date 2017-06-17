@@ -35,7 +35,7 @@ public interface IOperatingArea extends IAbstractTile {
 		public static int[] maxSize(IOperatingArea mach) {
 			int[] dim = mach.getBaseDimensions();
 			ItemStack item = mach.getUpgradeSlots().getStackInSlot(1);
-			int n = item == null ? base[0] : base[0] + mult[0] * item.stackSize;
+			int n = item == null ? base[0] : base[0] + mult[0] * item.getCount();
 			return new int[]{dim[0] * n / base[0], Math.min(dim[1] * n / base[0], 256), dim[2] * n / base[0]};
 		}
 
@@ -44,16 +44,16 @@ public interface IOperatingArea extends IAbstractTile {
 			int[] dim = mach.getBaseDimensions();
 			if (dim[3] == Integer.MAX_VALUE) return dim[3];
 			ItemStack item = upgr.getStackInSlot(1);
-			int n = item == null ? base[0] : base[0] + mult[0] * item.stackSize;
+			int n = item == null ? base[0] : base[0] + mult[0] * item.getCount();
 			item = upgr.getStackInSlot(2);
-			n *= (item == null ? base[1] : base[1] + mult[1] * item.stackSize);
+			n *= (item == null ? base[1] : base[1] + mult[1] * item.getCount());
 			return dim[3] * n / base[0] / base[1];
 		}
 
 		public static int Umax(IOperatingArea mach) {
 			int[] dim = mach.getBaseDimensions();
 			ItemStack item = mach.getUpgradeSlots().getStackInSlot(3);
-			int n = item == null ? base[2] : base[2] + mult[2] * item.stackSize;
+			int n = item == null ? base[2] : base[2] + mult[2] * item.getCount();
 			return dim[4] * n / base[2];
 		}
 

@@ -75,11 +75,11 @@ public class MatterOrbItemHandler {
 		NBTTagCompound nbt = list.getCompoundTagAt(s);
 		ItemStack stack = new ItemStack(Item.getItemById(nbt.getShort("i")), nbt.getInteger("n"), nbt.getShort("d"));
 		if (nbt.hasKey("t")) stack.setTagCompound(nbt.getCompoundTag("t"));
-		if (n >= stack.stackSize) {
+		if (n >= stack.getCount()) {
 			list.removeTag(s);
 			return stack;
 		} else {
-			nbt.setInteger("n", stack.stackSize - n);
+			nbt.setInteger("n", stack.getCount() - n);
 			stack.setCount(n);
 			return stack;
 		}
@@ -122,19 +122,19 @@ public class MatterOrbItemHandler {
 			for (int i = 0; i < list.tagCount(); i++) {
 				NBTTagCompound nbt = list.getCompoundTagAt(i);
 				if (nbt.getShort("i") == Item.getIdFromItem(stack.getItem()) && nbt.getShort("d") == stack.getItemDamage() && ((!nbt.hasKey("t") && stack.getTagCompound() == null) || (stack.getTagCompound() != null && stack.getTagCompound().equals(nbt.getTag("t"))))) {
-					nbt.setInteger("n", nbt.getInteger("n") + stack.stackSize);
+					nbt.setInteger("n", nbt.getInteger("n") + stack.getCount());
 					stack.setCount(0);
 					break;
 				}
 			}
-			if (stack.stackSize > 0 && list.tagCount() < max) {
+			if (stack.getCount() > 0 && list.tagCount() < max) {
 				NBTTagCompound nbt = new NBTTagCompound();
 				nbt.setShort("i", (short)Item.getIdFromItem(stack.getItem()));
-				nbt.setInteger("n", stack.stackSize);
+				nbt.setInteger("n", stack.getCount());
 				nbt.setShort("d", (short)stack.getItemDamage());
 				if (stack.getTagCompound() != null) nbt.setTag("t", stack.getTagCompound());
 				list.appendTag(nbt);
-			} else if (stack.stackSize > 0) {
+			} else if (stack.getCount() > 0) {
 				remain[n++] = stack;
 			}
 		}
@@ -187,7 +187,7 @@ public class MatterOrbItemHandler {
 			if (s == 0) return null;
 			if (simulate) {
 				ItemStack stack = getItem(inv.mainInventory[tool], slot);
-				if(stack.stackSize > amount) stack.setCount(amount);
+				if(stack.getCount() > amount) stack.setCount(amount);
 				return stack;
 			} else return decrStackSize(inv.mainInventory[tool], slot, amount);
 		}

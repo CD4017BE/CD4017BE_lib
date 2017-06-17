@@ -115,7 +115,7 @@ public class EnergyAPI {
 	 * @return the wrapper instance. Never null: if no valid handler was found this is the default instance.
 	 */
 	public static IEnergyAccess get(ItemStack item, int s) {
-		if (item == null || item.getItem() == null || item.stackSize != 1) return NULL;
+		if (item == null || item.getItem() == null || item.getCount() != 1) return NULL;
 		IEnergyAccess e;
 		for (IEnergyHandler c : handlers)
 			if ((e = c.create(item, s)) != null)

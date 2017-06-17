@@ -106,9 +106,9 @@ public class ItemFluidUtil {
 			if (extr != null) stack = extr.getExtract(stack, src);
 			if (stack == null) continue;
 			if (ins != null && (stack = ItemHandlerHelper.copyStackWithSize(stack, ins.insertAmount(stack, dst))) == null) continue;
- 			n = stack.stackSize;
+ 			n = stack.getCount();
 			stack = ItemHandlerHelper.insertItemStacked(dst, stack, false);
- 			if (stack != null) n -= stack.stackSize;
+ 			if (stack != null) n -= stack.getCount();
  			src.extractItem(i, n, false);
  			m += n;
 		}
@@ -133,11 +133,11 @@ public class ItemFluidUtil {
 	}
 
 	public static int drain(IItemHandler inv, ItemStack item) {
-		int n = item.stackSize, m = 0;
+		int n = item.getCount(), m = 0;
 		for (int i = 0; i < inv.getSlots() && m < n; i++) 
 			if (item.isItemEqual(inv.getStackInSlot(i))) {
 				ItemStack stack = inv.extractItem(i, n - m, false);
-				if (stack != null) m += stack.stackSize;
+				if (stack != null) m += stack.getCount();
 			}
 		return m;
 	}
@@ -148,7 +148,7 @@ public class ItemFluidUtil {
 			if (ore.isEqual(inv.getStackInSlot(i))) {
 				ItemStack stack = inv.extractItem(i, n - m, false);
 				if (stack != null) {
-					m += stack.stackSize;
+					m += stack.getCount();
 					addToList(buffer, stack);
 				}
 			}
@@ -158,7 +158,7 @@ public class ItemFluidUtil {
 	public static void addToList(ArrayList<ItemStack> list, ItemStack item) {
 		for (ItemStack stack : list)
 			if (item.isItemEqual(stack)) {
-				stack.grow(item.stackSize);
+				stack.grow(item.getCount());
 				return;
 			}
 		list.add(item);
@@ -193,7 +193,7 @@ public class ItemFluidUtil {
 		private final int n;
 
 		public StackedFluidAccess(ItemStack item) {
-			this.n = item != null ? item.stackSize : 0;
+			this.n = item != null ? item.getCount() : 0;
 			if (n > 0) {
 				this.acc = FluidUtil.getFluidHandler(item);
 				if (this.acc != null) item.setCount(1);
@@ -235,8 +235,8 @@ public class ItemFluidUtil {
 		}
 
 		public ItemStack result() {
-			item.stackSize *= n;
-			return item.stackSize > 0 && item.getItem() != null ? item : null;
+			item.getCount() *= n;
+			return item.getCount() > 0 && item.getItem() != null ? item : null;
 		}
 
 	}

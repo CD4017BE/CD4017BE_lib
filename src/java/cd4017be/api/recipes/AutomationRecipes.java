@@ -63,7 +63,7 @@ public class AutomationRecipes
 					if (item == null) continue;
 					int n = getStacksize(item);
 					for (ItemStack i : items)
-						if (isItemEqual(i, item)) n -= i.stackSize;
+						if (isItemEqual(i, item)) n -= i.getCount();
 					if (n > 0) return false;
 				}
 			}
@@ -160,7 +160,7 @@ public class AutomationRecipes
 	public static int getStacksize(Object obj)
 	{
 		if (obj == null) return 0;
-		if (obj instanceof ItemStack) return ((ItemStack)obj).stackSize;
+		if (obj instanceof ItemStack) return ((ItemStack)obj).getCount();
 		if (obj instanceof OreDictStack) return ((OreDictStack)obj).stacksize;
 		return 0;
 	}
@@ -187,11 +187,11 @@ public class AutomationRecipes
 					if (inventory[s + i] != null) return false;
 					else continue;
 				} else if (input[i] instanceof ItemStack) {
-					if (!Utils.itemsEqual((ItemStack)input[i], inventory[s + i]) || inventory[s + i].stackSize < ((ItemStack)input[i]).stackSize) return false;
+					if (!Utils.itemsEqual((ItemStack)input[i], inventory[s + i]) || inventory[s + i].getCount() < ((ItemStack)input[i]).getCount()) return false;
 					else continue;
 				} else if (input[i] instanceof OreDictStack) {
 					OreDictStack obj = (OreDictStack)input[i];
-					if (inventory[s + i] == null || inventory[s + i].stackSize < obj.stacksize || !obj.isEqual(inventory[s + i])) return false;
+					if (inventory[s + i] == null || inventory[s + i].getCount() < obj.stacksize || !obj.isEqual(inventory[s + i])) return false;
 				}
 			}
 			return true;
@@ -248,12 +248,12 @@ public class AutomationRecipes
 			if (this.in0 instanceof FluidStack && in0 != null) {
 				if (!in0.containsFluid((FluidStack)this.in0)) return false;
 			} else if (this.in0 instanceof ItemStack && in0 == null && inv[s] != null) {
-				if (!inv[s].isItemEqual((ItemStack)this.in0) || inv[s].stackSize < ((ItemStack)this.in0).stackSize) return false;
+				if (!inv[s].isItemEqual((ItemStack)this.in0) || inv[s].getCount() < ((ItemStack)this.in0).getCount()) return false;
 			} else return false;
 			if (this.in1 instanceof FluidStack && in1 != null) {
 				if (!in1.containsFluid((FluidStack)this.in1)) return false;
 			} else if (this.in1 instanceof ItemStack && in1 == null && inv[s + 1] != null) {
-				if (!inv[s + 1].isItemEqual((ItemStack)this.in1) || inv[s + 1].stackSize < ((ItemStack)this.in1).stackSize) return false;
+				if (!inv[s + 1].isItemEqual((ItemStack)this.in1) || inv[s + 1].getCount() < ((ItemStack)this.in1).getCount()) return false;
 			} else return false;
 			return true;
 		}
@@ -262,12 +262,12 @@ public class AutomationRecipes
 		{
 			if (this.in0 instanceof FluidStack) tanks.drain(t0, ((FluidStack)this.in0).amount, true);
 			else if (this.in0 instanceof ItemStack){
-				if (inv.items[s0].stackSize > ((ItemStack)this.in0).stackSize) inv.items[s0].shrink(((ItemStack)this.in0).stackSize);
+				if (inv.items[s0].getCount() > ((ItemStack)this.in0).getCount()) inv.items[s0].shrink(((ItemStack)this.in0).getCount());
 				else inv.items[s0] = null;
 			}
 			if (this.in1 instanceof FluidStack) tanks.drain(t1, ((FluidStack)this.in1).amount, true);
 			else if (this.in1 instanceof ItemStack){
-				if (inv.items[s1].stackSize > ((ItemStack)this.in1).stackSize) inv.items[s1].shrink(((ItemStack)this.in1).stackSize);
+				if (inv.items[s1].getCount() > ((ItemStack)this.in1).getCount()) inv.items[s1].shrink(((ItemStack)this.in1).getCount());
 				else inv.items[s1] = null;
 			}
 			this.in0 = null;
@@ -284,9 +284,9 @@ public class AutomationRecipes
 					inv.items[s0] = (ItemStack)this.out0;
 					this.out0 = null;
 				} else if (inv.items[s0].isItemEqual((ItemStack)this.out0)) {
-					int n = inv.items[s0].getMaxStackSize() - inv.items[s0].stackSize;
-					if (n > ((ItemStack)this.out0).stackSize) {
-						inv.items[s0].grow(((ItemStack)this.out0).stackSize);
+					int n = inv.items[s0].getMaxStackSize() - inv.items[s0].getCount();
+					if (n > ((ItemStack)this.out0).getCount()) {
+						inv.items[s0].grow(((ItemStack)this.out0).getCount());
 						this.out0 = null;
 					} else {
 						inv.items[s0].grow(n);
@@ -302,9 +302,9 @@ public class AutomationRecipes
 					inv.items[s1] = (ItemStack)this.out1;
 					this.out1 = null;
 				} else if (inv.items[s1].isItemEqual((ItemStack)this.out1)) {
-					int n = inv.items[s1].getMaxStackSize() - inv.items[s1].stackSize;
-					if (n > ((ItemStack)this.out1).stackSize) {
-						inv.items[s1].grow(((ItemStack)this.out1).stackSize);
+					int n = inv.items[s1].getMaxStackSize() - inv.items[s1].getCount();
+					if (n > ((ItemStack)this.out1).getCount()) {
+						inv.items[s1].grow(((ItemStack)this.out1).getCount());
 						this.out1 = null;
 					} else {
 						inv.items[s1].grow(n);
@@ -406,7 +406,7 @@ public class AutomationRecipes
 			if (this.in instanceof FluidStack && in != null) {
 				if (!in.containsFluid((FluidStack)this.in)) return false;
 			} else if (this.in instanceof ItemStack && in == null && inv[s] != null) {
-				if (!inv[s].isItemEqual((ItemStack)this.in) || inv[s].stackSize < ((ItemStack)this.in).stackSize) return false;
+				if (!inv[s].isItemEqual((ItemStack)this.in) || inv[s].getCount() < ((ItemStack)this.in).getCount()) return false;
 			} else return false;
 			return true;
 		}
@@ -415,7 +415,7 @@ public class AutomationRecipes
 		{
 			if (this.in instanceof FluidStack) tanks.drain(t0, ((FluidStack)this.in).amount, true);
 			else if (this.in instanceof ItemStack){
-				if (inv.items[s0].stackSize > ((ItemStack)this.in).stackSize) inv.items[s0].shrink(((ItemStack)this.in).stackSize);
+				if (inv.items[s0].getCount() > ((ItemStack)this.in).getCount()) inv.items[s0].shrink(((ItemStack)this.in).getCount());
 				else inv.items[s0] = null;
 			}
 			this.in = null;
@@ -431,9 +431,9 @@ public class AutomationRecipes
 					inv.items[s0] = (ItemStack)this.out0;
 					this.out0 = null;
 				} else if (inv.items[s0].isItemEqual((ItemStack)this.out0)) {
-					int n = inv.items[s0].getMaxStackSize() - inv.items[s0].stackSize;
-					if (n > ((ItemStack)this.out0).stackSize) {
-						inv.items[s0].grow(((ItemStack)this.out0).stackSize);
+					int n = inv.items[s0].getMaxStackSize() - inv.items[s0].getCount();
+					if (n > ((ItemStack)this.out0).getCount()) {
+						inv.items[s0].grow(((ItemStack)this.out0).getCount());
 						this.out0 = null;
 					} else {
 						inv.items[s0].grow(n);
@@ -449,9 +449,9 @@ public class AutomationRecipes
 					inv.items[s1] = (ItemStack)this.out1;
 					this.out1 = null;
 				} else if (inv.items[s1].isItemEqual((ItemStack)this.out1)) {
-					int n = inv.items[s1].getMaxStackSize() - inv.items[s1].stackSize;
-					if (n > ((ItemStack)this.out1).stackSize) {
-						inv.items[s1].grow(((ItemStack)this.out1).stackSize);
+					int n = inv.items[s1].getMaxStackSize() - inv.items[s1].getCount();
+					if (n > ((ItemStack)this.out1).getCount()) {
+						inv.items[s1].grow(((ItemStack)this.out1).getCount());
 						this.out1 = null;
 					} else {
 						inv.items[s1].grow(n);
@@ -547,7 +547,7 @@ public class AutomationRecipes
 		
 		public boolean matches(ItemStack in)
 		{
-			return Utils.oresEqual(in, input) && in.stackSize >= input.stackSize;
+			return Utils.oresEqual(in, input) && in.getCount() >= input.getCount();
 		}
 	}
 	

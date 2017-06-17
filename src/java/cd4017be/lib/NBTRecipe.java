@@ -65,7 +65,7 @@ public class NBTRecipe extends ShapedOreRecipe
 			if (stack != null && stack.getTagCompound() != null)
 				for (int j = 0; j < nbtVars.length; j++)
 					if (stack.getTagCompound().hasKey(nbtVars[j]))
-						this.applyTag(out.getTagCompound(), stack.getTagCompound().getTag(nbtVars[j]), j, out.stackSize);
+						this.applyTag(out.getTagCompound(), stack.getTagCompound().getTag(nbtVars[j]), j, out.getCount());
 		}
 		return out;
 	}

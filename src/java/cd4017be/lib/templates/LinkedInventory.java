@@ -30,19 +30,19 @@ public class LinkedInventory implements IItemHandlerModifiable {
 		ItemStack item = get.apply(slot);
 		if (item == null) {
 			int n = stack.getMaxStackSize();
-			if (stack.stackSize <= n) {
+			if (stack.getCount() <= n) {
 				if (!sim) set.accept(stack.copy(), slot);
 				return null;
 			} else {
 				if (!sim) set.accept(copyStackWithSize(stack, n), slot);
-				return copyStackWithSize(stack, stack.stackSize - n);
+				return copyStackWithSize(stack, stack.getCount() - n);
 			}
 		} else if (canItemStacksStack(stack, item)) {
-			int n = item.getMaxStackSize() - item.stackSize;
+			int n = item.getMaxStackSize() - item.getCount();
 			if (n <= 0) return stack;
-			else if (stack.stackSize <= n) {
+			else if (stack.getCount() <= n) {
 				if (!sim) {
-					item.grow(stack.stackSize);
+					item.grow(stack.getCount());
 					set.accept(item, slot);
 				}
 				return null;
@@ -51,7 +51,7 @@ public class LinkedInventory implements IItemHandlerModifiable {
 					item.grow(n);
 					set.accept(item, slot);
 				}
-				return copyStackWithSize(stack, stack.stackSize - n);
+				return copyStackWithSize(stack, stack.getCount() - n);
 			}
 		} else return stack;
 	}
@@ -60,7 +60,7 @@ public class LinkedInventory implements IItemHandlerModifiable {
 	public ItemStack extractItem(int slot, int amount, boolean sim) {
 		ItemStack item = get.apply(slot);
 		if (item == null) return null;
-		if (amount >= item.stackSize) {
+		if (amount >= item.getCount()) {
 			if (!sim) set.accept(null, slot);
 			return item;
 		} else {
