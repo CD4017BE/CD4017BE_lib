@@ -117,7 +117,7 @@ public class AutomationRecipes
 		for (int id = 0; id < items.length; ++id)
 		{
 			NBTTagCompound tag = list.getCompoundTagAt(id);
-			items[id] = ItemStack.loadItemStackFromNBT(tag);
+			items[id] = new ItemStack(tag);
 		}
 		FluidStack liquid = FluidStack.loadFluidStackFromNBT(nbt);
 		float energy = nbt.getFloat("Energy");
@@ -334,12 +334,12 @@ public class AutomationRecipes
 		if (nbt.hasKey("out0")) {
 			NBTTagCompound tag = nbt.getCompoundTag("out0");
 			if (tag.hasKey("FluidName")) out0 = FluidStack.loadFluidStackFromNBT(tag);
-			else if (tag.hasKey("id")) out0 = ItemStack.loadItemStackFromNBT(tag);
+			else if (tag.hasKey("id")) out0 = new ItemStack(tag);
 		}
 		if (nbt.hasKey("out1")) {
 			NBTTagCompound tag = nbt.getCompoundTag("out1");
 			if (tag.hasKey("FluidName")) out1 = FluidStack.loadFluidStackFromNBT(tag);
-			else if (tag.hasKey("id")) out1 = ItemStack.loadItemStackFromNBT(tag);
+			else if (tag.hasKey("id")) out1 = new ItemStack(tag);
 		}
 		return new CoolRecipe(null, out0, null, out1, energy);
 	}
@@ -480,12 +480,12 @@ public class AutomationRecipes
 		if (nbt.hasKey("out0")) {
 			NBTTagCompound tag = nbt.getCompoundTag("out0");
 			if (tag.hasKey("FluidName")) out0 = FluidStack.loadFluidStackFromNBT(tag);
-			else if (tag.hasKey("id")) out0 = ItemStack.loadItemStackFromNBT(tag);
+			else if (tag.hasKey("id")) out0 = new ItemStack(tag);
 		}
 		if (nbt.hasKey("out1")) {
 			NBTTagCompound tag = nbt.getCompoundTag("out1");
 			if (tag.hasKey("FluidName")) out1 = FluidStack.loadFluidStackFromNBT(tag);
-			else if (tag.hasKey("id")) out1 = ItemStack.loadItemStackFromNBT(tag);
+			else if (tag.hasKey("id")) out1 = new ItemStack(tag);
 		}
 		return new ElRecipe(null, out0, out1, energy);
 	}

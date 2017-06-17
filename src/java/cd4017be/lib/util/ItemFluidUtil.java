@@ -32,7 +32,7 @@ public class ItemFluidUtil {
 		for (int i = 0; i < list.tagCount(); i++) {
 			NBTTagCompound tag = list.getCompoundTagAt(i);
 			int s = tag.getByte("slot") & 0xff;
-			if (s < inv.length) inv[s] = ItemStack.loadItemStackFromNBT(tag);
+			if (s < inv.length) inv[s] = new ItemStack(tag);
 		}
 	}
 
@@ -51,14 +51,14 @@ public class ItemFluidUtil {
 	public static ItemStack[] loadItems(NBTTagList list) {
 		ItemStack[] items = new ItemStack[list.tagCount()];
 		for (int i = 0; i < items.length; i++)
-			items[i] = ItemStack.loadItemStackFromNBT(list.getCompoundTagAt(i));
+			items[i] = new ItemStack(list.getCompoundTagAt(i));
 		return items;
 	}
 
 	public static void loadItems(NBTTagList list, ItemStack[] items) {
 		int m = Math.min(items.length, list.tagCount());
 		for (int i = 0; i < m; i++)
-			items[i] = ItemStack.loadItemStackFromNBT(list.getCompoundTagAt(i));
+			items[i] = new ItemStack(list.getCompoundTagAt(i));
 	}
 
 	public static NBTTagList saveItems(ItemStack[] items) {

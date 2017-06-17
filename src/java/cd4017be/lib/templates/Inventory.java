@@ -118,7 +118,7 @@ public class Inventory implements IItemHandlerModifiable {
 		sideCfg = nbt.getLong(name + "Cfg");
 		for (int i = 0; i < items.length; i++) {
 			String tagName = name + Integer.toHexString(i);
-			items[i] = nbt.hasKey(tagName, 10) ? ItemStack.loadItemStackFromNBT(nbt.getCompoundTag(tagName)) : null;
+			items[i] = nbt.hasKey(tagName, 10) ? new ItemStack(nbt.getCompoundTag(tagName)) : null;
 		}
 	}
 

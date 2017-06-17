@@ -41,7 +41,7 @@ public class InventoryItemHandler {
 			s = tag.getByte("slot") & 0xff;
 			if (s >= emptyS.length) continue;
 			emptyS[s] = true;
-			it = ItemStack.loadItemStackFromNBT(tag);
+			it = new ItemStack(tag);
 			if (Utils.itemsEqual(stack, it)) {
 				if (it.stackSize + stack.stackSize <= it.getMaxStackSize()){
 					it.stackSize += stack.stackSize;
@@ -74,7 +74,7 @@ public class InventoryItemHandler {
 		ItemStack it;
 		for (int i = 0; i < buff.length; i++) {
 			tag = list.getCompoundTagAt(i);
-			it = ItemStack.loadItemStackFromNBT(tag);
+			it = new ItemStack(tag);
 			for (int j = 0; j < n && it != null; j++)
 				if (Utils.itemsEqual(buff[j], it)) {
 					buff[j].stackSize += it.stackSize;
@@ -103,7 +103,7 @@ public class InventoryItemHandler {
 		ItemStack it;
 		for (int i = 0; i < list.tagCount() && n > 0; i++) {
 			tag = list.getCompoundTagAt(i);
-			it = ItemStack.loadItemStackFromNBT(tag);
+			it = new ItemStack(tag);
 			if (Utils.itemsEqual(stack, it)) {
 				if (it.stackSize <= n) {
 					n -= it.stackSize;

@@ -40,7 +40,7 @@ public interface IPipe
 		public static Cover read(NBTTagCompound nbt, String name) {
 			if (!nbt.hasKey(name)) return null;
 			else {
-				ItemStack item = ItemStack.loadItemStackFromNBT(nbt.getCompoundTag(name));
+				ItemStack item = new ItemStack(nbt.getCompoundTag(name));
 				return create(item);
 			}
 		}
