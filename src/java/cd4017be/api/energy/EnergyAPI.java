@@ -80,17 +80,13 @@ public class EnergyAPI {
 			handlers.add(new EnergyOpenComputers());
 			FMLLog.log("CD4017BE_lib", Level.INFO, "added Open Computers Energy-API");
 		}
-		if (Loader.isModLoaded("Tesla")) {
-			handlers.add(new EnergyTesla());
-			FMLLog.log("CD4017BE_lib", Level.INFO, "added Tesla Energy-API");
+		if (true) {
+			handlers.add(new EnergyForge());
+			FMLLog.log("CD4017BE_lib", Level.INFO, "added Forge Energy-API");
 		}
 		if (Loader.isModLoaded("IC2")) {
 			handlers.add(new EnergyIndustrialCraft());
 			FMLLog.log("CD4017BE_lib", Level.INFO, "added IC2 Energy-API");
-		}
-		if (true) {//TODO change to weak reference if possible
-			handlers.add(new EnergyRedstoneFlux());
-			FMLLog.log("CD4017BE_lib", Level.INFO, "added Redstone Flux Energy-API");
 		}
 	}
 	

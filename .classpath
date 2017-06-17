@@ -61,9 +61,11 @@
 	<classpathentry exported="true" kind="lib" path="C:/Users/CD4017BE/.gradle/caches/modules-2/files-2.1/org.lwjgl.lwjgl/lwjgl-platform/2.9.4-nightly-20150209/b84d5102b9dbfabfeb5e43c7e2828d98a7fc80e0/lwjgl-platform-2.9.4-nightly-20150209-natives-windows.jar"/>
 	<classpathentry exported="true" kind="lib" path="C:/Users/CD4017BE/.gradle/caches/modules-2/files-2.1/org.lwjgl.lwjgl/lwjgl-platform/2.9.4-nightly-20150209/931074f46c795d2f7b30ed6395df5715cfd7675b/lwjgl-platform-2.9.4-nightly-20150209-natives-linux.jar"/>
 	<classpathentry exported="true" kind="lib" path="C:/Users/CD4017BE/.gradle/caches/modules-2/files-2.1/org.lwjgl.lwjgl/lwjgl-platform/2.9.4-nightly-20150209/bcab850f8f487c3f4c4dbabde778bb82bd1a40ed/lwjgl-platform-2.9.4-nightly-20150209-natives-osx.jar"/>
-	<classpathentry exported="true" kind="lib" path="C:/Users/CD4017BE/Minecraft Modding/Mods-1.7.10/CD4017BE_lib/libs/ComputerCraft1.75.jar"/>
 	<classpathentry exported="true" kind="lib" path="C:/Users/CD4017BE/.gradle/caches/minecraft/deobfedDeps/compileDummy.jar"/>
 	<classpathentry exported="true" kind="lib" path="C:/Users/CD4017BE/.gradle/caches/minecraft/deobfedDeps/providedDummy.jar"/>
 	<classpathentry exported="true" kind="lib" path="C:/Users/CD4017BE/.gradle/caches/minecraft/net/minecraftforge/forge/1.11.2-13.20.0.2315/start"/>
+	<classpathentry exported="true" kind="lib" path="libs/OpenComputers-MC1.11.2-1.7.0.29-api.jar"/>
+	<classpathentry kind="lib" path="libs/industrialcraft-2-2.2.825-experimental-api.jar"/>
+	<classpathentry kind="lib" path="libs/jei_1.11.2-4.5.0.287.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

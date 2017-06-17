@@ -135,7 +135,7 @@ public class MovedBlock
 		boolean flag = false;
 		if (extendedblockstorage == Chunk.NULL_BLOCK_STORAGE) {
 			if (block == Blocks.AIR) return false;
-			extendedblockstorage = storageArrays[y >> 4] = new ExtendedBlockStorage(y >> 4 << 4, !world.provider.getHasNoSky());
+			extendedblockstorage = storageArrays[y >> 4] = new ExtendedBlockStorage(y >> 4 << 4, !world.provider.hasNoSky());
 			flag = y >= h;
 		}
 
