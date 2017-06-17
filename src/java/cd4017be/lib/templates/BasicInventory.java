@@ -52,4 +52,9 @@ public class BasicInventory implements IItemHandlerModifiable {
 		items[slot] = stack;
 	}
 
+	@Override
+	public int getSlotLimit(int slot) {
+		return 64;
+	}
+
 }

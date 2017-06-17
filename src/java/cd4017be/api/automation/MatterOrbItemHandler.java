@@ -192,6 +192,11 @@ public class MatterOrbItemHandler {
 			} else return decrStackSize(inv.mainInventory.get(tool), slot, amount);
 		}
 
+		@Override
+		public int getSlotLimit(int slot) {
+			return Integer.MAX_VALUE;
+		}
+
 	}
 
 }

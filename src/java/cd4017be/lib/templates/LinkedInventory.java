@@ -9,12 +9,13 @@ import java.util.function.IntFunction;
 
 public class LinkedInventory implements IItemHandlerModifiable {
 
-	private final int slots;
+	private final int slots, stackSize;
 	private final IntFunction<ItemStack> get;
 	private final ObjIntConsumer<ItemStack> set;
 
-	public LinkedInventory(int slots, IntFunction<ItemStack> get, ObjIntConsumer<ItemStack> set) {
+	public LinkedInventory(int slots, int stackSize, IntFunction<ItemStack> get, ObjIntConsumer<ItemStack> set) {
 		this.slots = slots;
+		this.stackSize = stackSize;
 		this.get = get;
 		this.set = set;
 	}
@@ -75,6 +76,11 @@ public class LinkedInventory implements IItemHandlerModifiable {
 	@Override
 	public void setStackInSlot(int slot, ItemStack stack) {
 		set.accept(stack, slot);
+	}
+
+	@Override
+	public int getSlotLimit(int slot) {
+		return stackSize;
 	}
 
 }

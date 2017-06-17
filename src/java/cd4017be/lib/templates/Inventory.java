@@ -135,6 +135,11 @@ public class Inventory implements IItemHandlerModifiable {
 	}
 
 	@Override
+	public int getSlotLimit(int slot) {
+		return 64;
+	}
+
+	@Override
 	public ItemStack getStackInSlot(int i) {
 		return items[i];
 	}
@@ -214,6 +219,10 @@ public class Inventory implements IItemHandlerModifiable {
 		public void setStackInSlot(int slot, ItemStack stack) {
 			Inventory.this.setStackInSlot(slot + ofs, stack);
 		}
+		@Override
+		public int getSlotLimit(int slot) {
+			return Inventory.this.getSlotLimit(slot + ofs);
+		}
 	}
 
 	public class Access implements IItemHandler {
@@ -288,6 +297,11 @@ public class Inventory implements IItemHandlerModifiable {
 				}
 			}
 			return ItemHandlerHelper.copyStackWithSize(item, m);
+		}
+
+		@Override
+		public int getSlotLimit(int slot) {
+			return Inventory.this.getSlotLimit(slots[slot]);
 		}
 	}
 

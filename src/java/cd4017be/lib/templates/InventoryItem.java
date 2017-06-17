@@ -79,4 +79,9 @@ public class InventoryItem implements IItemHandlerModifiable {
 		public void saveInventory(ItemStack inv, EntityPlayer player, ItemStack[] items);
 	}
 
+	@Override
+	public int getSlotLimit(int slot) {
+		return 64;
+	}
+
 }
