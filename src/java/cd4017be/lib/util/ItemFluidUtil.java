@@ -158,7 +158,7 @@ public class ItemFluidUtil {
 	public static void addToList(ArrayList<ItemStack> list, ItemStack item) {
 		for (ItemStack stack : list)
 			if (item.isItemEqual(stack)) {
-				stack.stackSize += item.stackSize;
+				stack.grow(item.stackSize);
 				return;
 			}
 		list.add(item);

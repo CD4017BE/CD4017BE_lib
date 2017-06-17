@@ -42,13 +42,13 @@ public class LinkedInventory implements IItemHandlerModifiable {
 			if (n <= 0) return stack;
 			else if (stack.stackSize <= n) {
 				if (!sim) {
-					item.stackSize += stack.stackSize;
+					item.grow(stack.stackSize);
 					set.accept(item, slot);
 				}
 				return null;
 			} else {
 				if (!sim) {
-					item.stackSize += n;
+					item.grow(n);
 					set.accept(item, slot);
 				}
 				return copyStackWithSize(stack, stack.stackSize - n);
@@ -65,7 +65,7 @@ public class LinkedInventory implements IItemHandlerModifiable {
 			return item;
 		} else {
 			if (!sim) {
-				item.stackSize -= amount;
+				item.shrink(amount);
 				set.accept(item, slot);
 			}
 			return copyStackWithSize(item, amount);

@@ -44,10 +44,10 @@ public class InventoryItemHandler {
 			it = new ItemStack(tag);
 			if (Utils.itemsEqual(stack, it)) {
 				if (it.stackSize + stack.stackSize <= it.getMaxStackSize()){
-					it.stackSize += stack.stackSize;
+					it.grow(stack.stackSize);
 					stack = null;
 				} else {
-					stack.stackSize -= it.getMaxStackSize() - it.stackSize;
+					stack.shrink(it.getMaxStackSize() - it.stackSize);
 					it.setCount(it.getMaxStackSize());
 				}
 				it.writeToNBT(tag);
@@ -77,7 +77,7 @@ public class InventoryItemHandler {
 			it = new ItemStack(tag);
 			for (int j = 0; j < n && it != null; j++)
 				if (Utils.itemsEqual(buff[j], it)) {
-					buff[j].stackSize += it.stackSize;
+					buff[j].grow(it.stackSize);
 					it = null;
 				}
 			if (it != null) buff[n++] = it;
@@ -109,7 +109,7 @@ public class InventoryItemHandler {
 					n -= it.stackSize;
 					list.removeTag(i--);
 				} else {
-					it.stackSize -= n;
+					it.shrink(n);
 					n = 0;
 					it.writeToNBT(tag);
 				}

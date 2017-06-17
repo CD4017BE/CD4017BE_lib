@@ -146,7 +146,7 @@ public class Inventory implements IItemHandlerModifiable {
 		if (m <= 0) return stack;
 		if (!sim) {
 			if (item == null) item = ItemHandlerHelper.copyStackWithSize(stack, m);
-			else item.stackSize += m;
+			else item.grow(m);
 			handler.setSlot(-1, i, item);
 		}
 		return (m = stack.stackSize - m) > 0 ? ItemHandlerHelper.copyStackWithSize(stack, m) : null;
@@ -159,7 +159,7 @@ public class Inventory implements IItemHandlerModifiable {
 		if (!sim) {
 			if (item.stackSize <= m) handler.setSlot(-1, i, null);
 			else {
-				item.stackSize -= m;
+				item.shrink(m);
 				handler.setSlot(-1, i, item);
 			}
 		}
@@ -269,7 +269,7 @@ public class Inventory implements IItemHandlerModifiable {
 			if ((d & 0x40) == 0 || (m = handler.insertAm(d & 7, s = slots[i], item = items[s], stack)) <= 0) return stack;
 			if (!sim) {
 				if (item == null) item = ItemHandlerHelper.copyStackWithSize(stack, m);
-				else item.stackSize += m;
+				else item.grow(m);
 				handler.setSlot(d & 0x47, s, item);
 			}
 			return (m = stack.stackSize - m) > 0 ? ItemHandlerHelper.copyStackWithSize(stack, m) : null;
@@ -283,7 +283,7 @@ public class Inventory implements IItemHandlerModifiable {
 			if (!sim) {
 				if (item.stackSize == m) handler.setSlot(d & 0x87, s, null);
 				else {
-					item.stackSize -= m;
+					item.shrink(m);
 					handler.setSlot(d & 0x87, s, item);
 				}
 			}

@@ -168,7 +168,7 @@ public class TileContainer extends DataContainer {
 					}
 				} else if (slot instanceof SlotHolo) {
 					if (slot.isItemValid(item1) && ItemHandlerHelper.canItemStacksStack(stack, item1)) {
-						stack.stackSize += item1.stackSize;
+						stack.grow(item1.stackSize);
 						if (stack.stackSize > slot.getSlotStackLimit()) stack.setCount(slot.getSlotStackLimit());
 						slot.putStack(stack);
 						item.setCount(item1.stackSize);
@@ -183,7 +183,7 @@ public class TileContainer extends DataContainer {
 						slot.onSlotChanged();
 						return true;
 					} else if (stack.stackSize < mxs) {
-						item1.stackSize -= mxs - stack.stackSize;
+						item1.shrink(mxs - stack.stackSize);
 						stack.setCount(mxs);
 						slot.onSlotChanged();
 					}
@@ -255,7 +255,7 @@ public class TileContainer extends DataContainer {
 				ItemStack curItem = player.inventory.getItemStack();
 				if (curItem != null && slot.isItemValid(curItem)) {
 					if (item != null && item.isItemEqual(curItem)) {
-						item.stackSize += b == 1 ? 1 : curItem.stackSize;
+						item.grow(b == 1 ? 1 : curItem.stackSize);
 					} else {
 						item = curItem.copy();
 						if (b == 1) item.setCount(1);
@@ -285,7 +285,7 @@ public class TileContainer extends DataContainer {
 					int n = rem != null ? 65536 - rem.stackSize : 65536, n1 = 0;
 					if (n <= 0) return null;
 					if (b == 0) {
-						if (n < curItem.stackSize) curItem.stackSize -= n1 = n;
+						if (n < curItem.stackSize) curItem.shrink(n1 = n);
 						else {
 							n1 = curItem.stackSize;
 							player.inventory.setItemStack(null);
@@ -297,7 +297,7 @@ public class TileContainer extends DataContainer {
 				} else {
 					int n = b == 0 ? curItem.stackSize : 1;
 					ItemStack rem = acc.insertItem(p, ItemHandlerHelper.copyStackWithSize(curItem, n), false);
-					curItem.stackSize -= n - (rem != null ? rem.stackSize : 0);
+					curItem.shrink(n - (rem != null ? rem.stackSize : 0));
 					if (curItem.stackSize <= 0) player.inventory.setItemStack(null);
 				}
 			} else if (item != null) {
@@ -323,10 +323,10 @@ public class TileContainer extends DataContainer {
 			ItemStack stack = inv.mainInventory[i];
 			if (stack != null && stack.stackSize < m && stack.isItemEqual(item)) {
 				if (item.stackSize <= m - stack.stackSize) {
-					stack.stackSize += item.stackSize;
+					stack.grow(item.stackSize);
 					return 0;
 				} else {
-					item.stackSize -= m - stack.stackSize;
+					item.shrink(m - stack.stackSize);
 					stack.setCount(m);
 				}
 			} else if (stack == null && i < es) es = i;

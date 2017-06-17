@@ -36,7 +36,7 @@ public class InventoryItem implements IItemHandlerModifiable {
 		int m = Math.min(stack.getMaxStackSize() - (item == null ? 0 : item.stackSize), stack.stackSize); 
 		if (m <= 0 || !(item == null || ItemHandlerHelper.canItemStacksStack(item, stack))) return stack;
 		if (!sim) {
-			if (item != null) item.stackSize -= m;
+			if (item != null) item.shrink(m);
 			else item = ItemHandlerHelper.copyStackWithSize(stack, m);
 			this.setStackInSlot(slot, item);
 		}
@@ -51,7 +51,7 @@ public class InventoryItem implements IItemHandlerModifiable {
 		if (!sim) {
 			if (item.stackSize <= m) this.setStackInSlot(slot, null);
 			else {
-				item.stackSize -= m;
+				item.shrink(m);
 				this.setStackInSlot(slot, item);
 			}
 		}

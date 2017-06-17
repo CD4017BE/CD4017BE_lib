@@ -30,7 +30,7 @@ public class BasicInventory implements IItemHandlerModifiable {
 		if (m <= 0 || (item != null && !ItemHandlerHelper.canItemStacksStack(item, stack))) return stack;
 		if (!sim) {
 			if (item == null) item = ItemHandlerHelper.copyStackWithSize(stack, m);
-			else item.stackSize += m;
+			else item.grow(m);
 			items[i] = item;
 		}
 		return (m = stack.stackSize - m) > 0 ? ItemHandlerHelper.copyStackWithSize(stack, m) : null;
@@ -42,7 +42,7 @@ public class BasicInventory implements IItemHandlerModifiable {
 		if (item == null || (m = item.stackSize < m ? item.stackSize : m) <= 0) return null;
 		if (!sim) {
 			if (item.stackSize <= m) items[i] = null;
-			else items[i].stackSize -= m;
+			else items[i].shrink(m);
 		}
 		return ItemHandlerHelper.copyStackWithSize(item, m);
 	}

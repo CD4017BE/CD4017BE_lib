@@ -262,12 +262,12 @@ public class AutomationRecipes
 		{
 			if (this.in0 instanceof FluidStack) tanks.drain(t0, ((FluidStack)this.in0).amount, true);
 			else if (this.in0 instanceof ItemStack){
-				if (inv.items[s0].stackSize > ((ItemStack)this.in0).stackSize) inv.items[s0].stackSize -= ((ItemStack)this.in0).stackSize;
+				if (inv.items[s0].stackSize > ((ItemStack)this.in0).stackSize) inv.items[s0].shrink(((ItemStack)this.in0).stackSize);
 				else inv.items[s0] = null;
 			}
 			if (this.in1 instanceof FluidStack) tanks.drain(t1, ((FluidStack)this.in1).amount, true);
 			else if (this.in1 instanceof ItemStack){
-				if (inv.items[s1].stackSize > ((ItemStack)this.in1).stackSize) inv.items[s1].stackSize -= ((ItemStack)this.in1).stackSize;
+				if (inv.items[s1].stackSize > ((ItemStack)this.in1).stackSize) inv.items[s1].shrink(((ItemStack)this.in1).stackSize);
 				else inv.items[s1] = null;
 			}
 			this.in0 = null;
@@ -286,11 +286,11 @@ public class AutomationRecipes
 				} else if (inv.items[s0].isItemEqual((ItemStack)this.out0)) {
 					int n = inv.items[s0].getMaxStackSize() - inv.items[s0].stackSize;
 					if (n > ((ItemStack)this.out0).stackSize) {
-						inv.items[s0].stackSize += ((ItemStack)this.out0).stackSize;
+						inv.items[s0].grow(((ItemStack)this.out0).stackSize);
 						this.out0 = null;
 					} else {
-						inv.items[s0].stackSize += n;
-						((ItemStack)this.out0).stackSize -= n;
+						inv.items[s0].grow(n);
+						((ItemStack)this.out0).shrink(n);
 					}
 				}
 			}
@@ -304,11 +304,11 @@ public class AutomationRecipes
 				} else if (inv.items[s1].isItemEqual((ItemStack)this.out1)) {
 					int n = inv.items[s1].getMaxStackSize() - inv.items[s1].stackSize;
 					if (n > ((ItemStack)this.out1).stackSize) {
-						inv.items[s1].stackSize += ((ItemStack)this.out1).stackSize;
+						inv.items[s1].grow(((ItemStack)this.out1).stackSize);
 						this.out1 = null;
 					} else {
-						inv.items[s1].stackSize += n;
-						((ItemStack)this.out1).stackSize -= n;
+						inv.items[s1].grow(n);
+						((ItemStack)this.out1).shrink(n);
 					}
 				}
 			}
@@ -415,7 +415,7 @@ public class AutomationRecipes
 		{
 			if (this.in instanceof FluidStack) tanks.drain(t0, ((FluidStack)this.in).amount, true);
 			else if (this.in instanceof ItemStack){
-				if (inv.items[s0].stackSize > ((ItemStack)this.in).stackSize) inv.items[s0].stackSize -= ((ItemStack)this.in).stackSize;
+				if (inv.items[s0].stackSize > ((ItemStack)this.in).stackSize) inv.items[s0].shrink(((ItemStack)this.in).stackSize);
 				else inv.items[s0] = null;
 			}
 			this.in = null;
@@ -433,11 +433,11 @@ public class AutomationRecipes
 				} else if (inv.items[s0].isItemEqual((ItemStack)this.out0)) {
 					int n = inv.items[s0].getMaxStackSize() - inv.items[s0].stackSize;
 					if (n > ((ItemStack)this.out0).stackSize) {
-						inv.items[s0].stackSize += ((ItemStack)this.out0).stackSize;
+						inv.items[s0].grow(((ItemStack)this.out0).stackSize);
 						this.out0 = null;
 					} else {
-						inv.items[s0].stackSize += n;
-						((ItemStack)this.out0).stackSize -= n;
+						inv.items[s0].grow(n);
+						((ItemStack)this.out0).shrink(n);
 					}
 				}
 			}
@@ -451,11 +451,11 @@ public class AutomationRecipes
 				} else if (inv.items[s1].isItemEqual((ItemStack)this.out1)) {
 					int n = inv.items[s1].getMaxStackSize() - inv.items[s1].stackSize;
 					if (n > ((ItemStack)this.out1).stackSize) {
-						inv.items[s1].stackSize += ((ItemStack)this.out1).stackSize;
+						inv.items[s1].grow(((ItemStack)this.out1).stackSize);
 						this.out1 = null;
 					} else {
-						inv.items[s1].stackSize += n;
-						((ItemStack)this.out1).stackSize -= n;
+						inv.items[s1].grow(n);
+						((ItemStack)this.out1).shrink(n);
 					}
 				}
 			}
