@@ -241,7 +241,7 @@ public class TileContainer extends DataContainer {
 		slot.onSlotChange(stack, item);
 		if (stack.getCount() == 0) slot.putStack((ItemStack)null);
 		else slot.onSlotChanged();
-		slot.onPickupFromSlot(player, stack);
+		slot.onTake(player, stack);
 		return item;
 	}
 
@@ -318,8 +318,8 @@ public class TileContainer extends DataContainer {
 
 	public static int putInPlayerInv(ItemStack item, InventoryPlayer inv) {
 		int m = item.getMaxStackSize();
-		int es = inv.mainInventory.length;
-		for (int i = 0; i < inv.mainInventory.length; i++) {
+		int es = inv.mainInventory.size();
+		for (int i = 0; i < inv.mainInventory.size(); i++) {
 			ItemStack stack = inv.mainInventory.get(i);
 			if (stack != null && stack.getCount() < m && stack.isItemEqual(item)) {
 				if (item.getCount() <= m - stack.getCount()) {
@@ -331,7 +331,7 @@ public class TileContainer extends DataContainer {
 				}
 			} else if (stack == null && i < es) es = i;
 		}
-		for (int i = es; i < inv.mainInventory.length; i++)
+		for (int i = es; i < inv.mainInventory.size(); i++)
 			if (inv.mainInventory.get(i) == null) {
 				if (item.getCount() <= m) {
 					inv.mainInventory.set(i, item);
@@ -343,7 +343,7 @@ public class TileContainer extends DataContainer {
 
 	public static int getFromPlayerInv(ItemStack item, InventoryPlayer inv) {
 		int n = 0;
-		for (int i = 0; i < inv.mainInventory.length; i++) {
+		for (int i = 0; i < inv.mainInventory.size(); i++) {
 			ItemStack stack = inv.mainInventory.get(i);
 			if (item.isItemEqual(stack)) {
 				n += stack.getCount();
