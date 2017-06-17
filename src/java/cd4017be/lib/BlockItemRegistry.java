@@ -97,7 +97,7 @@ public class BlockItemRegistry
 		ItemStack item = stacks.get(name);
 		if (item == null) return null;
 		ItemStack ret = item.copy();
-		ret.stackSize = n;
+		ret.setCount(n);
 		return ret;
 	}
 	
@@ -112,7 +112,7 @@ public class BlockItemRegistry
 		ItemStack item = stacks.get(name);
 		if (item == null) return null;
 		ItemStack ret = item.copy();
-		ret.stackSize = n;
+		ret.setCount(n);
 		ret.setItemDamage(m);
 		return ret;
 	}

@@ -80,7 +80,7 @@ public class MatterOrbItemHandler {
 			return stack;
 		} else {
 			nbt.setInteger("n", stack.stackSize - n);
-			stack.stackSize = n;
+			stack.setCount(n);
 			return stack;
 		}
 	}
@@ -123,7 +123,7 @@ public class MatterOrbItemHandler {
 				NBTTagCompound nbt = list.getCompoundTagAt(i);
 				if (nbt.getShort("i") == Item.getIdFromItem(stack.getItem()) && nbt.getShort("d") == stack.getItemDamage() && ((!nbt.hasKey("t") && stack.getTagCompound() == null) || (stack.getTagCompound() != null && stack.getTagCompound().equals(nbt.getTag("t"))))) {
 					nbt.setInteger("n", nbt.getInteger("n") + stack.stackSize);
-					stack.stackSize = 0;
+					stack.setCount(0);
 					break;
 				}
 			}
@@ -170,7 +170,7 @@ public class MatterOrbItemHandler {
 		public ItemStack getStackInSlot(int s) {
 			if (s == 0) return null;
 			ItemStack stack = getItem(inv.mainInventory[tool], slot);
-			if (stack != null) stack.stackSize = 1;
+			if (stack != null) stack.setCount(1);
 			return stack;
 		}
 
@@ -187,7 +187,7 @@ public class MatterOrbItemHandler {
 			if (s == 0) return null;
 			if (simulate) {
 				ItemStack stack = getItem(inv.mainInventory[tool], slot);
-				if(stack.stackSize > amount) stack.stackSize = amount;
+				if(stack.stackSize > amount) stack.setCount(amount);
 				return stack;
 			} else return decrStackSize(inv.mainInventory[tool], slot, amount);
 		}

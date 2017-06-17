@@ -48,7 +48,7 @@ public class InventoryItemHandler {
 					stack = null;
 				} else {
 					stack.stackSize -= it.getMaxStackSize() - it.stackSize;
-					it.stackSize = it.getMaxStackSize();
+					it.setCount(it.getMaxStackSize());
 				}
 				it.writeToNBT(tag);
 			}

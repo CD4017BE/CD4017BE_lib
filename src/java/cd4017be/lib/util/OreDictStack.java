@@ -56,7 +56,7 @@ public class OreDictStack {
 		int n = 0;
 		for (ItemStack item : list) {
 			items[n] = item.copy();
-			items[n++].stackSize = stacksize;
+			items[n++].setCount(stacksize);
 		}
 		return items;
 	}
@@ -65,7 +65,7 @@ public class OreDictStack {
 		List<ItemStack> list = OreDictionary.getOres(id);
 		if (list.isEmpty()) return null;
 		ItemStack item = list.get(0).copy();
-		item.stackSize = stacksize;
+		item.setCount(stacksize);
 		return item;
 	}
 

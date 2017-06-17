@@ -58,7 +58,7 @@ public class RecipeScriptContext extends Context {
 			switch(p.param.length) {
 			case 4: item.setTagCompound(p.get(3, NBTTagCompound.class));
 			case 3: item.setItemDamage((int)p.getNumber(2));
-			case 2: item.stackSize = (int)p.getNumber(1);
+			case 2: item.setCount((int)p.getNumber(1));
 			default: return item;
 			}
 		}, FL = (p) -> {

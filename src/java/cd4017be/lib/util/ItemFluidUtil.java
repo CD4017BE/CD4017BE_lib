@@ -179,8 +179,8 @@ public class ItemFluidUtil {
 		for (int i = 0; i < inv.getSlots(); i++) {
 			ItemStack stack = inv.extractItem(i, am, true);
 			if (stack == null) continue;
-			stack.stackSize = mss ? stack.getMaxStackSize() : am;
-			stack.stackSize = drain(inv, stack);
+			stack.setCount(mss ? stack.getMaxStackSize() : am);
+			stack.setCount(drain(inv, stack));
 			return stack;
 		}
 		return null;
@@ -196,7 +196,7 @@ public class ItemFluidUtil {
 			this.n = item != null ? item.stackSize : 0;
 			if (n > 0) {
 				this.acc = FluidUtil.getFluidHandler(item);
-				if (this.acc != null) item.stackSize = 1;
+				if (this.acc != null) item.setCount(1);
 				this.item = item;
 			} else {
 				this.acc = null;

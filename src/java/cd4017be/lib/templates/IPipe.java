@@ -33,7 +33,7 @@ public interface IPipe
 			Cover cover = new Cover(ib.block.getStateFromMeta(ib.getMetadata(item.getMetadata())));
 			if (cover.block == null || cover.block.getBlock() instanceof BlockPipe || !cover.block.getBlock().isFullBlock(cover.block)) return null;
 			cover.item = item.copy();
-			cover.item.stackSize = 1;
+			cover.item.setCount(1);
 			return cover;
 		}
 		

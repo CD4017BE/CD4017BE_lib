@@ -163,28 +163,28 @@ public class TileContainer extends DataContainer {
 				if (slot instanceof GlitchSaveSlot) {
 					GlitchSaveSlot gss = (GlitchSaveSlot)slot;
 					if ((item1 = gss.getItemHandler().insertItem(gss.index, item1, false)) == null) {
-						item.stackSize = 0;
+						item.setCount(0);
 						return true;
 					}
 				} else if (slot instanceof SlotHolo) {
 					if (slot.isItemValid(item1) && ItemHandlerHelper.canItemStacksStack(stack, item1)) {
 						stack.stackSize += item1.stackSize;
-						if (stack.stackSize > slot.getSlotStackLimit()) stack.stackSize = slot.getSlotStackLimit();
+						if (stack.stackSize > slot.getSlotStackLimit()) stack.setCount(slot.getSlotStackLimit());
 						slot.putStack(stack);
-						item.stackSize = item1.stackSize;
+						item.setCount(item1.stackSize);
 						return true;
 					}
 				} else if (ItemHandlerHelper.canItemStacksStack(stack, item1)) {
 					int j = stack.stackSize + item1.stackSize;
 					int mxs = Math.min(item1.getMaxStackSize(), slot.getSlotStackLimit());
 					if (j <= mxs) {
-						item.stackSize = 0;
-						stack.stackSize = j;
+						item.setCount(0);
+						stack.setCount(j);
 						slot.onSlotChanged();
 						return true;
 					} else if (stack.stackSize < mxs) {
 						item1.stackSize -= mxs - stack.stackSize;
-						stack.stackSize = mxs;
+						stack.setCount(mxs);
 						slot.onSlotChanged();
 					}
 				}
@@ -196,13 +196,13 @@ public class TileContainer extends DataContainer {
 				if (slot instanceof GlitchSaveSlot) {
 					GlitchSaveSlot gss = (GlitchSaveSlot)slot;
 					if ((item1 = gss.getItemHandler().insertItem(gss.index, item1, false)) == null) {
-						item.stackSize = 0;
+						item.setCount(0);
 						return true;
 					}
 				} else if (slot instanceof SlotHolo) {
 					if (slot.isItemValid(item1)) {
 						slot.putStack(item1);
-						item.stackSize = item1.stackSize;
+						item.setCount(item1.stackSize);
 						return true;
 					}
 				} else if (slot.isItemValid(item1)) {
@@ -210,7 +210,7 @@ public class TileContainer extends DataContainer {
 					if (item1.stackSize <= mxs) {
 						slot.putStack(item1.copy());
 						slot.onSlotChanged();
-						item.stackSize = 0;
+						item.setCount(0);
 						return true;
 					} else {
 						slot.putStack(item1.splitStack(mxs));
@@ -219,7 +219,7 @@ public class TileContainer extends DataContainer {
 				}
 			}
 		if (item1.stackSize != item.stackSize) {
-			item.stackSize = item1.stackSize;
+			item.setCount(item1.stackSize);
 			return true;
 		} else return false;
 	}
@@ -258,9 +258,9 @@ public class TileContainer extends DataContainer {
 						item.stackSize += b == 1 ? 1 : curItem.stackSize;
 					} else {
 						item = curItem.copy();
-						if (b == 1) item.stackSize = 1;
+						if (b == 1) item.setCount(1);
 					}
-					if (item.stackSize > slot.getSlotStackLimit()) item.stackSize = slot.getSlotStackLimit();
+					if (item.stackSize > slot.getSlotStackLimit()) item.setCount(slot.getSlotStackLimit());
 					slot.putStack(item);
 				} else if (curItem == null && item != null && slot.canTakeStack(player)){
 					slot.decrStackSize(b == 0 ? slot.getSlotStackLimit() : 1);
@@ -327,7 +327,7 @@ public class TileContainer extends DataContainer {
 					return 0;
 				} else {
 					item.stackSize -= m - stack.stackSize;
-					stack.stackSize = m;
+					stack.setCount(m);
 				}
 			} else if (stack == null && i < es) es = i;
 		}
@@ -351,7 +351,7 @@ public class TileContainer extends DataContainer {
 					inv.mainInventory[i] = null;
 					if (n == item.stackSize) return n;
 				} else {
-					stack.stackSize = n - item.stackSize;
+					stack.setCount(n - item.stackSize);
 					return item.stackSize;
 				}
 			}

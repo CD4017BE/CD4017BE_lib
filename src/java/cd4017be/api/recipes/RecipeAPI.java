@@ -194,7 +194,7 @@ public class RecipeAPI {
 					res.setItem(item.getItem());
 					res.setItemDamage(item.getItemDamage());
 					res.setTagCompound(item.getTagCompound());
-					res.stackSize = item.stackSize;
+					res.setCount(item.stackSize);
 				}
 			}
 		}
