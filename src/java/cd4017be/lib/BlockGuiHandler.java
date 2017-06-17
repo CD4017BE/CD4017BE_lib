@@ -125,7 +125,7 @@ public class BlockGuiHandler implements IGuiHandler {
 	public void onServerPacketReceived(FMLNetworkEvent.ClientCustomPacketEvent event) {
 		FMLProxyPacket packet = event.getPacket();
 		if (!packet.channel().equals(guiChannel)) return;
-		Container container = Minecraft.getMinecraft().thePlayer.openContainer;
+		Container container = Minecraft.getMinecraft().player.openContainer;
 		if (container != null && container instanceof DataContainer) {
 			PacketBuffer data = new PacketBuffer(packet.payload());
 			IGuiData te = ((DataContainer)container).data;

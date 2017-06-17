@@ -129,7 +129,7 @@ public abstract class GuiMachine extends GuiContainer {
 		if (focus >= 0) guiComps.get(focus).mouseIn(x, y, b, 1);
 		else {
 			Slot slot = this.getSlotUnderMouse();
-			ItemStack itemstack = this.mc.thePlayer.inventory.getItemStack();
+			ItemStack itemstack = this.mc.player.inventory.getItemStack();
 			if (slot instanceof SlotHolo && slot != lastClickSlot) {
 				if (itemstack == null || slot.getStack() == null || itemstack.isItemEqual(slot.getStack()))
 					this.handleMouseClick(slot, slot.slotNumber, b, ClickType.PICKUP);
@@ -234,7 +234,7 @@ public abstract class GuiMachine extends GuiContainer {
 	}
 
 	public void sendChat(String msg) {
-		mc.thePlayer.addChatMessage(new TextComponentString(msg));
+		mc.player.addChatMessage(new TextComponentString(msg));
 	}
 
 	public static void color(int c) {
