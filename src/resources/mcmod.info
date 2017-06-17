@@ -6,7 +6,7 @@
   "version": "4.4.4",
   "acceptableRemoteVersions": "(,)",
   "acceptableSaveVersions": "(,)",
-  "acceptedMinecraftVersions": "[1.9.4,1.11)",
+  "acceptedMinecraftVersions": "[1.11.2,1.12)",
   "url": "https://github.com/CD4017BE/CD4017BE_lib",
   "updateUrl": "https://github.com/CD4017BE/CD4017BE_lib/releases",
   "authorList": ["CD4017BE"],
