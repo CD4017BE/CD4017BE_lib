@@ -320,7 +320,7 @@ public class TileContainer extends DataContainer {
 		int m = item.getMaxStackSize();
 		int es = inv.mainInventory.length;
 		for (int i = 0; i < inv.mainInventory.length; i++) {
-			ItemStack stack = inv.mainInventory[i];
+			ItemStack stack = inv.mainInventory.get(i);
 			if (stack != null && stack.getCount() < m && stack.isItemEqual(item)) {
 				if (item.getCount() <= m - stack.getCount()) {
 					stack.grow(item.getCount());
@@ -332,7 +332,7 @@ public class TileContainer extends DataContainer {
 			} else if (stack == null && i < es) es = i;
 		}
 		for (int i = es; i < inv.mainInventory.length; i++)
-			if (inv.mainInventory[i] == null) {
+			if (inv.mainInventory.get(i) == null) {
 				if (item.getCount() <= m) {
 					inv.mainInventory.set(i, item);
 					return 0;
@@ -344,7 +344,7 @@ public class TileContainer extends DataContainer {
 	public static int getFromPlayerInv(ItemStack item, InventoryPlayer inv) {
 		int n = 0;
 		for (int i = 0; i < inv.mainInventory.length; i++) {
-			ItemStack stack = inv.mainInventory[i];
+			ItemStack stack = inv.mainInventory.get(i);
 			if (item.isItemEqual(stack)) {
 				n += stack.getCount();
 				if (n <= item.getCount()) {

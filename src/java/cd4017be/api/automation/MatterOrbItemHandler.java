@@ -169,7 +169,7 @@ public class MatterOrbItemHandler {
 		@Override
 		public ItemStack getStackInSlot(int s) {
 			if (s == 0) return null;
-			ItemStack stack = getItem(inv.mainInventory[tool], slot);
+			ItemStack stack = getItem(inv.mainInventory.get(tool), slot);
 			if (stack != null) stack.setCount(1);
 			return stack;
 		}
@@ -177,8 +177,8 @@ public class MatterOrbItemHandler {
 		@Override
 		public ItemStack insertItem(int slot, ItemStack stack, boolean sim) {
 			if (slot != 0) return stack;
-			if (sim) return canInsert(inv.mainInventory[tool], stack) ? null : stack;
-			ItemStack[] rem = addItemStacks(inv.mainInventory[tool], stack.copy());
+			if (sim) return canInsert(inv.mainInventory.get(tool), stack) ? null : stack;
+			ItemStack[] rem = addItemStacks(inv.mainInventory.get(tool), stack.copy());
 			return rem.length == 0 ? null : rem[0];
 		}
 
@@ -186,10 +186,10 @@ public class MatterOrbItemHandler {
 		public ItemStack extractItem(int s, int amount, boolean simulate) {
 			if (s == 0) return null;
 			if (simulate) {
-				ItemStack stack = getItem(inv.mainInventory[tool], slot);
+				ItemStack stack = getItem(inv.mainInventory.get(tool), slot);
 				if(stack.getCount() > amount) stack.setCount(amount);
 				return stack;
-			} else return decrStackSize(inv.mainInventory[tool], slot, amount);
+			} else return decrStackSize(inv.mainInventory.get(tool), slot, amount);
 		}
 
 	}

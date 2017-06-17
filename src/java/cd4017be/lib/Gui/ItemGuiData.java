@@ -25,7 +25,7 @@ public class ItemGuiData implements IGuiData {
 
 	@Override
 	public boolean canPlayerAccessUI(EntityPlayer player) {
-		ItemStack item = player.inventory.mainInventory[player.inventory.currentItem];
+		ItemStack item = player.inventory.mainInventory.get(player.inventory.currentItem);
 		return item != null && item.getItem() == this.item;
 	}
 
@@ -40,7 +40,7 @@ public class ItemGuiData implements IGuiData {
 
 	@Override
 	public boolean detectAndSendChanges(DataContainer container, PacketBuffer dos) {
-		ItemStack item = container.player.inventory.mainInventory[container.player.inventory.currentItem];
+		ItemStack item = container.player.inventory.mainInventory.get(container.player.inventory.currentItem);
 		if (item == null || container instanceof TileContainer) return false;
 		if (!ItemStack.areItemStacksEqual(lastState, item)) {
 			dos.writeItemStack(lastState = item.copy());
