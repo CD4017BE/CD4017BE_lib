@@ -334,9 +334,9 @@ public class TileContainer extends DataContainer {
 		for (int i = es; i < inv.mainInventory.length; i++)
 			if (inv.mainInventory[i] == null) {
 				if (item.getCount() <= m) {
-					inv.mainInventory[i] = item;
+					inv.mainInventory.set(i, item);
 					return 0;
-				} else inv.mainInventory[i] = item.splitStack(m);
+				} else inv.mainInventory.set(i, item.splitStack(m));
 			}
 		return item.getCount();
 	}
@@ -348,7 +348,7 @@ public class TileContainer extends DataContainer {
 			if (item.isItemEqual(stack)) {
 				n += stack.getCount();
 				if (n <= item.getCount()) {
-					inv.mainInventory[i] = null;
+					inv.mainInventory.set(i, null);
 					if (n == item.getCount()) return n;
 				} else {
 					stack.setCount(n - item.getCount());

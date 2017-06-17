@@ -52,7 +52,7 @@ public class ItemGuiData implements IGuiData {
 	public void updateClientChanges(DataContainer container, PacketBuffer dis) {
 		if (dis.readableBytes() > 0) try {
 			ItemStack item = dis.readItemStack();
-			if (item.getItem() == this.item) container.player.inventory.mainInventory[container.player.inventory.currentItem] = item;
+			if (item.getItem() == this.item) container.player.inventory.mainInventory.set(container.player.inventory.currentItem, item);
 		} catch (IOException e) {}
 	}
 
