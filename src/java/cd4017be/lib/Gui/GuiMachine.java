@@ -102,7 +102,7 @@ public abstract class GuiMachine extends GuiContainer {
 			TileContainer cont = (TileContainer)inventorySlots;
 			if (cont.invPlayerS != cont.invPlayerE) {
 				Slot pos = cont.inventorySlots.get(cont.invPlayerS);
-				this.drawStringCentered(I18n.translateToLocal("container.inventory"), this.guiLeft + pos.xDisplayPosition + 80, this.guiTop + pos.yDisplayPosition - 14, 0x404040);
+				this.drawStringCentered(I18n.translateToLocal("container.inventory"), this.guiLeft + pos.xPos + 80, this.guiTop + pos.yPos - 14, 0x404040);
 			}
 		}
 		if ((drawBG & 2) != 0 && inventorySlots instanceof DataContainer)
@@ -760,7 +760,7 @@ public abstract class GuiMachine extends GuiContainer {
 				mc.renderEngine.bindTexture(LIB_TEX);
 				for (TankSlot slot : ((TileContainer)inventorySlots).tankSlots)
 					if (slot.tankNumber == i)
-						drawTexturedModalRect(guiLeft + slot.xDisplayPosition + (slot.size >> 4 & 0xf) * 9 - 9, guiTop + slot.yDisplayPosition + (slot.size & 0xf) * 18 - (s<6?10:18), 144 + dir * 16, 16, 16, s<6?8:16);
+						drawTexturedModalRect(guiLeft + slot.xPos + (slot.size >> 4 & 0xf) * 9 - 9, guiTop + slot.yPos + (slot.size & 0xf) * 18 - (s<6?10:18), 144 + dir * 16, 16, 16, s<6?8:16);
 			}
 			if(s >= 0 && s < 6) drawSideCube(guiLeft + tabsX - 64, py + 63, s, dir);
 		}
@@ -819,7 +819,7 @@ public abstract class GuiMachine extends GuiContainer {
 				int i0 = tile.inventory.groups[i].s, i1 = tile.inventory.groups[i].e;
 				for (Slot slot : inventorySlots.inventorySlots)
 					if (slot instanceof SlotItemHandler && slot.getSlotIndex() >= i0 && slot.getSlotIndex() < i1)
-						drawTexturedModalRect(guiLeft + slot.xDisplayPosition, guiTop + slot.yDisplayPosition, 144 + dir * 16, 0, 16, 16);
+						drawTexturedModalRect(guiLeft + slot.xPos, guiTop + slot.yPos, 144 + dir * 16, 0, 16, 16);
 			}
 			if (s >= 0) drawSideCube(guiLeft + tabsX - 64, py + 63, s, dir);
 		}
@@ -859,7 +859,7 @@ public abstract class GuiMachine extends GuiContainer {
 		final TankSlot slot;
 
 		public FluidTank(int id, TankSlot slot) {
-			super(id, slot.xDisplayPosition, slot.yDisplayPosition, (slot.size >> 4 & 0xf) * 18 - 2, (slot.size & 0xf) * 18 - 2, null, null, null);
+			super(id, slot.xPos, slot.yPos, (slot.size >> 4 & 0xf) * 18 - 2, (slot.size & 0xf) * 18 - 2, null, null, null);
 			this.slot = slot;
 		}
 

@@ -372,15 +372,15 @@ public class TileContainer extends DataContainer {
 	}
 
 	public static class TankSlot {
-		public final int xDisplayPosition, yDisplayPosition, tankNumber;
+		public final int xPos, yPos, tankNumber;
 		public final byte size;
 		public final ITankContainer inventory;
 
 		public TankSlot(ITankContainer inv, int id, int x, int y, byte size) {
 			this.inventory = inv;
 			this.tankNumber = id;
-			this.xDisplayPosition = x;
-			this.yDisplayPosition = y;
+			this.xPos = x;
+			this.yPos = y;
 			this.size = size;
 		}
 
