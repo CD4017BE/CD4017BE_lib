@@ -1,5 +1,7 @@
 package cd4017be.lib.Gui;
 
+import java.util.List;
+
 import cd4017be.lib.BlockGuiHandler;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -74,7 +76,7 @@ public class DataContainer extends Container {
 
 	@Override
 	@SideOnly(Side.CLIENT)
-	public void putStacksInSlots(ItemStack[] stack) {}
+	public void setAll(List<ItemStack> items) {}
 
 	public interface IGuiData {
 		public void initContainer(DataContainer container);

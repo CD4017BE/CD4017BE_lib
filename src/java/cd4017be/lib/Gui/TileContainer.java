@@ -4,6 +4,7 @@ import cd4017be.lib.templates.ITankContainer;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -361,9 +362,10 @@ public class TileContainer extends DataContainer {
 
 	@Override
 	@SideOnly(Side.CLIENT)
-	public void putStacksInSlots(ItemStack[] stack) {
-		for (int i = 0; i < stack.length && i < this.inventorySlots.size(); ++i) 
-			this.inventorySlots.get(i).putStack(stack[i]);
+	public void setAll(List<ItemStack> items) {
+		int m = Math.min(items.size(), inventorySlots.size());
+		for (int i = 0; i < m; ++i)
+			inventorySlots.get(i).putStack(items.get(i));
 	}
 
 	public interface ISlotClickHandler {

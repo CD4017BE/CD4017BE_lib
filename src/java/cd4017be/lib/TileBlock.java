@@ -182,7 +182,8 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
 	protected boolean drop;
 
 	@Override
-	public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumHand hand, ItemStack item, EnumFacing s, float X, float Y, float Z) {
+	public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumHand hand, EnumFacing s, float X, float Y, float Z) {
+		ItemStack item = player.getHeldItem(hand);
 		if (tileEntity == null) return false;
 		TileEntity te = world.getTileEntity(pos);
 		if (te != null && te instanceof ModTileEntity) return ((ModTileEntity)te).onActivated(player, hand, item, s, X, Y, Z);
@@ -197,10 +198,10 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
 	}
 
 	@Override
-	public void neighborChanged(IBlockState state, World world, BlockPos pos, Block b) {
+	public void neighborChanged(IBlockState state, World world, BlockPos pos, Block b, BlockPos src) {
 		if (tileEntity == null) return;
 		TileEntity te = world.getTileEntity(pos);
-		if (te != null && te instanceof ModTileEntity) ((ModTileEntity)te).onNeighborBlockChange(b);
+		if (te != null && te instanceof ModTileEntity) ((ModTileEntity)te).onNeighborBlockChange(b, src);
 	}
 
 	@Override
@@ -255,7 +256,7 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
 	}
 
 	@Override
-	public IBlockState onBlockPlaced(World world, BlockPos pos, EnumFacing s, float X, float Y, float Z, int m, EntityLivingBase placer) {
+	public IBlockState getStateForPlacement(World world, BlockPos pos, EnumFacing s, float X, float Y, float Z, int m, EntityLivingBase placer, EnumHand hand) {
 		if (orient == null) return this.getStateFromMeta(m);
 		if (placer.isSneaking()) {
 			if (orient.type == 0 && (s == EnumFacing.DOWN || s == EnumFacing.UP)) return this.blockState.getBaseState().withProperty(orient, Z + X > 1F ? (Z > X ? 5 : 7) : (Z < X ? 4 : 6));

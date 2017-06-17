@@ -45,7 +45,7 @@ public class MovedBlock
 			nbt.setInteger("x", pos.getX());
 			nbt.setInteger("y", pos.getY());
 			nbt.setInteger("z", pos.getZ());
-			tile = TileEntity.func_190200_a(world, nbt);
+			tile = TileEntity.create(world, nbt);
 			if (tile instanceof IOperatingArea) {
 				int [] area = ((IOperatingArea)tile).getOperatingArea();
 				area[0] += pos.getX(); area[3] += pos.getX();

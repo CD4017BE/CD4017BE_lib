@@ -2,13 +2,12 @@ package cd4017be.lib.templates;
 
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
-
 import cd4017be.lib.BlockItemRegistry;
 import cd4017be.lib.DefaultItem;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.NonNullList;
 
 /**
  * 
@@ -33,7 +32,7 @@ public class ItemMaterial extends DefaultItem {
 	}
 
 	@Override
-	public void getSubItems(Item item, CreativeTabs tab, List<ItemStack> subItems) {
+	public void getSubItems(Item item, CreativeTabs tab, NonNullList<ItemStack> subItems) {
 		subItems.add(new ItemStack(this, 1, 0));
 		int[] ids = new int[variants.size()];
 		int n = 0;

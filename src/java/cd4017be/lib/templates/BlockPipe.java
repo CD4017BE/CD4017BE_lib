@@ -101,7 +101,7 @@ public class BlockPipe extends TileBlock
 	}
 
 	@Override
-	public void addCollisionBoxToList(IBlockState state, World world, BlockPos pos, AxisAlignedBB area, List<AxisAlignedBB> list, Entity entity) 
+	public void addCollisionBoxToList(IBlockState state, World world, BlockPos pos, AxisAlignedBB area, List<AxisAlignedBB> list, Entity entity, boolean flag) 
 	{
 		AxisAlignedBB box;
 		TileEntity te = world.getTileEntity(pos);
@@ -129,7 +129,7 @@ public class BlockPipe extends TileBlock
 	public RayTraceResult collisionRayTrace(IBlockState state, World world, BlockPos pos, Vec3d v0, Vec3d v1) 
 	{
 		ArrayList<AxisAlignedBB> boxes = new ArrayList<AxisAlignedBB>();
-		this.addCollisionBoxToList(state, world, pos, FULL_BLOCK_AABB.offset(pos), boxes, null);
+		this.addCollisionBoxToList(state, world, pos, FULL_BLOCK_AABB.offset(pos), boxes, null, false);
 		RayTraceResult rayTrace = null;
 		for (AxisAlignedBB box : boxes) {
 			rayTrace = box.calculateIntercept(v0, v1);

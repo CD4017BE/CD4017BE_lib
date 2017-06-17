@@ -63,7 +63,7 @@ public class ModTileEntity extends TileEntity implements IAbstractTile {
 
 	public void onClicked(EntityPlayer player) {}
 
-	public void onNeighborBlockChange(Block b) {}
+	public void onNeighborBlockChange(Block b, BlockPos src) {}
 
 	public void onNeighborTileChange(BlockPos pos) {}
 
