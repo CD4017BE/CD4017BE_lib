@@ -136,7 +136,7 @@ public class ModTileEntity extends TileEntity implements IAbstractTile {
 	public void dropStack(ItemStack stack) {
 		if (stack == null) return;
 		EntityItem ei = new EntityItem(world, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, stack);
-		world.spawnEntityInWorld(ei);
+		world.spawnEntity(ei);
 	}
 
 	/**

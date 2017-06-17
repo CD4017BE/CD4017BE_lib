@@ -234,7 +234,7 @@ public abstract class GuiMachine extends GuiContainer {
 	}
 
 	public void sendChat(String msg) {
-		mc.player.addChatMessage(new TextComponentString(msg));
+		mc.player.sendMessage(new TextComponentString(msg));
 	}
 
 	public static void color(int c) {

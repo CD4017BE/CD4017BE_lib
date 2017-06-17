@@ -43,7 +43,7 @@ public class ItemGuiData implements IGuiData {
 		ItemStack item = container.player.inventory.mainInventory[container.player.inventory.currentItem];
 		if (item == null || container instanceof TileContainer) return false;
 		if (!ItemStack.areItemStacksEqual(lastState, item)) {
-			dos.writeItemStackToBuffer(lastState = item.copy());
+			dos.writeItemStack(lastState = item.copy());
 			return true;
 		} else return false;
 	}
@@ -51,7 +51,7 @@ public class ItemGuiData implements IGuiData {
 	@Override
 	public void updateClientChanges(DataContainer container, PacketBuffer dis) {
 		if (dis.readableBytes() > 0) try {
-			ItemStack item = dis.readItemStackFromBuffer();
+			ItemStack item = dis.readItemStack();
 			if (item.getItem() == this.item) container.player.inventory.mainInventory[container.player.inventory.currentItem] = item;
 		} catch (IOException e) {}
 	}

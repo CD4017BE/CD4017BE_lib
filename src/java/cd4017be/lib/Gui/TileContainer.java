@@ -96,7 +96,7 @@ public class TileContainer extends DataContainer {
 			for (byte c = send, i = 0; c != 0; c >>= 1, i++)
 				if ((c & 1) != 0) {
 					FluidStack fluid = this.fluidStacks.get(i);
-					dos.writeNBTTagCompoundToBuffer(fluid == null ? null : fluid.writeToNBT(new NBTTagCompound()));
+					dos.writeCompoundTag(fluid == null ? null : fluid.writeToNBT(new NBTTagCompound()));
 				}
 		}
 		int p = -1, n = 0;
@@ -120,7 +120,7 @@ public class TileContainer extends DataContainer {
 					if (item0 != null && item0.getItem() != null) {
 						dos.writeInt(item0.getCount());
 						dos.writeShort(item0.getItemDamage());
-						dos.writeNBTTagCompoundToBuffer(item0.getTagCompound());
+						dos.writeCompoundTag(item0.getTagCompound());
 					}
 					n++;
 				} else for (IContainerListener listener : this.listeners)
@@ -137,13 +137,13 @@ public class TileContainer extends DataContainer {
 		if (!this.tankSlots.isEmpty())
 			for (byte c = dis.readByte(), i = 0; c != 0 && i < this.tankSlots.size(); c >>= 1, i++)
 				if ((c & 1) != 0)
-					this.tankSlots.get(i).putStack(FluidStack.loadFluidStackFromNBT(dis.readNBTTagCompoundFromBuffer()));
+					this.tankSlots.get(i).putStack(FluidStack.loadFluidStackFromNBT(dis.readCompoundTag()));
 		if ((specialInvSync & 1) != 0)
 			for (int n = dis.readUnsignedByte(); n > 0; n--) {
 				int s = dis.readUnsignedByte();
 				int id = dis.readShort();
 				ItemStack item = id == 0 ? null : new ItemStack(Item.getItemById(id), dis.readInt(), dis.readShort());
-				if (item != null) item.setTagCompound(dis.readNBTTagCompoundFromBuffer());
+				if (item != null) item.setTagCompound(dis.readCompoundTag());
 				Slot slot; IItemHandler acc;
 				if (s < inventorySlots.size() && (slot = inventorySlots.get(s)) instanceof GlitchSaveSlot && (acc = ((GlitchSaveSlot)slot).getItemHandler()) instanceof IItemHandlerModifiable)
 					((IItemHandlerModifiable)acc).setStackInSlot(((GlitchSaveSlot)slot).index, item);
