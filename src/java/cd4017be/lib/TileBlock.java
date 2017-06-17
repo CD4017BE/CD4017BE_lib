@@ -265,7 +265,7 @@ public class TileBlock extends DefaultBlock implements ITileEntityProvider
 		}
 		int h = placer.rotationPitch > 40 ? 1 : placer.rotationPitch < -35 ? -1 : 0;
 		if (orient.type == 1 && h != 0) return this.blockState.getBaseState().withProperty(orient, h < 0 ? 2 : 3);
-		int d = MathHelper.floor_double((double)(placer.rotationYaw * 4.0F / 360.0F) + 0.5D) & 3;
+		int d = MathHelper.floor((double)(placer.rotationYaw * 4.0F / 360.0F) + 0.5D) & 3;
 		if (d > 0) d = (d + 1) % 3 + 1;
 		if (orient.type < 2 || h == 0) return this.blockState.getBaseState().withProperty(orient, 4 + d);
 		if (h < 0) return this.blockState.getBaseState().withProperty(orient, d);

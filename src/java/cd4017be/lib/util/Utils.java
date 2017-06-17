@@ -243,7 +243,7 @@ public class Utils {
 	{
 		if (entity.rotationPitch < -45.0F) return 0;
 		if (entity.rotationPitch > 45.0F) return 1;
-		int d = MathHelper.floor_double((double)(entity.rotationYaw * 4.0F / 360.0F) + 0.5D) & 3;
+		int d = MathHelper.floor((double)(entity.rotationYaw * 4.0F / 360.0F) + 0.5D) & 3;
 		if (d == 0) return 2;
 		if (d == 1) return 5;
 		if (d == 2) return 3;
