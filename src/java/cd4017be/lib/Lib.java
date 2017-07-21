@@ -18,7 +18,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.oredict.RecipeSorter;
 
-@Mod(modid = "CD4017BE_lib", useMetadata = true)
+@Mod(modid = "cd4017be_lib", useMetadata = true)
 public class Lib {
 	@Instance
 	public static Lib instance = new Lib();
@@ -62,7 +62,7 @@ public class Lib {
 	public void afterStart(FMLServerAboutToStartEvent event) {
 		//trash stuff that's not needed anymore
 		RecipeScriptContext.instance = null;
-		cd4017be.lib.script.Compiler.deallocate();
+		//cd4017be.lib.script.Compiler.deallocate();
 		System.gc();
 	}
 }

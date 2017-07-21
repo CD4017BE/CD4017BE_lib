@@ -1,9 +1,9 @@
 [
 {
-  "modid": "CD4017BE_lib",
+  "modid": "cd4017be_lib",
   "name": "CD4017BE_lib",
   "description": "Large collection of classes needed by my other mods",
-  "version": "4.4.4",
+  "version": "5.0.0",
   "acceptableRemoteVersions": "(,)",
   "acceptableSaveVersions": "(,)",
   "acceptedMinecraftVersions": "[1.11.2,1.12)",
