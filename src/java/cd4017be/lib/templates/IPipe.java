@@ -12,7 +12,9 @@ import net.minecraft.nbt.NBTTagCompound;
 /**
  *
  * @author CD4017BE
+ * @deprecated replaced by IMultipartTile
  */
+@Deprecated
 public interface IPipe 
 {
 	public int textureForSide(byte s);

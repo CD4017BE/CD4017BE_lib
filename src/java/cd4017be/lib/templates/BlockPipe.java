@@ -34,7 +34,9 @@ import net.minecraftforge.common.property.IUnlistedProperty;
 /**
  *
  * @author CD4017BE
+ * @deprecated replaced by MultipartBlock
  */
+@Deprecated
 @SuppressWarnings("rawtypes")
 public class BlockPipe extends TileBlock
 {

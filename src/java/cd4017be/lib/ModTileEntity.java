@@ -33,7 +33,9 @@ import net.minecraftforge.items.IItemHandler;
 /**
  *
  * @author CD4017BE
+ * @deprecated replaced by BaseTileEntity
  */
+@Deprecated
 public class ModTileEntity extends TileEntity implements IAbstractTile {
 
 	public int dimensionId;

@@ -33,7 +33,9 @@ import net.minecraft.world.World;
 /**
  *
  * @author CD4017BE
+ * @deprecated replaced by AdvancedBlock & OrientedBlock
  */
+@Deprecated
 public class TileBlock extends DefaultBlock implements ITileEntityProvider
 {
 	public static final Orientation[] Orientations = new Orientation[4];

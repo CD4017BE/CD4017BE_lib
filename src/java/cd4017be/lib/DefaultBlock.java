@@ -12,7 +12,9 @@ import net.minecraftforge.fml.common.registry.GameRegistry;
 /**
  *
  * @author CD4017BE
+ * @deprecated replaced by BaseBlock
  */
+@Deprecated
 public class DefaultBlock extends Block
 {
 	

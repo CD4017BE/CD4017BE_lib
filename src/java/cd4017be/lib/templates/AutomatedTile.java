@@ -30,6 +30,7 @@ import net.minecraftforge.items.ItemHandlerHelper;
  * The ultimate TileEntity template for lazy people
  * @author CD4017BE
  */
+@Deprecated
 public class AutomatedTile extends ModTileEntity implements ITickable {
 
 	public Inventory inventory;
