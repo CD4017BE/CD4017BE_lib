@@ -22,8 +22,10 @@ import cd4017be.lib.util.VecN;
 /**
  * 
  * @author CD4017BE
+ * @deprecated replaced by {@link cd4017be.lib.render.model.ModelContext}
  */
 @SideOnly(Side.CLIENT)
+@Deprecated
 public class TESRModelParser extends ScriptCompiler {
 
 	private static class State {
@@ -207,6 +209,7 @@ public class TESRModelParser extends ScriptCompiler {
 		return model;
 	}
 
+	/**@deprecated replaced by {@link cd4017be.lib.render.model.IntArrayModel} */
 	public static int[] bake(String code, ResourceLocation res) throws CompileException {
 		State state = new State();
 		state.matrix = new Matrix4d();
@@ -238,6 +241,7 @@ public class TESRModelParser extends ScriptCompiler {
 		return data;
 	}
 
+	/**@deprecated replaced by {@link cd4017be.lib.render.model.IntArrayModel} */
 	public static void renderWithOffsetAndBrightness(VertexBuffer render, String model, float dx, float dy, float dz, int l) {
 		int[] data = SpecialModelLoader.instance.tesrModelData.get(model);
 		if (data == null) return;
@@ -254,6 +258,7 @@ public class TESRModelParser extends ScriptCompiler {
 		render.addVertexData(res);
 	}
 
+	/**@deprecated replaced by {@link cd4017be.lib.render.model.IntArrayModel} */
 	public static void renderWithTOCB(VertexBuffer render, String model, TextureAtlasSprite tex, float dx, float dy, float dz, int c, int l) {
 		int[] data = SpecialModelLoader.instance.tesrModelData.get(model);
 		if (data == null) return;

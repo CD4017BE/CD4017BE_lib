@@ -5,6 +5,7 @@ import java.nio.FloatBuffer;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 
+import net.minecraft.client.renderer.block.model.ModelRotation;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.relauncher.Side;
@@ -69,6 +70,101 @@ public class Util {
 		GL11.glMultMatrix(mat);
 	}
 
+	public static void rotate(int[] data, int px, ModelRotation rot) {
+		int py = px + 1, pz = px + 2, i;
+		switch (rot) {
+		//horizontal
+		case X0_Y0: return;
+		case X0_Y90:
+			i = data[pz];
+			data[pz] = data[px];
+			data[px] = neg(i);
+			return;
+		case X0_Y180:
+			data[px] = neg(data[px]);
+			data[pz] = neg(data[pz]);
+			return;
+		case X0_Y270:
+			i = data[px];
+			data[px] = data[pz];
+			data[pz] = neg(i);
+			return;
+		//face down
+		case X90_Y0:
+			i = data[py];
+			data[py] = data[pz];
+			data[pz] = neg(i);
+			return;
+		case X90_Y90:
+			i = data[py];
+			data[py] = data[pz];
+			data[pz] = data[px];
+			data[px] = i;
+			return;
+		case X90_Y180:
+			i = data[py];
+			data[py] = data[pz];
+			data[pz] = i;
+			data[px] = neg(data[px]);
+			return;
+		case X90_Y270:
+			i = data[px];
+			data[px] = neg(data[py]);
+			data[py] = data[pz];
+			data[pz] = neg(i);
+			return;
+		//upside down
+		case X180_Y0:
+			data[py] = neg(data[py]);
+			data[pz] = neg(data[pz]);
+			return;
+		case X180_Y90:
+			data[py] = neg(data[py]);
+			i = data[pz];
+			data[pz] = data[px];
+			data[px] = i;
+			return;
+		case X180_Y180:
+			data[px] = neg(data[px]);
+			data[py] = neg(data[py]);
+			return;
+		case X180_Y270:
+			data[py] = neg(data[py]);
+			i = data[px];
+			data[px] = neg(data[pz]);
+			data[pz] = neg(i);
+			return;
+		//face up
+		case X270_Y0:
+			i = data[pz];
+			data[pz] = data[py];
+			data[py] = neg(i);
+			return;
+		case X270_Y90:
+			i = data[py];
+			data[py] = neg(data[pz]);
+			data[pz] = data[px];
+			data[px] = neg(i);
+			return;
+		case X270_Y180:
+			i = data[pz];
+			data[pz] = neg(data[py]);
+			data[py] = neg(i);
+			data[px] = neg(data[px]);
+			return;
+		case X270_Y270:
+			i = data[pz];
+			data[pz] = neg(data[px]);
+			data[px] = data[py];
+			data[py] = neg(i);
+			return;
+		}
+	}
+
+	private static int neg(int i) {
+		return Float.floatToRawIntBits(1F - Float.intBitsToFloat(i));
+	}
+	
 	public static final Util instance = new Util();
 	public static int RenderFrame = 0;
 

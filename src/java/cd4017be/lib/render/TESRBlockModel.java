@@ -17,8 +17,10 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 /**
  * 
  * @author CD4017BE
+ * @deprecated replaced by {@link cd4017be.lib.render.model.RawModelData}
  */
 @SideOnly(Side.CLIENT)
+@Deprecated
 public class TESRBlockModel implements IBakedModel {
 
 	BakedQuad[][] quads = new BakedQuad[7][];

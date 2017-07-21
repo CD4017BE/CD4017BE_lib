@@ -29,7 +29,9 @@ import net.minecraftforge.common.property.IExtendedBlockState;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
+/**@deprecated replaced by MultipartModel */
 @SideOnly(Side.CLIENT)
+@Deprecated
 public class ModelPipe implements IModel {
 
 	/** core0, core1, ..., con0[B, T, N, S, W, E], con1[...], ... */

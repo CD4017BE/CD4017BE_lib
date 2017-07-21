@@ -2,12 +2,18 @@ package cd4017be.lib.render;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.apache.logging.log4j.Level;
 
+import cd4017be.lib.render.model.ModelContext;
+import cd4017be.lib.render.model.RawModelData;
+import cd4017be.lib.script.Module;
+import cd4017be.lib.script.Parameters;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
@@ -36,6 +42,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class SpecialModelLoader implements ICustomModelLoader {
 
+	public static final String SCRIPT_PREFIX = "models/block/_";
 	public static final SpecialModelLoader instance = new SpecialModelLoader();
 	public static final StateMapper stateMapper = new StateMapper();
 	private static String mod = "";
@@ -56,30 +63,41 @@ public class SpecialModelLoader implements ICustomModelLoader {
 	public static void registerBlockModel(Block block, IModel model) {
 		String[] name = block.getRegistryName().toString().split(":");
 		instance.models.put(new ResourceLocation(name[0], "models/block/" + name[1]), model);
-		//ModelLoader.setCustomStateMapper(block, stateMapper);
 	}
 	
 	public static void registerItemModel(Item item, IModel model) {
 		String[] name = item.getRegistryName().toString().split(":");
 		instance.models.put(new ResourceLocation(name[0], "models/item/" + name[1]), model);
 	}
-	
+
+	@Deprecated
 	public static void registerTESRModel(String path) {
 		instance.tesrRegistry.add(path);
 	}
-	
+
+	private IResourceManager resourceManager;
+	private HashMap<String, ModelContext> scriptModels = new HashMap<String, ModelContext>();
 	public HashMap<ResourceLocation, IModel> models = new HashMap<ResourceLocation, IModel>();
 	public HashSet<String> mods = new HashSet<String>();
+	public ArrayList<IModeledTESR> tesrs = new ArrayList<IModeledTESR>();
+
+	@Deprecated
 	public HashSet<String> tesrRegistry = new HashSet<String>();
+	@Deprecated
 	private HashMap<ResourceLocation, String> tesrModelCode = new HashMap<ResourceLocation, String>();
+	@Deprecated
 	public HashMap<String, int[]> tesrModelData = new HashMap<String, int[]>();
-	private IResourceManager resourceManager;
-	
+
 	private SpecialModelLoader() {
 		ModelLoaderRegistry.registerLoader(this);
 		MinecraftForge.EVENT_BUS.register(this);
 	}
-	
+
+	public void cleanUp() {
+		for (IModeledTESR tesr : tesrs) tesr.bakeModels();
+		scriptModels.clear();
+	}
+
 	public String loadTESRModelSourceCode(ResourceLocation res) throws IOException {
 		String code = tesrModelCode.get(res);
 		if (code != null) return code;
@@ -105,24 +123,77 @@ public class SpecialModelLoader implements ICustomModelLoader {
 			}
 		}
 		tesrModelCode.clear();
+		cleanUp();
 	}
 	
 	@Override
 	public void onResourceManagerReload(IResourceManager resourceManager) {
 		this.resourceManager = resourceManager;
+		for (Iterator<IModel> it = models.values().iterator(); it.hasNext();) {
+			IModel m = it.next();
+			if (m instanceof IHardCodedModel) ((IHardCodedModel)m).onReload();
+			else it.remove();
+		}
 	}
 
 	@Override
 	public boolean accepts(ResourceLocation modelLocation) {
-		return mods.contains(modelLocation.getResourceDomain()) && 
-				models.containsKey(modelLocation);
+		return mods.contains(modelLocation.getResourceDomain()) &&
+			(modelLocation.getResourcePath().startsWith(SCRIPT_PREFIX) || models.containsKey(modelLocation));
 	}
 
 	@Override
-	public IModel loadModel(ResourceLocation modelLocation) throws IOException {
-		return models.get(modelLocation);
+	public IModel loadModel(ResourceLocation modelLocation) throws Exception {
+		IModel model = models.get(modelLocation);
+		if (model == null && modelLocation.getResourcePath().startsWith(SCRIPT_PREFIX)) {
+			model = loadScriptModel(modelLocation);
+			if (model != null) models.put(modelLocation, model);
+		}
+		return model;
 	}
 	
+	private IModel loadScriptModel(ResourceLocation modelLocation) throws Exception {
+		String domain = modelLocation.getResourceDomain();
+		String scriptName = modelLocation.getResourcePath().substring(SCRIPT_PREFIX.length());
+		int p = scriptName.indexOf('.');
+		String methodName;
+		if (p >= 0) {
+			methodName = scriptName.substring(p + 1);
+			scriptName = scriptName.substring(0, p);
+		} else methodName = "main()";
+		
+		ModelContext cont = scriptModels.get(domain);
+		if (cont == null) {
+			scriptModels.put(domain, cont = new ModelContext());
+		}
+		Module script = cont.getOrLoad(scriptName, domain, resourceManager);
+		p = methodName.indexOf('(');
+		Parameters param;
+		if (p >= 0) {
+			int q = methodName.indexOf(')', p);
+			if (q < 0) q = methodName.length();
+			param = parseParam(methodName.substring(p + 1, q), script);
+			methodName = methodName.substring(0, p);
+		} else param = new Parameters();
+		cont.reset();
+		script.invoke(methodName, param);
+		return new RawModelData(script, cont);
+	}
+
+	private Parameters parseParam(String s, Module m) {
+		s = s.trim();
+		if (s.isEmpty()) return new Parameters();
+		String[] args = s.split(",");
+		Object[] arr = new Object[args.length];
+		for (int i = 0; i < args.length; i++)
+			try {
+				arr[i] = Double.parseDouble(args[i]);
+			} catch (NumberFormatException e) {
+				arr[i] = m.read(args[i]);
+			}
+		return new Parameters(arr);
+	}
+
 	public static class StateMapper implements IStateMapper {
 		@Override
 		public Map<IBlockState, ModelResourceLocation> putStateModelLocations(Block block) {
