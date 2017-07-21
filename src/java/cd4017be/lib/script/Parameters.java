@@ -55,6 +55,13 @@ public class Parameters {
 		return param[i];
 	}
 
+	public Object[] getArrayOrAll() {
+		if (param.length != 1) return param;
+		Object o = param[0];
+		if(o instanceof Object[]) return (Object[])o;
+		return param;
+	}
+
 	private IllegalArgumentException num(int pos) {
 		return new IllegalArgumentException(String.format("Too few arguments, expected at least %d", pos + 1));
 	}

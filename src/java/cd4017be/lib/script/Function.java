@@ -59,7 +59,7 @@ public class Function {
 			int p = Arrays.binarySearch(codeIndices, (short)code.position());
 			p = p == -1 ? lineOfs : lineOfs + lineNumbers[p < 0 ? -2 - p : p];
 			String msg = ex.getMessage();
-			throw new ScriptException(ex.getClass().getSimpleName() + (msg == null ? "" : ": " + msg), name, p);
+			throw (ScriptException)new ScriptException(ex.getClass().getSimpleName() + (msg == null ? "" : ": " + msg), name, p).initCause(ex);
 		}
 	}
 

@@ -16,9 +16,10 @@ public class ScriptFiles {
 	public static Script[] createCompiledPackage(File out) {
 		File[] files = out.getParentFile().listFiles();
 		ArrayList<File> in = new ArrayList<File>();
-		for (File f : files)
-			if (f.getName().endsWith(".rcp"))
-				in.add(f);
+		if (files != null)
+			for (File f : files)
+				if (f.getName().endsWith(".rcp"))
+					in.add(f);
 		if (in.isEmpty()) {
 			System.out.println("no valid files found!");
 			return null;

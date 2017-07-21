@@ -17,8 +17,16 @@ public class Stack<T> {
 		return pos;
 	}
 
+	public int size() {
+		return arr.length;
+	}
+
 	public boolean isEmpty() {
 		return pos < 0;
+	}
+
+	public boolean isFull() {
+		return pos >= arr.length - 1; 
 	}
 
 	public void setPos(int p) {
