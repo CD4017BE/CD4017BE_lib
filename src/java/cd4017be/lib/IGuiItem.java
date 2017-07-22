@@ -1,21 +1,13 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package cd4017be.lib;
 
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
-import java.io.IOException;
-
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.item.ItemStack;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 /**
@@ -25,32 +17,24 @@ import net.minecraft.world.World;
 public interface IGuiItem 
 {
 	/**
-	 * @param world
+	 * @param item
 	 * @param player
-	 * @param x
-	 * @param y
-	 * @param z
+	 * @param world
+	 * @param pos
+	 * @param slot
 	 * @return The server gui object
 	 */
-	public Container getContainer(World world, EntityPlayer player, int x, int y, int z);
+	public Container getContainer(ItemStack item, EntityPlayer player, World world, BlockPos pos, int slot);
 	
 	@SideOnly(Side.CLIENT)
 	/**
-	 * @param world
-	 * @param player
-	 * @param x
-	 * @param y
-	 * @param z
-	 * @return The client gui object
-	 */
-	public GuiContainer getGui(World world, EntityPlayer player, int x, int y, int z);
-	
-	/**
-	 * Called on server after BlockGuiHandler.sendPacketToPlayer is called on client
 	 * @param item
 	 * @param player
-	 * @param data
-	 * @throws IOException
+	 * @param world
+	 * @param pos
+	 * @param slot
+	 * @return The client gui object
 	 */
-	public void onPlayerCommand(ItemStack item, EntityPlayer player, PacketBuffer data);
+	public GuiContainer getGui(ItemStack item, EntityPlayer player, World world, BlockPos pos, int slot);
+
 }

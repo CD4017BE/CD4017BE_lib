@@ -28,6 +28,7 @@ public class Lib {
 
 	@Mod.EventHandler
 	public void preInit(FMLPreInitializationEvent event) {
+		BlockGuiHandler.register();
 		Capabilities.register();
 		EnergyAPI.init();
 		RecipeSorter.register("cd4017be_lib:shapedNBT", NBTRecipe.class, RecipeSorter.Category.SHAPED, "after:minecraft:shaped before:minecraft:shapeless");
