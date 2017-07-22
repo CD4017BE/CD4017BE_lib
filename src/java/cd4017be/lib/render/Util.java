@@ -5,6 +5,7 @@ import java.nio.FloatBuffer;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 
+import cd4017be.lib.util.Orientation;
 import net.minecraft.client.renderer.block.model.ModelRotation;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -62,6 +63,14 @@ public class Util {
 		FloatBuffer mat = matrices[dir];
 		mat.rewind();
 		GL11.glMultMatrix(mat);
+	}
+
+	public static void moveAndOrientToBlock(double x, double y, double z, Orientation o) {
+		GL11.glTranslated(x + 0.5D, y + 0.5D, z + 0.5D);
+		//TODO implement
+		//FloatBuffer mat = matrices[dir];
+		//mat.rewind();
+		//GL11.glMultMatrix(mat);
 	}
 
 	public static void rotateTo(int dir) {
