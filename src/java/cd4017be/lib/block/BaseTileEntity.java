@@ -1,5 +1,6 @@
 package cd4017be.lib.block;
 
+import cd4017be.lib.util.Orientation;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
@@ -16,9 +17,18 @@ public class BaseTileEntity extends TileEntity {
 	}
 
 	public IBlockState getBlockState() {
-		if (blockState == null)
+		if (blockState == null) {
 			blockState = world.getBlockState(pos);
+			blockType = blockState.getBlock();
+		}	
 		return blockState;
+	}
+
+	public Orientation getOrientation() {
+		getBlockState();
+		if (blockType instanceof OrientedBlock)
+			return blockState.getValue(((OrientedBlock)blockType).orientProp);
+		else return Orientation.N;
 	}
 
 	@Override

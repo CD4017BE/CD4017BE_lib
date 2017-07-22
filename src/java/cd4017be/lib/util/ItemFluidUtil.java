@@ -2,6 +2,8 @@ package cd4017be.lib.util;
 
 import java.util.ArrayList;
 
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
@@ -9,6 +11,9 @@ import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidUtil;
 import net.minecraftforge.fluids.capability.IFluidHandler;
@@ -239,6 +244,29 @@ public class ItemFluidUtil {
 			return item.getCount() > 0 && item.getItem() != null ? item : null;
 		}
 
+	}
+
+	/**
+	 * drops an ItemStack at the position of given entity
+	 * @param stack dropped stack
+	 * @param entity entity to drop at
+	 */
+	public static void dropStack(ItemStack stack, Entity entity) {
+		if (stack.isEmpty()) return;
+		EntityItem ei = new EntityItem(entity.world, entity.posX, entity.posY, entity.posZ, stack);
+		entity.world.spawnEntity(ei);
+	}
+
+	/**
+	 * drops an ItemStack at the given block position
+	 * @param stack dropped stack
+	 * @param world the world
+	 * @param pos position to drop at
+	 */
+	public static void dropStack(ItemStack stack, World world, BlockPos pos) {
+		if (stack.isEmpty()) return;
+		EntityItem ei = new EntityItem(world, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, stack);
+		world.spawnEntity(ei);
 	}
 
 }
