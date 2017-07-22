@@ -4,11 +4,14 @@ import java.text.DecimalFormatSymbols;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.annotation.Nullable;
+
 import cd4017be.api.circuits.IQuickRedstoneHandler;
 import cd4017be.lib.ModTileEntity;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.ISidedInventory;
@@ -17,11 +20,15 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
+import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.fluids.FluidRegistry;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.IFluidBlock;
+import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.oredict.OreDictionary;
 
 /**
@@ -33,11 +40,15 @@ public class Utils {
 	public static final BlockPos NOWHERE = new BlockPos(0, -1, 0);
 	public static final byte IN = -1, OUT = 1, ACC = 0;
 
+	/**@deprecated use {@link ItemHandlerHelper.canItemStacksStack}*/
+	@Deprecated
 	public static boolean itemsEqual(ItemStack item0, ItemStack item1)
 	{
 		return (item0 == null && item1 == null) || (item0 != null && item1 != null && item0.isItemEqual(item1) && ItemStack.areItemStackTagsEqual(item0, item1));
 	}
 
+	/**@deprecated better compare to OreDictionary entry directly */
+	@Deprecated
 	public static boolean oresEqual(ItemStack item0, ItemStack item1)
 	{
 		if (itemsEqual(item0, item1)) return true;
@@ -55,7 +66,9 @@ public class Utils {
 	 * @param inv the inventory to access
 	 * @param side the side to access from
 	 * @return the accessible slots
+	 * @deprecated use capabilities
 	 */
+	@Deprecated
 	public static int[] accessibleSlots(IInventory inv, int side) {
 		if (inv instanceof ISidedInventory) {
 			return ((ISidedInventory) inv).getSlotsForFace(EnumFacing.VALUES[side]);
@@ -68,6 +81,82 @@ public class Utils {
 		}
 	}
 
+	/**
+	 * Chunk-flushing save way to get a neighboring TileEntity
+	 * @param tile source tile
+	 * @param side side of source tile to get neighbor for
+	 * @return neighbor TileEntity or null if not existing or chunk not loaded
+	 */
+	public static @Nullable TileEntity neighborTile(TileEntity tile, EnumFacing side) {
+		World world = tile.getWorld();
+		BlockPos pos = tile.getPos().offset(side);
+		return world.isBlockLoaded(pos) ? world.getTileEntity(pos) : null;
+	}
+
+	/**
+	 * Chunk-flushing save way to get a TileEntity for given position
+	 * @param world World
+	 * @param pos tile position
+	 * @return the TileEntity or null if not existing or chunk not loaded
+	 */
+	public static @Nullable TileEntity getTileAt(World world, BlockPos pos) {
+		return world.isBlockLoaded(pos) ? world.getTileEntity(pos) : null;
+	}
+
+	/**
+	 * Chunk-flushing save way to get a capability from a neighboring block
+	 * @param tile source tile
+	 * @param side side of source tile to get neighboring capability for
+	 * @param cap the capability type
+	 * @return capability instance or null if chunk not loaded, no TileEntity or capability not available
+	 */
+	public static @Nullable <T> T neighborCapability(TileEntity tile, EnumFacing side, Capability<T> cap) {
+		World world = tile.getWorld();
+		BlockPos pos = tile.getPos().offset(side);
+		if (!world.isBlockLoaded(pos)) return null;
+		TileEntity te = world.getTileEntity(pos);
+		return te != null ? te.getCapability(cap, side.getOpposite()) : null;
+	}
+
+	/**
+	 * Chunk-flushing save way to get a capability for given position and side
+	 * @param world World
+	 * @param pos tile position
+	 * @param side side to access
+	 * @param cap the capability type
+	 * @return capability instance or null if chunk not loaded, no TileEntity or capability not available
+	 */
+	public static @Nullable <T> T getCapabilityAt(World world, BlockPos pos, @Nullable EnumFacing side, Capability<T> cap) {
+		if (!world.isBlockLoaded(pos)) return null;
+		TileEntity te = world.getTileEntity(pos);
+		return te != null ? te.getCapability(cap, side) : null; 
+	}
+
+	/**
+	 * checks to which block side the given position belongs
+	 * @param X block relative x
+	 * @param Y block relative y
+	 * @param Z block relative z
+	 * @return side
+	 */
+	public static EnumFacing hitSide(float X, float Y, float Z) {
+		float dx = Math.abs(X -= 0.5F);
+		float dy = Math.abs(Y -= 0.5F);
+		float dz = Math.abs(Z -= 0.5F);
+		return dy > dz && dy > dx ?
+				Y < 0 ? EnumFacing.DOWN : EnumFacing.UP
+			: dz > dx ?
+				Z < 0 ? EnumFacing.NORTH : EnumFacing.SOUTH
+			: X < 0 ? EnumFacing.WEST : EnumFacing.EAST;
+	}
+
+	public static RayTraceResult getHit(EntityPlayer player, IBlockState block, BlockPos pos) {
+		Vec3d p = player.getPositionEyes(1);
+		return block.collisionRayTrace(player.world, pos, p, p.add(player.getLook(1).scale(16)));
+	}
+
+	/**@deprecated use {@link neighborTile} */
+	@Deprecated
 	public static TileEntity getTileOnSide(ModTileEntity tileEntity, byte s) {
 		if (tileEntity == null) return null;
 		return tileEntity.getLoadedTile(tileEntity.getPos().offset(EnumFacing.VALUES[s]));
@@ -220,6 +309,8 @@ public class Utils {
 		else return null;
 	}
 
+	/**@deprecated use capabilities */
+	@Deprecated
 	public static int findStack(ItemStack item, IInventory inv, int[] s, int start)
 	{
 		if (item == null) return -1;
@@ -239,6 +330,7 @@ public class Utils {
 		return a < 0 ? -1 - (-a - 1) / b: a / b;
 	}
 	
+	@Deprecated
 	public static byte getLookDir(Entity entity)
 	{
 		if (entity.rotationPitch < -45.0F) return 0;
@@ -250,8 +342,8 @@ public class Utils {
 		return 4;
 	}
 
-	public static void updateRedstoneOnSide(ModTileEntity te, int value, EnumFacing side) {
-		ICapabilityProvider cp = te.getTileOnSide(side);
+	public static void updateRedstoneOnSide(TileEntity te, int value, EnumFacing side) {
+		ICapabilityProvider cp = neighborTile(te, side);
 		if (cp != null && cp instanceof IQuickRedstoneHandler) ((IQuickRedstoneHandler)cp).onRedstoneStateChange(side.getOpposite(), value, te);
 		else te.getWorld().neighborChanged(te.getPos().offset(side), te.getBlockType(), te.getPos());
 	}
