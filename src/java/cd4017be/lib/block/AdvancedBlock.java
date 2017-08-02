@@ -3,6 +3,8 @@ package cd4017be.lib.block;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
+import javax.annotation.Nullable;
+
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
@@ -34,8 +36,9 @@ public class AdvancedBlock extends BaseBlock {
 	 * @param id registry name
 	 * @param m material
 	 * @param flags 2 = nonOpaque, 1 = noFullBlock
+	 * @param tile optional TileEntity to register with this block
 	 */
-	public AdvancedBlock(String id, Material m, int flags, Class<? extends TileEntity> tile) {
+	public AdvancedBlock(String id, Material m, int flags, @Nullable Class<? extends TileEntity> tile) {
 		super(id, m);
 		this.fullBlock = (flags & 1) == 0;
 		this.flags = ~flags << 6;

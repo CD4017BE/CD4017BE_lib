@@ -342,6 +342,18 @@ public class Utils {
 		return 4;
 	}
 
+	public static EnumFacing getLookDirStrict(Entity entity) {
+		if (entity.rotationPitch < -45.0F) return EnumFacing.DOWN;
+		if (entity.rotationPitch > 45.0F) return EnumFacing.UP;
+		return entity.getHorizontalFacing();
+	}
+
+	public static EnumFacing getLookDirPlacement(Entity entity) {
+		if (entity.rotationPitch < -35.0F) return EnumFacing.DOWN;
+		if (entity.rotationPitch > 40.0F) return EnumFacing.UP;
+		return entity.getHorizontalFacing();
+	}
+
 	public static void updateRedstoneOnSide(TileEntity te, int value, EnumFacing side) {
 		ICapabilityProvider cp = neighborTile(te, side);
 		if (cp != null && cp instanceof IQuickRedstoneHandler) ((IQuickRedstoneHandler)cp).onRedstoneStateChange(side.getOpposite(), value, te);

@@ -10,6 +10,7 @@ import net.minecraftforge.fml.common.network.FMLEventChannel;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
 import net.minecraftforge.fml.common.network.IGuiHandler;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
+import net.minecraftforge.fml.common.network.NetworkRegistry.TargetPoint;
 import net.minecraftforge.fml.common.network.internal.FMLProxyPacket;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -126,6 +127,17 @@ public class BlockGuiHandler implements IGuiHandler {
 	 */
 	public static void sendPacketToPlayer(EntityPlayerMP player, PacketBuffer data) {
 		eventChannel.sendTo(new FMLProxyPacket(data, guiChannel), player);
+	}
+
+	/**
+	 * Sends a Gui update packet to all players standing within given range to a TileEntity.
+	 * @param tile
+	 * @param range
+	 * @param data
+	 */
+	public static void sendPacketToAllNear(TileEntity tile, double range, PacketBuffer data) {
+		BlockPos pos = tile.getPos();
+		eventChannel.sendToAllAround(new FMLProxyPacket(data, guiChannel), new TargetPoint(tile.getWorld().provider.getDimension(), pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, range));
 	}
 
 	/**
