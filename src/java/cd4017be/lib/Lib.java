@@ -62,6 +62,6 @@ public class Lib {
 		//trash stuff that's not needed anymore
 		RecipeScriptContext.instance = null;
 		cd4017be.lib.script.Compiler.deallocate();
-		System.gc();
+		//System.gc();
 	}
 }
