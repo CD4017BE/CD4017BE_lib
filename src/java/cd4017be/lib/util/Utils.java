@@ -19,6 +19,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumFacing.Axis;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
@@ -352,6 +353,38 @@ public class Utils {
 		if (entity.rotationPitch < -35.0F) return EnumFacing.DOWN;
 		if (entity.rotationPitch > 40.0F) return EnumFacing.UP;
 		return entity.getHorizontalFacing();
+	}
+
+	/**
+	 * @param pos position
+	 * @param ref reference point
+	 * @return the side of the reference point that faces towards the given position or null if both are equal or not direct neighbors of each other.
+	 */
+	public static EnumFacing getSide(BlockPos pos, BlockPos ref) {
+		int dx = pos.getX() - ref.getX();
+		int dy = pos.getY() - ref.getY();
+		int dz = pos.getZ() - ref.getZ();
+		if (dx != 0)
+			if (dy != 0 || dz != 0) return null;
+			else return dx == -1 ? EnumFacing.WEST : dx == 1 ? EnumFacing.EAST : null;
+		else if (dy != 0)
+			if (dz != 0) return null;
+			else return dy == -1 ? EnumFacing.DOWN : dy == 1 ? EnumFacing.UP : null;
+		else return dz == -1 ? EnumFacing.NORTH : dz == 1 ? EnumFacing.SOUTH : null;
+	}
+
+	/**
+	 * @param pos
+	 * @param axis
+	 * @return the element of pos specified by axis
+	 */
+	public static int coord(BlockPos pos, Axis axis) {
+		switch(axis) {
+		case X: return pos.getX();
+		case Y: return pos.getY();
+		case Z: return pos.getZ();
+		default: return 0;
+		}
 	}
 
 	public static void updateRedstoneOnSide(TileEntity te, int value, EnumFacing side) {

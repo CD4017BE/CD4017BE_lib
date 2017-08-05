@@ -120,6 +120,20 @@ public class CoordMap1D<E> implements Iterable<E> {
 	}
 
 	/**
+	 * @return the element at lowest populated position or null if map is empty
+	 */
+	public E getFirst() {
+		return min == Integer.MAX_VALUE ? null : (E) array[min & mask];
+	}
+
+	/**
+	 * @return the element at highest populated position or null if map is empty
+	 */
+	public E getLast() {
+		return max == Integer.MIN_VALUE ? null : (E) array[max & mask];
+	}
+
+	/**
 	 * increase capacity to be <b>greater</b> than minSize.
 	 * @param minSize
 	 */

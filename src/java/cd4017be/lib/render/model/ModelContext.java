@@ -52,6 +52,7 @@ public class ModelContext extends Context {
 
 	Stack<State> states = new Stack<State>(maxStates);
 	List<Quad>[] quads;
+	ResourceLocation loadPath;
 
 	private void add(Quad quadi) {
 		State state = states.get();
@@ -74,7 +75,8 @@ public class ModelContext extends Context {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public ModelContext() {
+	public ModelContext(ResourceLocation loadPath) {
+		this.loadPath = loadPath;
 		defFunc.put("add", (p) -> {
 			for (Object o : p.getArrayOrAll()) add((Quad)o);
 			return null;
@@ -200,22 +202,49 @@ public class ModelContext extends Context {
 		states.add(state);
 	}
 
-	public Module getOrLoad(String name, String domain, IResourceManager manager) throws Exception {
+	public Module getOrLoad(String name, IResourceManager manager) throws Exception {
 		Module m = modules.get(name);
 		if (m != null) return m;
-		IResource res = manager.getResource(new ResourceLocation(domain, "models/block/" + name + ".rcp"));//TODO allow subfolders
+		IResource res = manager.getResource(new ResourceLocation(loadPath.toString() + name + ".rcp"));//TODO allow subfolders
 		Script script = Compiler.compile(this, name, new InputStreamReader(res.getInputStream()));
 		Object var = script.variables.remove("dependencies");
 		if (var instanceof Object[]) try {
 			for (Object o : (Object[])var)
 				if (o instanceof String) 
-					getOrLoad((String)o, domain, manager);
+					getOrLoad((String)o, manager);
 		} catch (Exception e) {
 			throw (ScriptException) new ScriptException("failed loading dependency for script:", name, 0).initCause(e);
 		}
 		Function func = script.methods.remove("init");
 		if (func != null) func.apply(new Parameters());
 		return script;
+	}
+
+	public void run(Module script, String cmd) throws NoSuchMethodException, ScriptException {
+		int p = cmd.indexOf('(');
+		Parameters param;
+		if (p >= 0) {
+			int q = cmd.indexOf(')', p);
+			if (q < 0) q = cmd.length();
+			param = parseParam(cmd.substring(p + 1, q), script);
+			cmd = cmd.substring(0, p);
+		} else param = new Parameters();
+		reset();
+		script.invoke(cmd, param);
+	}
+
+	private Parameters parseParam(String s, Module m) {
+		s = s.trim();
+		if (s.isEmpty()) return new Parameters();
+		String[] args = s.split(",");
+		Object[] arr = new Object[args.length];
+		for (int i = 0; i < args.length; i++)
+			try {
+				arr[i] = Double.parseDouble(args[i]);
+			} catch (NumberFormatException e) {
+				arr[i] = m.read(args[i]);
+			}
+		return new Parameters(arr);
 	}
 
 }

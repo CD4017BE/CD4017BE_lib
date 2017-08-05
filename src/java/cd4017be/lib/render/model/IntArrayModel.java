@@ -5,6 +5,7 @@ import cd4017be.lib.render.model.ModelContext.Quad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.renderer.vertex.VertexFormat;
+import net.minecraft.util.EnumFacing.Axis;
 import net.minecraft.util.math.MathHelper;
 
 public class IntArrayModel {
@@ -62,6 +63,33 @@ public class IntArrayModel {
 		ofsX += dx;
 		ofsY += dy;
 		ofsZ += dz;
+	}
+
+	public void setOffset(float ofs, Axis axis) {
+		int i;
+		switch(axis) {
+		case X:
+			if (ofs == ofsX) return;
+			ofs -= ofsX;
+			ofsX += ofs;
+			i = 0;
+			break;
+		case Y:
+			if (ofs == ofsY) return;
+			ofs -= ofsY;
+			ofsY += ofs;
+			i = 1;
+			break;
+		case Z:
+			if (ofs == ofsZ) return;
+			ofs -= ofsZ;
+			ofsZ += ofs;
+			i = 2;
+			break;
+		default: return;
+		}
+		for (; i < vertexData.length; i++)
+			vertexData[i] = Float.floatToIntBits(ofs + Float.intBitsToFloat(vertexData[i]));
 	}
 
 	public void setColor(int c) {

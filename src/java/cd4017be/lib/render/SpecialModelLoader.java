@@ -13,13 +13,14 @@ import org.apache.logging.log4j.Level;
 import cd4017be.lib.render.model.ModelContext;
 import cd4017be.lib.render.model.RawModelData;
 import cd4017be.lib.script.Module;
-import cd4017be.lib.script.Parameters;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.client.renderer.block.statemap.IStateMapper;
+import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.client.resources.IResourceManager;
 import net.minecraft.item.Item;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.event.ModelBakeEvent;
 import net.minecraftforge.client.model.ICustomModelLoader;
@@ -29,6 +30,7 @@ import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.client.model.ModelLoaderRegistry;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fluids.Fluid;
+import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
@@ -70,6 +72,11 @@ public class SpecialModelLoader implements ICustomModelLoader {
 		instance.models.put(new ResourceLocation(name[0], "models/item/" + name[1]), model);
 	}
 
+	public static <T extends TileEntity> void registerTESR(Class<T> tile, TileEntitySpecialRenderer<T> tesr) {
+		ClientRegistry.bindTileEntitySpecialRenderer(tile, tesr);
+		if (tesr instanceof IModeledTESR) instance.tesrs.add((IModeledTESR)tesr);
+	}
+
 	@Deprecated
 	public static void registerTESRModel(String path) {
 		instance.tesrRegistry.add(path);
@@ -94,7 +101,7 @@ public class SpecialModelLoader implements ICustomModelLoader {
 	}
 
 	public void cleanUp() {
-		for (IModeledTESR tesr : tesrs) tesr.bakeModels();
+		for (IModeledTESR tesr : tesrs) tesr.bakeModels(resourceManager);
 		scriptModels.clear();
 	}
 
@@ -164,34 +171,11 @@ public class SpecialModelLoader implements ICustomModelLoader {
 		
 		ModelContext cont = scriptModels.get(domain);
 		if (cont == null) {
-			scriptModels.put(domain, cont = new ModelContext());
+			scriptModels.put(domain, cont = new ModelContext(new ResourceLocation(domain, "models/block/")));
 		}
-		Module script = cont.getOrLoad(scriptName, domain, resourceManager);
-		p = methodName.indexOf('(');
-		Parameters param;
-		if (p >= 0) {
-			int q = methodName.indexOf(')', p);
-			if (q < 0) q = methodName.length();
-			param = parseParam(methodName.substring(p + 1, q), script);
-			methodName = methodName.substring(0, p);
-		} else param = new Parameters();
-		cont.reset();
-		script.invoke(methodName, param);
+		Module script = cont.getOrLoad(scriptName, resourceManager);
+		cont.run(script, methodName);
 		return new RawModelData(script, cont);
-	}
-
-	private Parameters parseParam(String s, Module m) {
-		s = s.trim();
-		if (s.isEmpty()) return new Parameters();
-		String[] args = s.split(",");
-		Object[] arr = new Object[args.length];
-		for (int i = 0; i < args.length; i++)
-			try {
-				arr[i] = Double.parseDouble(args[i]);
-			} catch (NumberFormatException e) {
-				arr[i] = m.read(args[i]);
-			}
-		return new Parameters(arr);
 	}
 
 	public static class StateMapper implements IStateMapper {
