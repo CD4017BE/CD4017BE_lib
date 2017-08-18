@@ -1,14 +1,16 @@
 package cd4017be.lib.templates;
 
+import net.minecraft.block.Block;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
-import cd4017be.lib.ModTileEntity;
 import cd4017be.lib.TickRegistry;
 import cd4017be.lib.TickRegistry.IUpdatable;
+import cd4017be.lib.block.AdvancedBlock.INeighborAwareTile;
+import cd4017be.lib.block.BaseTileEntity;
 
-public class PassiveMultiblockTile<C extends MultiblockComp<C, N>, N extends SharedNetwork<C, N>> extends ModTileEntity implements IUpdatable {
+public class PassiveMultiblockTile<C extends MultiblockComp<C, N>, N extends SharedNetwork<C, N>> extends BaseTileEntity implements INeighborAwareTile, IUpdatable {
 
 	protected C comp;
 
@@ -33,7 +35,11 @@ public class PassiveMultiblockTile<C extends MultiblockComp<C, N>, N extends Sha
 	}
 
 	@Override
-	public void onNeighborTileChange(BlockPos pos) {
+	public void neighborBlockChange(Block b, BlockPos src) {
+	}
+
+	@Override
+	public void neighborTileChange(BlockPos src) {
 		if (!comp.updateCon) {
 			comp.updateCon = true;
 			TickRegistry.instance.updates.add(this);
@@ -43,7 +49,7 @@ public class PassiveMultiblockTile<C extends MultiblockComp<C, N>, N extends Sha
 	@Override
 	public void validate() {
 		super.validate();
-		comp.setUID(SharedNetwork.ExtPosUID(pos, dimensionId));
+		comp.setUID(SharedNetwork.ExtPosUID(pos, world.provider.getDimension()));
 		TickRegistry.instance.updates.add(this);
 	}
 

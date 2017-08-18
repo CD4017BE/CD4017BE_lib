@@ -20,6 +20,7 @@ import net.minecraft.inventory.Container;
  *
  * @author CD4017BE
  */
+@Deprecated
 public class TileBlockRegistry 
 {
 	

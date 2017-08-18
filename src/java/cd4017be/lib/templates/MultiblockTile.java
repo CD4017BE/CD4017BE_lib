@@ -1,13 +1,15 @@
 package cd4017be.lib.templates;
 
-import cd4017be.lib.ModTileEntity;
+import cd4017be.lib.block.AdvancedBlock.INeighborAwareTile;
+import cd4017be.lib.block.BaseTileEntity;
+import net.minecraft.block.Block;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ITickable;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 
-public class MultiblockTile<C extends MultiblockComp<C, N>, N extends SharedNetwork<C, N>> extends ModTileEntity implements ITickable {
+public class MultiblockTile<C extends MultiblockComp<C, N>, N extends SharedNetwork<C, N>> extends BaseTileEntity implements ITickable, INeighborAwareTile {
 
 	protected C comp;
 
@@ -33,14 +35,14 @@ public class MultiblockTile<C extends MultiblockComp<C, N>, N extends SharedNetw
 	}
 
 	@Override
-	public void onNeighborTileChange(BlockPos pos) {
+	public void neighborTileChange(BlockPos src) {
 		comp.updateCon = true;
 	}
 
 	@Override
 	public void validate() {
 		super.validate();
-		comp.setUID(SharedNetwork.ExtPosUID(pos, dimensionId));
+		comp.setUID(SharedNetwork.ExtPosUID(pos, world.provider.getDimension()));
 	}
 
 	@Override
@@ -54,5 +56,8 @@ public class MultiblockTile<C extends MultiblockComp<C, N>, N extends SharedNetw
 		super.onChunkUnload();
 		if (comp.network != null) comp.network.remove(comp);
 	}
+
+	@Override
+	public void neighborBlockChange(Block b, BlockPos src) {}
 
 }

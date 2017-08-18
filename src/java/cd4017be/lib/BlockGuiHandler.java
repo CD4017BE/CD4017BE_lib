@@ -3,7 +3,6 @@ package cd4017be.lib;
 import cd4017be.lib.Gui.DataContainer;
 import cd4017be.lib.Gui.DataContainer.IGuiData;
 import cd4017be.lib.util.Utils;
-import cd4017be.lib.TileBlockRegistry.TileBlockEntry;
 import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.network.FMLEventChannel;
@@ -18,9 +17,11 @@ import io.netty.buffer.Unpooled;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
 
 import org.apache.logging.log4j.Level;
 
+import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.entity.player.EntityPlayer;
@@ -41,6 +42,7 @@ import net.minecraft.world.World;
 public class BlockGuiHandler implements IGuiHandler {
 
 	private static final String guiChannel = "CD4017BE_gui";
+	private static HashMap<Block, GuiEntry> gui_registry = new HashMap<Block, GuiEntry>();
 
 	public static BlockGuiHandler instance = new BlockGuiHandler();
 	public static FMLEventChannel eventChannel;
@@ -49,6 +51,32 @@ public class BlockGuiHandler implements IGuiHandler {
 		eventChannel = NetworkRegistry.INSTANCE.newEventDrivenChannel(guiChannel);
 		eventChannel.register(instance);
 		NetworkRegistry.INSTANCE.registerGuiHandler(Lib.instance, instance);
+	}
+
+	/**
+	 * register a Gui to a block.<br>
+	 * {@code registerContainer(id, ...);} must be called before.
+	 * @param id
+	 * @param gui
+	 */
+	@SideOnly(Side.CLIENT)
+	public static void registerGui(Block id, Class<? extends GuiContainer> gui) {
+		GuiEntry entry = gui_registry.get(id);
+		if (entry != null) {
+			if (entry.gui != null) FMLLog.warning("CD4017BE-modlib: GuiContainer %1$s overrrides already registered GuiContainer %2$s for Block-ID %3$d !", gui.getName(), entry.gui.getName(), id);
+			entry.gui = gui;
+		} else FMLLog.warning("CD4017BE-modlib: Failed to register GuiContainer %1$s because Block-ID %2$s is not registered!", gui.getName(), id);
+	}
+
+	/**
+	 * register a container to a block
+	 * @param id
+	 * @param container
+	 */
+	public static void registerContainer(Block id, Class<? extends Container> container) {
+		GuiEntry entry = new GuiEntry();
+		entry.container = container;
+		gui_registry.put(id, entry);
 	}
 
 	/**
@@ -215,9 +243,9 @@ public class BlockGuiHandler implements IGuiHandler {
 		BlockPos pos = new BlockPos(x, y, z);
 		Container c;
 		if (ID < 0) {
-			TileBlockEntry entry = TileBlockRegistry.getBlockEntry(world.getBlockState(pos).getBlock());
+			GuiEntry entry = gui_registry.get(world.getBlockState(pos).getBlock());
 			TileEntity te = world.getTileEntity(pos);
-			if (entry != null && entry.container != null && te != null && entry.tileEntity.isInstance(te)) {
+			if (entry != null && entry.container != null && te instanceof IGuiData) {
 				try {
 					c = entry.container.getConstructor(IGuiData.class, EntityPlayer.class).newInstance((IGuiData)te, player);
 				} catch (NoSuchMethodException ex) {
@@ -248,16 +276,16 @@ public class BlockGuiHandler implements IGuiHandler {
 		BlockPos pos = new BlockPos(x, y, z);
 		GuiContainer g;
 		if (ID < 0) { //Block gui
-			TileBlockEntry entry = TileBlockRegistry.getBlockEntry(world.getBlockState(pos).getBlock());
+			GuiEntry entry = gui_registry.get(world.getBlockState(pos).getBlock());
 			TileEntity te = world.getTileEntity(pos);
-			if (entry != null && entry.gui != null && te != null && entry.tileEntity.isInstance(te)) {
+			if (entry != null && entry.gui != null && te instanceof IGuiData) {
 				if(player.openContainer != null && player.openContainer instanceof DataContainer && ((DataContainer)player.openContainer).data == te) {
 					return Minecraft.getMinecraft().currentScreen;
 				}
 				try {
-					g = entry.gui.getConstructor(entry.tileEntity, EntityPlayer.class).newInstance(entry.tileEntity.cast(te), player);
+					g = entry.gui.getConstructor(IGuiData.class, EntityPlayer.class).newInstance((IGuiData)te, player);
 				} catch (NoSuchMethodException ex) {
-					FMLLog.severe("CD4017BE-lib: GuiContainer %1$s is missing the Constructor ( %2$s , %3$s )", entry.gui.getName(), entry.tileEntity.getName(), EntityPlayer.class.getName());
+					FMLLog.severe("CD4017BE-lib: GuiContainer %1$s is missing the Constructor ( %2$s , %3$s )", entry.gui.getName(), IGuiData.class.getName(), EntityPlayer.class.getName());
 					return null;
 				} catch (InstantiationException ex) {
 					ex.printStackTrace();
@@ -328,6 +356,12 @@ public class BlockGuiHandler implements IGuiHandler {
 		 * @throws IOException
 		 */
 		public void onPacketFromClient(PacketBuffer data, EntityPlayer sender, ItemStack item, int slot) throws IOException;
+	}
+
+	private static class GuiEntry {
+		Class<? extends Container> container;
+		@SideOnly(Side.CLIENT)
+		Class<? extends GuiContainer> gui;
 	}
 
 }
