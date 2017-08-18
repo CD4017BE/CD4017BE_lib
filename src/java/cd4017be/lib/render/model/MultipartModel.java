@@ -10,6 +10,7 @@ import com.google.common.base.Function;
 import cd4017be.lib.block.MultipartBlock;
 import cd4017be.lib.property.PropertyBoolean;
 import cd4017be.lib.render.IHardCodedModel;
+import cd4017be.lib.util.PropertyByte;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
@@ -44,6 +45,19 @@ public class MultipartModel implements IModel, IHardCodedModel {
 		}
 	}
 
+	public MultipartModel setPipeVariants(int n) {
+		for (int i = 0; i < block.modules.length; i++) {
+			IUnlistedProperty<?> prop = block.modules[i];
+			if (prop instanceof PropertyByte && modelProvider[i] == null) {
+				ResourceLocation[] locs = new ResourceLocation[n];
+				for (int j = 0; j < n; j++)
+					locs[j] = new ModelResourceLocation(block.getRegistryName(), prop.getName() + "_" + j);
+				modelProvider[i] = new ProviderByte(locs);
+			}
+		}
+		return this;
+	}
+
 	@Override
 	public Collection<ResourceLocation> getDependencies() {
 		ArrayList<ResourceLocation> list = new ArrayList<ResourceLocation>();
@@ -71,6 +85,9 @@ public class MultipartModel implements IModel, IHardCodedModel {
 	public IModelState getDefaultState() {
 		return ModelRotation.X0_Y0;
 	}
+
+	@Override
+	public void onReload() {}
 
 	public class BakedMultipart implements IBakedModel {
 
@@ -159,7 +176,35 @@ public class MultipartModel implements IModel, IHardCodedModel {
 
 	}
 
-	@Override
-	public void onReload() {}
+	public class ProviderByte implements IModelProvider {
+
+		private final ResourceLocation[] models;
+		private final IBakedModel[] baked;
+
+		public ProviderByte(ResourceLocation... models) {
+			this.models = models;
+			this.baked = new IBakedModel[models.length];
+		}
+		
+		@Override
+		public IBakedModel getModelFor(Object val) {
+			byte var = (Byte)val;
+			return var >= 0 && var < models.length ? baked[var] : null;
+		}
+
+		@Override
+		public Collection<ResourceLocation> getDependencies() {
+			return Arrays.asList(models);
+		}
+
+		@Override
+		public void bake(IModelState state, VertexFormat format, Function<ResourceLocation, TextureAtlasSprite> textureGetter) {
+			for (int i = 0; i < models.length; i++) {
+				IModel model = ModelLoaderRegistry.getModelOrLogError(models[i], "missing");
+				baked[i] = model.bake(model.getDefaultState(), format, textureGetter);
+			}
+		}
+
+	}
 
 }
