@@ -3,6 +3,7 @@ package cd4017be.lib.util;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.IStringSerializable;
 import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -30,6 +31,17 @@ public enum Orientation implements IStringSerializable {
 		return name();
 	}
 
+	public static Orientation fromFacing(EnumFacing front) {
+		switch(front) {
+		case DOWN: return Bn;
+		case UP: return Tn;
+		case SOUTH: return S;
+		case WEST: return W;
+		case EAST: return E;
+		default: return N;
+		}
+	}
+
 	public EnumFacing rotate(EnumFacing dir) {
 		if (dir == EnumFacing.NORTH) return front;
 		if (dir.getAxis() != Axis.X) {
@@ -55,6 +67,22 @@ public enum Orientation implements IStringSerializable {
 		case 3: box = new AxisAlignedBB(box.minZ, box.minY, 1.0 - box.maxX, box.maxZ, box.maxY, 1.0 - box.minX); break;
 		}
 		return box;
+	}
+
+	public Vec3d rotate(Vec3d vec) {
+		double x = vec.xCoord, y, z;
+		switch(ordinal() >> 2) {
+		case 1: y = vec.zCoord; z = -vec.yCoord; break;
+		case 2: y = -vec.yCoord; z = -vec.zCoord; break;
+		case 3: y = -vec.zCoord; z = vec.yCoord; break;
+		default: y = vec.yCoord; z = vec.zCoord;
+		}
+		switch(ordinal() & 3) {
+		case 1: return new Vec3d(-z, y, x);
+		case 2: return new Vec3d(-x, y, -z);
+		case 3: return new Vec3d(z, y, -x);
+		default: return new Vec3d(x, y, z);
+		}
 	}
 
 	@SideOnly(Side.CLIENT)

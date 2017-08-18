@@ -3,6 +3,7 @@ package cd4017be.lib.util;
 import java.text.DecimalFormatSymbols;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.ObjIntConsumer;
 
 import javax.annotation.Nullable;
 
@@ -79,6 +80,43 @@ public class Utils {
 				s[i] = i;
 			}
 			return s;
+		}
+	}
+
+	/**
+	 * performs the given operation for all blocks in a square ring.
+	 * @param center center of the ring
+	 * @param axis the axis around which the ring forms
+	 * @param radius radius of the ring in blocks
+	 * @param operation performed operation supplied with the block's position and its square distance to the center
+	 */
+	public static void forRing(BlockPos center, Axis axis, int radius, ObjIntConsumer<BlockPos> operation) {
+		int x = center.getX(), y = center.getY(), z = center.getZ();
+		switch(axis) {
+		case X:
+			for (int i = -radius; i <= radius; i++) {
+				int d = radius * radius + i * i;
+				operation.accept(new BlockPos(x, y - radius, z + i), d);
+				operation.accept(new BlockPos(x, y + radius, z + i), d);
+				operation.accept(new BlockPos(x, y + i, z - radius), d);
+				operation.accept(new BlockPos(x, y + i, z + radius), d);
+			}
+		case Y:
+			for (int i = -radius; i <= radius; i++) {
+				int d = radius * radius + i * i;
+				operation.accept(new BlockPos(x - radius, y, z + i), d);
+				operation.accept(new BlockPos(x + radius, y, z + i), d);
+				operation.accept(new BlockPos(x + i, y, z - radius), d);
+				operation.accept(new BlockPos(x + i, y, z + radius), d);
+			}
+		case Z:
+			for (int i = -radius; i <= radius; i++) {
+				int d = radius * radius + i * i;
+				operation.accept(new BlockPos(x - radius, y + i, z), d);
+				operation.accept(new BlockPos(x + radius, y + i, z), d);
+				operation.accept(new BlockPos(x + i, y - radius, z), d);
+				operation.accept(new BlockPos(x + i, y + radius, z), d);
+			}
 		}
 	}
 
@@ -383,6 +421,18 @@ public class Utils {
 		case X: return pos.getX();
 		case Y: return pos.getY();
 		case Z: return pos.getZ();
+		default: return 0;
+		}
+	}
+
+	public static double coord(double x, double y, double z, EnumFacing d) {
+		switch(d) {
+		case DOWN: return -y;
+		case UP: return y;
+		case NORTH: return -z;
+		case SOUTH: return z;
+		case WEST: return -x;
+		case EAST: return x;
 		default: return 0;
 		}
 	}
