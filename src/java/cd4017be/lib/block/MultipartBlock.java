@@ -2,6 +2,7 @@ package cd4017be.lib.block;
 
 import java.util.List;
 
+import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.properties.PropertyInteger;
@@ -24,8 +25,8 @@ public abstract class MultipartBlock extends AdvancedBlock {
 	public PropertyInteger baseState;
 	public IUnlistedProperty<?>[] modules;
 	
-	public MultipartBlock(String id, Material m, int flags, Class<? extends TileEntity> tile) {
-		super(id, m, flags, tile);
+	public MultipartBlock(String id, Material m, SoundType sound, int flags, Class<? extends TileEntity> tile) {
+		super(id, m, sound, flags, tile);
 	}
 
 	protected abstract IUnlistedProperty<?>[] createModules();
@@ -132,7 +133,15 @@ public abstract class MultipartBlock extends AdvancedBlock {
 	}
 
 	public interface IModularTile {
+		/**
+		 * @param m module property index
+		 * @return state for given module
+		 */
 		public <T> T getModuleState(int m);
+		/**
+		 * @param m module property index
+		 * @return whether given module exists (= has collision box)
+		 */
 		public boolean isModulePresent(int m);
 	}
 

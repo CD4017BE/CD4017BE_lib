@@ -6,6 +6,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
@@ -38,8 +39,9 @@ public class AdvancedBlock extends BaseBlock {
 	 * @param flags 2 = nonOpaque, 1 = noFullBlock
 	 * @param tile optional TileEntity to register with this block
 	 */
-	public AdvancedBlock(String id, Material m, int flags, @Nullable Class<? extends TileEntity> tile) {
+	public AdvancedBlock(String id, Material m, SoundType sound, int flags, @Nullable Class<? extends TileEntity> tile) {
 		super(id, m);
+		this.setSoundType(sound);
 		this.fullBlock = (flags & 1) == 0;
 		this.flags = ~flags << 6;
 		this.tileEntity = tile;

@@ -1,6 +1,7 @@
 package cd4017be.lib.block;
 
 import cd4017be.lib.util.Orientation;
+import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.state.BlockStateContainer;
@@ -18,13 +19,13 @@ public abstract class OrientedBlock extends AdvancedBlock {
 
 	public final IProperty<Orientation> orientProp;
 
-	protected OrientedBlock(String id, Material m, int flags, Class<? extends TileEntity> tile, IProperty<Orientation> prop) {
-		super(id, m, flags, tile);
+	protected OrientedBlock(String id, Material m, SoundType sound, int flags, Class<? extends TileEntity> tile, IProperty<Orientation> prop) {
+		super(id, m, sound, flags, tile);
 		orientProp = prop;
 	}
 
-	public static OrientedBlock create(String id, Material m, int flags, Class<? extends TileEntity> tile, IProperty<Orientation> prop) {
-		return new OrientedBlock(id, m, flags, tile, prop) {
+	public static OrientedBlock create(String id, Material m, SoundType sound, int flags, Class<? extends TileEntity> tile, IProperty<Orientation> prop) {
+		return new OrientedBlock(id, m, sound, flags, tile, prop) {
 			@Override
 			protected BlockStateContainer createBlockState() {
 				return new BlockStateContainer(this, prop);
