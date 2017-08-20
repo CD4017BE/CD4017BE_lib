@@ -16,12 +16,12 @@ import net.minecraftforge.common.property.IUnlistedProperty;
 public abstract class BlockPipe extends MultipartBlock {
 
 	public static final IUnlistedProperty<?>[] CON_PROPS = {
-		new PropertyByte("conB"),
-		new PropertyByte("conT"),
-		new PropertyByte("conN"),
-		new PropertyByte("conS"),
-		new PropertyByte("conW"),
-		new PropertyByte("conE")	
+		new PropertyByte("cb"),
+		new PropertyByte("ct"),
+		new PropertyByte("cn"),
+		new PropertyByte("cs"),
+		new PropertyByte("cw"),
+		new PropertyByte("ce")
 	};
 
 	public static BlockPipe create(String id, Material m, SoundType sound, Class<? extends TileEntity> tile, int states) {
@@ -44,8 +44,10 @@ public abstract class BlockPipe extends MultipartBlock {
 
 	@Override
 	public void getSubBlocks(Item item, CreativeTabs tab, NonNullList<ItemStack> list) {
-		for (int i : baseState.getAllowedValues())
-			list.add(new ItemStack(item, 1, i));
+		if (baseState != null)
+			for (int i : baseState.getAllowedValues())
+				list.add(new ItemStack(item, 1, i));
+		else list.add(new ItemStack(item));
 	}
 
 	@Override
