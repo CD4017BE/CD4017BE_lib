@@ -28,7 +28,7 @@ public enum Orientation implements IStringSerializable {
 
 	@Override
 	public String getName() {
-		return name();
+		return name().toLowerCase();
 	}
 
 	public static Orientation fromFacing(EnumFacing front) {
@@ -90,9 +90,9 @@ public enum Orientation implements IStringSerializable {
 		return ModelRotation.values()[ordinal()];
 	}
 
-	public static final PropertyEnum<Orientation> XY_12_ROT = PropertyEnum.create("dir", Orientation.class, Arrays.asList(Bn, Bs, Bw, Be, Tn, Ts, Tw, Te, N, S, W, E));
-	public static final PropertyEnum<Orientation> ALL_AXIS = PropertyEnum.create("dir", Orientation.class, Arrays.asList(Bn, Tn, N, S, W, E));
-	public static final PropertyEnum<Orientation> HOR_AXIS = PropertyEnum.create("dir", Orientation.class, Arrays.asList(N, S, W, E));
-	public static final PropertyEnum<Orientation> ALL_AXIS_INV = PropertyEnum.create("dir", Orientation.class, Arrays.asList(Bs, Ts, Rn, Rs, Rw, Re));
-	public static final PropertyEnum<Orientation> HOR_AXIS_INV = PropertyEnum.create("dir", Orientation.class, Arrays.asList(Rn, Rs, Rw, Re));
+	public static final PropertyEnum<Orientation> XY_12_ROT = PropertyEnum.create("orient", Orientation.class, Arrays.asList(Bn, Bs, Bw, Be, Tn, Ts, Tw, Te, N, S, W, E));
+	public static final PropertyEnum<Orientation> ALL_AXIS = PropertyEnum.create("orient", Orientation.class, Arrays.asList(Bn, Tn, N, S, W, E));
+	public static final PropertyEnum<Orientation> HOR_AXIS = PropertyEnum.create("orient", Orientation.class, Arrays.asList(N, S, W, E));
+	public static final PropertyEnum<Orientation> ALL_AXIS_INV = PropertyEnum.create("orient", Orientation.class, Arrays.asList(Bs, Ts, Rn, Rs, Rw, Re));
+	public static final PropertyEnum<Orientation> HOR_AXIS_INV = PropertyEnum.create("orient", Orientation.class, Arrays.asList(Rn, Rs, Rw, Re));
 }
