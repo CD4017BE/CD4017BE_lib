@@ -17,17 +17,17 @@ import net.minecraft.world.World;
 
 public abstract class OrientedBlock extends AdvancedBlock {
 
-	public final IProperty<Orientation> orientProp;
+	public IProperty<Orientation> orientProp;
 
 	protected OrientedBlock(String id, Material m, SoundType sound, int flags, Class<? extends TileEntity> tile, IProperty<Orientation> prop) {
 		super(id, m, sound, flags, tile);
-		orientProp = prop;
 	}
 
 	public static OrientedBlock create(String id, Material m, SoundType sound, int flags, Class<? extends TileEntity> tile, IProperty<Orientation> prop) {
 		return new OrientedBlock(id, m, sound, flags, tile, prop) {
 			@Override
 			protected BlockStateContainer createBlockState() {
+				orientProp = prop;
 				return new BlockStateContainer(this, prop);
 			}
 		};

@@ -31,12 +31,18 @@ import net.minecraftforge.common.property.IUnlistedProperty;
 public class MultipartModel implements IModel, IHardCodedModel {
 
 	public final IModelProvider[] modelProvider;
-	public final ResourceLocation baseModel;
+	public final ResourceLocation[] baseModels;
 	public final MultipartBlock block;
 
 	public MultipartModel(MultipartBlock block) {
 		this.block = block;
-		this.baseModel = new ModelResourceLocation(block.getRegistryName(), "base");
+		if (block.baseState == null) {
+			baseModels = new ResourceLocation[] {new ModelResourceLocation(block.getRegistryName(), "base")};
+		} else {
+			Collection<Integer> states = block.baseState.getAllowedValues();
+			this.baseModels = new ResourceLocation[states.size()];
+			for (int s : states) baseModels[s] = new ModelResourceLocation(block.getRegistryName(), "base" + s);
+		}
 		this.modelProvider = new IModelProvider[block.modules.length];
 		for (int i = 0; i < block.modules.length; i++) {
 			IUnlistedProperty<?> prop = block.modules[i];
@@ -51,7 +57,7 @@ public class MultipartModel implements IModel, IHardCodedModel {
 			if (prop instanceof PropertyByte && modelProvider[i] == null) {
 				ResourceLocation[] locs = new ResourceLocation[n];
 				for (int j = 0; j < n; j++)
-					locs[j] = new ModelResourceLocation(block.getRegistryName(), prop.getName() + "_" + j);
+					locs[j] = new ModelResourceLocation(block.getRegistryName(), prop.getName() + j);
 				modelProvider[i] = new ProviderByte(locs);
 			}
 		}
@@ -61,7 +67,7 @@ public class MultipartModel implements IModel, IHardCodedModel {
 	@Override
 	public Collection<ResourceLocation> getDependencies() {
 		ArrayList<ResourceLocation> list = new ArrayList<ResourceLocation>();
-		list.add(baseModel);
+		for (ResourceLocation res : baseModels) list.add(res);
 		for (IModelProvider provider : modelProvider) {
 			Collection<ResourceLocation> c = provider.getDependencies();
 			if (c != null) list.addAll(c);
@@ -76,9 +82,14 @@ public class MultipartModel implements IModel, IHardCodedModel {
 
 	@Override
 	public IBakedModel bake(IModelState state, VertexFormat format, Function<ResourceLocation, TextureAtlasSprite> textureGetter) {
-		IModel model = ModelLoaderRegistry.getModelOrLogError(baseModel, "missing base Model");
-		for (IModelProvider provider : modelProvider) provider.bake(state, format, textureGetter);
-		return new BakedMultipart(model.bake(state, format, textureGetter));
+		IBakedModel[] models = new IBakedModel[baseModels.length];
+		for (int i = 0; i < baseModels.length; i++) {
+			IModel model = ModelLoaderRegistry.getModelOrLogError(baseModels[i], "missing base Model " + i);
+			models[i] = model.bake(state, format, textureGetter);
+		}
+		for (IModelProvider provider : modelProvider)
+			provider.bake(state, format, textureGetter);
+		return new BakedMultipart(models);
 	}
 
 	@Override
@@ -91,16 +102,16 @@ public class MultipartModel implements IModel, IHardCodedModel {
 
 	public class BakedMultipart implements IBakedModel {
 
-		private final IBakedModel base;
+		private final IBakedModel[] base;
 
-		private BakedMultipart(IBakedModel base) {
+		private BakedMultipart(IBakedModel[] base) {
 			this.base = base;
 		}
 
 		@Override
 		public List<BakedQuad> getQuads(IBlockState state, EnumFacing side, long rand) {
 			ArrayList<BakedQuad> list = new ArrayList<BakedQuad>();
-			list.addAll(base.getQuads(state, side, rand));
+			list.addAll(base[block.baseState == null ? 0 : state.getValue(block.baseState)].getQuads(state, side, rand));
 			if (state instanceof IExtendedBlockState) {
 				IExtendedBlockState exState = (IExtendedBlockState) state;
 				for (int i = 0; i < block.modules.length; i++) {
@@ -113,12 +124,12 @@ public class MultipartModel implements IModel, IHardCodedModel {
 
 		@Override
 		public boolean isAmbientOcclusion() {
-			return base.isAmbientOcclusion();
+			return base[0].isAmbientOcclusion();
 		}
 
 		@Override
 		public boolean isGui3d() {
-			return base.isGui3d();
+			return base[0].isGui3d();
 		}
 
 		@Override
@@ -128,7 +139,7 @@ public class MultipartModel implements IModel, IHardCodedModel {
 
 		@Override
 		public TextureAtlasSprite getParticleTexture() {
-			return base.getParticleTexture();
+			return base[0].getParticleTexture();
 		}
 
 		@Override

@@ -24,7 +24,6 @@ import net.minecraft.item.crafting.CraftingManager;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.ShapedRecipes;
 import net.minecraft.item.crafting.ShapelessRecipes;
-import net.minecraftforge.fluids.FluidContainerRegistry;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fml.common.IFuelHandler;
 import net.minecraftforge.fml.common.Loader;
@@ -33,7 +32,6 @@ import net.minecraftforge.oredict.OreDictionary;
 import net.minecraftforge.oredict.ShapedOreRecipe;
 import net.minecraftforge.oredict.ShapelessOreRecipe;
 
-@SuppressWarnings("deprecation")
 public class RecipeAPI {
 
 	public static interface IRecipeHandler {
@@ -86,7 +84,7 @@ public class RecipeAPI {
 		Handlers.put("fuel", new FuelHandler());
 		Handlers.put("worldgen", new OreGenHandler());
 		Handlers.put("item", (p) -> Lib.materials.addMaterial((int)p.getNumber(1), p.getString(2)));
-		Handlers.put("fluidCont", (p) -> FluidContainerRegistry.registerFluidContainer(p.get(1, FluidStack.class), p.get(2, ItemStack.class), p.get(3, ItemStack.class)));
+		//TODO Handlers.put("fluidCont", (p) -> FluidContainerRegistry.registerFluidContainer(p.get(1, FluidStack.class), p.get(2, ItemStack.class), p.get(3, ItemStack.class)));
 		if (Loader.isModLoaded("Automation")) {
 			Handlers.put("advFurn", (p) -> {
 				FluidStack Fin = null;
@@ -191,7 +189,7 @@ public class RecipeAPI {
 				ItemStack item = (ItemStack)curElement[0];
 				ItemStack res = curRecipe.getRecipeOutput();
 				if (res != null) {
-					res.setItem(item.getItem());
+					//TODO res.setItem(item.getItem());
 					res.setItemDamage(item.getItemDamage());
 					res.setTagCompound(item.getTagCompound());
 					res.setCount(item.getCount());
