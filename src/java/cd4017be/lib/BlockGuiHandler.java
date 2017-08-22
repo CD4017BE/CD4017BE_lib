@@ -185,7 +185,7 @@ public class BlockGuiHandler implements IGuiHandler {
 	 * @return prepared PacketBuffer
 	 */
 	public static PacketBuffer getPacketForItem(int slot) {
-		return getPacketTargetData(new BlockPos(0, - 1, slot));
+		return getPacketTargetData(new BlockPos(slot, - 1, 0));
 	}
 
 	@SideOnly(Side.CLIENT)

@@ -13,7 +13,7 @@ import cd4017be.lib.templates.InventoryItem;
 public class ItemGuiData implements IGuiData {
 
 	protected final Item item;
-	private ItemStack lastState;
+	private ItemStack lastState = ItemStack.EMPTY;
 	protected InventoryItem inv;
 
 	public ItemGuiData(Item item) {
@@ -26,7 +26,7 @@ public class ItemGuiData implements IGuiData {
 	@Override
 	public boolean canPlayerAccessUI(EntityPlayer player) {
 		ItemStack item = player.inventory.mainInventory.get(player.inventory.currentItem);
-		return item != null && item.getItem() == this.item;
+		return item.getItem() == this.item;
 	}
 
 	@Override
@@ -41,7 +41,7 @@ public class ItemGuiData implements IGuiData {
 	@Override
 	public boolean detectAndSendChanges(DataContainer container, PacketBuffer dos) {
 		ItemStack item = container.player.inventory.mainInventory.get(container.player.inventory.currentItem);
-		if (item == null || container instanceof TileContainer) return false;
+		if (item.isEmpty() || container instanceof TileContainer) return false;
 		if (!ItemStack.areItemStacksEqual(lastState, item)) {
 			dos.writeItemStack(lastState = item.copy());
 			return true;
