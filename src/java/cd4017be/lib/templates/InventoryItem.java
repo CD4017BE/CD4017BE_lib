@@ -3,10 +3,8 @@ package cd4017be.lib.templates;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.item.ItemStack;
-import net.minecraftforge.items.IItemHandlerModifiable;
-import net.minecraftforge.items.ItemHandlerHelper;
 
-public class InventoryItem implements IItemHandlerModifiable {
+public class InventoryItem extends AbstractInventory {
 
 	private final InventoryPlayer ref;
 	private final IItemInventory inv;
@@ -15,7 +13,7 @@ public class InventoryItem implements IItemHandlerModifiable {
 	public InventoryItem(EntityPlayer player) {
 		this.ref = player.inventory;
 		ItemStack item = ref.mainInventory.get(ref.currentItem);
-		if (item == null || !(item.getItem() instanceof IItemInventory)) throw new IllegalArgumentException("Held item not InventoryItem compatible!");
+		if (!(item.getItem() instanceof IItemInventory)) throw new IllegalArgumentException("Held item not InventoryItem compatible!");
 		this.inv = (IItemInventory)item.getItem();
 		this.cache = inv.loadInventory(item, player);
 	}
@@ -31,38 +29,10 @@ public class InventoryItem implements IItemHandlerModifiable {
 	}
 
 	@Override
-	public ItemStack insertItem(int slot, ItemStack stack, boolean sim) {
-		ItemStack item = cache[slot];
-		int m = Math.min(stack.getMaxStackSize() - (item == null ? 0 : item.getCount()), stack.getCount()); 
-		if (m <= 0 || !(item == null || ItemHandlerHelper.canItemStacksStack(item, stack))) return stack;
-		if (!sim) {
-			if (item != null) item.shrink(m);
-			else item = ItemHandlerHelper.copyStackWithSize(stack, m);
-			this.setStackInSlot(slot, item);
-		}
-		return (m = stack.getCount() - m) > 0 ? ItemHandlerHelper.copyStackWithSize(stack, m) : null;
-	}
-
-	@Override
-	public ItemStack extractItem(int slot, int amount, boolean sim) {
-		ItemStack item = this.getStackInSlot(slot);
-		if (item == null) return null;
-		int m = Math.min(item.getCount(), amount);
-		if (!sim) {
-			if (item.getCount() <= m) this.setStackInSlot(slot, null);
-			else {
-				item.shrink(m);
-				this.setStackInSlot(slot, item);
-			}
-		}
-		return ItemHandlerHelper.copyStackWithSize(item, m);
-	}
-
-	@Override
 	public void setStackInSlot(int slot, ItemStack stack) {
 		cache[slot] = stack;
 		ItemStack item = ref.mainInventory.get(ref.currentItem);
-		if (item != null && item.getItem() == inv) 
+		if (item.getItem() == inv)
 			inv.saveInventory(item, ref.player, cache);
 	}
 
@@ -77,11 +47,6 @@ public class InventoryItem implements IItemHandlerModifiable {
 	public interface IItemInventory {
 		public ItemStack[] loadInventory(ItemStack inv, EntityPlayer player);
 		public void saveInventory(ItemStack inv, EntityPlayer player, ItemStack[] items);
-	}
-
-	@Override
-	public int getSlotLimit(int slot) {
-		return 64;
 	}
 
 }

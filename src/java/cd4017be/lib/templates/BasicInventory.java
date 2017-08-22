@@ -7,10 +7,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraftforge.items.IItemHandlerModifiable;
-import net.minecraftforge.items.ItemHandlerHelper;
 
-public class BasicInventory implements IItemHandlerModifiable {
+public class BasicInventory extends AbstractInventory {
 
 	public final ItemStack[] items;
 	public ObjIntConsumer<ItemStack> onModify;
@@ -18,7 +16,7 @@ public class BasicInventory implements IItemHandlerModifiable {
 
 	public BasicInventory(int slots) {
 		items = new ItemStack[slots];
-		restriction = BasicInventory::insertAmount;
+		restriction = super::insertAm;
 		Arrays.fill(items, ItemStack.EMPTY);
 	}
 
@@ -33,41 +31,14 @@ public class BasicInventory implements IItemHandlerModifiable {
 	}
 
 	@Override
-	public ItemStack insertItem(int i, ItemStack stack, boolean sim) {
-		ItemStack item = items[i];
-		int n = item.getCount();
-		int m = Math.min(restriction.insertAmount(i, stack) - n, stack.getCount()); 
-		if (m <= 0 || !(n == 0 || ItemHandlerHelper.canItemStacksStack(item, stack))) return stack;
-		if (!sim) {
-			if (n == 0) item = ItemHandlerHelper.copyStackWithSize(stack, m);
-			else item.grow(m);
-			if (onModify != null) onModify.accept(item, i);
-			items[i] = item;
-		}
-		return ItemHandlerHelper.copyStackWithSize(stack, stack.getCount() - m);
-	}
-
-	@Override
-	public ItemStack extractItem(int i, int m, boolean sim) {
-		ItemStack item = items[i];
-		if (item.getCount() < m) m = item.getCount();
-		if (m <= 0) return ItemStack.EMPTY;
-		if (!sim) {
-			item.shrink(m);
-			if (onModify != null) onModify.accept(item, m);
-		}
-		return ItemHandlerHelper.copyStackWithSize(item, m);
-	}
-
-	@Override
 	public void setStackInSlot(int slot, ItemStack stack) {
 		if (onModify != null) onModify.accept(stack, slot);
 		items[slot] = stack;
 	}
 
 	@Override
-	public int getSlotLimit(int slot) {
-		return 64;
+	public int insertAm(int slot, ItemStack item) {
+		return restriction.insertAmount(slot, item);
 	}
 
 	public static int insertAmount(int slot, ItemStack item) {
