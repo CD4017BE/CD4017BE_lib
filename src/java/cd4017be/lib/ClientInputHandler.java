@@ -26,8 +26,8 @@ public class ClientInputHandler
 	public void handleMouseInput(MouseEvent e)
 	{
 		if (mc.player != null && mc.gameSettings != null && mc.player.isSneaking()) {
-			ItemStack item = mc.player.getHeldItemMainhand();
-			if (item != null && item.getItem() instanceof IScrollHandlerItem && (e.getDwheel() != 0 || (e.getButton() > 1 && e.isButtonstate()))) {
+			ItemStack item = mc.player.getHeldItemMainhand();//TODO add scroll handling for In-World UI blocks
+			if (item.getItem() instanceof IScrollHandlerItem && (e.getDwheel() != 0 || (e.getButton() > 1 && e.isButtonstate()))) {
 				((IScrollHandlerItem)item.getItem()).onSneakScroll(item, mc.player, e.getDwheel());
 				e.setCanceled(true);
 			}

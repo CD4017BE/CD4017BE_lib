@@ -19,7 +19,7 @@ public class SlotItemType extends SlotItemHandler {
 
 	@Override
 	public boolean isItemValid(ItemStack item) {
-		if (item != null) 
+		if (!item.isEmpty()) 
 			for (ItemStack comp : allowed)
 				if (item.getItem() == comp.getItem() && !(item.getHasSubtypes() && item.getItemDamage() != comp.getItemDamage())) return true;
 		return false;

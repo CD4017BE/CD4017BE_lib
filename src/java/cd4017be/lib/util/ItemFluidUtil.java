@@ -11,12 +11,12 @@ import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidUtil;
 import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.fluids.capability.IFluidHandlerItem;
 import net.minecraftforge.fluids.capability.IFluidTankProperties;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
@@ -44,7 +44,7 @@ public class ItemFluidUtil {
 	public static NBTTagList saveInventory(ItemStack[] inv) {
 		NBTTagList list = new NBTTagList();
 		for (int i = 0; i < inv.length; i++)
-			if (inv[i] != null) {
+			if (!inv[i].isEmpty()) {
 				NBTTagCompound tag = new NBTTagCompound();
 				inv[i].writeToNBT(tag);
 				tag.setByte("slot", (byte)i);
@@ -69,7 +69,7 @@ public class ItemFluidUtil {
 	public static NBTTagList saveItems(ItemStack[] items) {
 		NBTTagList list = new NBTTagList();
 		for (ItemStack item : items)
-			if (item != null) {
+			if (!item.isEmpty()) {
 				NBTTagCompound tag = new NBTTagCompound();
 				item.writeToNBT(tag);
 				list.appendTag(tag);
@@ -109,11 +109,11 @@ public class ItemFluidUtil {
 		for (int i = 0; i < src.getSlots(); i++) {
 			stack = src.extractItem(i, 65536, true);
 			if (extr != null) stack = extr.getExtract(stack, src);
-			if (stack == null) continue;
-			if (ins != null && (stack = ItemHandlerHelper.copyStackWithSize(stack, ins.insertAmount(stack, dst))) == null) continue;
- 			n = stack.getCount();
-			stack = ItemHandlerHelper.insertItemStacked(dst, stack, false);
- 			if (stack != null) n -= stack.getCount();
+			if (stack.getCount() == 0) continue;
+			if (ins == null) n = stack.getCount();
+			else if ((n = ins.insertAmount(stack, dst)) == 0) continue;
+			else stack = ItemHandlerHelper.copyStackWithSize(stack, n);
+			n -= ItemHandlerHelper.insertItemStacked(dst, stack, false).getCount();
  			src.extractItem(i, n, false);
  			m += n;
 		}
@@ -121,7 +121,7 @@ public class ItemFluidUtil {
 	}
 
 	public static int findStack(ItemStack item, IItemHandler inv, int p) {
-		if (item == null) return -1;
+		if (item.isEmpty()) return -1;
 		for (int i = p; i < inv.getSlots(); i++)
 			if (ItemStack.areItemStacksEqual(item, inv.getStackInSlot(i))) return i;
 		return -1;
@@ -129,11 +129,11 @@ public class ItemFluidUtil {
 
 	public static ItemStack putInSlots(IItemHandler inv, ItemStack stack, int... slots) {
 		for (int s : slots)
-			if (inv.getStackInSlot(s) != null && (stack = inv.insertItem(s, stack, false)) == null)
-				return null;
+			if (inv.getStackInSlot(s).getCount() > 0 && (stack = inv.insertItem(s, stack, false)).getCount() == 0)
+				return stack;
 		for (int s : slots)
-			if (inv.getStackInSlot(s) == null && (stack = inv.insertItem(s, stack, false)) == null)
-				return null;
+			if (inv.getStackInSlot(s).getCount() == 0 && (stack = inv.insertItem(s, stack, false)).getCount() == 0)
+				break;
 		return stack;
 	}
 
@@ -142,7 +142,7 @@ public class ItemFluidUtil {
 		for (int i = 0; i < inv.getSlots() && m < n; i++) 
 			if (item.isItemEqual(inv.getStackInSlot(i))) {
 				ItemStack stack = inv.extractItem(i, n - m, false);
-				if (stack != null) m += stack.getCount();
+				m += stack.getCount();
 			}
 		return m;
 	}
@@ -152,8 +152,9 @@ public class ItemFluidUtil {
 		for (int i = 0; i < inv.getSlots() && m < n; i++) 
 			if (ore.isEqual(inv.getStackInSlot(i))) {
 				ItemStack stack = inv.extractItem(i, n - m, false);
-				if (stack != null) {
-					m += stack.getCount();
+				int x = stack.getCount();
+				if (x > 0) {
+					m += x;
 					addToList(buffer, stack);
 				}
 			}
@@ -183,29 +184,25 @@ public class ItemFluidUtil {
 		if (mss) am = 65536;
 		for (int i = 0; i < inv.getSlots(); i++) {
 			ItemStack stack = inv.extractItem(i, am, true);
-			if (stack == null) continue;
+			if (stack.getCount() == 0) continue;
 			stack.setCount(mss ? stack.getMaxStackSize() : am);
 			stack.setCount(drain(inv, stack));
 			return stack;
 		}
-		return null;
+		return ItemStack.EMPTY;
 	}
 
 	public static class StackedFluidAccess implements IFluidHandler {
 
-		public final IFluidHandler acc;
-		private final ItemStack item;
+		public final IFluidHandlerItem acc;
 		private final int n;
 
 		public StackedFluidAccess(ItemStack item) {
-			this.n = item != null ? item.getCount() : 0;
+			this.n = item.getCount();
 			if (n > 0) {
-				this.acc = FluidUtil.getFluidHandler(item);
-				if (this.acc != null) item.setCount(1);
-				this.item = item;
+				this.acc = FluidUtil.getFluidHandler(ItemHandlerHelper.copyStackWithSize(item, 1));
 			} else {
 				this.acc = null;
-				this.item = null;
 			}
 		}
 
@@ -240,8 +237,9 @@ public class ItemFluidUtil {
 		}
 
 		public ItemStack result() {
+			ItemStack item = acc.getContainer();
 			item.setCount(item.getCount() * n);
-			return item.getCount() > 0 && item.getItem() != null ? item : null;
+			return item;
 		}
 
 	}

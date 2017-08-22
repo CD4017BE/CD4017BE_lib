@@ -38,7 +38,7 @@ public class InventoryItem extends AbstractInventory {
 
 	public void update() {
 		ItemStack item = ref.mainInventory.get(ref.currentItem);
-		if (item != null && item.getItem() == inv) {
+		if (item.getItem() == inv) {
 			ItemStack[] items = inv.loadInventory(item, ref.player);
 			System.arraycopy(items, 0, cache, 0, Math.min(cache.length, items.length));
 		}

@@ -95,7 +95,7 @@ public class BlockItemRegistry
 	public static ItemStack stack(String name, int n)
 	{
 		ItemStack item = stacks.get(name);
-		if (item == null) return null;
+		if (item == null) return ItemStack.EMPTY;
 		ItemStack ret = item.copy();
 		ret.setCount(n);
 		return ret;
@@ -110,7 +110,7 @@ public class BlockItemRegistry
 	public static ItemStack stack(String name, int n, int m)
 	{
 		ItemStack item = stacks.get(name);
-		if (item == null) return null;
+		if (item == null) return ItemStack.EMPTY;
 		ItemStack ret = item.copy();
 		ret.setCount(n);
 		ret.setItemDamage(m);

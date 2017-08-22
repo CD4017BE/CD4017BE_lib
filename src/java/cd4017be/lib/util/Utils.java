@@ -252,29 +252,15 @@ public class Utils {
 		
 		public boolean matches(ItemStack item) 
 		{
-			if (item == null) return false;
-			else if (types == null) return true;
-			for (ItemStack type : types) {
-				if (type == null) continue;
-				if (item.getItem() == type.getItem() && 
-					(!meta || item.getItemDamage() == type.getItemDamage()) &&
-					(!nbt || ItemStack.areItemStackTagsEqual(item, type)))
-					return true;
-			}
-			if (ores == null) return false;
-			for (int o : OreDictionary.getOreIDs(item))
-				for (int i : ores)
-					if (i == o) return true;
-			return false;
+			return getMatch(item) >= 0;
 		}
 		
 		public int getMatch(ItemStack item)
 		{
-			if (item == null) return -1;
+			if (item.isEmpty()) return -1;
 			else if (types == null) return -1;
 			for (int i = 0; i < types.length; i++) {
 				ItemStack type = types[i];
-				if (type == null) continue;
 				if (item.getItem() == type.getItem() && 
 					(!meta || item.getItemDamage() == type.getItemDamage()) &&
 					(!nbt || ItemStack.areItemStackTagsEqual(item, type)))

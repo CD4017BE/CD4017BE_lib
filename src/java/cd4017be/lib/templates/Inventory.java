@@ -15,6 +15,7 @@ import net.minecraftforge.items.ItemHandlerHelper;
  *
  * @author CD4017BE
  */
+@Deprecated
 public class Inventory implements IItemHandlerModifiable {
 
 	public static int ticks = 1;

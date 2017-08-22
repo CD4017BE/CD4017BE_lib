@@ -29,11 +29,11 @@ public class LinkedInventory implements IItemHandlerModifiable {
 	@Override
 	public ItemStack insertItem(int slot, ItemStack stack, boolean sim) {
 		ItemStack item = get.apply(slot);
-		if (item == null) {
+		if (item.getCount() == 0) {
 			int n = stack.getMaxStackSize();
 			if (stack.getCount() <= n) {
 				if (!sim) set.accept(stack.copy(), slot);
-				return null;
+				return ItemStack.EMPTY;
 			} else {
 				if (!sim) set.accept(copyStackWithSize(stack, n), slot);
 				return copyStackWithSize(stack, stack.getCount() - n);
@@ -46,7 +46,7 @@ public class LinkedInventory implements IItemHandlerModifiable {
 					item.grow(stack.getCount());
 					set.accept(item, slot);
 				}
-				return null;
+				return ItemStack.EMPTY;
 			} else {
 				if (!sim) {
 					item.grow(n);
@@ -60,9 +60,9 @@ public class LinkedInventory implements IItemHandlerModifiable {
 	@Override
 	public ItemStack extractItem(int slot, int amount, boolean sim) {
 		ItemStack item = get.apply(slot);
-		if (item == null) return null;
+		if (item.getCount() == 0) return ItemStack.EMPTY;
 		if (amount >= item.getCount()) {
-			if (!sim) set.accept(null, slot);
+			if (!sim) set.accept(ItemStack.EMPTY, slot);
 			return item;
 		} else {
 			if (!sim) {

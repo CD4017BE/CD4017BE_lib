@@ -39,7 +39,7 @@ public class GlitchSaveSlot extends SlotItemHandler {
 
 	@Override
 	public ItemStack decrStackSize(int amount) {
-		return null;
+		return ItemStack.EMPTY;
 	}
 
 	@Override

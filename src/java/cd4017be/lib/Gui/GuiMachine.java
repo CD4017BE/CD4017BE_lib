@@ -224,8 +224,7 @@ public abstract class GuiMachine extends GuiContainer {
 	public void drawItemStack(ItemStack stack, int x, int y, String altText){
 		zLevel = 200.0F;
 		itemRender.zLevel = 200.0F;
-		net.minecraft.client.gui.FontRenderer font = null;
-		if (stack != null) font = stack.getItem().getFontRenderer(stack);
+		net.minecraft.client.gui.FontRenderer font = stack.getItem().getFontRenderer(stack);
 		if (font == null) font = fontRendererObj;
 		this.itemRender.renderItemAndEffectIntoGUI(stack, x, y);
 		this.itemRender.renderItemOverlayIntoGUI(font, stack, x, y, altText);

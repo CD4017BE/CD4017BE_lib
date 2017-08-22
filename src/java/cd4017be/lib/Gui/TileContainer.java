@@ -71,7 +71,7 @@ public class TileContainer extends DataContainer {
 			specialInvSync |= 1;
 			GlitchSaveSlot gss = (GlitchSaveSlot)slot;
 			if(player.world.isRemote && gss.getItemHandler() instanceof IItemHandlerModifiable)
-				((IItemHandlerModifiable)gss.getItemHandler()).setStackInSlot(gss.index, null);
+				((IItemHandlerModifiable)gss.getItemHandler()).setStackInSlot(gss.index, ItemStack.EMPTY);
 		}
 	}
 
@@ -114,11 +114,13 @@ public class TileContainer extends DataContainer {
 			ItemStack item1 = slot.getStack();
 			ItemStack item0 = this.inventoryItemStacks.get(i);
 			if (!ItemStack.areItemStacksEqual(item0, item1)) {
-				this.inventoryItemStacks.set(i, item0 = (item1 == null ? null : item1.copy()));
+				this.inventoryItemStacks.set(i, item0 = item1.copy());
 				if (slot instanceof GlitchSaveSlot) {
 					dos.writeByte(i);
-					dos.writeShort(Item.getIdFromItem(item0 != null ? item0.getItem() : null));
-					if (item0 != null && item0.getItem() != null) {
+					if (item0.isEmpty()) {
+						dos.writeShort(0);
+					} else {
+						dos.writeShort(Item.getIdFromItem(item0.getItem()));
 						dos.writeInt(item0.getCount());
 						dos.writeShort(item0.getItemDamage());
 						dos.writeCompoundTag(item0.getTagCompound());
@@ -143,8 +145,12 @@ public class TileContainer extends DataContainer {
 			for (int n = dis.readUnsignedByte(); n > 0; n--) {
 				int s = dis.readUnsignedByte();
 				int id = dis.readShort();
-				ItemStack item = id == 0 ? null : new ItemStack(Item.getItemById(id), dis.readInt(), dis.readShort());
-				if (item != null) item.setTagCompound(dis.readCompoundTag());
+				ItemStack item;
+				if (id == 0) item = ItemStack.EMPTY;
+				else {
+					item = new ItemStack(Item.getItemById(id), dis.readInt(), dis.readShort());
+					item.setTagCompound(dis.readCompoundTag());
+				}
 				Slot slot; IItemHandler acc;
 				if (s < inventorySlots.size() && (slot = inventorySlots.get(s)) instanceof GlitchSaveSlot && (acc = ((GlitchSaveSlot)slot).getItemHandler()) instanceof IItemHandlerModifiable)
 					((IItemHandlerModifiable)acc).setStackInSlot(((GlitchSaveSlot)slot).index, item);
@@ -160,10 +166,10 @@ public class TileContainer extends DataContainer {
 			for (int i = se - ss; i > 0 && item1.getCount() > 0; i--) {
 				Slot slot = inventorySlots.get(d ? i + ss - 1 : se - i);
 				ItemStack stack = slot.getStack();
-				if (stack == null) continue;
+				if (stack.isEmpty()) continue;
 				if (slot instanceof GlitchSaveSlot) {
 					GlitchSaveSlot gss = (GlitchSaveSlot)slot;
-					if ((item1 = gss.getItemHandler().insertItem(gss.index, item1, false)) == null) {
+					if ((item1 = gss.getItemHandler().insertItem(gss.index, item1, false)).isEmpty()) {
 						item.setCount(0);
 						return true;
 					}
@@ -193,10 +199,10 @@ public class TileContainer extends DataContainer {
 		if (item1.getCount() > 0)
 			for (int i = se - ss; i > 0; i--) {
 				Slot slot = inventorySlots.get(d ? i + ss - 1 : se - i);
-				if (slot.getStack() != null) continue;
+				if (slot.getStack().getCount() != 0) continue;
 				if (slot instanceof GlitchSaveSlot) {
 					GlitchSaveSlot gss = (GlitchSaveSlot)slot;
-					if ((item1 = gss.getItemHandler().insertItem(gss.index, item1, false)) == null) {
+					if ((item1 = gss.getItemHandler().insertItem(gss.index, item1, false)).getCount() == 0) {
 						item.setCount(0);
 						return true;
 					}
@@ -228,20 +234,19 @@ public class TileContainer extends DataContainer {
 	@Override
 	public ItemStack transferStackInSlot(EntityPlayer player, int id) {
 		Slot slot = inventorySlots.get(id);
-		if (slot == null || !slot.getHasStack()) return null;
+		if (slot == null || !slot.getHasStack()) return ItemStack.EMPTY;
 		ItemStack stack = slot.getStack();
 		ItemStack item = stack.copy();
 		if (clickHandler == null || !clickHandler.transferStack(stack, id, this)) {
 			int s, e;
 			if (id < invPlayerS || id >= invPlayerE) {s = invPlayerS; e = invPlayerE;}
 			else if (invPlayerS > 0) {s = 0; e = invPlayerS;}
-			else return null;
-			if(!mergeItemStack(stack, s, e, false)) return null;
+			else return ItemStack.EMPTY;
+			if(!mergeItemStack(stack, s, e, false)) return ItemStack.EMPTY;
 		}
-		if (stack.getCount() == item.getCount()) return null;
+		if (stack.getCount() == item.getCount()) return ItemStack.EMPTY;
 		slot.onSlotChange(stack, item);
-		if (stack.getCount() == 0) slot.putStack((ItemStack)null);
-		else slot.onSlotChanged();
+		slot.onSlotChanged();
 		slot.onTake(player, stack);
 		return item;
 	}
@@ -254,8 +259,8 @@ public class TileContainer extends DataContainer {
 		if (slot instanceof SlotHolo) {
 			if (m == ClickType.PICKUP) {
 				ItemStack curItem = player.inventory.getItemStack();
-				if (curItem != null && slot.isItemValid(curItem)) {
-					if (item != null && item.isItemEqual(curItem)) {
+				if (curItem.getCount() > 0 && slot.isItemValid(curItem)) {
+					if (item.getCount() > 0 && item.isItemEqual(curItem)) {
 						item.grow(b == 1 ? 1 : curItem.getCount());
 					} else {
 						item = curItem.copy();
@@ -263,33 +268,33 @@ public class TileContainer extends DataContainer {
 					}
 					if (item.getCount() > slot.getSlotStackLimit()) item.setCount(slot.getSlotStackLimit());
 					slot.putStack(item);
-				} else if (curItem == null && item != null && slot.canTakeStack(player)){
+				} else if (curItem.getCount() == 0 && item.getCount() != 0 && slot.canTakeStack(player)){
 					slot.decrStackSize(b == 0 ? slot.getSlotStackLimit() : 1);
-				} else return null;
+				} else return ItemStack.EMPTY;
 				slot.onSlotChanged();
 			}
-			return null;
+			return ItemStack.EMPTY;
 		} else if (slot instanceof GlitchSaveSlot) {
-			if (m != ClickType.PICKUP && m != ClickType.QUICK_MOVE) return null;
+			if (m != ClickType.PICKUP && m != ClickType.QUICK_MOVE) return ItemStack.EMPTY;
 			boolean boost = m == ClickType.QUICK_MOVE;
 			GlitchSaveSlot gss = (GlitchSaveSlot)slot;
 			if (!gss.clientInteract) {
-				if (player.world.isRemote) return null;
+				if (player.world.isRemote) return ItemStack.EMPTY;
 				specialInvSync |= 2;
 			}
 			IItemHandler acc = gss.getItemHandler();
 			int p = gss.index;
 			ItemStack curItem = player.inventory.getItemStack();
-			if (curItem != null) {
+			if (curItem.getCount() > 0) {
 				if (boost) {
 					ItemStack rem = acc.insertItem(p, ItemHandlerHelper.copyStackWithSize(curItem, 65536), true);
-					int n = rem != null ? 65536 - rem.getCount() : 65536, n1 = 0;
-					if (n <= 0) return null;
+					int n = 65536 - rem.getCount(), n1 = 0;
+					if (n <= 0) return ItemStack.EMPTY;
 					if (b == 0) {
 						if (n < curItem.getCount()) curItem.shrink(n1 = n);
 						else {
 							n1 = curItem.getCount();
-							player.inventory.setItemStack(null);
+							player.inventory.setItemStack(ItemStack.EMPTY);
 						}
 					}
 					if (n1 < n)
@@ -298,18 +303,18 @@ public class TileContainer extends DataContainer {
 				} else {
 					int n = b == 0 ? curItem.getCount() : 1;
 					ItemStack rem = acc.insertItem(p, ItemHandlerHelper.copyStackWithSize(curItem, n), false);
-					curItem.shrink(n - (rem != null ? rem.getCount() : 0));
-					if (curItem.getCount() <= 0) player.inventory.setItemStack(null);
+					curItem.shrink(n - rem.getCount());
+					if (curItem.getCount() <= 0) player.inventory.setItemStack(ItemStack.EMPTY);
 				}
-			} else if (item != null) {
+			} else if (item.getCount() > 0) {
 				int n = boost ? (b == 0 ? item.getMaxStackSize() : 65536) : (b == 0 ? 1 : 8);
-				if ((item = acc.extractItem(p, n, true)) == null) return null;
+				if ((item = acc.extractItem(p, n, true)).getCount() == 0) return ItemStack.EMPTY;
 				int rem = putInPlayerInv(item.copy(), player.inventory);
 				acc.extractItem(p, item.getCount() - rem, false);
 			}
-			return null;
-		} else if (clickHandler != null && clickHandler.slotClick(item == null ? null : item.copy(), slot, b, m, this)) {
-			return item == null || item.getCount() <= 0 ? null : item;
+			return ItemStack.EMPTY;
+		} else if (clickHandler != null && clickHandler.slotClick(item.copy(), slot, b, m, this)) {
+			return item;
 		} else {
 			ItemStack ret = super.slotClick(s, b, m, player);
 			if (slot instanceof SlotItemHandler && slot.getStack() == item) slot.putStack(slot.getStack());
@@ -318,28 +323,34 @@ public class TileContainer extends DataContainer {
 	}
 
 	public static int putInPlayerInv(ItemStack item, InventoryPlayer inv) {
+		int x = item.getCount();
 		int m = item.getMaxStackSize();
 		int es = inv.mainInventory.size();
 		for (int i = 0; i < inv.mainInventory.size(); i++) {
 			ItemStack stack = inv.mainInventory.get(i);
-			if (stack != null && stack.getCount() < m && stack.isItemEqual(item)) {
-				if (item.getCount() <= m - stack.getCount()) {
-					stack.grow(item.getCount());
+			int n = stack.getCount();
+			if (n > 0 && n < m && ItemHandlerHelper.canItemStacksStack(stack, item)) {
+				if (x <= m - n) {
+					stack.grow(x);
 					return 0;
 				} else {
-					item.shrink(m - stack.getCount());
+					x -= m - n;
 					stack.setCount(m);
 				}
-			} else if (stack == null && i < es) es = i;
+			} else if (n == 0 && i < es) es = i;
 		}
 		for (int i = es; i < inv.mainInventory.size(); i++)
-			if (inv.mainInventory.get(i) == null) {
-				if (item.getCount() <= m) {
+			if (inv.mainInventory.get(i).isEmpty()) {
+				if (x <= m) {
+					item.setCount(x);
 					inv.mainInventory.set(i, item);
 					return 0;
-				} else inv.mainInventory.set(i, item.splitStack(m));
+				} else {
+					x -= m;
+					inv.mainInventory.set(i, ItemHandlerHelper.copyStackWithSize(item, m));
+				}
 			}
-		return item.getCount();
+		return x;
 	}
 
 	public static int getFromPlayerInv(ItemStack item, InventoryPlayer inv) {
@@ -349,7 +360,7 @@ public class TileContainer extends DataContainer {
 			if (item.isItemEqual(stack)) {
 				n += stack.getCount();
 				if (n <= item.getCount()) {
-					inv.mainInventory.set(i, null);
+					inv.mainInventory.set(i, ItemStack.EMPTY);
 					if (n == item.getCount()) return n;
 				} else {
 					stack.setCount(n - item.getCount());

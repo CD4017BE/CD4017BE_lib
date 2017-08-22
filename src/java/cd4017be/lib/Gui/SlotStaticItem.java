@@ -22,7 +22,7 @@ public class SlotStaticItem extends Slot {
 
 	@Override
 	public ItemStack decrStackSize(int amount) {
-		return null;
+		return ItemStack.EMPTY;
 	}
 
 	@Override

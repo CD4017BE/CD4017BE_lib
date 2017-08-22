@@ -62,7 +62,7 @@ public class NBTRecipe extends ShapedOreRecipe
 		if (!out.hasTagCompound()) out.setTagCompound(new NBTTagCompound());
 		for (int i = 0; i < inv.getSizeInventory(); i++) {
 			ItemStack stack = inv.getStackInSlot(i);
-			if (stack != null && stack.getTagCompound() != null)
+			if (stack.getTagCompound() != null)
 				for (int j = 0; j < nbtVars.length; j++)
 					if (stack.getTagCompound().hasKey(nbtVars[j]))
 						this.applyTag(out.getTagCompound(), stack.getTagCompound().getTag(nbtVars[j]), j, out.getCount());

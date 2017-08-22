@@ -36,7 +36,7 @@ public class OreDictStack {
 	}
 	
 	public static OreDictStack[] get(ItemStack item) {
-		if (item == null || item.getItem() == null) return null;
+		if (item.isEmpty()) return null;
 		int[] i = OreDictionary.getOreIDs(item);
 		OreDictStack[] stacks = new OreDictStack[i.length];
 		for (int j = 0; j < i.length; j++) stacks[j] = new OreDictStack(i[j], item.getCount());
@@ -44,7 +44,7 @@ public class OreDictStack {
 	}
 	
 	public boolean isEqual(ItemStack item) {
-		if (item == null || item.getItem() == null) return false;
+		if (item.isEmpty()) return false;
 		for (int id : OreDictionary.getOreIDs(item))
 			if (id == ID) return true;
 		return false;
@@ -63,7 +63,7 @@ public class OreDictStack {
 
 	public ItemStack asItem() {
 		List<ItemStack> list = OreDictionary.getOres(id);
-		if (list.isEmpty()) return null;
+		if (list.isEmpty()) return ItemStack.EMPTY;
 		ItemStack item = list.get(0).copy();
 		item.setCount(stacksize);
 		return item;
