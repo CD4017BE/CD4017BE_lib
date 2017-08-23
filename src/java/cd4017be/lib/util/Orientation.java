@@ -31,6 +31,12 @@ public enum Orientation implements IStringSerializable {
 		return name().toLowerCase();
 	}
 
+	public Orientation reverse() {
+		int i = ordinal();
+		i = (4 - (i >> 2)) % 4 << 2 | (4 - i) % 4;
+		return values()[i];
+	}
+
 	public static Orientation fromFacing(EnumFacing front) {
 		switch(front) {
 		case DOWN: return Bn;

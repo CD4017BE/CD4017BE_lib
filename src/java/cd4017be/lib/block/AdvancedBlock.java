@@ -239,7 +239,7 @@ public class AdvancedBlock extends BaseBlock {
 	public int getWeakPower(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing s) {
 		if ((flags & 16) == 0) return 0;
 		TileEntity te = world.getTileEntity(pos);
-		if (te instanceof IRedstoneTile) return ((IRedstoneTile)te).redstoneLevel(s, false);
+		if (te instanceof IRedstoneTile) return ((IRedstoneTile)te).redstoneLevel(s.getOpposite(), false);
 		else return 0;
 	}
 
@@ -247,7 +247,7 @@ public class AdvancedBlock extends BaseBlock {
 	public int getStrongPower(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing s) {
 		if ((flags & 16) == 0) return 0;
 		TileEntity te = world.getTileEntity(pos);
-		if (te instanceof IRedstoneTile) return ((IRedstoneTile)te).redstoneLevel(s, true);
+		if (te instanceof IRedstoneTile) return ((IRedstoneTile)te).redstoneLevel(s.getOpposite(), true);
 		else return 0;
 	}
 
@@ -256,7 +256,7 @@ public class AdvancedBlock extends BaseBlock {
 		if ((flags & 16) == 0) return false;
 		if (side == null) return true;
 		TileEntity te = world.getTileEntity(pos);
-		if (te instanceof IRedstoneTile) return ((IRedstoneTile)te).connectRedstone(side);
+		if (te instanceof IRedstoneTile) return ((IRedstoneTile)te).connectRedstone(side.getOpposite());
 		return false;
 	}
 

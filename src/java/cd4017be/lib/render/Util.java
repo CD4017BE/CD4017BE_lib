@@ -7,6 +7,7 @@ import org.lwjgl.opengl.GL11;
 
 import cd4017be.lib.util.Orientation;
 import net.minecraft.client.renderer.block.model.ModelRotation;
+import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.relauncher.Side;
@@ -15,49 +16,31 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class Util {
 
-	public static final FloatBuffer[] matrices = new FloatBuffer[6];
+	public static final FloatBuffer[] matrices = new FloatBuffer[16];
 
 	static {
-		float[][] main = {
-			{//BOTTOM
-				 1, 0, 0, 0,
-				 0, 0, -1, 0,
-				 0, 1, 0, 0,
-				 0, 0, 0, 1
-			}, {//TOP
-				 1, 0, 0, 0,
-				 0, 0, 1, 0,
-				 0, -1, 0, 0,
-				 0, 0, 0, 1
-			}, {//NORTH
-				 1, 0, 0, 0,
-				 0, 1, 0, 0,
-				 0, 0, 1, 0,
-				 0, 0, 0, 1
-			}, {//SOUTH
-				-1, 0, 0, 0,
-				 0, 1, 0, 0,
-				 0, 0,-1, 0,
-				 0, 0, 0, 1
-			}, {//WEST
-				 0, 0,-1, 0,
-				 0, 1, 0, 0,
-				 1, 0, 0, 0,
-				 0, 0, 0, 1
-			}, {//EAST
-				 0, 0, 1, 0,
-				 0, 1, 0, 0,
-				-1, 0, 0, 0,
-				 0, 0, 0, 1
-			}
-		};
-		for (int i = 0; i < matrices.length; i++) {
-			matrices[i] = BufferUtils.createFloatBuffer(16);
-			matrices[i].put(main[i]);
-			matrices[i].flip();
+		Vec3d X = new Vec3d(1, 0, 0),
+			Y = new Vec3d(0, 1, 0),
+			Z = new Vec3d(0, 0, 1);
+		Vec3d x1, y1, z1;
+		FloatBuffer buff;
+		for (Orientation o : Orientation.values()) {
+			x1 = o.rotate(X);
+			y1 = o.rotate(Y);
+			z1 = o.rotate(Z);
+			buff = BufferUtils.createFloatBuffer(16);
+			buff.put(new float[] {
+				(float)x1.xCoord, (float)x1.yCoord, (float)x1.zCoord, 0,
+				(float)y1.xCoord, (float)y1.yCoord, (float)y1.zCoord, 0,
+				(float)z1.xCoord, (float)z1.yCoord, (float)z1.zCoord, 0,
+				0, 0, 0, 1
+			});
+			buff.flip();
+			matrices[o.ordinal()] = buff;
 		}
 	}
 
+	@Deprecated
 	public static void moveAndOrientToBlock(double x, double y, double z, int dir) {
 		GL11.glTranslated(x + 0.5D, y + 0.5D, z + 0.5D);
 		FloatBuffer mat = matrices[dir];
@@ -67,14 +50,13 @@ public class Util {
 
 	public static void moveAndOrientToBlock(double x, double y, double z, Orientation o) {
 		GL11.glTranslated(x + 0.5D, y + 0.5D, z + 0.5D);
-		//TODO implement
-		//FloatBuffer mat = matrices[dir];
-		//mat.rewind();
-		//GL11.glMultMatrix(mat);
+		FloatBuffer mat = matrices[o.ordinal()];
+		mat.rewind();
+		GL11.glMultMatrix(mat);
 	}
 
-	public static void rotateTo(int dir) {
-		FloatBuffer mat = matrices[dir];
+	public static void rotateTo(Orientation o) {
+		FloatBuffer mat = matrices[o.ordinal()];
 		mat.rewind();
 		GL11.glMultMatrix(mat);
 	}

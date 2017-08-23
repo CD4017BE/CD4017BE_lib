@@ -29,8 +29,11 @@ public abstract class AbstractInventory implements IItemHandlerModifiable {
 		if (item.getCount() < amount) amount = item.getCount();
 		if (amount <= 0) return ItemStack.EMPTY;
 		if (!simulate) {
-			item.shrink(amount);
-			setStackInSlot(slot, item);
+			if (amount == item.getCount()) setStackInSlot(slot, ItemStack.EMPTY);
+			else {
+				item.shrink(amount);
+				setStackInSlot(slot, item);
+			}
 		}
 		return ItemHandlerHelper.copyStackWithSize(item, amount);
 	}
