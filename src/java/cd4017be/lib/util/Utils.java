@@ -1,6 +1,5 @@
 package cd4017be.lib.util;
 
-import java.text.DecimalFormatSymbols;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.ObjIntConsumer;
@@ -273,49 +272,6 @@ public class Utils {
 			return -1;
 		}
 		
-	}
-	
-	private static final String[] DecScale  = {"a", "f", "p", "n", "u", "m", "", "k", "M", "G", "T", "P", "E"};
-	private static final int ofsDecScale = 6;
-	
-	/**
-	 * @param x number
-	 * @param w significant digits
-	 * @param c clip below exponent of 10
-	 * @return formatted number
-	 */
-	public static String formatNumber(double x, int w, int c)
-	{
-		double s = Math.signum(x);
-		if (x == 0 || Double.isNaN(x) || Double.isInfinite(x)) return "" + x;
-		int o = (int)Math.floor(Math.log10(x * s)) + 3 * ofsDecScale;
-		int p = (o + c) / 3;
-		int n = w - o + p * 3 - 1;
-		if (p < 0) return "0";
-		else if (p > DecScale.length) return "" + (s == -1 ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY);
-		x *= Math.pow(0.001, p - ofsDecScale);
-		String tex = String.format("%." + n + "f", x);
-		String ds = "" + DecimalFormatSymbols.getInstance().getDecimalSeparator();
-		if (tex.contains(ds)) {
-			while(tex.endsWith("0")) tex = tex.substring(0, tex.length() - 1);
-			if (tex.endsWith(ds)) tex = tex.substring(0, tex.length() - 1);
-		}
-		return tex + DecScale[p];
-	}
-	
-	/**
-	 * @param x number
-	 * @param w max fractal digits
-	 * @return formatted number
-	 */
-	public static String formatNumber(double x, int w) {
-		String tex = String.format("%." + w + "f", x);
-		String ds = "" + DecimalFormatSymbols.getInstance().getDecimalSeparator();
-		if (tex.contains(ds)) {
-			while(tex.endsWith("0")) tex = tex.substring(0, tex.length() - 1);
-			if (tex.endsWith(ds)) tex = tex.substring(0, tex.length() - 1);
-		}
-		return tex;
 	}
 	
 	public static FluidStack getFluid(World world, BlockPos pos, boolean sourceOnly)

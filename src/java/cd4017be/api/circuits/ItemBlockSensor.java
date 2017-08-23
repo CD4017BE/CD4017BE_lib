@@ -11,7 +11,7 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import cd4017be.lib.DefaultItem;
-import cd4017be.lib.TooltipInfo;
+import cd4017be.lib.util.TooltipUtil;
 
 public abstract class ItemBlockSensor extends DefaultItem implements ISensor {
 
@@ -24,7 +24,7 @@ public abstract class ItemBlockSensor extends DefaultItem implements ISensor {
 
 	@Override
 	public void addInformation(ItemStack item, EntityPlayer player, List<String> list, boolean b) {
-		if (item.hasTagCompound()) list.add(TooltipInfo.formatLink(BlockPos.fromLong(item.getTagCompound().getLong("link")), EnumFacing.getFront(item.getTagCompound().getByte("side"))));
+		if (item.hasTagCompound()) list.add(TooltipUtil.formatLink(BlockPos.fromLong(item.getTagCompound().getLong("link")), EnumFacing.getFront(item.getTagCompound().getByte("side"))));
 		super.addInformation(item, player, list, b);
 	}
 

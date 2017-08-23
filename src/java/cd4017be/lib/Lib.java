@@ -7,6 +7,7 @@ import cd4017be.api.recipes.RecipeScriptContext;
 import cd4017be.lib.render.ItemMaterialMeshDefinition;
 import cd4017be.lib.templates.ItemMaterial;
 import cd4017be.lib.templates.TabMaterials;
+import cd4017be.lib.util.TooltipUtil;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.Instance;
@@ -49,7 +50,7 @@ public class Lib {
 	@Mod.EventHandler
 	public void postInit(FMLPostInitializationEvent event) {
 		RecipeScriptContext.instance.runAll("POST_INIT");
-		TooltipInfo.addScriptVariables();
+		TooltipUtil.addScriptVariables();
 		if (event.getSide().isClient()) clientPostInit();
 	}
 

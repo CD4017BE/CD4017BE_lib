@@ -5,9 +5,10 @@ import java.util.List;
 
 import cd4017be.api.IAbstractTile;
 import cd4017be.lib.util.Orientation;
+import cd4017be.lib.util.TooltipUtil;
 import cd4017be.lib.util.Utils;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.item.EntityItem;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
@@ -91,9 +92,12 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 		return list;
 	}
 
-	protected void dropStack(ItemStack stack) {
-		if (stack.isEmpty()) return;
-		world.spawnEntity(new EntityItem(world, (double)pos.getX() + 0.5, (double)pos.getY() + 0.5, (double)pos.getZ() + 0.5, stack));
+	public boolean canPlayerAccessUI(EntityPlayer player) {
+		return !player.isDead && !tileEntityInvalid && getDistanceSq(player.posX, player.posY, player.posZ) < 64;
+	}
+
+	public String getName() {
+		return TooltipUtil.translate(this.getBlockType().getUnlocalizedName().replace("tile.", "gui.").concat(".name"));
 	}
 
 }

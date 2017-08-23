@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Level;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.FMLLog;
 
+@Deprecated
 public abstract class ScriptCompiler {
 
 	public static class CompileException extends Exception {

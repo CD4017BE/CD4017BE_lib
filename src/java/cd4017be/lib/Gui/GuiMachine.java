@@ -1,11 +1,10 @@
 package cd4017be.lib.Gui;
 
 import cd4017be.lib.BlockGuiHandler;
-import cd4017be.lib.TooltipInfo;
 import cd4017be.lib.Gui.DataContainer.IGuiData;
 import cd4017be.lib.Gui.TileContainer.TankSlot;
 import cd4017be.lib.templates.AutomatedTile;
-import cd4017be.lib.util.Utils;
+import cd4017be.lib.util.TooltipUtil;
 import cd4017be.lib.util.Vec3;
 
 import java.io.IOException;
@@ -32,7 +31,6 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.TextComponentString;
-import net.minecraft.util.text.translation.I18n;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidUtil;
 import net.minecraftforge.items.SlotItemHandler;
@@ -102,7 +100,7 @@ public abstract class GuiMachine extends GuiContainer {
 			TileContainer cont = (TileContainer)inventorySlots;
 			if (cont.invPlayerS != cont.invPlayerE) {
 				Slot pos = cont.inventorySlots.get(cont.invPlayerS);
-				this.drawStringCentered(I18n.translateToLocal("container.inventory"), this.guiLeft + pos.xPos + 80, this.guiTop + pos.yPos - 14, 0x404040);
+				this.drawStringCentered(TooltipUtil.translate("container.inventory"), this.guiLeft + pos.xPos + 80, this.guiTop + pos.yPos - 14, 0x404040);
 			}
 		}
 		if ((drawBG & 2) != 0 && inventorySlots instanceof DataContainer)
@@ -166,11 +164,11 @@ public abstract class GuiMachine extends GuiContainer {
 	}
 
 	public void drawFormatInfo(int x, int y, String key, Object... args) {
-		this.drawHoveringText(Arrays.asList(TooltipInfo.format("gui.cd4017be." + key, args).split("\n")), x, y, fontRendererObj);
+		this.drawHoveringText(Arrays.asList(TooltipUtil.format("gui.cd4017be." + key, args).split("\n")), x, y, fontRendererObj);
 	}
 
 	public void drawLocString(int x, int y, int h, int c, String s, Object... args) {
-		String[] text = TooltipInfo.format("gui.cd4017be." + s, args).split("\n");
+		String[] text = TooltipUtil.format("gui.cd4017be." + s, args).split("\n");
 		for (String l : text) {
 			this.fontRendererObj.drawString(l, x, y, c);
 			y += h;
@@ -293,11 +291,11 @@ public abstract class GuiMachine extends GuiContainer {
 			if (tooltip.startsWith("x*")) {
 				int p = tooltip.indexOf('+', 2), q = tooltip.indexOf(';', p);
 				float f = (Float)get.get() * Float.parseFloat(tooltip.substring(2, p)) + Float.parseFloat(tooltip.substring(p + 1, q));
-				text = TooltipInfo.format("gui.cd4017be." + tooltip.substring(q + 1), f);
+				text = TooltipUtil.format("gui.cd4017be." + tooltip.substring(q + 1), f);
 			} else {
 				if (tooltip.endsWith("#")) text = tooltip.replace("#", get.get().toString());
 				else text = tooltip;
-				text = TooltipInfo.getLocFormat("gui.cd4017be." + text);
+				text = TooltipUtil.getConfigFormat("gui.cd4017be." + text);
 			}
 			drawHoveringText(Arrays.asList(text.split("\n")), mx, py + h + 12, fontRendererObj);
 		}
@@ -330,7 +328,7 @@ public abstract class GuiMachine extends GuiContainer {
 		public void drawOverlay(int mx, int my) {
 			Object obj = get.get();
 			Object[] objA = obj instanceof Object[] ? (Object[])obj : new Object[]{obj};
-			String s = tooltip.startsWith("\\") ? String.format(tooltip.substring(1), objA) : TooltipInfo.format("gui.cd4017be." + tooltip, objA);
+			String s = tooltip.startsWith("\\") ? String.format(tooltip.substring(1), objA) : TooltipUtil.format("gui.cd4017be." + tooltip, objA);
 			drawHoveringText(Arrays.asList(s.split("\n")), mx, my, fontRendererObj);
 		}
 
@@ -368,7 +366,7 @@ public abstract class GuiMachine extends GuiContainer {
 			Object[] objA = obj instanceof Object[] ? (Object[])obj : new Object[]{obj};
 			String[] lines = (text.startsWith("\\") ? 
 					String.format(text.substring(1), objA) : 
-					TooltipInfo.format("gui.cd4017be." + (text.endsWith("#") ? text.replaceAll("#", ((Integer)obj).toString()) : text), objA)
+					TooltipUtil.format("gui.cd4017be." + (text.endsWith("#") ? text.replaceAll("#", ((Integer)obj).toString()) : text), objA)
 				).split("\n");
 			int y = py, x;
 			for (String l : lines) {
@@ -867,7 +865,7 @@ public abstract class GuiMachine extends GuiContainer {
 			FluidStack stack = slot.getStack();
 			ArrayList<String> info = new ArrayList<String>();
 			info.add(stack != null ? stack.getLocalizedName() : "Empty");
-			info.add(String.format("%s/%s ", Utils.formatNumber(stack != null ? (float)stack.amount / 1000F : 0F, 3), Utils.formatNumber((float)slot.inventory.getCapacity(slot.tankNumber) / 1000F, 3)) + TooltipInfo.getFluidUnit());
+			info.add(String.format("%s/%s ", TooltipUtil.formatNumber(stack != null ? (float)stack.amount / 1000F : 0F, 3), TooltipUtil.formatNumber((float)slot.inventory.getCapacity(slot.tankNumber) / 1000F, 3)) + TooltipUtil.getFluidUnit());
 			drawHoveringText(info, mx, my, fontRendererObj);
 		}
 

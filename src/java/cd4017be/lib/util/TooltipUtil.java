@@ -1,5 +1,6 @@
-package cd4017be.lib;
+package cd4017be.lib.util;
 
+import java.text.DecimalFormatSymbols;
 import java.util.HashMap;
 import java.util.IllegalFormatException;
 import java.util.Map.Entry;
@@ -11,15 +12,16 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.translation.I18n;
 import cd4017be.api.recipes.RecipeScriptContext;
+import cd4017be.lib.ConfigurationFile;
 import cd4017be.lib.script.Script;
 import cd4017be.lib.script.ScriptFiles.Version;
-import cd4017be.lib.util.Utils;
 
 /**
  *
  * @author CD4017BE
  */
-public class TooltipInfo {
+@SuppressWarnings("deprecation")
+public class TooltipUtil {
 
 	private static String ShiftHint, AltHint;
 	private static String FluidDispUnit;
@@ -108,20 +110,20 @@ public class TooltipInfo {
 				case 'F': {
 					float[] arr = (float[])val;
 					for (int i = 0; i < arr.length; i++)
-						variables.put(id + ":" + i, Utils.formatNumber(arr[i], 3, 0));
+						variables.put(id + ":" + i, formatNumber(arr[i], 3, 0));
 				} break;
 				case 'D': {
 					double[] arr = (double[])val;
 					for (int i = 0; i < arr.length; i++)
-						variables.put(id + ":" + i, Utils.formatNumber(arr[i], 3, 0));
+						variables.put(id + ":" + i, formatNumber(arr[i], 3, 0));
 				} break;
 				case 'T': {
 					String[] arr = (String[])val;
 					for (int i = 0; i < arr.length; i++) variables.put(id + ":" + i, arr[i]);
 				} break;
 				} continue;
-			case 'F': text = Utils.formatNumber((Float)val, 3, 0); break;
-			case 'D': text = Utils.formatNumber((Double)val, 3, 0); break;
+			case 'F': text = formatNumber((Float)val, 3, 0); break;
+			case 'D': text = formatNumber((Double)val, 3, 0); break;
 			default: text = val.toString();
 			}
 			variables.put(id, text);
@@ -140,11 +142,11 @@ public class TooltipInfo {
 
 	private static void addVar(String name, Object o) {
 		if (o instanceof Double) {
-			variables.put(name, Utils.formatNumber((Double)o, 4, 0));
+			variables.put(name, formatNumber((Double)o, 4, 0));
 		} else if (o instanceof double[]) {
 			double[] arr = (double[])o;
 			for (int i = 0; i < arr.length; i++)
-				variables.put(name + ":" + i, Utils.formatNumber(arr[i], 4, 0));
+				variables.put(name + ":" + i, formatNumber(arr[i], 4, 0));
 		} else if (o instanceof Object[]) {
 			Object[] arr = (Object[])o;
 			for (int i = 0; i < arr.length; i++)
@@ -158,7 +160,7 @@ public class TooltipInfo {
 	private static final HashMap<String, String> variables = new HashMap<String, String>();
 	private static final Pattern varInsertion = Pattern.compile("\\\\<([\\w:]+)>");
 
-	public static String getLocFormat(String s) {
+	public static String getConfigFormat(String s) {
 		s = I18n.translateToLocal(s).trim().replace("\\n", "\n");
 		Matcher m = varInsertion.matcher(s);
 		String s1 = "";
@@ -196,6 +198,57 @@ public class TooltipInfo {
 		} catch (IllegalFormatException e) {
 			return s + "\n" + e.toString();
 		}
+	}
+
+	public static String translate(String s) {
+		return I18n.translateToLocal(s);
+	}
+
+	public static boolean hasTranslation(String s) {
+		return I18n.canTranslate(s);
+	}
+
+	private static final String[] DecScale  = {"a", "f", "p", "n", "u", "m", "", "k", "M", "G", "T", "P", "E"};
+	private static final int ofsDecScale = 6;
+
+	/**
+	 * @param x number
+	 * @param w significant digits
+	 * @param c clip below exponent of 10
+	 * @return formatted number
+	 */
+	public static String formatNumber(double x, int w, int c)
+	{
+		double s = Math.signum(x);
+		if (x == 0 || Double.isNaN(x) || Double.isInfinite(x)) return "" + x;
+		int o = (int)Math.floor(Math.log10(x * s)) + 3 * ofsDecScale;
+		int p = (o + c) / 3;
+		int n = w - o + p * 3 - 1;
+		if (p < 0) return "0";
+		else if (p > DecScale.length) return "" + (s == -1 ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY);
+		x *= Math.pow(0.001, p - ofsDecScale);
+		String tex = String.format("%." + n + "f", x);
+		String ds = "" + DecimalFormatSymbols.getInstance().getDecimalSeparator();
+		if (tex.contains(ds)) {
+			while(tex.endsWith("0")) tex = tex.substring(0, tex.length() - 1);
+			if (tex.endsWith(ds)) tex = tex.substring(0, tex.length() - 1);
+		}
+		return tex + DecScale[p];
+	}
+
+	/**
+	 * @param x number
+	 * @param w max fractal digits
+	 * @return formatted number
+	 */
+	public static String formatNumber(double x, int w) {
+		String tex = String.format("%." + w + "f", x);
+		String ds = "" + DecimalFormatSymbols.getInstance().getDecimalSeparator();
+		if (tex.contains(ds)) {
+			while(tex.endsWith("0")) tex = tex.substring(0, tex.length() - 1);
+			if (tex.endsWith(ds)) tex = tex.substring(0, tex.length() - 1);
+		}
+		return tex;
 	}
 
 }

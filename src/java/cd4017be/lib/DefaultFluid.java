@@ -1,11 +1,7 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package cd4017be.lib;
 
+import cd4017be.lib.util.TooltipUtil;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.translation.I18n;
 import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidStack;
 
@@ -13,10 +9,10 @@ import net.minecraftforge.fluids.FluidStack;
  *
  * @author CD4017BE
  */
-public class ModFluid extends Fluid
+public class DefaultFluid extends Fluid
 {
 	
-	public ModFluid(String name, String tex)
+	public DefaultFluid(String name, String tex)
 	{
 		super(name, new ResourceLocation(tex), new ResourceLocation(tex));
 	}
@@ -24,7 +20,7 @@ public class ModFluid extends Fluid
 	@Override
 	public String getLocalizedName(FluidStack stack)
 	{
-		return I18n.translateToLocal(this.getUnlocalizedName() + ".name");
+		return TooltipUtil.translate(this.getUnlocalizedName() + ".name");
 	}
 	
 }

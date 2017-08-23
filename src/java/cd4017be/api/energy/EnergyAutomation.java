@@ -8,7 +8,7 @@ import java.util.List;
 import cd4017be.api.Capabilities;
 import cd4017be.api.energy.EnergyAPI.IEnergyAccess;
 import cd4017be.api.energy.EnergyAPI.IEnergyHandler;
-import cd4017be.lib.TooltipInfo;
+import cd4017be.lib.util.TooltipUtil;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
@@ -44,7 +44,7 @@ public class EnergyAutomation implements IEnergyHandler
 		}
 		
 		public void addInformation(List<String> list) {
-			list.add(String.format("Energy: %d / %d %s", this.getStorageI(), item.getEnergyCap(stack), TooltipInfo.getEnergyUnit()));
+			list.add(String.format("Energy: %d / %d %s", this.getStorageI(), item.getEnergyCap(stack), TooltipUtil.getEnergyUnit()));
 		}
 		/**
 		 * Get Integer tag value

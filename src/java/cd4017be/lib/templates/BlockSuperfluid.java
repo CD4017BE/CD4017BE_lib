@@ -1,12 +1,6 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package cd4017be.lib.templates;
 
-import cd4017be.lib.ModFluid;
+import cd4017be.lib.DefaultFluid;
 
 import java.util.Random;
 
@@ -32,7 +26,7 @@ public class BlockSuperfluid extends BlockFluidClassic
 	
 	private Random random = new Random();
 	
-	public BlockSuperfluid(String id, ModFluid fluid)
+	public BlockSuperfluid(String id, DefaultFluid fluid)
 	{
 		super(fluid, fluid.isGaseous() ? fluid.getTemperature() > 350 ? Material.FIRE : materialGas : Material.WATER);
 		this.setRegistryName(id);

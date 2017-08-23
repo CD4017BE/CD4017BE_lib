@@ -7,7 +7,7 @@ package cd4017be.api.automation;
 import cd4017be.api.Capabilities;
 import cd4017be.api.IAbstractTile;
 import cd4017be.api.energy.EnergyAPI.IEnergyAccess;
-import cd4017be.lib.TooltipInfo;
+import cd4017be.lib.util.TooltipUtil;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumFacing;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;

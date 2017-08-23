@@ -6,9 +6,9 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.translation.I18n;
 import cd4017be.lib.Gui.DataContainer.IGuiData;
 import cd4017be.lib.templates.InventoryItem;
+import cd4017be.lib.util.TooltipUtil;
 
 public class ItemGuiData implements IGuiData {
 
@@ -68,7 +68,7 @@ public class ItemGuiData implements IGuiData {
 
 	@Override
 	public String getName() {
-		return I18n.translateToLocal(item.getUnlocalizedName() + ".name");
+		return TooltipUtil.translate(item.getUnlocalizedName() + ".name");
 	}
 
 }

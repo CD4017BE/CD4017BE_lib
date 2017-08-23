@@ -5,6 +5,8 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
+import cd4017be.lib.BlockGuiHandler;
+import cd4017be.lib.Gui.DataContainer.IGuiData;
 import net.minecraft.block.Block;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
@@ -29,21 +31,21 @@ public class AdvancedBlock extends BaseBlock {
 	public final Class<? extends TileEntity> tileEntity;
 	protected EnumBlockRenderType renderType;
 	protected AxisAlignedBB[] boundingBox;
-	/**1:NeighborAware, 2:BreakCleanup, 4:Interactive, 8:PlaceHarvest, 16:Redstone, 32:Collision, 64:Opaque */
+	/**1:NeighborAware, 2:BreakCleanup, 4:Interactive, 8:PlaceHarvest, 16:Redstone, 32:Collision, 64:hasGui, 65536:Opaque */
 	protected int flags;
 
 	/**
 	 * 
 	 * @param id registry name
 	 * @param m material
-	 * @param flags 2 = nonOpaque, 1 = noFullBlock
+	 * @param flags 2 = nonOpaque, 1 = noFullBlock, 4 = don't open GUI
 	 * @param tile optional TileEntity to register with this block
 	 */
 	public AdvancedBlock(String id, Material m, SoundType sound, int flags, @Nullable Class<? extends TileEntity> tile) {
 		super(id, m);
 		this.setSoundType(sound);
 		this.fullBlock = (flags & 1) == 0;
-		this.flags = ~flags << 6;
+		this.flags = ~flags << 16;
 		this.tileEntity = tile;
 		if (tile != null) {
 			if (INeighborAwareTile.class.isAssignableFrom(tile)) this.flags |= 1;
@@ -52,6 +54,7 @@ public class AdvancedBlock extends BaseBlock {
 			if (ITilePlaceHarvest.class.isAssignableFrom(tile)) this.flags |= 8;
 			if (IRedstoneTile.class.isAssignableFrom(tile)) this.flags |= 16;
 			if (ITileCollision.class.isAssignableFrom(tile)) this.flags |= 32;
+			if ((flags & 4) == 0 && IGuiData.class.isAssignableFrom(tile)) this.flags |= 64;
 			GameRegistry.registerTileEntity(tileEntity, getRegistryName().toString());
 		}
 		this.renderType = EnumBlockRenderType.MODEL;
@@ -144,9 +147,14 @@ public class AdvancedBlock extends BaseBlock {
 
 	@Override
 	public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumHand hand, EnumFacing s, float X, float Y, float Z) {
-		if ((flags & 4) == 0) return false;
-		TileEntity te = world.getTileEntity(pos);
-		if (te instanceof IInteractiveTile) return ((IInteractiveTile)te).onActivated(player, hand, player.getHeldItem(hand), s, X, Y, Z);
+		if ((flags & 4) != 0) {
+			TileEntity te = world.getTileEntity(pos);
+			if (te instanceof IInteractiveTile && ((IInteractiveTile)te).onActivated(player, hand, player.getHeldItem(hand), s, X, Y, Z)) return true;
+		}
+		if ((flags & 64) != 0) {
+			BlockGuiHandler.openBlockGui(player, world, pos);
+			return true;
+		}
 		return false;
 	}
 
@@ -269,7 +277,7 @@ public class AdvancedBlock extends BaseBlock {
 
 	@Override
 	public boolean isOpaqueCube(IBlockState state) {
-		return (flags & 64) != 0;
+		return (flags & 65536) != 0;
 	}
 
 	@Override
