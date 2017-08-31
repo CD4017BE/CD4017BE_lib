@@ -11,8 +11,10 @@ import java.util.Map;
 import org.apache.logging.log4j.Level;
 
 import cd4017be.lib.render.model.ModelContext;
+import cd4017be.lib.render.model.ModelVariant;
 import cd4017be.lib.render.model.RawModelData;
 import cd4017be.lib.script.Module;
+import cd4017be.lib.util.Orientation;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
@@ -152,7 +154,15 @@ public class SpecialModelLoader implements ICustomModelLoader {
 	@Override
 	public IModel loadModel(ResourceLocation modelLocation) throws Exception {
 		IModel model = models.get(modelLocation);
-		if (model == null && modelLocation.getResourcePath().startsWith(SCRIPT_PREFIX)) {
+		if (model != null) return model;
+		String path = modelLocation.getResourcePath();
+		int p = path.indexOf('#');
+		if (p >= 0) {
+			String s = path.substring(p + 1);
+			Orientation o = Orientation.valueOf(s.substring(0, 1).toUpperCase() + s.substring(1));
+			model = loadModel(new ResourceLocation(modelLocation.getResourceDomain(), path.substring(0, p)));
+			return new ModelVariant(model, o.getModelRotation());
+		} else if (path.startsWith(SCRIPT_PREFIX)) {
 			model = loadScriptModel(modelLocation);
 			if (model != null) models.put(modelLocation, model);
 		}
