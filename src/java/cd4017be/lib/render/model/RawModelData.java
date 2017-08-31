@@ -53,9 +53,9 @@ public class RawModelData implements IModel {
 				int j = 0;
 				for (Quad quad : list) {
 					for (double[] vert : quad.vertices) {
-						data[j++] = Float.floatToRawIntBits((float)vert[0]);	//X
-						data[j++] = Float.floatToRawIntBits((float)vert[1]);	//Y
-						data[j++] = Float.floatToRawIntBits((float)vert[2]);	//Z
+						data[j++] = Float.floatToRawIntBits((float)vert[0] / 16F);	//X
+						data[j++] = Float.floatToRawIntBits((float)vert[1] / 16F);	//Y
+						data[j++] = Float.floatToRawIntBits((float)vert[2] / 16F);	//Z
 						data[j++] = (int)MathHelper.clamp(vert[7] * 255D, 0, 255)		//B
 								| (int)MathHelper.clamp(vert[6] * 255D, 0, 255) << 8	//G
 								| (int)MathHelper.clamp(vert[5] * 255D, 0, 255) << 16	//R

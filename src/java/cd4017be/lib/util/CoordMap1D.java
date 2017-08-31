@@ -21,9 +21,9 @@ public class CoordMap1D<E> implements Iterable<E> {
 	 */
 	public CoordMap1D(int initCapm1) {
 		if (initCapm1 < 0) throw new IllegalArgumentException("capacity can't be negative!");
-		int i = Integer.numberOfLeadingZeros(initCapm1);
-		mask = 0xffffffff >>> i;
-		array = new Object[1 << (32 - i)];
+		int i = 1 << (32 - Integer.numberOfLeadingZeros(initCapm1));
+		mask = i - 1;
+		array = new Object[i];
 		min = Integer.MAX_VALUE;
 		max = Integer.MIN_VALUE;
 	}
@@ -138,11 +138,11 @@ public class CoordMap1D<E> implements Iterable<E> {
 	 * @param minSize
 	 */
 	private void grow(int minSize) {
-		int l = Integer.numberOfLeadingZeros(minSize);
-		Object[] narr = new Object[1 << (32 - l)];
+		int l = 1 << (32 - Integer.numberOfLeadingZeros(minSize));
+		Object[] narr = new Object[l];
 		int p0 = min & mask, p1 = max & mask;
 		int size = max - min + 1;
-		mask = 0xffffffff >>> l;
+		mask = l - 1;
 		if (p1 > p0) System.arraycopy(array, p0, narr, min & mask, size);
 		else {
 			int m = array.length - p0;
@@ -202,9 +202,11 @@ public class CoordMap1D<E> implements Iterable<E> {
 	public void copyInto(int start, int end, CoordMap1D<E> map) {
 		if (start < min) start = min;
 		if (end > max) end = max;
-		int l = end - start;
-		if (l < 0) return;
-		if (l >= map.array.length) map.grow(l);
+		if (end < start) return;
+		if (start < map.min) map.min = start;
+		if (end > map.max) map.max = end;
+		int l = map.range();
+		if (l > map.array.length) map.grow(l - 1);
 		Object o;
 		for (int i = start; i <= end; i++)
 			if ((o = array[i & mask]) != null)
@@ -239,6 +241,16 @@ public class CoordMap1D<E> implements Iterable<E> {
 			Arrays.fill(array, start, array.length, null);
 			Arrays.fill(array, 0, end + 1, null);
 		}
+	}
+
+	@Override
+	public String toString() {
+		if (isEmpty()) return "[|]";
+		String s = "";
+		for (Object o : this)
+			s += o.toString() + " ,";
+		s = "[" + min + "| " + s.substring(0, s.length() - 1) + "|" + max + "]";
+		return s;
 	}
 
 	public class Iterator implements java.util.Iterator<E> {

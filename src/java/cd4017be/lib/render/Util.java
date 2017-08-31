@@ -8,6 +8,7 @@ import org.lwjgl.opengl.GL11;
 import cd4017be.lib.util.Orientation;
 import net.minecraft.client.renderer.block.model.ModelRotation;
 import net.minecraft.util.math.Vec3d;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.relauncher.Side;
@@ -158,6 +159,10 @@ public class Util {
 	
 	public static final Util instance = new Util();
 	public static int RenderFrame = 0;
+
+	private Util() {
+		MinecraftForge.EVENT_BUS.register(this);
+	}
 
 	@SubscribeEvent
 	public void renderTick(TickEvent.RenderTickEvent event) {

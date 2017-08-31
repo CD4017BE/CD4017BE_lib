@@ -88,7 +88,7 @@ public class IntArrayModel {
 			break;
 		default: return;
 		}
-		for (; i < vertexData.length; i++)
+		for (; i < vertexData.length; i+=7)
 			vertexData[i] = Float.floatToIntBits(ofs + Float.intBitsToFloat(vertexData[i]));
 	}
 
