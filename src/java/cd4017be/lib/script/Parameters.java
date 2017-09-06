@@ -62,6 +62,17 @@ public class Parameters {
 		return param;
 	}
 
+	public double[] getVectorOrAll() {
+		if (param.length == 1) {
+			Object o = param[0];
+			if (o instanceof double[]) return (double[])o;
+		}
+		double[] vec = new double[param.length];
+		for (int i = 0; i < vec.length; i++)
+			vec[i] = getNumber(i);
+		return vec;
+	}
+
 	private IllegalArgumentException num(int pos) {
 		return new IllegalArgumentException(String.format("Too few arguments, expected at least %d", pos + 1));
 	}

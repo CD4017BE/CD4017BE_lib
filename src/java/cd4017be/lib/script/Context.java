@@ -13,7 +13,25 @@ public class Context implements Module {
 			FMLLog.log("RECIPE_SCRIPT", Level.INFO, "> %s", p.get(0));
 			return null;
 		}, TIME = (p) -> (double)System.currentTimeMillis(),
-		REPL = (p) -> p.getString(0).replaceFirst(p.getString(1), p.getString(2));
+		REPL = (p) -> p.getString(0).replaceFirst(p.getString(1), p.getString(2)),
+		CONC = (p) -> {
+			int n = 0;
+			for (Object obj : p.param) {
+				if (obj instanceof Object[]) n += ((Object[])obj).length;
+				else n++;
+			}
+			Object[] vec = new Object[n];
+			for (int i = 0, j = 0; i < p.param.length; i++) {
+				Object obj = p.param[i];
+				if (obj instanceof Object[]) {
+					Object[] sub = (Object[])obj;
+					System.arraycopy(sub, 0, vec, j, sub.length);
+					j += sub.length;
+				} else vec[j++] = obj;
+			}
+			return vec; 
+		}, NARR = (p) -> new Object[(int)p.getNumber(0)],
+		NVEC = (p) -> new double[(int)p.getNumber(0)];
 	
 	public HashMap<String, Module> modules = new HashMap<String, Module>();
 	public HashMap<String, Function<Parameters, Object>> defFunc = new HashMap<String, Function<Parameters, Object>>();
@@ -23,6 +41,9 @@ public class Context implements Module {
 		defFunc.put("print", PRINT);
 		defFunc.put("time", TIME);
 		defFunc.put("repl", REPL);
+		defFunc.put("conc", CONC);
+		defFunc.put("narr", NARR);
+		defFunc.put("nvec", NVEC);
 	}
 	
 	private String[] split(String name) {
