@@ -143,7 +143,8 @@ public class CoordMap1D<E> implements Iterable<E> {
 		int p0 = min & mask, p1 = max & mask;
 		int size = max - min + 1;
 		mask = l - 1;
-		if (p1 > p0) System.arraycopy(array, p0, narr, min & mask, size);
+		if (min == max) narr[min & mask] = array[p0];
+		else if (p1 > p0) System.arraycopy(array, p0, narr, min & mask, size);
 		else {
 			int m = array.length - p0;
 			System.arraycopy(array, p0, narr, min & mask, m);
@@ -203,14 +204,16 @@ public class CoordMap1D<E> implements Iterable<E> {
 		if (start < min) start = min;
 		if (end > max) end = max;
 		if (end < start) return;
-		if (start < map.min) map.min = start;
-		if (end > map.max) map.max = end;
-		int l = map.range();
-		if (l > map.array.length) map.grow(l - 1);
+		int nmin = Math.min(map.min, start),
+			nmax = Math.max(map.max, end);
+		int l = nmax - nmin;
+		if (l >= map.array.length) map.grow(l);
 		Object o;
 		for (int i = start; i <= end; i++)
 			if ((o = array[i & mask]) != null)
 				map.array[i & map.mask] = o;
+		map.min = nmin;
+		map.max = nmax;
 	}
 
 	/**

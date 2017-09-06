@@ -93,29 +93,29 @@ public class Utils {
 		int x = center.getX(), y = center.getY(), z = center.getZ();
 		switch(axis) {
 		case X:
-			for (int i = -radius; i <= radius; i++) {
+			for (int i = -radius; i < radius; i++) {
 				int d = radius * radius + i * i;
 				operation.accept(new BlockPos(x, y - radius, z + i), d);
-				operation.accept(new BlockPos(x, y + radius, z + i), d);
-				operation.accept(new BlockPos(x, y + i, z - radius), d);
+				operation.accept(new BlockPos(x, y + radius, z - i), d);
+				operation.accept(new BlockPos(x, y - i, z - radius), d);
 				operation.accept(new BlockPos(x, y + i, z + radius), d);
-			}
+			} break;
 		case Y:
-			for (int i = -radius; i <= radius; i++) {
+			for (int i = -radius; i < radius; i++) {
 				int d = radius * radius + i * i;
 				operation.accept(new BlockPos(x - radius, y, z + i), d);
-				operation.accept(new BlockPos(x + radius, y, z + i), d);
-				operation.accept(new BlockPos(x + i, y, z - radius), d);
+				operation.accept(new BlockPos(x + radius, y, z - i), d);
+				operation.accept(new BlockPos(x - i, y, z - radius), d);
 				operation.accept(new BlockPos(x + i, y, z + radius), d);
-			}
+			} break;
 		case Z:
-			for (int i = -radius; i <= radius; i++) {
+			for (int i = -radius; i < radius; i++) {
 				int d = radius * radius + i * i;
 				operation.accept(new BlockPos(x - radius, y + i, z), d);
-				operation.accept(new BlockPos(x + radius, y + i, z), d);
-				operation.accept(new BlockPos(x + i, y - radius, z), d);
+				operation.accept(new BlockPos(x + radius, y - i, z), d);
+				operation.accept(new BlockPos(x - i, y - radius, z), d);
 				operation.accept(new BlockPos(x + i, y + radius, z), d);
-			}
+			} break;
 		}
 	}
 

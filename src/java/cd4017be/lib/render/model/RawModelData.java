@@ -36,6 +36,18 @@ import net.minecraftforge.common.model.TRSRTransformation;
 
 public class RawModelData implements IModel {
 
+	public static final ImmutableMap<TransformType, TRSRTransformation> DEFAULT_TRANSFORM;
+	static {
+		ImmutableMap.Builder<TransformType, TRSRTransformation> builder = ImmutableMap.builder();
+		builder.put(TransformType.GUI, getTransform(new double[][] {{0D, 0D, 0D}, {0.625, 0.625, 0.625}, {30D, 225D, 0D}}));
+		builder.put(TransformType.GROUND, getTransform(new double[][] {{0D, 3D, 0D}, {0.25, 0.25, 0.25}, {0D, 0D, 0D}}));
+		builder.put(TransformType.FIXED, getTransform(new double[][] {{0D, 0D, 0D}, {0.5, 0.5, 0.5}, {0D, 0D, 0D}}));
+		builder.put(TransformType.THIRD_PERSON_RIGHT_HAND, getTransform(new double[][] {{0D, 2.5, 0D}, {0.375, 0.375, 0.375}, {75D, 45D, 0D}}));
+		builder.put(TransformType.THIRD_PERSON_LEFT_HAND, getTransform(new double[][] {{0D, 2.5, 0D}, {0.375, 0.375, 0.375}, {75D, 45D, 0D}}));
+		builder.put(TransformType.FIRST_PERSON_RIGHT_HAND, getTransform(new double[][] {{0D, 0D, 0D}, {0.4, 0.4, 0.4}, {0D, 45D, 0D}}));
+		builder.put(TransformType.FIRST_PERSON_LEFT_HAND, getTransform(new double[][] {{0D, 0D, 0D}, {0.4, 0.4, 0.4}, {0D, 225D, 0D}}));
+		DEFAULT_TRANSFORM = builder.build();
+	}
 	private final int[][] quads = new int[7][];
 	private final boolean diffuseLight, gui3D;
 	private final ResourceLocation[] textures;
@@ -52,6 +64,7 @@ public class RawModelData implements IModel {
 				int[] data = new int[28 * list.size()];
 				int j = 0;
 				for (Quad quad : list) {
+					if (quad.tex < 0 || quad.tex >= textures.length) throw new IllegalStateException("invalid texture index " + quad.tex + " !");
 					for (double[] vert : quad.vertices) {
 						data[j++] = Float.floatToRawIntBits((float)vert[0] / 16F);	//X
 						data[j++] = Float.floatToRawIntBits((float)vert[1] / 16F);	//Y
@@ -73,25 +86,30 @@ public class RawModelData implements IModel {
 	private ImmutableMap<TransformType, TRSRTransformation> readTransf(Module script) {
 		ImmutableMap.Builder<TransformType, TRSRTransformation> builder = ImmutableMap.builder();
 		TRSRTransformation t;
-		if ((t = getTransform(script.read("dsp_head"))) != null) builder.put(TransformType.HEAD, t);
-		if ((t = getTransform(script.read("dsp_gui"))) != null) builder.put(TransformType.GUI, t);
-		if ((t = getTransform(script.read("dsp_ground"))) != null) builder.put(TransformType.GROUND, t);
-		if ((t = getTransform(script.read("dsp_fixed"))) != null) builder.put(TransformType.FIXED, t);
-		if ((t = getTransform(script.read("dsp_3PRighthand"))) != null) builder.put(TransformType.THIRD_PERSON_RIGHT_HAND, t);
-		if ((t = getTransform(script.read("dsp_3PLefthand"))) != null) builder.put(TransformType.THIRD_PERSON_LEFT_HAND, t);
-		if ((t = getTransform(script.read("dsp_1PRighthand"))) != null) builder.put(TransformType.FIRST_PERSON_RIGHT_HAND, t);
-		if ((t = getTransform(script.read("dsp_1PLefthand"))) != null) builder.put(TransformType.FIRST_PERSON_LEFT_HAND, t);
-		return builder.build();
+		builder.putAll(DEFAULT_TRANSFORM);
+		boolean edit = false;
+		if ((t = getTransform(script.read("dsp_head"))) != null) {builder.put(TransformType.HEAD, t); edit = true;}
+		if ((t = getTransform(script.read("dsp_gui"))) != null) {builder.put(TransformType.GUI, t); edit = true;}
+		if ((t = getTransform(script.read("dsp_ground"))) != null) {builder.put(TransformType.GROUND, t); edit = true;}
+		if ((t = getTransform(script.read("dsp_fixed"))) != null) {builder.put(TransformType.FIXED, t); edit = true;}
+		if ((t = getTransform(script.read("dsp_3PRighthand"))) != null) {builder.put(TransformType.THIRD_PERSON_RIGHT_HAND, t); edit = true;}
+		if ((t = getTransform(script.read("dsp_3PLefthand"))) != null) {builder.put(TransformType.THIRD_PERSON_LEFT_HAND, t); edit = true;}
+		if ((t = getTransform(script.read("dsp_1PRighthand"))) != null) {builder.put(TransformType.FIRST_PERSON_RIGHT_HAND, t); edit = true;}
+		if ((t = getTransform(script.read("dsp_1PLefthand"))) != null) {builder.put(TransformType.FIRST_PERSON_LEFT_HAND, t); edit = true;}
+		return edit ? builder.build() : DEFAULT_TRANSFORM;
 	}
 
-	private TRSRTransformation getTransform(Object par) {
+	private static TRSRTransformation getTransform(Object par) {
 		if (!(par instanceof Object[])) return null;
 		Object[] arr = (Object[])par;
 		if (arr.length < 3) return null;
-		return new TRSRTransformation(read(arr[0]), TRSRTransformation.quatFromXYZDegrees(read(arr[2])), read(arr[1]), null);
+		Vector3f scale = read(arr[1]);
+		Vector3f ofs = read(arr[0]);
+		ofs.scale(1F/16F);
+		return new TRSRTransformation(ofs, null, scale, TRSRTransformation.quatFromXYZDegrees(read(arr[2])));
 	}
 
-	private Vector3f read(Object o) {
+	private static Vector3f read(Object o) {
 		if (o instanceof double[]) {
 			double[] vec = (double[])o;
 			return vec.length < 3 ? null : new Vector3f((float)vec[0], (float)vec[1], (float)vec[2]);
@@ -103,8 +121,9 @@ public class RawModelData implements IModel {
 	}
 
 	private ResourceLocation[] readTextures(Object par) {
-		if (!(par instanceof Object[])) return null;
+		if (!(par instanceof Object[])) throw new IllegalStateException("'textures' variable not defined! At least one texture required for particles.");
 		Object[] arr = (Object[])par;
+		if (arr.length == 0) throw new IllegalStateException("'textures' variable is empty array! At least one texture required for particles.");
 		ResourceLocation[] textures = new ResourceLocation[arr.length];
 		for (int i = 0; i < arr.length; i++)
 			textures[i] = new ResourceLocation((String)arr[i]);
@@ -123,7 +142,8 @@ public class RawModelData implements IModel {
 
 	@Override
 	public IBakedModel bake(IModelState state, VertexFormat format, Function<ResourceLocation, TextureAtlasSprite> bakedTextureGetter) {
-		if (format != DefaultVertexFormats.BLOCK && format != DefaultVertexFormats.ITEM) return null;
+		boolean hasNormal = format == DefaultVertexFormats.ITEM;
+		if (format != DefaultVertexFormats.BLOCK && !hasNormal) return null;
 		TextureAtlasSprite[] textures = new TextureAtlasSprite[this.textures.length];
 		for (int i = 0; i < textures.length; i++) textures[i] = bakedTextureGetter.apply(this.textures[i]);
 		Baked bm = new Baked(textures[0]);
@@ -138,13 +158,37 @@ public class RawModelData implements IModel {
 					if (state instanceof ModelRotation) Util.rotate(data, l, (ModelRotation)state);
 					data[l + 4] = Float.floatToRawIntBits(texture.getInterpolatedU(Float.intBitsToFloat(data[l + 4])));	//U
 					data[l + 5] = Float.floatToRawIntBits(texture.getInterpolatedV(Float.intBitsToFloat(data[l + 5])));	//V
-					data[l + 6] = 0; //TODO normals for Item format
+					data[l + 6] = 0;
 				}
+				if (hasNormal) genNormals(data);
 				dst[j] = new BakedQuad(data, -1, FaceBakery.getFacingFromVertexData(data), texture, diffuseLight, format);
 			}
 			bm.quads[i] = dst;
 		}
 		return bm;
+	}
+
+	private void genNormals(int[] data) {
+		float[] pos = new float[12];
+		for (int i = 0; i < 4; i++) {
+			pos[i] = Float.intBitsToFloat(data[i * 7]);
+			pos[i | 4] = Float.intBitsToFloat(data[i * 7 + 1]);
+			pos[i | 8] = Float.intBitsToFloat(data[i * 7 + 2]);
+		}
+		for (int i = 0; i < 4; i++) {
+			int i0 = (i + 3) & 3, i1 = (i + 1) & 3;
+			float x0 = pos[i0] - pos[i],
+				y0 = pos[i0|4] - pos[i|4],
+				z0 = pos[i0|8] - pos[i|8],
+				x1 = pos[i1] - pos[i],
+				y1 = pos[i1|4] - pos[i|4],
+				z1 = pos[i1|8] - pos[i|8];
+			float x = y1 * z0 - z1 * y0,
+				y = z1 * x0 - x1 * z0,
+				z = x1 * y0 - y1 * x0;
+			float d = 127F / (float)Math.sqrt(x*x + y*y + z*z);
+			data[i * 7 + 6] = ((byte)(x * d) & 0xff) | ((byte)(y * d) & 0xff) << 8 | ((byte)(z * d) & 0xff) << 16;
+		}
 	}
 
 	@Override
@@ -189,7 +233,7 @@ public class RawModelData implements IModel {
 
 		@Override
 		public ItemCameraTransforms getItemCameraTransforms() {
-			return null;
+			return ItemCameraTransforms.DEFAULT;
 		}
 
 		@Override
@@ -199,7 +243,7 @@ public class RawModelData implements IModel {
 
 		@Override
 		public Pair<? extends IBakedModel, Matrix4f> handlePerspective(TransformType cameraTransformType) {
-			return IPerspectiveAwareModel.MapWrapper.handlePerspective(this, transform, cameraTransformType);
+			return Pair.of(this, transform.get(cameraTransformType).getMatrix());
 		}
 
 	}
