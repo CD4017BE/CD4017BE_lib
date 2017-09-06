@@ -2,7 +2,10 @@ package cd4017be.lib.render.model;
 
 import java.util.Arrays;
 import cd4017be.lib.render.model.ModelContext.Quad;
+import cd4017be.lib.script.Module;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.util.EnumFacing.Axis;
@@ -30,9 +33,9 @@ public class IntArrayModel {
 		int j = 0;
 		for (Quad quad : context.quads[0])
 			for (double[] vert : quad.vertices) {
-				vertexData[j++] = Float.floatToRawIntBits((float)vert[0]);	//X
-				vertexData[j++] = Float.floatToRawIntBits((float)vert[1]);	//Y
-				vertexData[j++] = Float.floatToRawIntBits((float)vert[2]);	//Z
+				vertexData[j++] = Float.floatToRawIntBits((float)vert[0] / 16F);	//X
+				vertexData[j++] = Float.floatToRawIntBits((float)vert[1] / 16F);	//Y
+				vertexData[j++] = Float.floatToRawIntBits((float)vert[2] / 16F);	//Z
 				vertexData[j++] = (int)MathHelper.clamp(vert[7] * 255D, 0, 255)	//B
 						| (int)MathHelper.clamp(vert[6] * 255D, 0, 255) << 8	//G
 						| (int)MathHelper.clamp(vert[5] * 255D, 0, 255) << 16	//R
@@ -41,6 +44,35 @@ public class IntArrayModel {
 				vertexData[j++] = Float.floatToRawIntBits((float)vert[4]);	//V
 				vertexData[j++] = brightness;
 			}
+	}
+
+	public static TextureAtlasSprite[] getTextures(Module script) {
+		TextureMap map = Minecraft.getMinecraft().getTextureMapBlocks();
+		Object[] names = (Object[])script.read("textures");
+		TextureAtlasSprite[] textures = new TextureAtlasSprite[names.length];
+		for (int i = 0; i < textures.length; i++)
+			textures[i] = map.getAtlasSprite((String)names[i]);
+		return textures;
+	}
+
+	public IntArrayModel(ModelContext context, TextureAtlasSprite[] textures) {
+		this(context.quads[0].size());
+		int j = 0;
+		for (Quad quad : context.quads[0]) {
+			TextureAtlasSprite tex = textures[quad.tex];
+			for (double[] vert : quad.vertices) {
+				vertexData[j++] = Float.floatToRawIntBits((float)vert[0] / 16F);	//X
+				vertexData[j++] = Float.floatToRawIntBits((float)vert[1] / 16F);	//Y
+				vertexData[j++] = Float.floatToRawIntBits((float)vert[2] / 16F);	//Z
+				vertexData[j++] = (int)MathHelper.clamp(vert[7] * 255D, 0, 255)	//B
+						| (int)MathHelper.clamp(vert[6] * 255D, 0, 255) << 8	//G
+						| (int)MathHelper.clamp(vert[5] * 255D, 0, 255) << 16	//R
+						| (int)MathHelper.clamp(vert[8] * 255D, 0, 255) << 24;	//A
+				vertexData[j++] = Float.floatToRawIntBits(tex.getInterpolatedU(vert[3]));	//U
+				vertexData[j++] = Float.floatToRawIntBits(tex.getInterpolatedV(vert[4]));	//V
+				vertexData[j++] = brightness;
+			}
+		}
 	}
 
 	public void setBrightness(int l) {

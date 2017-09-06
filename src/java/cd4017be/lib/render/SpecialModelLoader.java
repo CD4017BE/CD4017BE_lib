@@ -7,13 +7,16 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.logging.log4j.Level;
 
+import cd4017be.lib.render.model.IntArrayModel;
 import cd4017be.lib.render.model.ModelContext;
 import cd4017be.lib.render.model.ModelVariant;
 import cd4017be.lib.render.model.RawModelData;
 import cd4017be.lib.script.Module;
+import cd4017be.lib.script.Script;
 import cd4017be.lib.util.Orientation;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
@@ -104,7 +107,12 @@ public class SpecialModelLoader implements ICustomModelLoader {
 
 	public void cleanUp() {
 		for (IModeledTESR tesr : tesrs) tesr.bakeModels(resourceManager);
-		scriptModels.clear();
+		for (ModelContext cont : scriptModels.values())
+			for (Iterator<Entry<String, Module>> it = cont.modules.entrySet().iterator(); it.hasNext();) {
+				Entry<String, Module> e = it.next();
+				Module m = e.getValue();
+				if (m instanceof Script && !e.getKey().startsWith("tesr.")) it.remove();
+			}
 	}
 
 	public String loadTESRModelSourceCode(ResourceLocation res) throws IOException {
@@ -134,7 +142,7 @@ public class SpecialModelLoader implements ICustomModelLoader {
 		tesrModelCode.clear();
 		cleanUp();
 	}
-	
+
 	@Override
 	public void onResourceManagerReload(IResourceManager resourceManager) {
 		this.resourceManager = resourceManager;
@@ -143,6 +151,7 @@ public class SpecialModelLoader implements ICustomModelLoader {
 			if (m instanceof IHardCodedModel) ((IHardCodedModel)m).onReload();
 			else it.remove();
 		}
+		scriptModels.clear();
 	}
 
 	@Override
@@ -186,6 +195,19 @@ public class SpecialModelLoader implements ICustomModelLoader {
 		Module script = cont.getOrLoad(scriptName, resourceManager);
 		cont.run(script, methodName);
 		return new RawModelData(script, cont);
+	}
+
+	public static IntArrayModel loadTESRModel(String domain, String name) throws Exception {
+		int p = name.indexOf('.');
+		String methodName;
+		if (p >= 0) {
+			methodName = name.substring(p + 1);
+			name = name.substring(0, p);
+		} else methodName = "main()";
+		ModelContext cont = instance.scriptModels.get(domain);
+		Module script = cont.getOrLoad("tesr." + name, instance.resourceManager);
+		cont.run(script, methodName);
+		return new IntArrayModel(cont, IntArrayModel.getTextures(script));
 	}
 
 	public static class StateMapper implements IStateMapper {

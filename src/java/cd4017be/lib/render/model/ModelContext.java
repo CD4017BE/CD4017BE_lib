@@ -26,6 +26,7 @@ public class ModelContext extends Context {
 		Matrix4d matrix;
 		double oU, oV, sU, sV;
 		double[] sColor;
+		int texOfs;
 		State copy(){
 			State state = new State();
 			state.matrix = new Matrix4d(matrix);
@@ -34,6 +35,7 @@ public class ModelContext extends Context {
 			state.sU = sU;
 			state.sV = sV;
 			state.sColor = sColor.clone();
+			state.texOfs = texOfs;
 			return state;
 		}
 	}
@@ -57,7 +59,7 @@ public class ModelContext extends Context {
 	private void add(Quad quadi) {
 		State state = states.get();
 		Quad nQuad = new Quad();
-		nQuad.tex = quadi.tex;
+		nQuad.tex = quadi.tex + state.texOfs;
 		int i = 0;
 		for (double[] vertex : quadi.vertices) {
 			double[] vert2 = nQuad.vertices[i++];
@@ -92,7 +94,7 @@ public class ModelContext extends Context {
 			return null;
 		});
 		defFunc.put("rotate", (p) -> {
-			double[] vec = p.getVector(0);
+			double[] vec = p.getVectorOrAll();
 			State state = states.get();
 			vec[3] = Math.toRadians(vec[3]);
 			Matrix4d mat = new Matrix4d();
@@ -100,8 +102,8 @@ public class ModelContext extends Context {
 			state.matrix.mul(mat);
 			return null;
 		});
-		defFunc.put("translate", (p) -> {//FIXME translation seems to have no effect
-			double[] vec = p.getVector(0);
+		defFunc.put("translate", (p) -> {
+			double[] vec = p.getVectorOrAll();
 			State state = states.get();
 			Matrix4d mat = new Matrix4d();
 			mat.set(new Vector3d(vec));
@@ -109,39 +111,46 @@ public class ModelContext extends Context {
 			return null;
 		});
 		defFunc.put("scale", (p) -> {
-			double[] vec = p.getVector(0);
+			double[] vec = p.getVectorOrAll();
 			State state = states.get();
 			Matrix4d mat = new Matrix4d();
 			mat.setM00(vec[0]);
 			mat.setM11(vec[1]);
 			mat.setM22(vec[2]);
+			mat.setM33(1);
 			state.matrix.mul(mat);
 			return null;
 		});
 		defFunc.put("offsetUV", (p) -> {
-			double[] vec = p.getVector(0);
+			double[] vec = p.getVectorOrAll();
 			State state = states.get();
 			state.oU += vec[0] * state.sU;
 			state.oV += vec[1] * state.sV;
 			return null;
 		});
 		defFunc.put("scaleUV", (p) -> {
-			double[] vec = p.getVector(0);
+			double[] vec = p.getVectorOrAll();
 			State state = states.get();
 			state.sU *= vec[0];
 			state.sV *= vec[1];
 			return null;
 		});
 		defFunc.put("color", (p) -> {
-			double[] vec = p.getVector(0);
+			double[] vec = p.getVectorOrAll();
 			State state = states.get();
 			for (int j = 0; j < vec.length; j++) state.sColor[j] = vec[j];
+			return null;
+		});
+		defFunc.put("texIdx", (p) -> {
+			double val = p.getNumber(0);
+			State state = states.get();
+			state.texOfs += (int)val;
 			return null;
 		});
 		defFunc.put("quad", (p) -> {
 			Quad quad = new Quad();
 			String format = p.getString(4);
-			quad.tex = (int)p.getNumber(5);
+			quad.tex = p.param.length > 5 ? (int)p.getNumber(5) : 0;
 			if (format == null) format = defaultFormat;
 			quad.cullFace = cfNames.indexOf(format.charAt(format.length() - 1));
 			for (int i = 0; i < 4; i++) {
@@ -157,9 +166,9 @@ public class ModelContext extends Context {
 		});
 		defFunc.put("rect", (p) -> {
 			Quad quad = new Quad();
-			String format = p.getString(3);
+			String format = p.getString(2);
+			quad.tex = p.param.length > 3 ? (int)p.getNumber(3) : 0;
 			quad.cullFace = format.length() <= 3 ? -1 : cfNames.indexOf(format.charAt(3));
-			quad.tex = (int)p.getNumber(2);
 			int t;
 			int tN = (t = format.indexOf('-')) < 0 ? format.indexOf('+') + 3 : t;
 			boolean inv = tN >= 3; tN %= 3;
@@ -205,7 +214,7 @@ public class ModelContext extends Context {
 	public Module getOrLoad(String name, IResourceManager manager) throws Exception {
 		Module m = modules.get(name);
 		if (m != null) return m;
-		IResource res = manager.getResource(new ResourceLocation(loadPath.toString() + name + ".rcp"));//TODO allow subfolders
+		IResource res = manager.getResource(new ResourceLocation(loadPath.toString() + name.replace('.', '/') + ".rcp"));
 		Script script = Compiler.compile(this, name, new InputStreamReader(res.getInputStream()));
 		Object var = script.variables.remove("dependencies");
 		if (var instanceof Object[]) try {
