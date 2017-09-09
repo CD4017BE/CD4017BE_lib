@@ -144,6 +144,7 @@ public class RawModelData implements IModel {
 	public IBakedModel bake(IModelState state, VertexFormat format, Function<ResourceLocation, TextureAtlasSprite> bakedTextureGetter) {
 		boolean hasNormal = format == DefaultVertexFormats.ITEM;
 		if (format != DefaultVertexFormats.BLOCK && !hasNormal) return null;
+		ModelRotation orient = state instanceof ModelRotation ? (ModelRotation)state : ModelRotation.X0_Y0;
 		TextureAtlasSprite[] textures = new TextureAtlasSprite[this.textures.length];
 		for (int i = 0; i < textures.length; i++) textures[i] = bakedTextureGetter.apply(this.textures[i]);
 		Baked bm = new Baked(textures[0]);
@@ -155,7 +156,7 @@ public class RawModelData implements IModel {
 				int[] data = Arrays.copyOfRange(src, k, k + 28);
 				TextureAtlasSprite texture = textures[data[6]];
 				for (int l = 0; l < 28; l += 7) {
-					if (state instanceof ModelRotation) Util.rotate(data, l, (ModelRotation)state);
+					Util.rotate(data, l, orient);
 					data[l + 4] = Float.floatToRawIntBits(texture.getInterpolatedU(Float.intBitsToFloat(data[l + 4])));	//U
 					data[l + 5] = Float.floatToRawIntBits(texture.getInterpolatedV(Float.intBitsToFloat(data[l + 5])));	//V
 					data[l + 6] = 0;
@@ -163,7 +164,8 @@ public class RawModelData implements IModel {
 				if (hasNormal) genNormals(data);
 				dst[j] = new BakedQuad(data, -1, FaceBakery.getFacingFromVertexData(data), texture, diffuseLight, format);
 			}
-			bm.quads[i] = dst;
+			if (orient == ModelRotation.X0_Y0 || i == 0) bm.quads[i] = dst;
+			else bm.quads[orient.rotateFace(EnumFacing.VALUES[i - 1]).ordinal() + 1] = dst;
 		}
 		return bm;
 	}
