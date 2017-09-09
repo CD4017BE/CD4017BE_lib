@@ -7,6 +7,7 @@ import java.util.List;
 import com.google.common.base.Function;
 
 import cd4017be.lib.property.PropertyBlockMimic;
+import cd4017be.lib.render.IHardCodedModel;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -22,7 +23,7 @@ import net.minecraftforge.client.model.IModel;
 import net.minecraftforge.common.model.IModelState;
 import net.minecraftforge.common.property.IExtendedBlockState;
 
-public class BlockMimicModel implements IModel, IBakedModel {
+public class BlockMimicModel implements IModel, IBakedModel, IHardCodedModel {
 
 	public static final BlockMimicModel instance = new BlockMimicModel();
 
@@ -90,5 +91,8 @@ public class BlockMimicModel implements IModel, IBakedModel {
 	public IModelState getDefaultState() {
 		return ModelRotation.X0_Y0;
 	}
+
+	@Override
+	public void onReload() {}
 
 }
