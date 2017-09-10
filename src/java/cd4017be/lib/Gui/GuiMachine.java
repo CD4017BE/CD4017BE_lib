@@ -39,6 +39,8 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
+import com.mojang.realmsclient.gui.ChatFormatting;
+
 /**
  *
  * @author CD4017BE
@@ -698,6 +700,45 @@ public abstract class GuiMachine extends GuiContainer {
 				drawTexturedModalRect(px + dx, py, tx + dx, ty, m, h);
 				drawTexturedModalRect(px + dx1, py + dy1, tx + dx1, ty + dy1, 1, n);
 			}
+		}
+
+	}
+
+	public class InfoTab extends GuiComp<Object> {
+
+		final String[] headers;
+		int page = 0;
+
+		public InfoTab(int id, int px, int py, int w, int h, String tooltip) {
+			super(id, px, py, w, h);
+			setTooltip(tooltip);
+			headers = TooltipUtil.translate("gui.cd4017be." + tooltip).split("\n");
+		}
+
+		@Override
+		public void drawOverlay(int mx, int my) {
+			ArrayList<String> list = new ArrayList<String>();
+			String s = "";
+			for (int i = 0; i < headers.length; i++) {
+				if (i == page) s += "" + ChatFormatting.PREFIX_CODE + ChatFormatting.UNDERLINE.getChar();
+				s += headers[i] + ChatFormatting.PREFIX_CODE + ChatFormatting.RESET.getChar() + " | ";
+			}
+			list.add(s.substring(0, s.length() - 3));
+			for (String l : TooltipUtil.getConfigFormat("gui.cd4017be." + tooltip + page).split("\n"))
+				list.add(l);
+			drawHoveringText(list, mx, my);
+		}
+
+		@Override
+		public boolean mouseIn(int x, int y, int b, int d) {
+			if (d == 0) {
+				if (b == 0) page++;
+				else if (b == 1) page--;
+				else return false;
+			} else if (d == 3) page += b;
+			else return false;
+			page = Math.floorMod(page, headers.length);
+			return true;
 		}
 
 	}
