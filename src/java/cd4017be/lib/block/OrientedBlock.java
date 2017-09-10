@@ -1,15 +1,17 @@
 package cd4017be.lib.block;
 
+import cd4017be.lib.property.PropertyOrientation;
 import cd4017be.lib.util.Orientation;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.Mirror;
+import net.minecraft.util.Rotation;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
@@ -17,13 +19,13 @@ import net.minecraft.world.World;
 
 public abstract class OrientedBlock extends AdvancedBlock {
 
-	public IProperty<Orientation> orientProp;
+	public PropertyOrientation orientProp;
 
-	protected OrientedBlock(String id, Material m, SoundType sound, int flags, Class<? extends TileEntity> tile, IProperty<Orientation> prop) {
+	protected OrientedBlock(String id, Material m, SoundType sound, int flags, Class<? extends TileEntity> tile, PropertyOrientation prop) {
 		super(id, m, sound, flags, tile);
 	}
 
-	public static OrientedBlock create(String id, Material m, SoundType sound, int flags, Class<? extends TileEntity> tile, IProperty<Orientation> prop) {
+	public static OrientedBlock create(String id, Material m, SoundType sound, int flags, Class<? extends TileEntity> tile, PropertyOrientation prop) {
 		return new OrientedBlock(id, m, sound, flags, tile, prop) {
 			@Override
 			protected BlockStateContainer createBlockState() {
@@ -45,49 +47,9 @@ public abstract class OrientedBlock extends AdvancedBlock {
 
 	@Override
 	public IBlockState getStateForPlacement(World world, BlockPos pos, EnumFacing s, float X, float Y, float Z, int m, EntityLivingBase placer, EnumHand hand) {
-		Orientation dir = null;
-		if (placer.isSneaking()) {
-			if (s.getAxis().isVertical()) {
-				int i = Z + X > 1F ? (Z > X ? 1 : 3) : (Z < X ? 0 : 2);
-				for (Orientation o : orientProp.getAllowedValues()) {
-					int j = o.ordinal();
-					if ((j & 3) == i) {
-						dir = o;
-						if (o.front == s.getOpposite()) break;
-					} else if (dir == null && o.front == s.getOpposite()) dir = o;
-				}
-			} else {
-				int i = s.getHorizontalIndex();
-				for (Orientation o : orientProp.getAllowedValues()) {
-					int j = o.ordinal();
-					if ((j & 3) == i) {
-						if ((j & 4) == 0) {
-							dir = o;
-							break;
-						} else if (Y < 0.5F && o.front == EnumFacing.DOWN) {
-							dir = o;
-							if (Y < 0.25F) break;
-						} else if (Y >= 0.5F && o.front == EnumFacing.UP) {
-							dir = o;
-							if (Y >= 0.75F) break;
-						} else if (dir == null) dir = o;
-					}
-				}
-			}
-		} else {
-			int h = placer.rotationPitch > 40 ? 3 : placer.rotationPitch < -35 ? 1 : 0;
-			int i = MathHelper.floor((double)(placer.rotationYaw * 4.0F / 360.0F) + 0.5D) & 3;
-			for (Orientation o : orientProp.getAllowedValues()) {
-				int j = o.ordinal();
-				if ((j & 3) == i) {
-					dir = o;
-					if (j >> 2 == h || h == 0 && (j & 12) == 8) break;
-				} else if (dir == null && (j >> 2 == h || h == 0 && (j & 12) == 8)) {
-					dir = o;
-				}
-			}
-		}
-		return dir == null ? blockState.getBaseState() : blockState.getBaseState().withProperty(orientProp, dir);
+		int p = placer.rotationPitch > 45 ? 1 : placer.rotationPitch < -35 ? -1 : 0;
+		int y = MathHelper.floor((double)(placer.rotationYaw * 4.0F / 360.0F) + 0.5D) & 3;
+		return blockState.getBaseState().withProperty(orientProp, orientProp.getPlacementState(placer.isSneaking(), y, p, s, X, Y, Z));
 	}
 
 	@Override
@@ -100,14 +62,32 @@ public abstract class OrientedBlock extends AdvancedBlock {
 
 	@Override
 	public boolean rotateBlock(World world, BlockPos pos, EnumFacing axis) {
-		// TODO Auto-generated method stub
-		return super.rotateBlock(world, pos, axis);
+		Orientation o = world.getBlockState(pos).getValue(orientProp);
+		Orientation no = orientProp.getRotatedState(o, axis);
+		if (no == o) return false;
+		world.setBlockState(pos, getDefaultState().withProperty(orientProp, no));
+		return true;
 	}
 
 	@Override
 	public EnumFacing[] getValidRotations(World world, BlockPos pos) {
-		// TODO Auto-generated method stub
-		return super.getValidRotations(world, pos);
+		return orientProp.rotations();
+	}
+
+	@Override
+	public IBlockState withRotation(IBlockState state, Rotation rot) {
+		if (rot == Rotation.NONE) return state;
+		int i = state.getValue(orientProp).ordinal();
+		Orientation o = Orientation.values()[i & 12 | rot.rotate(i & 3, 4)];
+		return orientProp.getAllowedValues().contains(o) ? state.withProperty(orientProp, o) : state;
+	}
+
+	@Override
+	public IBlockState withMirror(IBlockState state, Mirror mirror) {
+		if (mirror == Mirror.NONE) return state;
+		int i = state.getValue(orientProp).ordinal();
+		Orientation o = Orientation.values()[i & 12 | mirror.mirrorRotation(i & 3, 4)];
+		return orientProp.getAllowedValues().contains(o) ? state.withProperty(orientProp, o) : state;
 	}
 
 }

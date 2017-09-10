@@ -15,6 +15,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -98,6 +99,17 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 
 	public String getName() {
 		return TooltipUtil.translate(this.getBlockType().getUnlocalizedName().replace("tile.", "gui.").concat(".name"));
+	}
+
+	@Override
+	public void updateContainingBlockInfo() {
+		super.updateContainingBlockInfo();
+		blockState = null;
+	}
+
+	@Override
+	public boolean shouldRefresh(World world, BlockPos pos, IBlockState oldState, IBlockState newState) {
+		return newState.getBlock() != oldState.getBlock();
 	}
 
 }
