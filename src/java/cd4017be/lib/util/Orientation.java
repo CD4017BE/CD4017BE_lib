@@ -91,6 +91,22 @@ public enum Orientation implements IStringSerializable {
 		}
 	}
 
+	public Vec3d invRotate(Vec3d vec) {
+		double x, y = vec.yCoord, z;
+		switch(ordinal() & 3) {
+		case 1: x = vec.zCoord; z = -vec.xCoord; break;
+		case 2: x = -vec.xCoord; z = -vec.zCoord; break;
+		case 3: x = -vec.zCoord; z = vec.xCoord; break;
+		default: x = vec.xCoord; z = vec.zCoord;
+		}
+		switch(ordinal() >> 2) {
+		case 1: return new Vec3d(x, -z, y);
+		case 2: return new Vec3d(x, -y, -z);
+		case 3: return new Vec3d(x, z, -y);
+		default: return new Vec3d(x, y, z);
+		}
+	}
+
 	@SideOnly(Side.CLIENT)
 	public ModelRotation getModelRotation() {
 		return ModelRotation.values()[ordinal()];
