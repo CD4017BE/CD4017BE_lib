@@ -28,6 +28,7 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 
 	public BaseTileEntity(IBlockState state) {
 		blockState = state;
+		blockType = blockState.getBlock();
 	}
 
 	public IBlockState getBlockState() {
@@ -68,6 +69,16 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 	public void onChunkUnload() {
 		//make sure that possible reference holders don't think this TileEntity still exists.
 		tileEntityInvalid = true;
+		clearData();
+	}
+
+	@Override
+	public void invalidate() {
+		super.invalidate();
+		clearData();
+	}
+
+	protected void clearData() {
 	}
 
 	@Override
