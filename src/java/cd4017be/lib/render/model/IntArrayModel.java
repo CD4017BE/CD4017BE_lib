@@ -47,8 +47,9 @@ public class IntArrayModel {
 	}
 
 	public static TextureAtlasSprite[] getTextures(Module script) {
-		TextureMap map = Minecraft.getMinecraft().getTextureMapBlocks();
 		Object[] names = (Object[])script.read("textures");
+		if (names == null) return null;
+		TextureMap map = Minecraft.getMinecraft().getTextureMapBlocks();
 		TextureAtlasSprite[] textures = new TextureAtlasSprite[names.length];
 		for (int i = 0; i < textures.length; i++)
 			textures[i] = map.getAtlasSprite((String)names[i]);
@@ -59,7 +60,7 @@ public class IntArrayModel {
 		this(context.quads[0].size());
 		int j = 0;
 		for (Quad quad : context.quads[0]) {
-			TextureAtlasSprite tex = textures[quad.tex];
+			TextureAtlasSprite tex = textures == null ? null : textures[quad.tex];
 			for (double[] vert : quad.vertices) {
 				vertexData[j++] = Float.floatToRawIntBits((float)vert[0] / 16F);	//X
 				vertexData[j++] = Float.floatToRawIntBits((float)vert[1] / 16F);	//Y
@@ -68,8 +69,8 @@ public class IntArrayModel {
 						| (int)MathHelper.clamp(vert[6] * 255D, 0, 255) << 8	//G
 						| (int)MathHelper.clamp(vert[5] * 255D, 0, 255) << 16	//R
 						| (int)MathHelper.clamp(vert[8] * 255D, 0, 255) << 24;	//A
-				vertexData[j++] = Float.floatToRawIntBits(tex.getInterpolatedU(vert[3]));	//U
-				vertexData[j++] = Float.floatToRawIntBits(tex.getInterpolatedV(vert[4]));	//V
+				vertexData[j++] = Float.floatToRawIntBits(tex == null ? (float)vert[3] : tex.getInterpolatedU(vert[3]));	//U
+				vertexData[j++] = Float.floatToRawIntBits(tex == null ? (float)vert[4] : tex.getInterpolatedV(vert[4]));	//V
 				vertexData[j++] = brightness;
 			}
 		}
