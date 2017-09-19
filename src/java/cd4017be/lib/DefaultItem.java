@@ -16,18 +16,16 @@ import cd4017be.lib.util.TooltipUtil;
  *
  * @author CD4017BE
  */
-public class DefaultItem extends Item
-{
-	
-	public DefaultItem(String id)
-	{
+public class DefaultItem extends Item {
+
+	public DefaultItem(String id) {
 		super();
 		this.setRegistryName(id);
-		this.setUnlocalizedName("cd4017be." + id);
+		this.setUnlocalizedName(TooltipUtil.unlocalizedNameFor(this));
 		GameRegistry.register(this);
 		this.init();
 	}
-	
+
 	protected void init() {
 		BlockItemRegistry.registerItemStack(new ItemStack(this), "item." + this.getRegistryName().getResourcePath());
 	}
@@ -48,7 +46,7 @@ public class DefaultItem extends Item
 		}
 		super.addInformation(item, player, list, b);
 	}
-	
+
 	@Override
 	public String getUnlocalizedName(ItemStack item) {
 		String s = super.getUnlocalizedName(item);
@@ -59,5 +57,5 @@ public class DefaultItem extends Item
 	public String getItemStackDisplayName(ItemStack item) {
 		return TooltipUtil.translate(this.getUnlocalizedName(item) + ".name");
 	}
-	
+
 }

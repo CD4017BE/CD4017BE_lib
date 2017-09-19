@@ -9,8 +9,10 @@ import java.util.regex.Pattern;
 
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.translation.I18n;
+import net.minecraftforge.fml.common.registry.IForgeRegistryEntry;
 import cd4017be.api.recipes.RecipeScriptContext;
 import cd4017be.lib.ConfigurationFile;
 import cd4017be.lib.script.Script;
@@ -22,6 +24,13 @@ import cd4017be.lib.script.ScriptFiles.Version;
  */
 @SuppressWarnings("deprecation")
 public class TooltipUtil {
+
+	public static String CURRENT_DOMAIN = "";
+
+	public static String unlocalizedNameFor(IForgeRegistryEntry.Impl<?> obj) {
+		ResourceLocation loc = obj.getRegistryName();
+		return (loc.getResourceDomain().equals(CURRENT_DOMAIN) ? CURRENT_DOMAIN : "cd4017be") + '.' + loc.getResourcePath();
+	}
 
 	private static String ShiftHint, AltHint;
 	private static String FluidDispUnit;

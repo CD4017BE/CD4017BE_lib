@@ -1,5 +1,6 @@
 package cd4017be.lib.block;
 
+import cd4017be.lib.util.TooltipUtil;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraftforge.fml.common.registry.GameRegistry;
@@ -20,7 +21,7 @@ public class BaseBlock extends Block {
 		super(m);
 		this.setRegistryName(id);
 		GameRegistry.register(this);
-		this.setUnlocalizedName("cd4017be." + id);
+		this.setUnlocalizedName(TooltipUtil.unlocalizedNameFor(this));
 		this.setHardness(1.5F);
 		this.setResistance(10F);
 	}
