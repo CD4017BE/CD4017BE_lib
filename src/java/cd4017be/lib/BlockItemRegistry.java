@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package cd4017be.lib;
 
 import net.minecraftforge.fml.relauncher.Side;
@@ -13,6 +9,7 @@ import cd4017be.lib.render.SingleTextureDefinition;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemMeshDefinition;
+import net.minecraft.client.renderer.ItemModelMesher;
 import net.minecraft.client.renderer.block.model.ModelBakery;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.item.Item;
@@ -23,8 +20,8 @@ import net.minecraft.util.ResourceLocation;
  *
  * @author CD4017BE
  */
-public class BlockItemRegistry 
-{
+public class BlockItemRegistry {
+
 	private static HashMap<String, ItemStack> stacks = new HashMap<String, ItemStack>();
 
 	@SideOnly(Side.CLIENT)
@@ -37,11 +34,25 @@ public class BlockItemRegistry
 	}
 
 	@SideOnly(Side.CLIENT)
+	public static void registerRenderBS(Block block, int m0, int m1) {
+		Item item = Item.getItemFromBlock(block);
+		ResourceLocation base = item.getRegistryName();
+		ResourceLocation[] locs = new ResourceLocation[m1 - m0 + 1];
+		ItemModelMesher mesh = Minecraft.getMinecraft().getRenderItem().getItemModelMesher();
+		for (int m = m0; m <= m1; m++) {
+			ModelResourceLocation loc = new ModelResourceLocation(base, "inventory" + (m == 0 ? "" : m));
+			mesh.register(item, m, loc);
+			locs[m - m0] = loc;
+		}
+		ModelBakery.registerItemVariants(item, locs);
+	}
+
+	@SideOnly(Side.CLIENT)
 	public static void registerRender(Item item, ItemMeshDefinition def) {
 		if (def == null) def = new SingleTextureDefinition(item.getRegistryName().toString());
 		Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(item, def);
 	}
-	
+
 	@SideOnly(Side.CLIENT)
 	public static void registerModels(Item item, String... models) {
 		ResourceLocation[] locs = new ResourceLocation[models.length];
@@ -60,24 +71,22 @@ public class BlockItemRegistry
 	public static void registerRender(Block block) {registerRender(block, 0, 0);}
 	@SideOnly(Side.CLIENT)
 	public static void registerModels(Block block, String... models) {registerModels(Item.getItemFromBlock(block), models);}
-	
+
 	/**
 	 * Registers a special ItemStack. Used for Items with sub types. 
 	 * @param item
 	 * @param name
 	 */
-	public static void registerItemStack(ItemStack item, String name)
-	{
+	public static void registerItemStack(ItemStack item, String name) {
 		stacks.put(name, item);
 	}
-	
+
 	/**
 	 * Registers multiple ItemStacks of the same Item for different damage values.
 	 * @param startItem 
 	 * @param names
 	 */
-	public static void registerMetadataItemStacks(ItemStack startItem, String... names)
-	{
+	public static void registerMetadataItemStacks(ItemStack startItem, String... names) {
 		int s = startItem.getItemDamage();
 		for (int i = 0; i < names.length; i++) {
 			if (names[i] == null) continue;
@@ -86,29 +95,27 @@ public class BlockItemRegistry
 			stacks.put(names[i], item);
 		}
 	}
-	
+
 	/**
 	 * @param name
 	 * @param n stacksize
 	 * @return ItemStack registered for the given name with given stacksize.
 	 */
-	public static ItemStack stack(String name, int n)
-	{
+	public static ItemStack stack(String name, int n) {
 		ItemStack item = stacks.get(name);
 		if (item == null) return ItemStack.EMPTY;
 		ItemStack ret = item.copy();
 		ret.setCount(n);
 		return ret;
 	}
-	
+
 	/**
 	 * @param name
 	 * @param n stacksize
 	 * @param m damage
 	 * @return ItemStack registered for the given name with given stacksize and damage.
 	 */
-	public static ItemStack stack(String name, int n, int m)
-	{
+	public static ItemStack stack(String name, int n, int m) {
 		ItemStack item = stacks.get(name);
 		if (item == null) return ItemStack.EMPTY;
 		ItemStack ret = item.copy();
@@ -116,5 +123,5 @@ public class BlockItemRegistry
 		ret.setItemDamage(m);
 		return ret;
 	}
-	
+
 }
