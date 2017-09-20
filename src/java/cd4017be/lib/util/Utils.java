@@ -386,6 +386,24 @@ public class Utils {
 	}
 
 	/**
+	 * Notify neighboring block(s) of TileEntity change
+	 * @param te the TileEntity that changed
+	 * @param side the side on which a neighbor should be notified or null to notify on all sides.
+	 */
+	public static void notifyNeighborTile(TileEntity te, EnumFacing side) {
+		if (side != null) {
+			BlockPos pos = te.getPos().offset(side);
+			World world = te.getWorld();
+			if (world == null) return;
+			if (world.isBlockLoaded(pos)) {
+				IBlockState state = world.getBlockState(pos);
+				state.getBlock().onNeighborChange(world, pos, te.getPos());			
+			}
+		} else for (EnumFacing f : EnumFacing.VALUES)
+			notifyNeighborTile(te, f);
+	}
+
+	/**
 	 * forward or backward cycle a number stored in some sub-bits of an integer
 	 * @param cfg storage integer
 	 * @param i start bit index

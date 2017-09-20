@@ -40,6 +40,11 @@ public class MultiblockTile<C extends MultiblockComp<C, N>, N extends SharedNetw
 	}
 
 	@Override
+	public void neighborBlockChange(Block b, BlockPos src) {
+		comp.updateCon = true;
+	}
+
+	@Override
 	public void validate() {
 		super.validate();
 		comp.setUID(SharedNetwork.ExtPosUID(pos, world.provider.getDimension()));
@@ -56,8 +61,5 @@ public class MultiblockTile<C extends MultiblockComp<C, N>, N extends SharedNetw
 		super.onChunkUnload();
 		if (comp.network != null) comp.network.remove(comp);
 	}
-
-	@Override
-	public void neighborBlockChange(Block b, BlockPos src) {}
 
 }
