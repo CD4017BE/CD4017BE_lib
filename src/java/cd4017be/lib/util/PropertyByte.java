@@ -30,4 +30,14 @@ public class PropertyByte implements IUnlistedProperty<Byte> {
 		return value.toString();
 	}
 
+	/**
+	 * convenience method to cast an int to the required property element type
+	 * @param i value
+	 * @return Byte value casted as T
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T> T cast(int i) {
+		return (T)Byte.valueOf((byte)i);
+	}
+
 }
