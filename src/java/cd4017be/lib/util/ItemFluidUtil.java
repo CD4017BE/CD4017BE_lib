@@ -1,6 +1,7 @@
 package cd4017be.lib.util;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
@@ -64,6 +65,7 @@ public class ItemFluidUtil {
 		int m = Math.min(items.length, list.tagCount());
 		for (int i = 0; i < m; i++)
 			items[i] = new ItemStack(list.getCompoundTagAt(i));
+		Arrays.fill(items, m, items.length, ItemStack.EMPTY);
 	}
 
 	public static NBTTagList saveItems(ItemStack[] items) {
