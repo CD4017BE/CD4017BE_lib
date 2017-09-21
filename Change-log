@@ -1,4 +1,12 @@
-The Lib
+v5.0.2:
+Changes:
+- fixed model bugs
+- fixed TileEntity neighbor notification
+- model system improvements
+- fixed null-ItemStack bugs
+Dependencies:
+- for MC-1.11.2
+- forge-13.20.0.2315 (or newer)
 
 ################################# VERSIONS 1.9.4 #################################
 4.1.1 Changes (from 1.8.9-3.2.2):
