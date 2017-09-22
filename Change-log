@@ -1,3 +1,14 @@
+v5.0.3:
+Changes:
+- support using unit scale formatting in localization directly
+- allow all item damage variants of DefaultItem to share a common tooltip
+- added template for Block and Item with generic metadata states
+- added a 'tags must be equal' mode to NBTRecipe
+- bug fixes
+Dependencies:
+- for MC-1.11.2
+- forge-13.20.0.2315 (or newer)
+
 v5.0.2:
 Changes:
 - fixed model bugs
