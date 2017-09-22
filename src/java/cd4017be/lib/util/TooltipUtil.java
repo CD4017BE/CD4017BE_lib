@@ -168,9 +168,23 @@ public class TooltipUtil {
 
 	private static final HashMap<String, String> variables = new HashMap<String, String>();
 	private static final Pattern varInsertion = Pattern.compile("\\\\<([\\w:]+)>");
+	private static final Pattern variantReplacement = Pattern.compile("\\:(\\d+)");
+	private static String lastKey, lastValue;
 
 	public static String getConfigFormat(String s) {
-		s = I18n.translateToLocal(s).trim().replace("\\n", "\n");
+		if (s.equals(lastKey)) return lastValue; //speed up tooltip rendering performance
+		lastKey = s;
+		String t = I18n.translateToLocal(s);
+		if (t.equals(s)) {
+			Matcher m = variantReplacement.matcher(s);
+			if (!m.find()) return lastValue = s;
+			String n = m.group(1);
+			s = s.substring(0, m.start(1)) + "i" + s.substring(m.end(1));
+			t = I18n.translateToLocal(s);
+			if (t.equals(s)) return lastValue = s;
+			t = t.replace("\\i", n);
+		}
+		s = t.trim().replace("\\n", "\n");
 		Matcher m = varInsertion.matcher(s);
 		String s1 = "";
 		while (m.find()) {
@@ -180,24 +194,7 @@ public class TooltipUtil {
 				m.reset(s = s.substring(m.end()));
 			}
 		}
-		return s1 + s;
-		/*
-		int p = 0, q, x;
-		String id, repl;
-		while ((q = s.indexOf("\\<", p)) >= p && (p = s.indexOf(">", q)) > q) {
-			id = s.substring(q + 2, p);
-			x = id.indexOf(":");
-			repl = x <= 0 ? id : id.substring(0, x);
-			for (ConfigurationFile cfg : configurations)
-				if (cfg.getObject(repl) != null) {
-					repl = formatReference(id, cfg);
-					break;
-				}
-			s = s.replace("\\<" + id + ">", repl);
-			p = q + repl.length();
-		}
-		return s;
-		*/
+		return lastValue = s1 + s;
 	}
 
 	public static String format(String s, Object... args) {

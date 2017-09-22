@@ -42,8 +42,8 @@ public class DefaultItemBlock extends ItemBlock
 			String s1 = TooltipUtil.getConfigFormat(sA);
 			if (!s1.equals(sA)) list.addAll(Arrays.asList(s1.split("\n")));
 		} else {
-			if (TooltipUtil.hasTranslation(s)) list.add(TooltipUtil.getShiftHint());
-			if (TooltipUtil.hasTranslation(s + "A")) list.add(TooltipUtil.getAltHint());
+			if (TooltipUtil.hasTranslation(s) || (hasSubtypes && TooltipUtil.hasTranslation(block.getUnlocalizedName() + ":i.tip"))) list.add(TooltipUtil.getShiftHint());
+			if (TooltipUtil.hasTranslation(s + "A") || (hasSubtypes && TooltipUtil.hasTranslation(block.getUnlocalizedName() + ":i.tipA"))) list.add(TooltipUtil.getAltHint());
 		}
 		super.addInformation(item, player, list, b);
 	}
