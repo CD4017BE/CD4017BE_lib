@@ -169,6 +169,7 @@ public class TooltipUtil {
 	private static final HashMap<String, String> variables = new HashMap<String, String>();
 	private static final Pattern varInsertion = Pattern.compile("\\\\<([\\w:]+)>");
 	private static final Pattern variantReplacement = Pattern.compile("\\:(\\d+)");
+	private static final Pattern numberFormat = Pattern.compile("%(?:(\\d+)\\$)?(?:(-?\\d?)\\.(\\d+))?u");
 	private static String lastKey, lastValue;
 
 	public static String getConfigFormat(String s) {
@@ -200,7 +201,24 @@ public class TooltipUtil {
 	public static String format(String s, Object... args) {
 		s = I18n.translateToLocal(s).trim().replace("\\n", "\n");
 		try {
-			return String.format(s, args);
+			Matcher m = numberFormat.matcher(s);
+			String s1 = "";
+			while (m.find()) {
+				double val = 0;
+				int exp = 0, n = 3;
+				String g = m.group(1);
+				if (g != null) val = (Double)args[Integer.parseInt(g)];
+				else for (Object o : args)
+					if (o instanceof Double) {
+						val = (Double)o;
+						break;
+					}
+				if ((g = m.group(2)) != null && !g.isEmpty()) exp = Integer.parseInt(g);
+				if ((g = m.group(3)) != null) n = Integer.parseInt(g);
+				s1 += s.substring(0, m.start()) + formatNumber(val, n, exp);
+				m.reset(s = s.substring(m.end()));
+			}
+			return String.format(s1 + s, args);
 		} catch (IllegalFormatException e) {
 			return s + "\n" + e.toString();
 		}
