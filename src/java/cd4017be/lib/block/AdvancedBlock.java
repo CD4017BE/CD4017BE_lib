@@ -31,7 +31,7 @@ public class AdvancedBlock extends BaseBlock {
 	public final Class<? extends TileEntity> tileEntity;
 	protected EnumBlockRenderType renderType;
 	protected AxisAlignedBB[] boundingBox;
-	/**1:NeighborAware, 2:BreakCleanup, 4:Interactive, 8:PlaceHarvest, 16:Redstone, 32:Collision, 64:hasGui, 65536:Opaque */
+	/**1:NeighborAware, 2:BreakCleanup, 4:Interactive, 8:PlaceHarvest, 16:Redstone, 32:Collision, 64:hasGui, 65536:nonOpaque */
 	protected int flags;
 
 	/**
@@ -45,7 +45,7 @@ public class AdvancedBlock extends BaseBlock {
 		super(id, m);
 		this.setSoundType(sound);
 		this.fullBlock = (flags & 1) == 0;
-		this.flags = ~flags << 16;
+		this.flags = flags << 15;
 		this.tileEntity = tile;
 		if (tile != null) {
 			if (INeighborAwareTile.class.isAssignableFrom(tile)) this.flags |= 1;
@@ -277,7 +277,7 @@ public class AdvancedBlock extends BaseBlock {
 
 	@Override
 	public boolean isOpaqueCube(IBlockState state) {
-		return (flags & 65536) != 0;
+		return (flags & 65536) == 0;
 	}
 
 	@Override
