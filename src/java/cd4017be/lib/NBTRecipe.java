@@ -1,9 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package cd4017be.lib;
 
 import net.minecraft.inventory.InventoryCrafting;
@@ -21,22 +15,20 @@ import net.minecraftforge.oredict.ShapedOreRecipe;
 /**
  * @author CD4017BE
  */
-public class NBTRecipe extends ShapedOreRecipe
-{
-	
+public class NBTRecipe extends ShapedOreRecipe {
+
 	private final String[] nbtVars;
 	private final byte[] addTypes;
-	
+
 	/**
 	 * Like a normal ShapedOreRecipe.
 	 * plus: The specified NBT-Tags will be applied to the recipe result. <>
-	 * Format for nbtTypes: "#tagname, +tagname, ..." <> apply types: {# = override value, + = add values, < = min value, > = max value}
+	 * Format for nbtTypes: "#tagname, +tagname, ..." <> apply types: {# = override value, + = add values, < = min value, > = max value, = = clear all nbt unless tags are equal on all ingreds}
 	 * @param out Recipe output
 	 * @param nbtTypes NBT-Tags
 	 * @param recipe 
 	 */
-	public NBTRecipe(ItemStack out, String nbtTypes, Object... recipe)
-	{
+	public NBTRecipe(ItemStack out, String nbtTypes, Object... recipe) {
 		super(out, recipe);
 		this.nbtVars = nbtTypes.split(",");
 		this.addTypes = new byte[this.nbtVars.length];
@@ -46,6 +38,7 @@ public class NBTRecipe extends ShapedOreRecipe
 			else if (s.startsWith("+")) addTypes[i] = 1; //add
 			else if (s.startsWith(">")) addTypes[i] = 3; //max value
 			else if (s.startsWith("<")) addTypes[i] = 4; //min value
+			else if (s.startsWith("=")) addTypes[i] = 5; //only use when equal
 			else {
 				addTypes[i] = 0; //override
 				nbtVars[i] = s;
@@ -56,26 +49,29 @@ public class NBTRecipe extends ShapedOreRecipe
 	}
 
 	@Override
-	public ItemStack getCraftingResult(InventoryCrafting inv) 
-	{
+	public ItemStack getCraftingResult(InventoryCrafting inv) {
 		ItemStack out = this.getRecipeOutput().copy();
 		if (!out.hasTagCompound()) out.setTagCompound(new NBTTagCompound());
 		for (int i = 0; i < inv.getSizeInventory(); i++) {
 			ItemStack stack = inv.getStackInSlot(i);
-			if (stack.getTagCompound() != null)
+			if (stack.hasTagCompound())
 				for (int j = 0; j < nbtVars.length; j++)
-					if (stack.getTagCompound().hasKey(nbtVars[j]))
-						this.applyTag(out.getTagCompound(), stack.getTagCompound().getTag(nbtVars[j]), j, out.getCount());
+					if (stack.getTagCompound().hasKey(nbtVars[j]) && !applyTag(out.getTagCompound(), stack.getTagCompound().getTag(nbtVars[j]), j, out.getCount())) {
+						out.setTagCompound(null);
+						return out;
+					}
 		}
 		return out;
 	}
-	
-	private void applyTag(NBTTagCompound nbt, NBTBase tag, int idx, int stacksize)
-	{
+
+	private boolean applyTag(NBTTagCompound nbt, NBTBase tag, int idx, int stacksize) {
 		String var = nbtVars[idx];
 		byte type = addTypes[idx];
 		if (type == 0){
 			if (!nbt.hasKey(var)) nbt.setTag(var, tag);
+		} else if (type == 5) {
+			if (!nbt.hasKey(var)) nbt.setTag(var, tag);
+			else return nbt.getTag(var).equals(tag);
 		} else if (tag instanceof NBTTagByte) {
 			nbt.setByte(var, (byte)this.applyValue(nbt.getByte(var), ((NBTTagByte)tag).getByte(), type, stacksize));
 		} else if (tag instanceof NBTTagShort) {
@@ -89,16 +85,16 @@ public class NBTRecipe extends ShapedOreRecipe
 		} else if (tag instanceof NBTTagDouble) {
 			nbt.setDouble(var, this.applyValue(nbt.getDouble(var), ((NBTTagDouble)tag).getDouble(), type, stacksize));
 		} else nbt.setTag(var, tag);
+		return true;
 	}
-	
-	private double applyValue(double old, double v, byte type, int stacksize)
-	{
+
+	private double applyValue(double old, double v, byte type, int stacksize) {
 		switch (type) {
-			case 1: return old + v;
+			case 1: return old + v / (double)stacksize;
 			case 2: return Math.max(old, v);
 			case 3: return Math.min(old, v);
 			default: return v;
 		}
 	}
-	
+
 }
