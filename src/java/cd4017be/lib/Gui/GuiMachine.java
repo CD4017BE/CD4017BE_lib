@@ -241,6 +241,17 @@ public abstract class GuiMachine extends GuiContainer {
 		GlStateManager.color((float)(c >> 16 & 0xff) / 255F, (float)(c >> 8 & 0xff) / 255F, (float)(c & 0xff) / 255F, (float)(c >> 24 & 0xff) / 255F);
 	}
 
+	/**
+	 * sends a packet to the server that is addressed to this GUI's data provider and contains a single byte of payload.<br>
+	 * (convenience method for handling button events)
+	 * @param c value to send
+	 */
+	public void sendCommand(int c) {
+		PacketBuffer buff = BlockGuiHandler.getPacketTargetData(((DataContainer)inventorySlots).data.pos());
+		buff.writeByte(c);
+		BlockGuiHandler.sendPacketToServer(buff);
+	}
+
 	public void setFocus(int id) {
 		if (focus >= 0 && focus < guiComps.size()) guiComps.get(focus).unfocus();
 		focus = id >= 0 && id < guiComps.size() && guiComps.get(id).focus() ? id : -1;

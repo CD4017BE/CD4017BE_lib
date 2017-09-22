@@ -8,11 +8,11 @@ import net.minecraftforge.fluids.capability.FluidTankProperties;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidTankProperties;
 
-public class LinkedTank implements IFluidHandler {
+public class LinkedTank implements IFluidHandler, ITankContainer {
 
 	private final Supplier<FluidStack> get;
 	private final Consumer<FluidStack> set;
-	public final int cap;
+	public int cap;
 
 	public LinkedTank(int cap, Supplier<FluidStack> get, Consumer<FluidStack> set) {
 		this.cap = cap;
@@ -58,6 +58,26 @@ public class LinkedTank implements IFluidHandler {
 		if (fluid.amount < m) m = fluid.amount;
 		if (doDrain) set.accept((fluid.amount -= m) > 0 ? fluid : null);
 		return new FluidStack(fluid, m);
+	}
+
+	@Override
+	public int getTanks() {
+		return 1;
+	}
+
+	@Override
+	public FluidStack getTank(int i) {
+		return get.get();
+	}
+
+	@Override
+	public int getCapacity(int i) {
+		return cap;
+	}
+
+	@Override
+	public void setTank(int i, FluidStack fluid) {
+		set.accept(fluid);
 	}
 
 }

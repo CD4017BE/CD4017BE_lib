@@ -1,5 +1,7 @@
 package cd4017be.lib.templates;
 
+import java.util.List;
+
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.ItemHandlerHelper;
@@ -45,6 +47,13 @@ public abstract class AbstractInventory implements IItemHandlerModifiable {
 
 	public int insertAm(int slot, ItemStack item) {
 		return Math.min(64, item.getMaxStackSize());
+	}
+
+	public void addToList(List<ItemStack> list) {
+		for (int i = 0; i < getSlots(); i++) {
+			ItemStack stack = getStackInSlot(i);
+			if (!stack.isEmpty()) list.add(stack);
+		}
 	}
 
 }
