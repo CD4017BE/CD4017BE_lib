@@ -36,9 +36,9 @@ public class IntArrayModel {
 				vertexData[j++] = Float.floatToRawIntBits((float)vert[0] / 16F);	//X
 				vertexData[j++] = Float.floatToRawIntBits((float)vert[1] / 16F);	//Y
 				vertexData[j++] = Float.floatToRawIntBits((float)vert[2] / 16F);	//Z
-				vertexData[j++] = (int)MathHelper.clamp(vert[7] * 255D, 0, 255)	//B
+				vertexData[j++] = (int)MathHelper.clamp(vert[5] * 255D, 0, 255)	//R
 						| (int)MathHelper.clamp(vert[6] * 255D, 0, 255) << 8	//G
-						| (int)MathHelper.clamp(vert[5] * 255D, 0, 255) << 16	//R
+						| (int)MathHelper.clamp(vert[7] * 255D, 0, 255) << 16	//B
 						| (int)MathHelper.clamp(vert[8] * 255D, 0, 255) << 24;	//A
 				vertexData[j++] = Float.floatToRawIntBits((float)vert[3]);	//U
 				vertexData[j++] = Float.floatToRawIntBits((float)vert[4]);	//V

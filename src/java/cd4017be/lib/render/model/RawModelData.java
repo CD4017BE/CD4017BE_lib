@@ -69,9 +69,9 @@ public class RawModelData implements IModel {
 						data[j++] = Float.floatToRawIntBits((float)vert[0] / 16F);	//X
 						data[j++] = Float.floatToRawIntBits((float)vert[1] / 16F);	//Y
 						data[j++] = Float.floatToRawIntBits((float)vert[2] / 16F);	//Z
-						data[j++] = (int)MathHelper.clamp(vert[7] * 255D, 0, 255)		//B
+						data[j++] = (int)MathHelper.clamp(vert[5] * 255D, 0, 255)		//R
 								| (int)MathHelper.clamp(vert[6] * 255D, 0, 255) << 8	//G
-								| (int)MathHelper.clamp(vert[5] * 255D, 0, 255) << 16	//R
+								| (int)MathHelper.clamp(vert[7] * 255D, 0, 255) << 16	//B
 								| (int)MathHelper.clamp(vert[8] * 255D, 0, 255) << 24;	//A
 						data[j++] = Float.floatToRawIntBits((float)vert[3]);	//U
 						data[j++] = Float.floatToRawIntBits((float)vert[4]);	//V
