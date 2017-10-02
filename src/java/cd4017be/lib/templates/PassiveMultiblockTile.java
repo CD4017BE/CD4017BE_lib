@@ -36,6 +36,10 @@ public class PassiveMultiblockTile<C extends MultiblockComp<C, N>, N extends Sha
 
 	@Override
 	public void neighborBlockChange(Block b, BlockPos src) {
+		if (!comp.updateCon) {
+			comp.updateCon = true;
+			TickRegistry.instance.updates.add(this);
+		}
 	}
 
 	@Override
