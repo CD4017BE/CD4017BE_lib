@@ -1,3 +1,12 @@
+v5.0.4
+Changes:
+- fix passive multiblock TileEntities not getting block changes
+- add lightning render utility
+- inventory bug fixes
+Dependencies:
+- for MC-1.11.2
+- forge-13.20.0.2315 (or newer)
+
 v5.0.3:
 Changes:
 - support using unit scale formatting in localization directly
@@ -113,4 +122,3 @@ Changes 2.7.1:
 Changes 2.7.2:
 -improved Oredictionary compatibility in AutomationRecipes-API
 -fixed render problem in BlockPipe-template
-
