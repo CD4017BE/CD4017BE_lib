@@ -35,6 +35,7 @@ public class ItemFluidUtil {
 	};
 
 	public static void loadInventory(NBTTagList list, ItemStack[] inv) {
+		Arrays.fill(inv, ItemStack.EMPTY);
 		for (int i = 0; i < list.tagCount(); i++) {
 			NBTTagCompound tag = list.getCompoundTagAt(i);
 			int s = tag.getByte("slot") & 0xff;

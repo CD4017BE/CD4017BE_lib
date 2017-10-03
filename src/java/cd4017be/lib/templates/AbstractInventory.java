@@ -42,11 +42,11 @@ public abstract class AbstractInventory implements IItemHandlerModifiable {
 
 	@Override
 	public int getSlotLimit(int slot) {
-		return insertAm(slot, ItemStack.EMPTY);
+		return 64;
 	}
 
 	public int insertAm(int slot, ItemStack item) {
-		return Math.min(64, item.getMaxStackSize());
+		return Math.min(getSlotLimit(slot), item.getMaxStackSize());
 	}
 
 	public void addToList(List<ItemStack> list) {
