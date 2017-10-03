@@ -6,8 +6,14 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 
 import cd4017be.lib.util.Orientation;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.block.model.ModelRotation;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -60,6 +66,14 @@ public class Util {
 		FloatBuffer mat = matrices[o.ordinal()];
 		mat.rewind();
 		GL11.glMultMatrix(mat);
+	}
+
+	public static void luminate(TileEntity te, EnumFacing side, int b) {
+		BlockPos pos = side == null ? te.getPos() : te.getPos().offset(side);
+		World world = te.getWorld();
+		IBlockState state = world.getBlockState(pos);
+		int l = world.getCombinedLight(pos, Math.max(state.getLightValue(world, pos), b));
+		OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, l & 0xffff, l >> 16);
 	}
 
 	public static void rotate(int[] data, int px, ModelRotation rot) {
