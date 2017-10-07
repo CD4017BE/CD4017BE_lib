@@ -15,6 +15,7 @@ import java.util.function.Supplier;
 
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.client.renderer.texture.TextureMap;
@@ -131,7 +132,8 @@ public abstract class GuiMachine extends GuiContainer {
 			Slot slot = this.getSlotUnderMouse();
 			ItemStack itemstack = this.mc.player.inventory.getItemStack();
 			if (slot instanceof SlotHolo && slot != lastClickSlot) {
-				if (itemstack == null || slot.getStack() == null || itemstack.isItemEqual(slot.getStack()))
+				ItemStack slotstack = slot.getStack();
+				if (itemstack.isEmpty() || slotstack.isEmpty()|| itemstack.isItemEqual(slotstack))
 					this.handleMouseClick(slot, slot.slotNumber, b, ClickType.PICKUP);
 			} else super.mouseClickMove(x, y, b, t);
 			lastClickSlot = slot;
@@ -183,6 +185,7 @@ public abstract class GuiMachine extends GuiContainer {
 
 	protected void drawSideCube(int x, int y, int s, byte dir) {
 		GlStateManager.enableDepth();
+		RenderHelper.enableGUIStandardItemLighting();
 		this.drawGradientRect(x, y, x + 64, y + 64, 0xff000000, 0xff000000);
 		this.mc.renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
 		GL11.glPushMatrix();
@@ -195,6 +198,7 @@ public abstract class GuiMachine extends GuiContainer {
 		IGuiData tile = ((DataContainer)this.inventorySlots).data;
 		this.mc.getBlockRendererDispatcher().renderBlockBrightness(tile.pos().getY() >= 0 ? player.world.getBlockState(tile.pos()) : Blocks.GLASS.getDefaultState(), 1);
 		//GL11.glRotatef(-90, 0, 1, 0);
+		GlStateManager.disableLighting();
 		this.mc.renderEngine.bindTexture(LIB_TEX);
 		Vec3 p = Vec3.Def(0.5, 0.5, 0.5), a, b;
 		switch(s) {
