@@ -80,6 +80,30 @@ public class ItemFluidUtil {
 		return list;
 	}
 
+	/**
+	 * writes an ItemStack to NBT using 32 bit stacksize resolution
+	 * @param item
+	 * @return
+	 */
+	public static NBTTagCompound saveItemHighRes(ItemStack item) {
+		NBTTagCompound nbt = new NBTTagCompound();
+		item.writeToNBT(nbt);
+		nbt.removeTag("Count");
+		nbt.setInteger("Num", item.getCount());
+		return nbt;
+	}
+
+	/**
+	 * loads an ItemStack from NBT using 32 bit stacksize resolution
+	 * @param nbt
+	 * @return
+	 */
+	public static ItemStack loadItemHighRes(NBTTagCompound nbt) {
+		ItemStack item = new ItemStack(nbt);
+		item.setCount(nbt.getInteger("Num"));
+		return item;
+	}
+
 	public static NBTTagList saveFluids(FluidStack[] fluids) {
 		NBTTagList list = new NBTTagList();
 		for (FluidStack fluid : fluids)
