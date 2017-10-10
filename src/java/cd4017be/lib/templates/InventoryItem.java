@@ -1,10 +1,11 @@
 package cd4017be.lib.templates;
 
+import cd4017be.lib.Gui.ItemGuiData.IInventoryItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.item.ItemStack;
 
-public class InventoryItem extends AbstractInventory {
+public class InventoryItem extends AbstractInventory implements IInventoryItem {
 
 	private final InventoryPlayer ref;
 	private final IItemInventory inv;
@@ -36,6 +37,7 @@ public class InventoryItem extends AbstractInventory {
 			inv.saveInventory(item, ref.player, cache);
 	}
 
+	@Override
 	public void update() {
 		ItemStack item = ref.mainInventory.get(ref.currentItem);
 		if (item.getItem() == inv) {

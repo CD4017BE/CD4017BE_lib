@@ -6,15 +6,15 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.BlockPos;
+import net.minecraftforge.items.IItemHandlerModifiable;
 import cd4017be.lib.Gui.DataContainer.IGuiData;
-import cd4017be.lib.templates.InventoryItem;
 import cd4017be.lib.util.TooltipUtil;
 
 public class ItemGuiData implements IGuiData {
 
 	protected final Item item;
 	private ItemStack lastState = ItemStack.EMPTY;
-	protected InventoryItem inv;
+	protected IInventoryItem inv;
 
 	public ItemGuiData(Item item) {
 		this.item = item;
@@ -69,6 +69,10 @@ public class ItemGuiData implements IGuiData {
 	@Override
 	public String getName() {
 		return TooltipUtil.translate(item.getUnlocalizedName() + ".name");
+	}
+
+	public interface IInventoryItem extends IItemHandlerModifiable {
+		void update();
 	}
 
 }
