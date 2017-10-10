@@ -1,8 +1,6 @@
 package cd4017be.lib;
 
 import java.util.ArrayList;
-import java.util.Map.Entry;
-
 import cd4017be.lib.block.AdvancedBlock.INeighborAwareTile;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
@@ -68,8 +66,7 @@ public class TickRegistry {
 				loadedS = world.isBlockLoaded(cp.getBlock(0, 0, 16)),
 				loadedW = world.isBlockLoaded(cp.getBlock(-1, 0, 0)),
 				loadedE = world.isBlockLoaded(cp.getBlock(16, 0, 0));
-		for (Entry<BlockPos, TileEntity> e : chunk.getTileEntityMap().entrySet()) {
-			BlockPos pos = e.getKey();
+		for (BlockPos pos : chunk.getTileEntityMap().keySet()) {
 			//only check for TileEntitys that sit on the chunk border
 			int x = pos.getX() & 15, z = pos.getZ() & 15;
 			if (z == 0 && loadedN) notifyNeighborTile(world, pos, EnumFacing.NORTH);
@@ -84,6 +81,18 @@ public class TickRegistry {
 		//only do it for TileEntities that explicitly want notification to not screw up other mods
 		if (te instanceof INeighborAwareTile)
 			((INeighborAwareTile)te).neighborTileChange(pos);
+	}
+
+	/**
+	 * since MC-1.11 TileEntities are by default not invalidated when their chunk unloads which causes some problems when working with references to other TileEntity instances. <br>
+	 * So they are quietly invalidated here to fix that (in the hope it won't screw things up).
+	 */
+	@SubscribeEvent
+	public void chunkUnload(ChunkEvent.Unload ev) {
+		for (TileEntity te : ev.getChunk().getTileEntityMap().values())
+			//set field directly instead of calling invalidate() as modders may have added additional logic to that method
+			//which was eventually only intended for regular TileEntity removal.
+			te.tileEntityInvalid = true;
 	}
 
 }
