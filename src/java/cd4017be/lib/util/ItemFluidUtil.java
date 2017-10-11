@@ -134,15 +134,16 @@ public class ItemFluidUtil {
 		ItemStack stack;
 		int n, m = 0;
 		for (int i = 0; i < src.getSlots(); i++) {
-			stack = src.extractItem(i, 65536, true);
-			if (extr != null) stack = extr.getExtract(stack, src);
-			if (stack.getCount() == 0) continue;
-			if (ins == null) n = stack.getCount();
-			else if ((n = ins.insertAmount(stack, dst)) == 0) continue;
-			else stack = ItemHandlerHelper.copyStackWithSize(stack, n);
-			n -= ItemHandlerHelper.insertItemStacked(dst, stack, false).getCount();
- 			src.extractItem(i, n, false);
- 			m += n;
+			if ((n = (stack = src.extractItem(i, 65536, true)).getCount()) == 0) continue;
+			if (extr != null && (n = (stack = extr.getExtract(stack, src)).getCount()) == 0) continue;
+			if (ins != null) {
+				if ((n = ins.insertAmount(stack, dst)) == 0) continue;
+				stack = ItemHandlerHelper.copyStackWithSize(stack, n);
+			}
+ 			if ((n -= ItemHandlerHelper.insertItemStacked(dst, stack, false).getCount()) > 0) {
+ 				src.extractItem(i, n, false);
+ 				m += n;
+ 			}
 		}
 		return m;
 	}
