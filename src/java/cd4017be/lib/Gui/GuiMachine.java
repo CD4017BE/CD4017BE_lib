@@ -721,13 +721,23 @@ public abstract class GuiMachine extends GuiContainer {
 
 	public class InfoTab extends GuiComp<Object> {
 
-		final String[] headers;
+		final String[] headers, keys;
 		int page = 0;
 
 		public InfoTab(int id, int px, int py, int w, int h, String tooltip) {
 			super(id, px, py, w, h);
 			setTooltip(tooltip);
 			headers = TooltipUtil.translate("gui.cd4017be." + tooltip).split("\n");
+			keys = new String[headers.length];
+			for (int i = 0; i < keys.length; i++) {
+				String s = headers[i];
+				int p = s.indexOf('@');
+				if (p < 0) keys[i] = "gui.cd4017be." + tooltip + i;
+				else {
+					keys[i] = "gui.cd4017be." + s.substring(p + 1).trim();
+					headers[i] = s.substring(0, p);
+				}
+			}
 		}
 
 		@Override
@@ -739,7 +749,7 @@ public abstract class GuiMachine extends GuiContainer {
 				s += headers[i] + ChatFormatting.PREFIX_CODE + ChatFormatting.RESET.getChar() + " | ";
 			}
 			list.add(s.substring(0, s.length() - 3));
-			for (String l : TooltipUtil.getConfigFormat("gui.cd4017be." + tooltip + page).split("\n"))
+			for (String l : TooltipUtil.getConfigFormat(keys[page]).split("\n"))
 				list.add(l);
 			drawHoveringText(list, mx, my);
 		}

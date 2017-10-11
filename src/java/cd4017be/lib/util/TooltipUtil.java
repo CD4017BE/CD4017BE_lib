@@ -37,6 +37,7 @@ public class TooltipUtil {
 	private static String EnergyDispUnit;
 	private static String PowerDispUnit;
 	private static String LinkPosFormat;
+	private static String LinkPosFormat1;
 
 	public static String getShiftHint() {
 		if (ShiftHint == null){
@@ -86,6 +87,14 @@ public class TooltipUtil {
 			if (LinkPosFormat == "cd4017be.linkPos") LinkPosFormat = "Link: x=%d y=%d z=%d %s";
 		}
 		return String.format(LinkPosFormat, pos.getX(), pos.getY(), pos.getZ(), side != null ? sides[side.ordinal()] : "");
+	}
+
+	public static String formatLink(BlockPos pos, EnumFacing side, int dim) {
+		if (LinkPosFormat1 == null) {
+			LinkPosFormat1 = I18n.translateToLocal("cd4017be.linkPos1");
+			if (LinkPosFormat1 == "cd4017be.linkPos1") LinkPosFormat1 = "Link: x=%d y=%d z=%d %s @dim %d";
+		}
+		return String.format(LinkPosFormat1, pos.getX(), pos.getY(), pos.getZ(), side != null ? sides[side.ordinal()] : "", dim);
 	}
 
 	public static void addConfigReference(ConfigurationFile cfg) {
