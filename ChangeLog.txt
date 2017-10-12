@@ -1,3 +1,14 @@
+v5.0.5
+Changes:
+- some added utility
+- supporting usage of more abstract Inventories for Item-GUIs- fixed some serious item multiplication bugs
+- fixed HoloSlot dragging
+- fixed lightning bug in side config overlay
+- fixed some problems with TileEntity invalidation
+Dependencies:
+- for MC-1.11.2
+- forge-13.20.0.2315 (or newer)
+
 v5.0.4
 Changes:
 - fix passive multiblock TileEntities not getting block changes
