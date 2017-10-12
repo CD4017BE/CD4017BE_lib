@@ -7,7 +7,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:2.2-SNAPSHOT'
+        classpath "net.minecraftforge.gradle:ForgeGradle:${snapshot}-SNAPSHOT"
     }
 }
 apply plugin: 'net.minecraftforge.gradle.forge'
@@ -23,8 +23,8 @@ version = "${mc_version}-${lib_version}"
 group= "com.cd4017be.lib" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "CD4017BE_lib"
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+sourceCompatibility = "${java_version}"
+targetCompatibility = "${java_version}"
 
 sourceSets {
     main {
