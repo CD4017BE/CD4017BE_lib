@@ -65,7 +65,8 @@ public abstract class VariantBlock extends AdvancedBlock {
 	}
 
 	@Override
-	public void getSubBlocks(Item item, CreativeTabs tab, NonNullList<ItemStack> list) {
+	public void getSubBlocks(CreativeTabs tab, NonNullList<ItemStack> list) {
+		Item item = Item.getItemFromBlock(this);
 		for (int i : prop.getAllowedValues())
 			list.add(new ItemStack(item, 1, i));
 	}

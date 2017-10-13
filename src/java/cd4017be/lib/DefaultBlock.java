@@ -21,7 +21,7 @@ public class DefaultBlock extends Block
 	public DefaultBlock(String id, Material m) {
 		super(m);
 		this.setRegistryName(id);
-		GameRegistry.register(this);
+		//TODO fix registration
 		this.setUnlocalizedName("cd4017be." + id);
 	}
 

@@ -32,7 +32,7 @@ public interface IPipe
 		public static Cover create(ItemStack item) {
 			if (item == null || !(item.getItem() instanceof ItemBlock)) return null;
 			ItemBlock ib = (ItemBlock)item.getItem();
-			Cover cover = new Cover(ib.block.getStateFromMeta(ib.getMetadata(item.getMetadata())));
+			Cover cover = new Cover(ib.getBlock().getStateFromMeta(ib.getMetadata(item.getMetadata())));
 			if (cover.block == null || cover.block.getBlock() instanceof BlockPipe || !cover.block.getBlock().isFullBlock(cover.block)) return null;
 			cover.item = item.copy();
 			cover.item.setCount(1);

@@ -32,7 +32,8 @@ public class ItemMaterial extends DefaultItem {
 	}
 
 	@Override
-	public void getSubItems(Item item, CreativeTabs tab, NonNullList<ItemStack> subItems) {
+	public void getSubItems(CreativeTabs tab, NonNullList<ItemStack> subItems) {
+		Item item = this;
 		subItems.add(new ItemStack(this, 1, 0));
 		int[] ids = new int[variants.size()];
 		int n = 0;

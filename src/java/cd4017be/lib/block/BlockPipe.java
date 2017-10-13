@@ -43,7 +43,8 @@ public abstract class BlockPipe extends MultipartBlock {
 	}
 
 	@Override
-	public void getSubBlocks(Item item, CreativeTabs tab, NonNullList<ItemStack> list) {
+	public void getSubBlocks(CreativeTabs tab, NonNullList<ItemStack> list) {
+		Item item = Item.getItemFromBlock(this);
 		if (baseState != null)
 			for (int i : baseState.getAllowedValues())
 				list.add(new ItemStack(item, 1, i));

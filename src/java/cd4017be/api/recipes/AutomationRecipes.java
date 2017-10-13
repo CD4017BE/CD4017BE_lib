@@ -642,7 +642,7 @@ public class AutomationRecipes
 			else if (this.item instanceof OreDictStack){
 				return ((OreDictStack)this.item).isEqual(item);
 			} else if (this.item instanceof Class) {
-				if (item.getItem() instanceof ItemBlock) return ((Class)this.item).isInstance(((ItemBlock)item.getItem()).block);
+				if (item.getItem() instanceof ItemBlock) return ((Class)this.item).isInstance(((ItemBlock)item.getItem()).getBlock());
 				else return ((Class)this.item).isInstance(item.getItem());
 			} else return false;
 		}

@@ -76,12 +76,12 @@ public enum Orientation implements IStringSerializable {
 	}
 
 	public Vec3d rotate(Vec3d vec) {
-		double x = vec.xCoord, y, z;
+		double x = vec.x, y, z;
 		switch(ordinal() >> 2) {
-		case 1: y = vec.zCoord; z = -vec.yCoord; break;
-		case 2: y = -vec.yCoord; z = -vec.zCoord; break;
-		case 3: y = -vec.zCoord; z = vec.yCoord; break;
-		default: y = vec.yCoord; z = vec.zCoord;
+		case 1: y = vec.z; z = -vec.y; break;
+		case 2: y = -vec.y; z = -vec.z; break;
+		case 3: y = -vec.z; z = vec.y; break;
+		default: y = vec.y; z = vec.z;
 		}
 		switch(ordinal() & 3) {
 		case 1: return new Vec3d(-z, y, x);
@@ -92,12 +92,12 @@ public enum Orientation implements IStringSerializable {
 	}
 
 	public Vec3d invRotate(Vec3d vec) {
-		double x, y = vec.yCoord, z;
+		double x, y = vec.y, z;
 		switch(ordinal() & 3) {
-		case 1: x = vec.zCoord; z = -vec.xCoord; break;
-		case 2: x = -vec.xCoord; z = -vec.zCoord; break;
-		case 3: x = -vec.zCoord; z = vec.xCoord; break;
-		default: x = vec.xCoord; z = vec.zCoord;
+		case 1: x = vec.z; z = -vec.x; break;
+		case 2: x = -vec.x; z = -vec.z; break;
+		case 3: x = -vec.z; z = vec.x; break;
+		default: x = vec.x; z = vec.z;
 		}
 		switch(ordinal() >> 2) {
 		case 1: return new Vec3d(x, -z, y);

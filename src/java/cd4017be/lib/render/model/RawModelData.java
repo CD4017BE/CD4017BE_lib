@@ -9,7 +9,7 @@ import javax.vecmath.Vector3f;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import com.google.common.base.Function;
+import java.util.function.Function;
 import com.google.common.collect.ImmutableMap;
 
 import cd4017be.lib.render.Util;
@@ -30,7 +30,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.client.model.IModel;
-import net.minecraftforge.client.model.IPerspectiveAwareModel;
+import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraftforge.common.model.IModelState;
 import net.minecraftforge.common.model.TRSRTransformation;
 
@@ -198,7 +198,7 @@ public class RawModelData implements IModel {
 		return ModelRotation.X0_Y0;
 	}
 
-	public class Baked implements IPerspectiveAwareModel {
+	public class Baked implements IBakedModel {
 
 		private final BakedQuad[][] quads = new BakedQuad[7][];
 		private final TextureAtlasSprite particle;

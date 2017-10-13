@@ -1,5 +1,10 @@
 package cd4017be.lib;
 
+import javax.annotation.Nullable;
+import net.minecraft.client.util.ITooltipFlag;
+import net.minecraft.world.World;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.Arrays;
 import java.util.List;
 
@@ -23,7 +28,7 @@ public class DefaultItemBlock extends ItemBlock
 	public DefaultItemBlock(Block id) {
 		super(id);
 		this.setRegistryName(id.getRegistryName());
-		GameRegistry.register(this);
+		//TODO fix registration
 		this.init();
 	}
 	
@@ -32,7 +37,8 @@ public class DefaultItemBlock extends ItemBlock
 	}
 
 	@Override
-	public void addInformation(ItemStack item, EntityPlayer player, List<String> list, boolean b) {
+	@SideOnly(Side.CLIENT)
+	public void addInformation(ItemStack item, @Nullable World player, List<String> list, ITooltipFlag b) {
 		String s = this.getUnlocalizedName(item) + ".tip";
 		if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)) {
 			String s1 = TooltipUtil.getConfigFormat(s);
@@ -42,15 +48,15 @@ public class DefaultItemBlock extends ItemBlock
 			String s1 = TooltipUtil.getConfigFormat(sA);
 			if (!s1.equals(sA)) list.addAll(Arrays.asList(s1.split("\n")));
 		} else {
-			if (TooltipUtil.hasTranslation(s) || (hasSubtypes && TooltipUtil.hasTranslation(block.getUnlocalizedName() + ":i.tip"))) list.add(TooltipUtil.getShiftHint());
-			if (TooltipUtil.hasTranslation(s + "A") || (hasSubtypes && TooltipUtil.hasTranslation(block.getUnlocalizedName() + ":i.tipA"))) list.add(TooltipUtil.getAltHint());
+			if (TooltipUtil.hasTranslation(s) || (hasSubtypes && TooltipUtil.hasTranslation(getBlock().getUnlocalizedName() + ":i.tip"))) list.add(TooltipUtil.getShiftHint());
+			if (TooltipUtil.hasTranslation(s + "A") || (hasSubtypes && TooltipUtil.hasTranslation(getBlock().getUnlocalizedName() + ":i.tipA"))) list.add(TooltipUtil.getAltHint());
 		}
 		super.addInformation(item, player, list, b);
 	}
 
 	@Override
 	public String getUnlocalizedName(ItemStack item) {
-		String s = this.block.getUnlocalizedName();
+		String s = this.getBlock().getUnlocalizedName();
 		return this.hasSubtypes ? s + ":" + item.getItemDamage() : s;
 	}
 

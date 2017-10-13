@@ -12,7 +12,7 @@ import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderItem;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.VertexBuffer;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.ResourceLocation;
@@ -38,7 +38,7 @@ public class InWorldUIRenderer extends TileEntitySpecialRenderer<InWorldUITile> 
 	}
 
 	@Override
-	public void renderTileEntityAt(InWorldUITile tile, double x, double y, double z, float t, int destroyStage) {
+	public void render(InWorldUITile tile, double x, double y, double z, float t, int destroyStage, float alpha) {
 		GlStateManager.pushMatrix();
 		Util.moveAndOrientToBlock(x, y, z, tile.getOrientation());
 		RayTraceResult target = tile.getAimTarget(rendererDispatcher.entity, t);
@@ -47,7 +47,7 @@ public class InWorldUIRenderer extends TileEntitySpecialRenderer<InWorldUITile> 
 		if (target != null) {
 			String s = r.getTooltip(tile, target.subHit);
 			if (s != null) {
-				Util.moveAndOrientToBlock(target.hitVec.xCoord - 1, target.hitVec.yCoord - 1, target.hitVec.zCoord - 1, Orientation.fromFacing(target.sideHit));
+/*TODO verify generated code*/				Util.moveAndOrientToBlock(target.hitVec.x - 1, target.hitVec.y - 1, target.hitVec.z - 1, Orientation.fromFacing(target.sideHit));
 				GlStateManager.scale(-TOOLTIP_SCALE, -TOOLTIP_SCALE, -TOOLTIP_SCALE);
 				renderToolTip(0, -10, 0xffc0c0c0, 0x80100020, s.split("\n"));
 			}
@@ -73,7 +73,7 @@ public class InWorldUIRenderer extends TileEntitySpecialRenderer<InWorldUITile> 
 		GlStateManager.disableAlpha();
 		GlStateManager.disableTexture2D();
 		GlStateManager.depthFunc(GL11.GL_ALWAYS);
-		VertexBuffer buff = Tessellator.getInstance().getBuffer();
+		BufferBuilder buff = Tessellator.getInstance().getBuffer();
 		buff.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
 		buff.addVertexData(new int[]{ //background frame
 				  x1, y2, z, c1,  x2, y2, z, c1,  x2, y1, z, c1,  x1, y1, z, c1, //center

@@ -109,21 +109,21 @@ public class BlockPipe extends TileBlock
 		TileEntity te = world.getTileEntity(pos);
 		if (te == null || !(te instanceof IPipe) || ((IPipe)te).getCover() != null) {
 			box = FULL_BLOCK_AABB.offset(pos);
-			if (area.intersectsWith(box))list.add(box);
+			if (area.intersects(box))list.add(box);
 			return;
 		}
 		AxisAlignedBB box0 = this.outerBox((IPipe)te);
 		double x = pos.getX(), y = pos.getY(), z = pos.getZ();
 		final double d0 = (double)((1F - size) / 2F), d1 = (double)((1F + size) / 2F);
 		box = new AxisAlignedBB(x + box0.minX, y + d0, z + d0, x + box0.maxX, y + d1, z + d1);
-		if (box.intersectsWith(area)) list.add(box);
+		if (box.intersects(area)) list.add(box);
 		if (box0.minY < d0 || box0.maxY > d1) {
 			box = new AxisAlignedBB(x + d0, y + box0.minY, z + d0, x + d1, y + box0.maxY, z + d1);
-			if (box.intersectsWith(area)) list.add(box);
+			if (box.intersects(area)) list.add(box);
 		}
 		if (box0.minZ < d0 || box0.maxZ > d1) {
 			box = new AxisAlignedBB(x + d0, y + d0, z + box0.minZ, x + d1, y + d1, z + box0.maxZ);
-			if (box.intersectsWith(area)) list.add(box);
+			if (box.intersects(area)) list.add(box);
 		}
 	}
 

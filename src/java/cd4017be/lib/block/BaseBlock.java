@@ -20,7 +20,7 @@ public class BaseBlock extends Block {
 	public BaseBlock(String id, Material m) {
 		super(m);
 		this.setRegistryName(id);
-		GameRegistry.register(this);
+		//TODO fix registration
 		this.setUnlocalizedName(TooltipUtil.unlocalizedNameFor(this));
 		this.setHardness(1.5F);
 		this.setResistance(10F);

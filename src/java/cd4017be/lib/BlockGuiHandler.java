@@ -219,7 +219,7 @@ public class BlockGuiHandler implements IGuiHandler {
 		if (!(event.getHandler() instanceof NetHandlerPlayServer)) {
 			FMLLog.log(Level.WARN, "NetHandler not instanceof NetHandlerPlayServer!");
 		}
-		EntityPlayerMP player = ((NetHandlerPlayServer)event.getHandler()).playerEntity;
+		EntityPlayerMP player = ((NetHandlerPlayServer)event.getHandler()).player;
 		try {
 			PacketBuffer data = new PacketBuffer(packet.payload());
 			BlockPos target = data.readBlockPos();

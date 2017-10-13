@@ -2,7 +2,7 @@ package cd4017be.lib.render.model;
 
 import java.util.Collection;
 
-import com.google.common.base.Function;
+import java.util.function.Function;
 
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;

@@ -13,7 +13,7 @@ import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraft.world.chunk.IChunkGenerator;
+import net.minecraft.world.gen.IChunkGenerator;
 import net.minecraft.world.chunk.IChunkProvider;
 import net.minecraft.world.gen.feature.WorldGenMinable;
 import net.minecraftforge.fml.common.IWorldGenerator;
@@ -43,7 +43,7 @@ public class OreGenHandler implements IRecipeHandler, IWorldGenerator{
 		if (!(i instanceof ItemBlock)) throw new IllegalArgumentException("supplied item has no registered block equivalent");
 		double[] vec = p.getVector(4);
 		if (vec.length != 3) throw new IllegalArgumentException("height parameter must have 3 elements");
-		IBlockState out = ((ItemBlock)i).block.getStateFromMeta(i.getMetadata(is.getMetadata()));
+		IBlockState out = ((ItemBlock)i).getBlock().getStateFromMeta(i.getMetadata(is.getMetadata()));
 		Block in = Block.getBlockFromName(p.getString(1));
 		if (in == null) throw new IllegalArgumentException("block type does not exists");
 		generators.add(new OreGen(out, is.getCount(), (int)p.getNumber(3), (int)vec[0], (int)vec[1], (int)vec[2], BlockMatcher.forBlock(in)));

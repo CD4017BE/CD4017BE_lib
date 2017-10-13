@@ -162,9 +162,9 @@ public class MovedBlock
 		
 		if (state.getLightOpacity(world, pos) != oldOpac || state.getLightValue(world, pos) != oldLight)
 		{
-			world.theProfiler.startSection("checkLight");
+			world.profiler.startSection("checkLight");
 		   	world.checkLight(pos);
-		   	world.theProfiler.endSection();
+		   	world.profiler.endSection();
 		}
 		world.notifyBlockUpdate(pos, state0, state, 3);
 		return true;
@@ -183,8 +183,8 @@ public class MovedBlock
 		int dimO = entity.world.provider.getDimension();
 		if (dim != dimO) {
 			MinecraftServer server = ((WorldServer)entity.world).getMinecraftServer();
-			WorldServer worldO = server.worldServerForDimension(dimO);
-			WorldServer worldN = server.worldServerForDimension(dim);
+			WorldServer worldO = server.getWorld(dimO);
+			WorldServer worldN = server.getWorld(dim);
 			if (entity instanceof EntityPlayerMP) {
 				server.getPlayerList().transferPlayerToDimension((EntityPlayerMP)entity, dim, new Teleporter(worldN, x, y, z));
 			} else {

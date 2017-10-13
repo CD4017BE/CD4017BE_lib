@@ -9,7 +9,7 @@ import javax.vecmath.Matrix4d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
-import net.minecraft.client.renderer.VertexBuffer;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
@@ -242,7 +242,7 @@ public class TESRModelParser extends ScriptCompiler {
 	}
 
 	/**@deprecated replaced by {@link cd4017be.lib.render.model.IntArrayModel} */
-	public static void renderWithOffsetAndBrightness(VertexBuffer render, String model, float dx, float dy, float dz, int l) {
+	public static void renderWithOffsetAndBrightness(BufferBuilder render, String model, float dx, float dy, float dz, int l) {
 		int[] data = SpecialModelLoader.instance.tesrModelData.get(model);
 		if (data == null) return;
 		int[] res = new int[data.length];
@@ -259,7 +259,7 @@ public class TESRModelParser extends ScriptCompiler {
 	}
 
 	/**@deprecated replaced by {@link cd4017be.lib.render.model.IntArrayModel} */
-	public static void renderWithTOCB(VertexBuffer render, String model, TextureAtlasSprite tex, float dx, float dy, float dz, int c, int l) {
+	public static void renderWithTOCB(BufferBuilder render, String model, TextureAtlasSprite tex, float dx, float dy, float dz, int c, int l) {
 		int[] data = SpecialModelLoader.instance.tesrModelData.get(model);
 		if (data == null) return;
 		int[] res = new int[data.length];

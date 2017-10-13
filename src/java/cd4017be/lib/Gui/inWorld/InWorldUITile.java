@@ -97,7 +97,7 @@ public abstract class InWorldUITile extends BaseTileEntity implements IInteracti
 			return res;
 		}
 		public double interpolate(Vec3d hit, EnumFacing dir) {
-			double p = Utils.coord(hit.xCoord, hit.yCoord, hit.zCoord, dir);
+			double p = Utils.coord(hit.x, hit.y, hit.z, dir);
 			double a = Utils.coord(box.minX, box.minY, box.minZ, dir);
 			double b = Utils.coord(box.maxX, box.maxY, box.maxZ, dir);
 			return (dir.getAxisDirection() == AxisDirection.POSITIVE ? (p - a) : (b - p)) / (b - a);

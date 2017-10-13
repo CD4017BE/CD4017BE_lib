@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import com.google.common.base.Function;
+import java.util.function.Function;
 
 import cd4017be.lib.property.PropertyBlockMimic;
 import cd4017be.lib.render.IHardCodedModel;

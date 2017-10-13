@@ -1,5 +1,9 @@
 package cd4017be.api.circuits;
 
+import javax.annotation.Nullable;
+import net.minecraft.client.util.ITooltipFlag;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.List;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
@@ -23,7 +27,8 @@ public abstract class ItemBlockSensor extends DefaultItem implements ISensor {
 	}
 
 	@Override
-	public void addInformation(ItemStack item, EntityPlayer player, List<String> list, boolean b) {
+	@SideOnly(Side.CLIENT)
+	public void addInformation(ItemStack item, @Nullable World player, List<String> list, ITooltipFlag b) {
 		if (item.hasTagCompound()) list.add(TooltipUtil.formatLink(BlockPos.fromLong(item.getTagCompound().getLong("link")), EnumFacing.getFront(item.getTagCompound().getByte("side"))));
 		super.addInformation(item, player, list, b);
 	}

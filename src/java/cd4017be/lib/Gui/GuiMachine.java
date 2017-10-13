@@ -17,7 +17,7 @@ import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.VertexBuffer;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.player.EntityPlayer;
@@ -168,19 +168,19 @@ public abstract class GuiMachine extends GuiContainer {
 	}
 
 	public void drawFormatInfo(int x, int y, String key, Object... args) {
-		this.drawHoveringText(Arrays.asList(TooltipUtil.format("gui.cd4017be." + key, args).split("\n")), x, y, fontRendererObj);
+		this.drawHoveringText(Arrays.asList(TooltipUtil.format("gui.cd4017be." + key, args).split("\n")), x, y, fontRenderer);
 	}
 
 	public void drawLocString(int x, int y, int h, int c, String s, Object... args) {
 		String[] text = TooltipUtil.format("gui.cd4017be." + s, args).split("\n");
 		for (String l : text) {
-			this.fontRendererObj.drawString(l, x, y, c);
+			this.fontRenderer.drawString(l, x, y, c);
 			y += h;
 		}
 	}
 
 	public void drawStringCentered(String s, int x, int y, int c) {
-		this.fontRendererObj.drawString(s, x - this.fontRendererObj.getStringWidth(s) / 2, y, c);
+		this.fontRenderer.drawString(s, x - this.fontRenderer.getStringWidth(s) / 2, y, c);
 	}
 
 	protected void drawSideCube(int x, int y, int s, byte dir) {
@@ -210,12 +210,12 @@ public abstract class GuiMachine extends GuiContainer {
 		default: a = Vec3.Def(1, 0, 0);
 		}
 		Vec3d look = player.getLookVec();
-		b = Vec3.Def(look.xCoord, look.yCoord, look.zCoord).mult(a).norm();
+		b = Vec3.Def(look.x, look.y, look.z).mult(a).norm();
 		p = p.add(a.scale(0.5)).add(b.scale(-0.5));
 		a = a.scale(1.5);
 		final float tx = (float)(144 + 16 * dir) / 256F, dtx = 16F / 256F, ty = 24F / 256F, dty = 8F / 256F;
 		
-		VertexBuffer t = Tessellator.getInstance().getBuffer();
+		BufferBuilder t = Tessellator.getInstance().getBuffer();
 		t.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
 		t.pos(p.x + b.x, p.y + b.y, p.z + b.z).tex(tx, ty + dty).endVertex();
 		t.pos(p.x + a.x + b.x, p.y + a.y + b.y, p.z + a.z + b.z).tex(tx + dtx, ty + dty).endVertex();
@@ -229,7 +229,7 @@ public abstract class GuiMachine extends GuiContainer {
 		zLevel = 200.0F;
 		itemRender.zLevel = 200.0F;
 		net.minecraft.client.gui.FontRenderer font = stack.getItem().getFontRenderer(stack);
-		if (font == null) font = fontRendererObj;
+		if (font == null) font = fontRenderer;
 		this.itemRender.renderItemAndEffectIntoGUI(stack, x, y);
 		this.itemRender.renderItemOverlayIntoGUI(font, stack, x, y, altText);
 		this.zLevel = 0.0F;
@@ -314,7 +314,7 @@ public abstract class GuiMachine extends GuiContainer {
 				else text = tooltip;
 				text = TooltipUtil.getConfigFormat("gui.cd4017be." + text);
 			}
-			drawHoveringText(Arrays.asList(text.split("\n")), mx, py + h + 12, fontRendererObj);
+			drawHoveringText(Arrays.asList(text.split("\n")), mx, py + h + 12, fontRenderer);
 		}
 
 		public void draw() {}
@@ -346,7 +346,7 @@ public abstract class GuiMachine extends GuiContainer {
 			Object obj = get.get();
 			Object[] objA = obj instanceof Object[] ? (Object[])obj : new Object[]{obj};
 			String s = tooltip.startsWith("\\") ? String.format(tooltip.substring(1), objA) : TooltipUtil.format("gui.cd4017be." + tooltip, objA);
-			drawHoveringText(Arrays.asList(s.split("\n")), mx, my, fontRendererObj);
+			drawHoveringText(Arrays.asList(s.split("\n")), mx, my, fontRenderer);
 		}
 
 	}
@@ -387,8 +387,8 @@ public abstract class GuiMachine extends GuiContainer {
 				).split("\n");
 			int y = py, x;
 			for (String l : lines) {
-				x = center ? px + (w - fontRendererObj.getStringWidth(l)) / 2 : px;
-				fontRendererObj.drawString(l, x, y, tc);
+				x = center ? px + (w - fontRenderer.getStringWidth(l)) / 2 : px;
+				fontRenderer.drawString(l, x, y, tc);
 				y += fh;
 			}
 			GlStateManager.color(1F, 1F, 1F, 1F);
@@ -421,9 +421,9 @@ public abstract class GuiMachine extends GuiContainer {
 		public void draw() {
 			if (focus == id) {
 				if (cur > text.length()) cur = text.length();
-				drawVerticalLine(px - 1 + fontRendererObj.getStringWidth(text.substring(0, cur)), py + (h - 9) / 2, py + (h + 7) / 2, cc);
+				drawVerticalLine(px - 1 + fontRenderer.getStringWidth(text.substring(0, cur)), py + (h - 9) / 2, py + (h + 7) / 2, cc);
 			} else text = get.get();
-			fontRendererObj.drawString(text, px, py + (h - 8) / 2, tc);
+			fontRenderer.drawString(text, px, py + (h - 8) / 2, tc);
 			GlStateManager.color(1, 1, 1, 1);
 		}
 
@@ -580,8 +580,8 @@ public abstract class GuiMachine extends GuiContainer {
 		@Override
 		public void draw() {
 			String s = String.format(form, get.get());
-			int x = px + (w - fontRendererObj.getStringWidth(s)) / 2, y = py + (h - 8) / 2;
-			fontRendererObj.drawString(s, x, y, tc);
+			int x = px + (w - fontRenderer.getStringWidth(s)) / 2, y = py + (h - 8) / 2;
+			fontRenderer.drawString(s, x, y, tc);
 			GlStateManager.color(1F, 1F, 1F, 1F);
 		}
 
@@ -932,7 +932,7 @@ public abstract class GuiMachine extends GuiContainer {
 			ArrayList<String> info = new ArrayList<String>();
 			info.add(stack != null ? stack.getLocalizedName() : "Empty");
 			info.add(String.format("%s/%s ", TooltipUtil.formatNumber(stack != null ? (float)stack.amount / 1000F : 0F, 3), TooltipUtil.formatNumber((float)slot.inventory.getCapacity(slot.tankNumber) / 1000F, 3)) + TooltipUtil.getFluidUnit());
-			drawHoveringText(info, mx, my, fontRendererObj);
+			drawHoveringText(info, mx, my, fontRenderer);
 		}
 
 		@Override

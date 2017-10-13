@@ -37,9 +37,9 @@ public class Util {
 			z1 = o.rotate(Z);
 			buff = BufferUtils.createFloatBuffer(16);
 			buff.put(new float[] {
-				(float)x1.xCoord, (float)x1.yCoord, (float)x1.zCoord, 0,
-				(float)y1.xCoord, (float)y1.yCoord, (float)y1.zCoord, 0,
-				(float)z1.xCoord, (float)z1.yCoord, (float)z1.zCoord, 0,
+				(float)x1.x, (float)x1.y, (float)x1.z, 0,
+/*TODO verify generated code*/				(float)y1.x, (float)y1.y, (float)y1.z, 0,
+/*TODO verify generated code*/				(float)z1.x, (float)z1.y, (float)z1.z, 0,
 				0, 0, 0, 1
 			});
 			buff.flip();

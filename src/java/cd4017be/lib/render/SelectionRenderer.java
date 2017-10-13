@@ -8,7 +8,7 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.GlStateManager.DestFactor;
 import net.minecraft.client.renderer.GlStateManager.SourceFactor;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.VertexBuffer;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraftforge.fml.relauncher.Side;
@@ -33,7 +33,7 @@ public class SelectionRenderer extends TileEntitySpecialRenderer<ModTileEntity> 
 		GlStateManager.color(1, 1, 1, 1);
 		//render
 		int density = 0x40;
-		VertexBuffer t = Tessellator.getInstance().getBuffer();
+		BufferBuilder t = Tessellator.getInstance().getBuffer();
 		t.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
 		t.setTranslation(ofsX, ofsY, ofsZ);
 		//Bottom
@@ -72,7 +72,7 @@ public class SelectionRenderer extends TileEntitySpecialRenderer<ModTileEntity> 
 	}
 
 	@Override
-	public void renderTileEntityAt(ModTileEntity te, double x, double y, double z, float partialTicks, int destroyStage) {
+	public void render(ModTileEntity te, double x, double y, double z, float partialTicks, int destroyStage, float alpha) {
 		if (te instanceof IOperatingArea && IOperatingArea.Handler.renderArea((IOperatingArea)te))
 			this.renderSelection(((IOperatingArea)te).getOperatingArea(), x - (double)te.getPos().getX(), y - (double)te.getPos().getY(), z - (double)te.getPos().getZ());
 	}

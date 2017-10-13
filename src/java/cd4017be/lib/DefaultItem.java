@@ -1,5 +1,10 @@
 package cd4017be.lib;
 
+import javax.annotation.Nullable;
+import net.minecraft.client.util.ITooltipFlag;
+import net.minecraft.world.World;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.Arrays;
 import java.util.List;
 
@@ -22,7 +27,7 @@ public class DefaultItem extends Item {
 		super();
 		this.setRegistryName(id);
 		this.setUnlocalizedName(TooltipUtil.unlocalizedNameFor(this));
-		GameRegistry.register(this);
+		//TODO fix registration
 		this.init();
 	}
 
@@ -31,7 +36,8 @@ public class DefaultItem extends Item {
 	}
 
 	@Override
-	public void addInformation(ItemStack item, EntityPlayer player, List<String> list, boolean b) {
+	@SideOnly(Side.CLIENT)
+	public void addInformation(ItemStack item, @Nullable World player, List<String> list, ITooltipFlag b) {
 		String s = this.getUnlocalizedName(item) + ".tip";
 		if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)) {
 			String s1 = TooltipUtil.getConfigFormat(s);
