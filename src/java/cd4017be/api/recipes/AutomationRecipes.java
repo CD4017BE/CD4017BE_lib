@@ -1,7 +1,7 @@
 package cd4017be.api.recipes;
 
-import cd4017be.lib.templates.Inventory;
-import cd4017be.lib.templates.TankContainer;
+import cd4017be.lib.capability.Inventory;
+import cd4017be.lib.capability.TankContainer;
 import cd4017be.lib.util.Obj2;
 import cd4017be.lib.util.OreDictStack;
 import cd4017be.lib.util.Utils;

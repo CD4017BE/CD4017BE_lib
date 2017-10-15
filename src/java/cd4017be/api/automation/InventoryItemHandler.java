@@ -2,7 +2,7 @@ package cd4017be.api.automation;
 
 import java.util.List;
 
-import cd4017be.lib.templates.InventoryItem.IItemInventory;
+import cd4017be.lib.capability.InventoryItem.IItemInventory;
 import cd4017be.lib.util.Utils;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;

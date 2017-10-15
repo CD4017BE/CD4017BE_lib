@@ -1,6 +1,7 @@
 package cd4017be.lib;
 
 import cd4017be.lib.Gui.DataContainer;
+import cd4017be.lib.Gui.IGuiItem;
 import cd4017be.lib.Gui.DataContainer.IGuiData;
 import cd4017be.lib.util.Utils;
 import net.minecraftforge.fml.common.FMLLog;

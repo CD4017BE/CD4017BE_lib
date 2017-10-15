@@ -1,7 +1,5 @@
 package cd4017be.lib.Gui;
 
-import cd4017be.lib.templates.ITankContainer;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;

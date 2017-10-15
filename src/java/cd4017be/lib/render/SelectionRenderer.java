@@ -3,7 +3,7 @@ package cd4017be.lib.render;
 import org.lwjgl.opengl.GL11;
 
 import cd4017be.api.automation.IOperatingArea;
-import cd4017be.lib.ModTileEntity;
+import cd4017be.lib.tileentity.ModTileEntity;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.GlStateManager.DestFactor;
 import net.minecraft.client.renderer.GlStateManager.SourceFactor;

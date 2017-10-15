@@ -9,8 +9,8 @@ import com.google.common.base.Function;
 
 import cd4017be.lib.block.MultipartBlock;
 import cd4017be.lib.property.PropertyBoolean;
+import cd4017be.lib.property.PropertyByte;
 import cd4017be.lib.render.IHardCodedModel;
-import cd4017be.lib.util.PropertyByte;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;

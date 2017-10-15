@@ -4,8 +4,9 @@ import cd4017be.api.Capabilities;
 import cd4017be.api.computers.ComputerAPI;
 import cd4017be.api.energy.EnergyAPI;
 import cd4017be.api.recipes.RecipeScriptContext;
+import cd4017be.lib.item.ItemMaterial;
 import cd4017be.lib.render.ItemMaterialMeshDefinition;
-import cd4017be.lib.templates.ItemMaterial;
+import cd4017be.lib.templates.NBTRecipe;
 import cd4017be.lib.templates.TabMaterials;
 import cd4017be.lib.util.TooltipUtil;
 import net.minecraft.item.Item;
@@ -76,6 +77,7 @@ public class Lib {
 	public void afterStart(FMLServerAboutToStartEvent event) {
 		//trash stuff that's not needed anymore
 		RecipeScriptContext.instance = null;
+		//cd4017be.lib.script.Compiler.deallocate();
 		System.gc();
 	}
 

@@ -2,7 +2,7 @@ package cd4017be.lib.Gui.inWorld;
 
 import cd4017be.lib.BlockGuiHandler;
 import cd4017be.lib.block.AdvancedBlock.IInteractiveTile;
-import cd4017be.lib.block.BaseTileEntity;
+import cd4017be.lib.tileentity.BaseTileEntity;
 import cd4017be.lib.util.Orientation;
 import cd4017be.lib.util.Utils;
 import net.minecraft.block.state.IBlockState;

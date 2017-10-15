@@ -7,10 +7,10 @@ package cd4017be.lib.templates;
 import java.util.ArrayList;
 import java.util.List;
 
-import cd4017be.lib.TileBlock;
+import cd4017be.lib.block.TileBlock;
+import cd4017be.lib.property.PropertyBlock;
+import cd4017be.lib.property.PropertyByte;
 import cd4017be.lib.templates.IPipe.Cover;
-import cd4017be.lib.util.PropertyBlock;
-import cd4017be.lib.util.PropertyByte;
 import net.minecraft.block.Block;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;

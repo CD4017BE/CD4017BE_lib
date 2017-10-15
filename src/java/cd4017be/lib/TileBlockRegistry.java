@@ -12,6 +12,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.HashMap;
 
 import cd4017be.lib.Gui.DataContainer.IGuiData;
+import cd4017be.lib.block.TileBlock;
+import cd4017be.lib.tileentity.ModTileEntity;
 import net.minecraft.block.Block;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.inventory.Container;
