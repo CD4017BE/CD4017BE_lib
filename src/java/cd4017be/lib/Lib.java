@@ -35,11 +35,11 @@ public class Lib {
 	public static final String ID = "cd4017be_lib";
 
 	@Instance
-	public static Lib instance = new Lib();
+	public static Lib instance;
 
 	public static ItemMaterial materials;
 
-	public static TabMaterials creativeTab;
+	public static final TabMaterials creativeTab = new TabMaterials(ID);
 
 	public Lib() {
 		MinecraftForge.EVENT_BUS.register(this);
@@ -52,9 +52,6 @@ public class Lib {
 		Capabilities.register();
 		EnergyAPI.init();
 		RecipeSorter.register(ID + ":shapedNBT", NBTRecipe.class, RecipeSorter.Category.SHAPED, "after:minecraft:shaped before:minecraft:shapeless");
-		creativeTab = new TabMaterials(ID);
-		(materials = new ItemMaterial("m")).setCreativeTab(creativeTab);
-		creativeTab.item = new ItemStack(materials);
 		RecipeScriptContext.instance = new RecipeScriptContext();
 		RecipeScriptContext.instance.setup();
 		RecipeScriptContext.instance.run("core.PRE_INIT");
@@ -83,13 +80,13 @@ public class Lib {
 	public void afterStart(FMLServerAboutToStartEvent event) {
 		//trash stuff that's not needed anymore
 		RecipeScriptContext.instance = null;
-		//cd4017be.lib.script.Compiler.deallocate();
 		System.gc();
 	}
 
 	@SubscribeEvent
 	public void registerItems(RegistryEvent.Register<Item> ev) {
-		ev.getRegistry().register(materials);
+		ev.getRegistry().register((materials = new ItemMaterial("m")).setCreativeTab(creativeTab));
+		creativeTab.item = new ItemStack(materials);
 	}
 
 }
