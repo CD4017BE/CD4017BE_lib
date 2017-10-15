@@ -6,8 +6,6 @@ import java.util.List;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraftforge.fml.common.registry.GameRegistry;
-
 import org.lwjgl.input.Keyboard;
 
 import cd4017be.lib.util.TooltipUtil;
@@ -22,7 +20,6 @@ public class DefaultItem extends Item {
 		super();
 		this.setRegistryName(id);
 		this.setUnlocalizedName(TooltipUtil.unlocalizedNameFor(this));
-		GameRegistry.register(this);
 		this.init();
 	}
 
