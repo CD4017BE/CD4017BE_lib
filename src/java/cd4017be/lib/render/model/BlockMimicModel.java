@@ -23,6 +23,10 @@ import net.minecraftforge.client.model.IModel;
 import net.minecraftforge.common.model.IModelState;
 import net.minecraftforge.common.property.IExtendedBlockState;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class BlockMimicModel implements IModel, IBakedModel, IHardCodedModel {
 
 	public static final BlockMimicModel instance = new BlockMimicModel();

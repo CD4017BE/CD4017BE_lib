@@ -20,11 +20,15 @@ import net.minecraftforge.common.property.ExtendedBlockState;
 import net.minecraftforge.common.property.IExtendedBlockState;
 import net.minecraftforge.common.property.IUnlistedProperty;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public abstract class MultipartBlock extends AdvancedBlock {
 
 	public PropertyInteger baseState;
 	public IUnlistedProperty<?>[] modules;
-	
+
 	public MultipartBlock(String id, Material m, SoundType sound, int flags, Class<? extends TileEntity> tile) {
 		super(id, m, sound, flags, tile);
 	}

@@ -5,6 +5,10 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class LockedSlot extends Slot {
 
 	public LockedSlot(IInventory inv, int slot, int xPosition, int yPosition) {

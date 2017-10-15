@@ -11,6 +11,10 @@ import cd4017be.lib.block.AdvancedBlock.INeighborAwareTile;
 import cd4017be.lib.templates.MultiblockComp;
 import cd4017be.lib.templates.SharedNetwork;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class PassiveMultiblockTile<C extends MultiblockComp<C, N>, N extends SharedNetwork<C, N>> extends BaseTileEntity implements INeighborAwareTile, IUpdatable {
 
 	protected C comp;

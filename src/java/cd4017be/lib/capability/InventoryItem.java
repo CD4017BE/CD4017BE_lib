@@ -5,6 +5,10 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.item.ItemStack;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class InventoryItem extends AbstractInventory implements IInventoryItem {
 
 	private final InventoryPlayer ref;

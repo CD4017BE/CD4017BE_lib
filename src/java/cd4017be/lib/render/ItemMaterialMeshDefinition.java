@@ -9,6 +9,10 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 @SideOnly(Side.CLIENT)
 public class ItemMaterialMeshDefinition implements ItemMeshDefinition {
 

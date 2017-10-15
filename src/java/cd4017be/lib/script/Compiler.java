@@ -15,6 +15,10 @@ import javax.script.ScriptException;
 
 import cd4017be.lib.script.Function.Operator;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class Compiler {
 
 	private static ByteBuffer buffer = ByteBuffer.allocate(65536);
@@ -446,7 +450,7 @@ public class Compiler {
 		state.lastId = variables;
 		return true;
 	}
-	
+
 	private boolean jump(State state, Comp c, int p) throws ScriptException {
 		switch(c.type) {
 		case K_br:
@@ -462,7 +466,7 @@ public class Compiler {
 		state.next(Type.sep_cmd);
 		return true;
 	}
-	
+
 	private Comp eval(State state, Type end) throws ScriptException {
 		Comp c = code.next();
 		if (end != null && c.type == end) return null;
@@ -597,7 +601,7 @@ public class Compiler {
 		}
 		return n;
 	}
-	
+
 	private void func(State state, String name, boolean ret, boolean save) throws ScriptException {
 		int n = params(state, Type.E_par);
 		state.curStack -= n;

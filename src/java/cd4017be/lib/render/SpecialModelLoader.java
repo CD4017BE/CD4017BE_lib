@@ -48,12 +48,12 @@ public class SpecialModelLoader implements ICustomModelLoader {
 	public static final SpecialModelLoader instance = new SpecialModelLoader();
 	public static final StateMapper stateMapper = new StateMapper();
 	private static String mod = "";
-	
+
 	public static void setMod(String name) {
 		mod = name;
 		instance.mods.add(name);
 	}
-	
+
 	public static void registerFluid(Fluid fluid) {
 		Block block = fluid.getBlock();
 		if (block == null || !mod.equals(block.getRegistryName().getResourceDomain())) return;
@@ -61,12 +61,12 @@ public class SpecialModelLoader implements ICustomModelLoader {
 		instance.models.put(new ResourceLocation(mod, "models/block/" + fluid.getName()), model);
 		ModelLoader.setCustomStateMapper(fluid.getBlock(), stateMapper);
 	}
-	
+
 	public static void registerBlockModel(Block block, IModel model) {
 		String[] name = block.getRegistryName().toString().split(":");
 		instance.models.put(new ResourceLocation(name[0], "models/block/" + name[1]), model);
 	}
-	
+
 	public static void registerItemModel(Item item, IModel model) {
 		String[] name = item.getRegistryName().toString().split(":");
 		instance.models.put(new ResourceLocation(name[0], "models/item/" + name[1]), model);
@@ -137,7 +137,7 @@ public class SpecialModelLoader implements ICustomModelLoader {
 		}
 		return model;
 	}
-	
+
 	private IModel loadScriptModel(ResourceLocation modelLocation) throws Exception {
 		String domain = modelLocation.getResourceDomain();
 		String scriptName = modelLocation.getResourcePath().substring(SCRIPT_PREFIX.length());
@@ -179,4 +179,5 @@ public class SpecialModelLoader implements ICustomModelLoader {
 			return map;
 		}
 	}
+
 }

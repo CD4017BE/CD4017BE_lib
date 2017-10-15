@@ -8,6 +8,10 @@ import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class BasicInventory extends AbstractInventory {
 
 	public final ItemStack[] items;

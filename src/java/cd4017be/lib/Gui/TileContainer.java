@@ -45,7 +45,7 @@ public class TileContainer extends DataContainer {
 	public void addPlayerInventory(int x, int y) {
 		this.addPlayerInventory(x, y, false, false);
 	}
-	
+
 	public void addPlayerInventory(int x, int y, boolean armor, boolean lockSel) {
 		invPlayerS = this.inventorySlots.size();
 		invPlayerE = invPlayerS + (armor ? 41 : 36);

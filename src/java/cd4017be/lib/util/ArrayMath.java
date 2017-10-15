@@ -1,5 +1,9 @@
 package cd4017be.lib.util;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class ArrayMath {
 
 	public static double[] add(double[] a, double[] b) {

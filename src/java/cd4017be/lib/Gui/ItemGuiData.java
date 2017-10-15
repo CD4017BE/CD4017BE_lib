@@ -10,6 +10,10 @@ import net.minecraftforge.items.IItemHandlerModifiable;
 import cd4017be.lib.Gui.DataContainer.IGuiData;
 import cd4017be.lib.util.TooltipUtil;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class ItemGuiData implements IGuiData {
 
 	protected final Item item;

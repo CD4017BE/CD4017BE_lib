@@ -14,6 +14,10 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class ItemSlot extends UIcomp {
 
 	protected final IItemHandler inv;

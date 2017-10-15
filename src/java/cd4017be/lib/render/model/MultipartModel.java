@@ -28,6 +28,10 @@ import net.minecraftforge.common.model.IModelState;
 import net.minecraftforge.common.property.IExtendedBlockState;
 import net.minecraftforge.common.property.IUnlistedProperty;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class MultipartModel implements IModel, IHardCodedModel {
 
 	public final IModelProvider[] modelProvider;

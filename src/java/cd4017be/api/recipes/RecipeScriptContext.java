@@ -33,6 +33,10 @@ import cd4017be.lib.script.ScriptFiles.Version;
 import cd4017be.lib.util.FileUtil;
 import cd4017be.lib.util.OreDictStack;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class RecipeScriptContext extends Context {
 
 	private static final Function<Parameters, Object>

@@ -19,6 +19,10 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class InWorldUIRenderer extends TileEntitySpecialRenderer<InWorldUITile> {
 
 	public static final InWorldUIRenderer instance = new InWorldUIRenderer();

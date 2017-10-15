@@ -7,6 +7,10 @@ import net.minecraft.block.properties.PropertyEnum;
 import net.minecraft.util.EnumFacing;
 import static net.minecraft.util.EnumFacing.*;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public abstract class PropertyOrientation extends PropertyEnum<Orientation> {
 
 	protected PropertyOrientation(String name, Orientation... allowedValues) {

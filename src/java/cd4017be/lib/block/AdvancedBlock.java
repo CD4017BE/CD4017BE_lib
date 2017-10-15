@@ -26,6 +26,10 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class AdvancedBlock extends BaseBlock {
 
 	public final Class<? extends TileEntity> tileEntity;
@@ -95,7 +99,7 @@ public class AdvancedBlock extends BaseBlock {
 		 */
 		void neighborTileChange(BlockPos src);
 	}
-	
+
 	@Override
 	public void neighborChanged(IBlockState state, World world, BlockPos pos, Block b, BlockPos src) {
 		if ((flags & 1) == 0) return;

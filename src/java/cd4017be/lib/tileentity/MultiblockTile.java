@@ -10,6 +10,10 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class MultiblockTile<C extends MultiblockComp<C, N>, N extends SharedNetwork<C, N>> extends BaseTileEntity implements ITickable, INeighborAwareTile {
 
 	protected C comp;

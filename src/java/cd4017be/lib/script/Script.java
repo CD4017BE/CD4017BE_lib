@@ -4,6 +4,10 @@ import java.util.HashMap;
 
 import javax.script.ScriptException;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class Script implements Module {
 
 	public final HashMap<String, Function> methods;

@@ -6,6 +6,10 @@ import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.templates.FluidHandlerItemStack;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class SingleFluidItemHandler extends FluidHandlerItemStack {
 
 	private final String tag;

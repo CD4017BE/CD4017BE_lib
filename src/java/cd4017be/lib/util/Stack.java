@@ -2,6 +2,10 @@ package cd4017be.lib.util;
 
 import java.util.Arrays;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 @SuppressWarnings("unchecked")
 public class Stack<T> {
 

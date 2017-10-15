@@ -2,6 +2,10 @@ package cd4017be.lib.property;
 
 import net.minecraftforge.common.property.IUnlistedProperty;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class PropertyBoolean implements IUnlistedProperty<Boolean> {
 
 	private final String name;

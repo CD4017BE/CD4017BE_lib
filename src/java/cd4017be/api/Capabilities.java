@@ -10,9 +10,14 @@ import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityInject;
 import net.minecraftforge.common.capabilities.CapabilityManager;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class Capabilities {
+
 	private static final Exception NotSupported = new Exception("You can't put this capability on everything you want! Modder, please inform yourself about how it works and use a constructor!");
-	
+
 	/** Capability for InductiveAutomation's electric cables */
 	@CapabilityInject(PipeEnergy.class)
 	public static Capability<PipeEnergy> ELECTRIC_CAPABILITY = null;
@@ -51,4 +56,5 @@ public class Capabilities {
 			throw NotSupported;
 		}
 	}
+
 }

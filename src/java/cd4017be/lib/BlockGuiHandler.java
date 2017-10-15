@@ -112,36 +112,6 @@ public class BlockGuiHandler implements IGuiHandler {
 	}
 
 	/**
-	 * Will open a Gui registered for the block at given position.
-	 * @param player
-	 * @param world
-	 * @param x
-	 * @param y
-	 * @param z
-	 * @deprecated use openGui above
-	 */
-	@Deprecated
-	public static void openGui(EntityPlayer player, World world, int x, int y, int z) {
-		if (Lib.instance != null) player.openGui(Lib.instance, 0, world, x, y, z);
-		else FMLLog.severe("CD4017BE-lib: BlockGuiHandler failed to open Gui! No Mod registered!");
-	}
-
-	/**
-	 * Will open a Gui for the item currently held by the player. The item has to implement IGuiItem.
-	 * @param player
-	 * @param world
-	 * @param x
-	 * @param y
-	 * @param z
-	 * @deprecated use openItemGui above
-	 */
-	@Deprecated
-	public static void openItemGui(EntityPlayer player, World world, int x, int y, int z) {
-		if (Lib.instance != null) player.openGui(Lib.instance, 1, world, x, y, z);
-		else FMLLog.severe("CD4017BE-lib: BlockGuiHandler failed to open Gui! No Mod registered!");
-	}
-
-	/**
 	 * Sends a Gui command packet to the server. 
 	 * @param data
 	 */
