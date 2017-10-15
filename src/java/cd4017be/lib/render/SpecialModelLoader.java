@@ -1,15 +1,11 @@
 package cd4017be.lib.render;
 
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import org.apache.logging.log4j.Level;
 
 import cd4017be.lib.render.model.IntArrayModel;
 import cd4017be.lib.render.model.ModelContext;
@@ -36,7 +32,6 @@ import net.minecraftforge.client.model.ModelLoaderRegistry;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
-import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -82,23 +77,11 @@ public class SpecialModelLoader implements ICustomModelLoader {
 		if (tesr instanceof IModeledTESR) instance.tesrs.add((IModeledTESR)tesr);
 	}
 
-	@Deprecated
-	public static void registerTESRModel(String path) {
-		instance.tesrRegistry.add(path);
-	}
-
 	private IResourceManager resourceManager;
 	private HashMap<String, ModelContext> scriptModels = new HashMap<String, ModelContext>();
 	public HashMap<ResourceLocation, IModel> models = new HashMap<ResourceLocation, IModel>();
 	public HashSet<String> mods = new HashSet<String>();
 	public ArrayList<IModeledTESR> tesrs = new ArrayList<IModeledTESR>();
-
-	@Deprecated
-	public HashSet<String> tesrRegistry = new HashSet<String>();
-	@Deprecated
-	private HashMap<ResourceLocation, String> tesrModelCode = new HashMap<ResourceLocation, String>();
-	@Deprecated
-	public HashMap<String, int[]> tesrModelData = new HashMap<String, int[]>();
 
 	private SpecialModelLoader() {
 		ModelLoaderRegistry.registerLoader(this);
@@ -115,31 +98,8 @@ public class SpecialModelLoader implements ICustomModelLoader {
 			}
 	}
 
-	public String loadTESRModelSourceCode(ResourceLocation res) throws IOException {
-		String code = tesrModelCode.get(res);
-		if (code != null) return code;
-		InputStreamReader isr = new InputStreamReader(resourceManager.getResource(res).getInputStream());
-		String s = "";
-		int n;
-		char[] buff = new char[256];
-		while((n = isr.read(buff)) > 0) s += String.valueOf(buff, 0, n);
-		tesrModelCode.put(res, s);
-		return s;
-	}
-	
 	@SubscribeEvent
 	public void bakeModels(ModelBakeEvent event) {
-		tesrModelData.clear();
-		for (String s : tesrRegistry) {
-			try {
-				ResourceLocation res = new ResourceLocation(s + ".tesr");
-				String code = this.loadTESRModelSourceCode(res);
-				tesrModelData.put(s, TESRModelParser.bake(code, res));
-			} catch (Exception e) {
-				FMLLog.log("cd4017be_lib", Level.ERROR, e, "unable to load TESR model %s :", s);
-			}
-		}
-		tesrModelCode.clear();
 		cleanUp();
 	}
 
