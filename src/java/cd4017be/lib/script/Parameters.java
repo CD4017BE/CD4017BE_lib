@@ -1,5 +1,9 @@
 package cd4017be.lib.script;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class Parameters {
 
 	public final Object[] param;

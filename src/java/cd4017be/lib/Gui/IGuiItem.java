@@ -14,8 +14,7 @@ import net.minecraft.world.World;
  * Implemented by Items to enable GuiScreens
  * @author CD4017BE
  */
-public interface IGuiItem 
-{
+public interface IGuiItem {
 	/**
 	 * @param item
 	 * @param player
@@ -25,8 +24,7 @@ public interface IGuiItem
 	 * @return The server gui object
 	 */
 	public Container getContainer(ItemStack item, EntityPlayer player, World world, BlockPos pos, int slot);
-	
-	@SideOnly(Side.CLIENT)
+
 	/**
 	 * @param item
 	 * @param player
@@ -35,6 +33,7 @@ public interface IGuiItem
 	 * @param slot
 	 * @return The client gui object
 	 */
+	@SideOnly(Side.CLIENT)
 	public GuiContainer getGui(ItemStack item, EntityPlayer player, World world, BlockPos pos, int slot);
 
 }

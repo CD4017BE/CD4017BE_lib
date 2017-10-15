@@ -7,6 +7,10 @@ import net.minecraft.util.math.RayTraceResult;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class UIcomp {
 
 	public final AxisAlignedBB bounds;

@@ -19,6 +19,10 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public abstract class InWorldUITile extends BaseTileEntity implements IInteractiveTile {
 
 	public static double VIEW_DIST = 4.0;

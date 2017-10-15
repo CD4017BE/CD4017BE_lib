@@ -4,6 +4,10 @@ import net.minecraft.item.ItemStack;
 import java.util.function.ObjIntConsumer;
 import java.util.function.IntFunction;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class LinkedInventory extends AbstractInventory {
 
 	private final int slots, stackSize;

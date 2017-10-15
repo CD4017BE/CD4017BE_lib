@@ -29,6 +29,10 @@ import net.minecraftforge.oredict.OreDictionary;
 import net.minecraftforge.oredict.ShapedOreRecipe;
 import net.minecraftforge.oredict.ShapelessOreRecipe;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class RecipeAPI {
 
 	public static interface IRecipeHandler {

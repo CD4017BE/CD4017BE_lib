@@ -9,6 +9,10 @@ import net.minecraftforge.fluids.capability.FluidTankProperties;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidTankProperties;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class LinkedTank implements IFluidHandler, ITankContainer {
 
 	private final Supplier<FluidStack> get;

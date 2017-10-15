@@ -3,10 +3,14 @@ package cd4017be.lib.property;
 import net.minecraft.block.state.IBlockState;
 import net.minecraftforge.common.property.IUnlistedProperty;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class PropertyBlock implements IUnlistedProperty<IBlockState> {
 
 	private final String name;
-	
+
 	public PropertyBlock(String name) {
 		this.name = name;
 	}

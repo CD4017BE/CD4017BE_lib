@@ -10,6 +10,10 @@ import cd4017be.api.energy.EnergyAPI.IEnergyHandler;
 import static cd4017be.api.energy.EnergyAPI.EU_value;
 import static ic2.api.item.ElectricItem.manager;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class EnergyIndustrialCraft implements IEnergyHandler {
 
 	@Override
@@ -86,7 +90,7 @@ public class EnergyIndustrialCraft implements IEnergyHandler {
 			else if (e < 0) return (float)manager.discharge(item, e / -EU_value, Integer.MAX_VALUE, intern, !intern, false) * -EU_value;
 			else return 0;
 		}
-		
+
 	}
 
 }

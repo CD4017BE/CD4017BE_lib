@@ -34,6 +34,10 @@ import net.minecraftforge.client.model.IPerspectiveAwareModel;
 import net.minecraftforge.common.model.IModelState;
 import net.minecraftforge.common.model.TRSRTransformation;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class RawModelData implements IModel {
 
 	public static final ImmutableMap<TransformType, TRSRTransformation> DEFAULT_TRANSFORM;
@@ -52,7 +56,7 @@ public class RawModelData implements IModel {
 	private final boolean diffuseLight, gui3D;
 	private final ResourceLocation[] textures;
 	private final ImmutableMap<TransformType, TRSRTransformation> transform;
-	
+
 	public RawModelData(Module script, ModelContext context) {
 		diffuseLight = read(script.read("ambientOcclusion"), true);
 		gui3D = read(script.read("isGui3D"), true);

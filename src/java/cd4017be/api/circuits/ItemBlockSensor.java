@@ -13,6 +13,10 @@ import net.minecraft.world.World;
 import cd4017be.lib.item.BaseItem;
 import cd4017be.lib.util.TooltipUtil;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public abstract class ItemBlockSensor extends BaseItem implements ISensor {
 
 	public double RangeSQ;

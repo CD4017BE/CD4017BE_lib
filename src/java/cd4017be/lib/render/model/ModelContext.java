@@ -20,6 +20,10 @@ import net.minecraft.client.resources.IResource;
 import net.minecraft.client.resources.IResourceManager;
 import net.minecraft.util.ResourceLocation;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class ModelContext extends Context {
 
 	private static class State {

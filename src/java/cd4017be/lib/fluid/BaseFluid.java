@@ -9,9 +9,8 @@ import net.minecraftforge.fluids.FluidStack;
  *
  * @author CD4017BE
  */
-public class BaseFluid extends Fluid
-{
-	
+public class BaseFluid extends Fluid {
+
 	public BaseFluid(String name, String tex)
 	{
 		super(name, new ResourceLocation(tex), new ResourceLocation(tex));
@@ -22,5 +21,5 @@ public class BaseFluid extends Fluid
 	{
 		return TooltipUtil.translate(this.getUnlocalizedName() + ".name");
 	}
-	
+
 }

@@ -6,6 +6,10 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.ItemHandlerHelper;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public abstract class AbstractInventory implements IItemHandlerModifiable {
 
 	@Override

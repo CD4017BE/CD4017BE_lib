@@ -21,6 +21,10 @@ import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class BaseTileEntity extends TileEntity implements IAbstractTile {
 
 	private IBlockState blockState;

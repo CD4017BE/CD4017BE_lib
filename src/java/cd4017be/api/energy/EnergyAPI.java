@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package cd4017be.api.energy;
 
 import java.util.ArrayList;
@@ -34,7 +30,7 @@ public class EnergyAPI {
 	public static float EU_value = 400F;
 	/**[J] energy conversion factor for OpenComputers*/
 	public static float OC_value = 1000F;
-	
+
 	/** 
 	 * This is a wrapper used to access energy in ItemStacks or TileEntities. 
 	 */
@@ -53,10 +49,9 @@ public class EnergyAPI {
 		 */
 		public float addEnergy(float e);
 	}
-	
+
 	/** This is used to support IEnergyAccess instances for TileEntities and ItemStacks */
-	public static interface IEnergyHandler
-	{
+	public static interface IEnergyHandler {
 		/**
 		 * @param te the TileEntity to create a wrapper for
 		 * @param s access side (null for internal)
@@ -70,7 +65,7 @@ public class EnergyAPI {
 		 */
 		public IEnergyAccess create(ItemStack item, int s);
 	}
-	
+
 	public static void init() {
 		if (Loader.isModLoaded("Automation")) {
 			handlers.add(new EnergyAutomation());
@@ -89,7 +84,7 @@ public class EnergyAPI {
 			FMLLog.log("CD4017BE_lib", Level.INFO, "added IC2 Energy-API");
 		}
 	}
-	
+
 	/**
 	 * @param te the TileEntity to get a valid wrapper for
 	 * @param s access side (null for internal)
@@ -104,7 +99,7 @@ public class EnergyAPI {
 				return e;
 		return NULL;
 	}
-	
+
 	/**
 	 * @param te the ItemStack to get a valid wrapper for
 	 * @param s access type: 0 = external, -1 = internal. Don't use any other values than listed as parameters unless you know what you're doing!
@@ -118,23 +113,23 @@ public class EnergyAPI {
 				return e;
 		return NULL;
 	}
-	
+
 	static class NullAccess implements IEnergyAccess {
-		
+
 		@Override
 		public float getStorage() {
 			return 0;
 		}
-		
+
 		@Override
 		public float getCapacity() {
 			return 0;
 		}
-		
+
 		@Override
 		public float addEnergy(float e) {
 			return 0;
 		}
 	}
-	
+
 }

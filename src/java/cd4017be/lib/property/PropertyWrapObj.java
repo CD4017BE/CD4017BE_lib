@@ -2,6 +2,11 @@ package cd4017be.lib.property;
 
 import net.minecraftforge.common.property.IUnlistedProperty;
 
+/**
+ * 
+ * @author CD4017BE
+ * @param <T>
+ */
 public class PropertyWrapObj<T> implements IUnlistedProperty<T> {
 
 	private final String name;

@@ -13,6 +13,10 @@ import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraftforge.common.property.IUnlistedProperty;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public abstract class BlockPipe extends MultipartBlock {
 
 	public static final IUnlistedProperty<?>[] CON_PROPS = {

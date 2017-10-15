@@ -1,9 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package cd4017be.lib.util;
 
 import cd4017be.api.automation.IOperatingArea;
@@ -26,19 +20,17 @@ import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
  *
  * @author CD4017BE
  */
-public class MovedBlock 
-{
+public class MovedBlock {
+
 	public final NBTTagCompound nbt;
 	public final IBlockState block;
-	
-	public MovedBlock(IBlockState block, NBTTagCompound tile) 
-	{
+
+	public MovedBlock(IBlockState block, NBTTagCompound tile) {
 		this.block = block;
 		this.nbt = tile;
 	}
-	
-	public boolean set(World world, BlockPos pos)
-	{
+
+	public boolean set(World world, BlockPos pos) {
 		TileEntity tile = null;
 		//boolean multipart = false;
 		if (nbt != null) {
@@ -73,9 +65,8 @@ public class MovedBlock
 		}*/
 		return setBlock(world, pos, block, tile);
 	}
-	
-	public static MovedBlock get(World world, BlockPos pos)
-	{
+
+	public static MovedBlock get(World world, BlockPos pos) {
 		IBlockState id = world.getBlockState(pos);
 		NBTTagCompound nbt = null;
 		TileEntity te = world.getTileEntity(pos);
@@ -91,9 +82,7 @@ public class MovedBlock
 		}
 		return new MovedBlock(id, nbt);
 	}
-	
-	
-	
+
 	/**
 	 * Place a Block without notify anything
 	 * @param world the World
@@ -104,8 +93,7 @@ public class MovedBlock
 	 * @param tile block TileEntity
 	 * @return true if placed successfully
 	 */
-	public static boolean setBlock(World world, BlockPos pos, IBlockState state, TileEntity tile)
-	{
+	public static boolean setBlock(World world, BlockPos pos, IBlockState state, TileEntity tile) {
 		if (!world.isBlockLoaded(pos)) return false;
 		Chunk chunk = world.getChunkFromBlockCoords(pos);
 		IBlockState state0 = chunk.getBlockState(pos);
@@ -169,7 +157,7 @@ public class MovedBlock
 		world.notifyBlockUpdate(pos, state0, state, 3);
 		return true;
 	}
-	
+
 	/**
 	 * Move an entity to a new Position
 	 * @param entity the Entity to move
@@ -178,8 +166,7 @@ public class MovedBlock
 	 * @param y new y position
 	 * @param z new z position
 	 */
-	public static void moveEntity(Entity entity, int dim, double x, double y, double z)
-	{
+	public static void moveEntity(Entity entity, int dim, double x, double y, double z) {
 		int dimO = entity.world.provider.getDimension();
 		if (dim != dimO) {
 			MinecraftServer server = ((WorldServer)entity.world).getMinecraftServer();
@@ -197,7 +184,7 @@ public class MovedBlock
 			((EntityPlayerMP)entity).setPositionAndUpdate(x, y, z);
 		} else entity.setPosition(x, y, z);
 	}
-	
+
 	public static class Teleporter extends net.minecraft.world.Teleporter {
 		private final double x, y, z;
 		public Teleporter(WorldServer worldIn, double x, double y, double z) {
@@ -210,5 +197,5 @@ public class MovedBlock
 		}
 		
 	}
-	
+
 }

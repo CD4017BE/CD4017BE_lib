@@ -11,6 +11,10 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.model.IModel;
 import net.minecraftforge.common.model.IModelState;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class ModelVariant implements IModel {
 
 	private final IModel parent;

@@ -13,8 +13,8 @@ import net.minecraftforge.fml.common.registry.GameRegistry;
  *
  * @author CD4017BE
  */
-public class BlockSuperfluid extends BlockFluidClassic
-{
+public class BlockSuperfluid extends BlockFluidClassic {
+
 	public static final Material materialGas = new MaterialGas();
 	public static class MaterialGas extends MaterialTransparent {
 		public MaterialGas() {
@@ -22,9 +22,9 @@ public class BlockSuperfluid extends BlockFluidClassic
 			this.setNoPushMobility();
 		}
 	}
-	
+
 	private Random random = new Random();
-	
+
 	public BlockSuperfluid(String id, BaseFluid fluid)
 	{
 		super(fluid, fluid.isGaseous() ? fluid.getTemperature() > 350 ? Material.FIRE : materialGas : Material.WATER);
@@ -35,8 +35,7 @@ public class BlockSuperfluid extends BlockFluidClassic
 
 	/*
 	@Override
-	public void updateTick(World world, BlockPos pos, IBlockState state, Random rand) 
-	{
+	public void updateTick(World world, BlockPos pos, IBlockState state, Random rand) {
 		int m = this.getMetaFromState(state);
 		if (m == 0) {
 			//Move source vertically if possible
@@ -64,21 +63,18 @@ public class BlockSuperfluid extends BlockFluidClassic
 	}
 
 	@Override
-	public void onNeighborBlockChange(World world, BlockPos pos, IBlockState state, Block blockId) 
-	{
+	public void onNeighborBlockChange(World world, BlockPos pos, IBlockState state, Block blockId) {
 		if (!this.checkFluidReaction(world, pos))
 		super.onNeighborBlockChange(world, pos, state, blockId);
 	}
 
 	@Override
-	public void onBlockAdded(World world, BlockPos pos, IBlockState state) 
-	{
+	public void onBlockAdded(World world, BlockPos pos, IBlockState state) {
 		if (!this.checkFluidReaction(world, pos))
 		super.onBlockAdded(world, pos, state);
 	}
-	
-	private boolean checkFluidReaction(World world, BlockPos pos)
-	{
+
+	private boolean checkFluidReaction(World world, BlockPos pos) {
 		if (this.densityDir > 0) return false;
 		Fluid fluid = reactConversions.get(this.getFluid());
 		if (fluid == null) return false;
@@ -110,27 +106,26 @@ public class BlockSuperfluid extends BlockFluidClassic
 			return true;
 		} else return false;
 	}
-	
+
 	public static HashMap<Fluid, Fluid> reactConversions = new HashMap<Fluid, Fluid>();
 	public static HashMap<Fluid, PotionEffect[]> effects = new HashMap<Fluid, PotionEffect[]>();
-	
-	public boolean tryReplace(World world, BlockPos pos)
-	{
+
+	public boolean tryReplace(World world, BlockPos pos) {
 		if (world.isAirBlock(x, y, z)) return true;
-
+		
 		Block bId = world.getBlock(x, y, z);
-
+		
 		if (bId == this)
 		{
 			return world.getBlockMetadata(x, y, z) != 0;
 		}
-
+		
 		Material material = bId.getMaterial();
 		if (material.blocksMovement() || material == Material.portal)
 		{
 			return false;
 		}
-
+		
 		int density = getDensity(world, x, y, z);
 		if (density == Integer.MAX_VALUE) 
 		{
@@ -140,17 +135,15 @@ public class BlockSuperfluid extends BlockFluidClassic
 		
 		return this.density > density;
 	}
-	
-	public void moveSourceTo(World world, int x, int y, int z, int nx, int ny, int nz)
-	{
+
+	public void moveSourceTo(World world, int x, int y, int z, int nx, int ny, int nz) {
 		world.setBlockMetadataWithNotify(x, y, z, 1, 3);
 		world.setBlock(nx, ny, nz, this, 0, 3);
 		world.scheduleBlockUpdate(x, y, z, this, tickRate);
 		world.notifyBlocksOfNeighborChange(x, y, z, this);
 	}
-	
-	public int[] findSource(World world, int x, int y, int z)
-	{
+
+	public int[] findSource(World world, int x, int y, int z) {
 		int m = world.getBlockMetadata(x, y, z);
 		int m1;
 		while (m > 0) {
@@ -170,8 +163,7 @@ public class BlockSuperfluid extends BlockFluidClassic
 	}
 
 	@Override
-	public void onEntityCollidedWithBlock(World world, int x, int y, int z, Entity entity) 
-	{
+	public void onEntityCollidedWithBlock(World world, int x, int y, int z, Entity entity) {
 		PotionEffect[] eff = effects.get(this.getFluid());
 		if (eff != null && entity instanceof EntityLivingBase)
 		for (PotionEffect e : eff) {
@@ -184,10 +176,9 @@ public class BlockSuperfluid extends BlockFluidClassic
 	}
 
 	@Override
-	public String getLocalizedName() 
-	{
+	public String getLocalizedName() {
 		return FluidRegistry.getFluid(fluidName).getLocalizedName();
 	}
-	
+
 	*/
 }
