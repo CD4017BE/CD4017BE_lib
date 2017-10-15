@@ -7,7 +7,7 @@ import java.util.function.ObjIntConsumer;
 import javax.annotation.Nullable;
 
 import cd4017be.api.circuits.IQuickRedstoneHandler;
-import cd4017be.lib.ModTileEntity;
+import cd4017be.lib.tileentity.ModTileEntity;
 import cd4017be.lib.block.AdvancedBlock.IRedstoneTile;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;

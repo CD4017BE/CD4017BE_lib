@@ -1,6 +1,6 @@
 package cd4017be.lib.block;
 
-import cd4017be.lib.util.PropertyByte;
+import cd4017be.lib.property.PropertyByte;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.PropertyInteger;

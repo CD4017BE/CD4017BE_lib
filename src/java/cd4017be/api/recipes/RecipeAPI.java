@@ -10,10 +10,10 @@ import java.util.regex.Pattern;
 
 import cd4017be.api.recipes.AutomationRecipes.*;
 import cd4017be.lib.Lib;
-import cd4017be.lib.NBTRecipe;
 import cd4017be.lib.script.Function.Iterator;
 import cd4017be.lib.script.Function.ArrayIterator;
 import cd4017be.lib.script.Function.ListIterator;
+import cd4017be.lib.templates.NBTRecipe;
 import cd4017be.lib.script.Function.FilteredIterator;
 import cd4017be.lib.script.Parameters;
 import cd4017be.lib.util.OreDictStack;

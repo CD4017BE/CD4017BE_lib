@@ -1,6 +1,6 @@
 package cd4017be.lib.render;
 
-import cd4017be.lib.templates.ItemMaterial;
+import cd4017be.lib.item.ItemMaterial;
 import net.minecraft.client.renderer.ItemMeshDefinition;
 import net.minecraft.client.renderer.block.model.ModelBakery;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;

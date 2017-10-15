@@ -18,6 +18,7 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Level;
 
+@Deprecated
 public class ConfigurationFile 
 {
 	public static File configDir = null;
