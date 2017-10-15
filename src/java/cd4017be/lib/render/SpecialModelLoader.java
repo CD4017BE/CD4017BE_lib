@@ -165,6 +165,9 @@ public class SpecialModelLoader implements ICustomModelLoader {
 			name = name.substring(0, p);
 		} else methodName = "main()";
 		ModelContext cont = instance.scriptModels.get(domain);
+		if (cont == null) {
+			instance.scriptModels.put(domain, cont = new ModelContext(new ResourceLocation(domain, "models/block/")));
+		}
 		Module script = cont.getOrLoad("tesr." + name, instance.resourceManager);
 		cont.run(script, methodName);
 		return new IntArrayModel(cont, IntArrayModel.getTextures(script));
