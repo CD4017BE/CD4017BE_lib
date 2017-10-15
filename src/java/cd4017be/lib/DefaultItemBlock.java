@@ -7,8 +7,6 @@ import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
-import net.minecraftforge.fml.common.registry.GameRegistry;
-
 import org.lwjgl.input.Keyboard;
 
 import cd4017be.lib.util.TooltipUtil;
@@ -17,16 +15,14 @@ import cd4017be.lib.util.TooltipUtil;
  *
  * @author CD4017BE
  */
-public class DefaultItemBlock extends ItemBlock
-{
-	
+public class DefaultItemBlock extends ItemBlock {
+
 	public DefaultItemBlock(Block id) {
 		super(id);
 		this.setRegistryName(id.getRegistryName());
-		GameRegistry.register(this);
 		this.init();
 	}
-	
+
 	protected void init() {
 		BlockItemRegistry.registerItemStack(new ItemStack(this), "tile." + this.getRegistryName().getResourcePath());
 	}
@@ -58,5 +54,5 @@ public class DefaultItemBlock extends ItemBlock
 	public String getItemStackDisplayName(ItemStack item) {
 		return TooltipUtil.translate(this.getUnlocalizedName(item) + ".name");
 	}
-	
+
 }
