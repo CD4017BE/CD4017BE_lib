@@ -20,18 +20,17 @@ import net.minecraftforge.fluids.FluidRegistry;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.oredict.OreDictionary;
 import cd4017be.api.recipes.RecipeAPI.IRecipeHandler;
 import cd4017be.api.recipes.RecipeAPI.IRecipeList;
 import cd4017be.lib.BlockItemRegistry;
-import cd4017be.lib.ConfigurationFile;
 import cd4017be.lib.script.Context;
 import cd4017be.lib.script.Module;
 import cd4017be.lib.script.Parameters;
 import cd4017be.lib.script.Script;
 import cd4017be.lib.script.ScriptFiles;
 import cd4017be.lib.script.ScriptFiles.Version;
+import cd4017be.lib.util.FileUtil;
 import cd4017be.lib.util.OreDictStack;
 
 public class RecipeScriptContext extends Context {
@@ -148,8 +147,8 @@ public class RecipeScriptContext extends Context {
 		defFunc.put("n", N);
 	}
 
-	public void setup(FMLPreInitializationEvent event) {
-		File dir = new File(event.getModConfigurationDirectory(), "cd4017be");
+	public void setup() {
+		File dir = FileUtil.configDir;
 		File comp = new File(dir, "compiled.dat");
 		HashMap<String, Version> versions = new HashMap<String, Version>();
 		for (Version v : scriptRegistry)
@@ -165,7 +164,7 @@ public class RecipeScriptContext extends Context {
 		}
 		for (Version v : versions.values())
 			try {
-				ConfigurationFile.copyData(v.fallback, new File(dir, v.name + ".rcp"));
+				FileUtil.copyData(v.fallback, new File(dir, v.name + ".rcp"));
 			} catch (IOException e) {
 				FMLLog.log(Level.ERROR, e, "copying script preset failed!");
 			}

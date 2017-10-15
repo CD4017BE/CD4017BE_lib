@@ -4,14 +4,13 @@ import cd4017be.api.Capabilities;
 import cd4017be.api.automation.AreaProtect;
 import cd4017be.api.automation.IOperatingArea;
 import cd4017be.api.automation.PipeEnergy;
+import cd4017be.lib.BlockGuiHandler.ClientPacketReceiver;
 import cd4017be.lib.Gui.TileContainer;
 import cd4017be.lib.capability.Inventory;
 import cd4017be.lib.capability.TankContainer;
-import cd4017be.lib.capability.Inventory.Access;
-
 import java.io.IOException;
 
-import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.ClickType;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
@@ -32,7 +31,7 @@ import net.minecraftforge.items.ItemHandlerHelper;
  * @author CD4017BE
  */
 @Deprecated
-public class AutomatedTile extends ModTileEntity implements ITickable {
+public class AutomatedTile extends BaseTileEntity implements ITickable, ClientPacketReceiver {
 
 	public Inventory inventory;
 	public TankContainer tanks;
@@ -65,7 +64,7 @@ public class AutomatedTile extends ModTileEntity implements ITickable {
 	public static int CmdOffset = 16;
 
 	@Override
-	public void onPlayerCommand(PacketBuffer dis, EntityPlayerMP player) throws IOException {
+	public void onPacketFromClient(PacketBuffer dis, EntityPlayer player) throws IOException {
 		if (!AreaProtect.interactingAllowed(player.getGameProfile(), world, pos.getX() >> 4, pos.getZ() >> 4)) return;
 		byte cmd = dis.readByte();
 		if (cmd == 0 && inventory != null) {
@@ -88,7 +87,7 @@ public class AutomatedTile extends ModTileEntity implements ITickable {
 			this.customPlayerCommand((byte)(cmd - CmdOffset), dis, player);
 	}
 
-	protected void customPlayerCommand(byte cmd, PacketBuffer dis, EntityPlayerMP player) throws IOException {}
+	protected void customPlayerCommand(byte cmd, PacketBuffer dis, EntityPlayer player) throws IOException {}
 
 	@Override
 	public boolean hasCapability(Capability<?> cap, EnumFacing s) {
@@ -157,4 +156,5 @@ public class AutomatedTile extends ModTileEntity implements ITickable {
 	public int extractAm(int g, int s, ItemStack item, int extract) {
 		return item == null ? 0 : item.getCount() < extract ? item.getCount() : extract;
 	}
+
 }

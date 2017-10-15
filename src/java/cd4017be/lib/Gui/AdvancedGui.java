@@ -796,7 +796,7 @@ public abstract class AdvancedGui extends GuiContainer {
 		@Override
 		public boolean mouseIn(int x, int y, int b, int d) {
 			if (x >= px + 9 && (y -= py + 9) >= 0) {
-				PacketBuffer dos = tile.getPacketTargetData();
+				PacketBuffer dos = BlockGuiHandler.getPacketTargetData(tile.getPos());
 				dos.writeByte(3);
 				dos.writeByte(tile.energy.sideCfg ^= 1 << (y / 9));
 				BlockGuiHandler.sendPacketToServer(dos);
@@ -849,7 +849,7 @@ public abstract class AdvancedGui extends GuiContainer {
 			x = (x - px) / 9 - 1;
 			y = (y - py) / 9 - 1;
 			if (x >= 0 && y >= 0) {
-				PacketBuffer dos = tile.getPacketTargetData();
+				PacketBuffer dos = BlockGuiHandler.getPacketTargetData(tile.getPos());
 				if (y == 7) dos.writeByte(2).writeByte(x);
 				else if (y == 6) dos.writeByte(1).writeLong(tile.tanks.sideCfg ^= 1L << (48 + x));
 				else {
@@ -908,7 +908,7 @@ public abstract class AdvancedGui extends GuiContainer {
 			if (x >= 0 && y >= 0) {
 				int p = y * 10 + x * 2;
 				long sp = 3L << p;
-				PacketBuffer dos = tile.getPacketTargetData();
+				PacketBuffer dos = BlockGuiHandler.getPacketTargetData(tile.getPos());
 				dos.writeByte(0);
 				dos.writeLong(tile.inventory.sideCfg = (tile.inventory.sideCfg & ~sp) | (tile.inventory.sideCfg + (dir ? 1L << p : sp) & sp));
 				BlockGuiHandler.sendPacketToServer(dos);

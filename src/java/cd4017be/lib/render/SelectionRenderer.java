@@ -3,7 +3,6 @@ package cd4017be.lib.render;
 import org.lwjgl.opengl.GL11;
 
 import cd4017be.api.automation.IOperatingArea;
-import cd4017be.lib.tileentity.ModTileEntity;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.GlStateManager.DestFactor;
 import net.minecraft.client.renderer.GlStateManager.SourceFactor;
@@ -11,6 +10,7 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -19,7 +19,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
  * @author CD4017BE
  */
 @SideOnly(Side.CLIENT)
-public class SelectionRenderer extends TileEntitySpecialRenderer<ModTileEntity> {
+public class SelectionRenderer extends TileEntitySpecialRenderer<TileEntity> {
 
 	private void renderSelection(int[] area, double ofsX, double ofsY, double ofsZ) {
 		if (area == null) return;
@@ -72,7 +72,7 @@ public class SelectionRenderer extends TileEntitySpecialRenderer<ModTileEntity> 
 	}
 
 	@Override
-	public void renderTileEntityAt(ModTileEntity te, double x, double y, double z, float partialTicks, int destroyStage) {
+	public void renderTileEntityAt(TileEntity te, double x, double y, double z, float partialTicks, int destroyStage) {
 		if (te instanceof IOperatingArea && IOperatingArea.Handler.renderArea((IOperatingArea)te))
 			this.renderSelection(((IOperatingArea)te).getOperatingArea(), x - (double)te.getPos().getX(), y - (double)te.getPos().getY(), z - (double)te.getPos().getZ());
 	}

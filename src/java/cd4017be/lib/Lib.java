@@ -8,6 +8,7 @@ import cd4017be.lib.item.ItemMaterial;
 import cd4017be.lib.render.ItemMaterialMeshDefinition;
 import cd4017be.lib.templates.NBTRecipe;
 import cd4017be.lib.templates.TabMaterials;
+import cd4017be.lib.util.FileUtil;
 import cd4017be.lib.util.TooltipUtil;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -42,6 +43,7 @@ public class Lib {
 
 	@Mod.EventHandler
 	public void preInit(FMLPreInitializationEvent event) {
+		FileUtil.initConfigDir(event);
 		BlockGuiHandler.register();
 		Capabilities.register();
 		EnergyAPI.init();
@@ -50,7 +52,7 @@ public class Lib {
 		(materials = new ItemMaterial("m")).setCreativeTab(creativeTab);
 		creativeTab.item = new ItemStack(materials);
 		RecipeScriptContext.instance = new RecipeScriptContext();
-		RecipeScriptContext.instance.setup(event);
+		RecipeScriptContext.instance.setup();
 		RecipeScriptContext.instance.run("core.PRE_INIT");
 	}
 

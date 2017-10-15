@@ -14,7 +14,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.translation.I18n;
 import net.minecraftforge.fml.common.registry.IForgeRegistryEntry;
 import cd4017be.api.recipes.RecipeScriptContext;
-import cd4017be.lib.ConfigurationFile;
 import cd4017be.lib.script.Script;
 import cd4017be.lib.script.ScriptFiles.Version;
 
@@ -95,57 +94,6 @@ public class TooltipUtil {
 			if (LinkPosFormat1 == "cd4017be.linkPos1") LinkPosFormat1 = "Link: x=%d y=%d z=%d %s @dim %d";
 		}
 		return String.format(LinkPosFormat1, pos.getX(), pos.getY(), pos.getZ(), side != null ? sides[side.ordinal()] : "", dim);
-	}
-
-	public static void addConfigReference(ConfigurationFile cfg) {
-		for (Entry<String, Object> var : cfg.variables.entrySet()) {
-			String id = var.getKey();
-			Object val = var.getValue();
-			String text;
-			switch(id.charAt(0)) {
-			case 'A':
-				switch(id.charAt(1)) {
-				case 'B': {
-					boolean[] arr = (boolean[])val;
-					for (int i = 0; i < arr.length; i++) variables.put(id + ":" + i, "" + arr[i]);
-				} break;
-				case 'W': {
-					byte[] arr = (byte[])val;
-					for (int i = 0; i < arr.length; i++) variables.put(id + ":" + i, "" + arr[i]);
-				} break;
-				case 'S': {
-					short[] arr = (short[])val;
-					for (int i = 0; i < arr.length; i++) variables.put(id + ":" + i, "" + arr[i]);
-				} break;
-				case 'I': {
-					int[] arr = (int[])val;
-					for (int i = 0; i < arr.length; i++) variables.put(id + ":" + i, "" + arr[i]);
-				} break;
-				case 'L': {
-					long[] arr = (long[])val;
-					for (int i = 0; i < arr.length; i++) variables.put(id + ":" + i, "" + arr[i]);
-				} break;
-				case 'F': {
-					float[] arr = (float[])val;
-					for (int i = 0; i < arr.length; i++)
-						variables.put(id + ":" + i, formatNumber(arr[i], 3, 0));
-				} break;
-				case 'D': {
-					double[] arr = (double[])val;
-					for (int i = 0; i < arr.length; i++)
-						variables.put(id + ":" + i, formatNumber(arr[i], 3, 0));
-				} break;
-				case 'T': {
-					String[] arr = (String[])val;
-					for (int i = 0; i < arr.length; i++) variables.put(id + ":" + i, arr[i]);
-				} break;
-				} continue;
-			case 'F': text = formatNumber((Float)val, 3, 0); break;
-			case 'D': text = formatNumber((Double)val, 3, 0); break;
-			default: text = val.toString();
-			}
-			variables.put(id, text);
-		}
 	}
 
 	public static void addScriptVariables() {

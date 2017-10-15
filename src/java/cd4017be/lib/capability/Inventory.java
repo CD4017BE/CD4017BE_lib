@@ -1,7 +1,7 @@
 package cd4017be.lib.capability;
 
 import cd4017be.lib.tileentity.AutomatedTile;
-import cd4017be.lib.tileentity.ModTileEntity;
+import cd4017be.lib.util.ItemFluidUtil;
 import cd4017be.lib.util.Utils;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
@@ -65,7 +65,7 @@ public class Inventory implements IItemHandlerModifiable {
 		for (byte s = 0; s < 6; s++) {
 			cfg = (int)(sideCfg >> (long)(s * 10));
 			if((cfg & 0x155) == (cfg & 0x2aa) >> 1) continue; //all connections are blocked or passive
-			TileEntity te = Utils.getTileOnSide(tile, s);
+			TileEntity te = Utils.neighborTile(tile, EnumFacing.VALUES[s]);
 			if (te == null || !te.hasCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, EnumFacing.VALUES[s^1])) continue;
 			access = te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, EnumFacing.VALUES[s^1]);
 			for (int g = 0; g < groups.length; g++, cfg >>= 2) 
@@ -178,9 +178,9 @@ public class Inventory implements IItemHandlerModifiable {
 		handler.setSlot(-1, i, stack);
 	}
 
-	public void dropItems(ModTileEntity te, int s0, int s1) {
+	public void dropItems(TileEntity te, int s0, int s1) {
 		for (int i = s0; i < s1; i++)
-			te.dropStack(items[i]);
+			ItemFluidUtil.dropStack(items[i], te.getWorld(), te.getPos());
 	}
 
 	public class Group {

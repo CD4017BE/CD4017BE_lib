@@ -7,20 +7,16 @@ import java.util.function.ObjIntConsumer;
 import javax.annotation.Nullable;
 
 import cd4017be.api.circuits.IQuickRedstoneHandler;
-import cd4017be.lib.tileentity.ModTileEntity;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.ISidedInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumFacing.Axis;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
@@ -29,7 +25,6 @@ import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.fluids.FluidRegistry;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.IFluidBlock;
-import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.oredict.OreDictionary;
 
 /**
@@ -40,47 +35,6 @@ public class Utils {
 
 	public static final BlockPos NOWHERE = new BlockPos(0, -1, 0);
 	public static final byte IN = -1, OUT = 1, ACC = 0;
-
-	/**@deprecated use {@link ItemHandlerHelper.canItemStacksStack}*/
-	@Deprecated
-	public static boolean itemsEqual(ItemStack item0, ItemStack item1)
-	{
-		return (item0 == null && item1 == null) || (item0 != null && item1 != null && item0.isItemEqual(item1) && ItemStack.areItemStackTagsEqual(item0, item1));
-	}
-
-	/**@deprecated better compare to OreDictionary entry directly */
-	@Deprecated
-	public static boolean oresEqual(ItemStack item0, ItemStack item1)
-	{
-		if (itemsEqual(item0, item1)) return true;
-		else
-		{
-			int[] ids = OreDictionary.getOreIDs(item0);
-			for (int id1 : OreDictionary.getOreIDs(item1))
-				for (int id0 : ids) if (id0 == id1) return true;
-			return false;
-		}
-	}
-
-	/**
-	 * Get all slots of the inventory that can be accessed from given side
-	 * @param inv the inventory to access
-	 * @param side the side to access from
-	 * @return the accessible slots
-	 * @deprecated use capabilities
-	 */
-	@Deprecated
-	public static int[] accessibleSlots(IInventory inv, int side) {
-		if (inv instanceof ISidedInventory) {
-			return ((ISidedInventory) inv).getSlotsForFace(EnumFacing.VALUES[side]);
-		} else {
-			int[] s = new int[inv.getSizeInventory()];
-			for (int i = 0; i < s.length; i++) {
-				s[i] = i;
-			}
-			return s;
-		}
-	}
 
 	/**
 	 * performs the given operation for all blocks in a square ring.
@@ -193,13 +147,6 @@ public class Utils {
 		return block.collisionRayTrace(player.world, pos, p, p.add(player.getLook(1).scale(16)));
 	}
 
-	/**@deprecated use {@link neighborTile} */
-	@Deprecated
-	public static TileEntity getTileOnSide(ModTileEntity tileEntity, byte s) {
-		if (tileEntity == null) return null;
-		return tileEntity.getLoadedTile(tileEntity.getPos().offset(EnumFacing.VALUES[s]));
-	}
-	
 	public static class ItemType {
 		public final ItemStack[] types;
 		public final boolean meta;
@@ -288,39 +235,6 @@ public class Utils {
 		if (block == Blocks.WATER || block == Blocks.FLOWING_WATER) return source || !sourceOnly ? new FluidStack(FluidRegistry.WATER, source ? 1000 : 0) : null;
 		else if (block == Blocks.LAVA|| block == Blocks.FLOWING_LAVA) return source || !sourceOnly ? new FluidStack(FluidRegistry.LAVA, source ? 1000 : 0) : null;
 		else return null;
-	}
-
-	/**@deprecated use capabilities */
-	@Deprecated
-	public static int findStack(ItemStack item, IInventory inv, int[] s, int start)
-	{
-		if (item == null) return -1;
-		for (int i = start; i < s.length; i++) {
-			if (itemsEqual(item, inv.getStackInSlot(s[i]))) return i;
-		}
-		return -1;
-	}
-	
-	public static int mod(int a, int b)
-	{
-		return a < 0 ? b - (-a - 1) % b - 1 : a % b;
-	}
-	
-	public static int div(int a, int b)
-	{
-		return a < 0 ? -1 - (-a - 1) / b: a / b;
-	}
-	
-	@Deprecated
-	public static byte getLookDir(Entity entity)
-	{
-		if (entity.rotationPitch < -45.0F) return 0;
-		if (entity.rotationPitch > 45.0F) return 1;
-		int d = MathHelper.floor((double)(entity.rotationYaw * 4.0F / 360.0F) + 0.5D) & 3;
-		if (d == 0) return 2;
-		if (d == 1) return 5;
-		if (d == 2) return 3;
-		return 4;
 	}
 
 	public static EnumFacing getLookDirStrict(Entity entity) {
