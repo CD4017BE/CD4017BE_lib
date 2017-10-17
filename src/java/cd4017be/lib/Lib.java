@@ -12,6 +12,7 @@ import cd4017be.lib.util.FileUtil;
 import cd4017be.lib.util.TooltipUtil;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -23,7 +24,6 @@ import net.minecraftforge.fml.common.event.FMLServerAboutToStartEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import net.minecraftforge.oredict.RecipeSorter;
 
 /**
  * 
@@ -69,13 +69,6 @@ public class Lib {
 	public void postInit(FMLPostInitializationEvent event) {
 		RecipeScriptContext.instance.runAll("POST_INIT");
 		TooltipUtil.addScriptVariables();
-		if (event.getSide().isClient()) clientPostInit();
-	}
-
-	@SideOnly(Side.CLIENT)
-	private static void clientPostInit() {
-		BlockItemRegistry.registerRender(materials);
-		BlockItemRegistry.registerRender(materials, new ItemMaterialMeshDefinition(materials));
 	}
 
 	@Mod.EventHandler
@@ -88,6 +81,12 @@ public class Lib {
 	@SubscribeEvent
 	public void registerItems(RegistryEvent.Register<Item> ev) {
 		ev.getRegistry().register(materials);
+	}
+
+	@SideOnly(Side.CLIENT)
+	@SubscribeEvent
+	public void registerMaterialModels(ModelRegistryEvent ev) {
+		BlockItemRegistry.registerRender(materials, new ItemMaterialMeshDefinition(materials));
 	}
 
 }

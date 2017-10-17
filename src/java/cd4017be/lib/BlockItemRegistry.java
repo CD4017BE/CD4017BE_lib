@@ -1,5 +1,6 @@
 package cd4017be.lib;
 
+import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -7,9 +8,7 @@ import java.util.HashMap;
 
 import cd4017be.lib.render.SingleTextureDefinition;
 import net.minecraft.block.Block;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemMeshDefinition;
-import net.minecraft.client.renderer.ItemModelMesher;
 import net.minecraft.client.renderer.block.model.ModelBakery;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.item.Item;
@@ -27,30 +26,22 @@ public class BlockItemRegistry {
 	@SideOnly(Side.CLIENT)
 	public static void registerRender(Item item, int m0, int m1) {
 		String id = item.getRegistryName().getResourcePath();
-		ResourceLocation[] locs = new ResourceLocation[m1 - m0 + 1];
 		for (int m = m0; m <= m1; m++)
-			Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(item, m, new ModelResourceLocation(locs[m] = new ResourceLocation(item.getRegistryName().getResourceDomain(), m == 0 ? id : id + "_" + m), "inventory"));
-		ModelBakery.registerItemVariants(item, locs);
+			ModelLoader.setCustomModelResourceLocation(item, m, new ModelResourceLocation(new ResourceLocation(item.getRegistryName().getResourceDomain(), m == 0 ? id : id + "_" + m), "inventory"));
 	}
 
 	@SideOnly(Side.CLIENT)
 	public static void registerRenderBS(Block block, int m0, int m1) {
 		Item item = Item.getItemFromBlock(block);
 		ResourceLocation base = item.getRegistryName();
-		ResourceLocation[] locs = new ResourceLocation[m1 - m0 + 1];
-		ItemModelMesher mesh = Minecraft.getMinecraft().getRenderItem().getItemModelMesher();
-		for (int m = m0; m <= m1; m++) {
-			ModelResourceLocation loc = new ModelResourceLocation(base, "inventory" + (m == 0 ? "" : m));
-			mesh.register(item, m, loc);
-			locs[m - m0] = loc;
-		}
-		ModelBakery.registerItemVariants(item, locs);
+		for (int m = m0; m <= m1; m++)
+			ModelLoader.setCustomModelResourceLocation(item, m, new ModelResourceLocation(base, "inventory" + (m == 0 ? "" : m)));
 	}
 
 	@SideOnly(Side.CLIENT)
 	public static void registerRender(Item item, ItemMeshDefinition def) {
 		if (def == null) def = new SingleTextureDefinition(item.getRegistryName().toString());
-		Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(item, def);
+		ModelLoader.setCustomMeshDefinition(item, def);
 	}
 
 	@SideOnly(Side.CLIENT)

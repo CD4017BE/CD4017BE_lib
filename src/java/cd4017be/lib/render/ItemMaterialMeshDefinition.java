@@ -16,7 +16,11 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class ItemMaterialMeshDefinition implements ItemMeshDefinition {
 
+	private final ModelResourceLocation defaultLoc;
+
 	public ItemMaterialMeshDefinition(ItemMaterial item) {
+		this.defaultLoc = new ModelResourceLocation(item.getRegistryName(), "inventory");
+		ModelBakery.registerItemVariants(item, defaultLoc);
 		ResourceLocation[] locs = new ResourceLocation[item.variants.size()];
 		String path = item.getRegistryName().toString() + "/";
 		int n = 0;
@@ -30,6 +34,7 @@ public class ItemMaterialMeshDefinition implements ItemMeshDefinition {
 		ItemMaterial item = (ItemMaterial)stack.getItem();
 		String name = item.variants.get(stack.getItemDamage());
 		if (name != null) return new ModelResourceLocation(item.getRegistryName().toString() + "/" + name, "inventory");
-		return new ModelResourceLocation(item.getRegistryName(), "inventory");
+		return defaultLoc;
 	}
+
 }
