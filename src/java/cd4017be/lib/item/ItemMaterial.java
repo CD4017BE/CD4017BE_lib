@@ -32,6 +32,7 @@ public class ItemMaterial extends BaseItem {
 
 	@Override
 	public void getSubItems(CreativeTabs tab, NonNullList<ItemStack> subItems) {
+		if (!isInCreativeTab(tab)) return;
 		Item item = this;
 		subItems.add(new ItemStack(this, 1, 0));
 		int[] ids = new int[variants.size()];
