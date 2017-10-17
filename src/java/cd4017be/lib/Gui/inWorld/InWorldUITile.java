@@ -2,7 +2,7 @@ package cd4017be.lib.Gui.inWorld;
 
 import cd4017be.lib.BlockGuiHandler;
 import cd4017be.lib.block.AdvancedBlock.IInteractiveTile;
-import cd4017be.lib.block.BaseTileEntity;
+import cd4017be.lib.tileentity.BaseTileEntity;
 import cd4017be.lib.util.Orientation;
 import cd4017be.lib.util.Utils;
 import net.minecraft.block.state.IBlockState;
@@ -19,6 +19,10 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public abstract class InWorldUITile extends BaseTileEntity implements IInteractiveTile {
 
 	public static double VIEW_DIST = 4.0;

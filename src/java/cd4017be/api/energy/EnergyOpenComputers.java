@@ -9,15 +9,20 @@ import cd4017be.api.energy.EnergyAPI.IEnergyAccess;
 import cd4017be.api.energy.EnergyAPI.IEnergyHandler;
 import static cd4017be.api.energy.EnergyAPI.OC_value;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class EnergyOpenComputers implements IEnergyHandler {
 
 	static class OCAccess implements IEnergyAccess {
+
 		final Connector energy;
-		
+
 		OCAccess(Connector con) {
 			this.energy = con;
 		}
-		
+
 		@Override
 		public float getStorage() {
 			return (float)energy.globalBuffer() * OC_value;
@@ -33,7 +38,7 @@ public class EnergyOpenComputers implements IEnergyHandler {
 			if (e <= 0) return 0;
 			else return e - (float)energy.changeBuffer(e / OC_value) * OC_value;
 		}
-		
+
 	}
 
 	@Override

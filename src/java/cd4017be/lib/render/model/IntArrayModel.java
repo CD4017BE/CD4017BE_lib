@@ -11,6 +11,10 @@ import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.util.EnumFacing.Axis;
 import net.minecraft.util.math.MathHelper;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class IntArrayModel {
 
 	public static final VertexFormat FORMAT = DefaultVertexFormats.BLOCK;

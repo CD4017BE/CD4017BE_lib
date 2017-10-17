@@ -21,10 +21,14 @@ import net.minecraftforge.fml.common.registry.GameRegistry;
 import cd4017be.api.recipes.RecipeAPI.IRecipeHandler;
 import cd4017be.lib.script.Parameters;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class OreGenHandler implements IRecipeHandler, IWorldGenerator{
-	
+
 	ArrayList<OreGen> generators;
-	
+
 	public OreGenHandler() {
 		generators = new ArrayList<OreGen>();
 		GameRegistry.registerWorldGenerator(this, 0);
@@ -82,5 +86,5 @@ public class OreGenHandler implements IRecipeHandler, IWorldGenerator{
 			return true;
 		}
 	}
-	
+
 }

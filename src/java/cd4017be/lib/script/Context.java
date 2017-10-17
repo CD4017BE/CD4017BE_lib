@@ -6,6 +6,10 @@ import javax.script.ScriptException;
 import org.apache.logging.log4j.Level;
 import net.minecraftforge.fml.common.FMLLog;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class Context implements Module {
 
 	private static final Function<Parameters, Object>
@@ -32,11 +36,11 @@ public class Context implements Module {
 			return vec; 
 		}, NARR = (p) -> new Object[(int)p.getNumber(0)],
 		NVEC = (p) -> new double[(int)p.getNumber(0)];
-	
+
 	public HashMap<String, Module> modules = new HashMap<String, Module>();
 	public HashMap<String, Function<Parameters, Object>> defFunc = new HashMap<String, Function<Parameters, Object>>();
 	public int recursion = 0;
-	
+
 	public Context() {
 		defFunc.put("print", PRINT);
 		defFunc.put("time", TIME);
@@ -45,13 +49,13 @@ public class Context implements Module {
 		defFunc.put("narr", NARR);
 		defFunc.put("nvec", NVEC);
 	}
-	
+
 	private String[] split(String name) {
 		int p = name.lastIndexOf('.');
 		if (p >= 0) return new String[]{name.substring(0, p), name.substring(p + 1)};
 		else return new String[]{"", name};
 	}
-	
+
 	@Override
 	public Object invoke(String name, Parameters args) throws NoSuchMethodException, ScriptException {
 		String[] s = split(name);

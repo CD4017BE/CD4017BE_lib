@@ -4,6 +4,10 @@ import com.mojang.authlib.GameProfile;
 
 import net.minecraft.world.World;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public interface IProtectionHandler {
 	/**
 	 * @param player

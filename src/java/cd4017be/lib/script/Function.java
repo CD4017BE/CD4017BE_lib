@@ -14,10 +14,21 @@ import javax.script.ScriptException;
 import cd4017be.lib.util.Stack;
 import static cd4017be.lib.util.ArrayMath.*;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class Function {
 
 	private static final int TICK_LIMIT = 262144, REC_LIMIT = 64;
-	
+
+	private final byte[] code;
+	public final int Nparam, lineOfs, Nstack;
+	public final boolean hasReturn;
+	public final String name;
+	private final short[] codeIndices, lineNumbers;
+	public Script script;
+
 	public Function(int param, int stack, int lineOfs, byte[] code, boolean ret, String name, HashMap<Short, Short> lines) {
 		this.Nparam = param;
 		this.Nstack = stack;
@@ -33,13 +44,25 @@ public class Function {
 		for (i = 0; i < lineNumbers.length; i++)
 			codeIndices[i] = lines.get(lineNumbers[i]);
 	}
-	private final byte[] code;
-	public final int Nparam, lineOfs, Nstack;
-	public final boolean hasReturn;
-	public final String name;
-	private final short[] codeIndices, lineNumbers;
-	public Script script;
-	
+
+	public Function(String name, DataInputStream dis) throws IOException {
+		this.name = name;
+		int i = dis.readByte();
+		this.Nparam = i & 0x7f;
+		this.hasReturn = (i & 0x80) != 0;
+		this.Nstack = dis.readByte() & 0xff;
+		this.code = new byte[dis.readShort() & 0xffff];
+		dis.read(code);
+		this.lineOfs = dis.readShort() & 0xffff;
+		i = dis.readShort();
+		this.lineNumbers = new short[i];
+		this.codeIndices = new short[i];
+		for (int j = 0; j < i; j++) {
+			codeIndices[j] = dis.readShort();
+			lineNumbers[j] = dis.readShort();
+		}
+	}
+
 	public Object apply(Parameters param) throws ScriptException {
 		if (param.param.length != Nparam) throw new ScriptException("wrong number of parameters!", name, lineOfs);
 		Stack<Object> stack = new Stack<Object>(Nstack);
@@ -60,24 +83,6 @@ public class Function {
 			p = p == -1 ? lineOfs : lineOfs + lineNumbers[p < 0 ? -2 - p : p];
 			String msg = ex.getMessage();
 			throw (ScriptException)new ScriptException(ex.getClass().getSimpleName() + (msg == null ? "" : ": " + msg), name, p).initCause(ex);
-		}
-	}
-
-	public Function(String name, DataInputStream dis) throws IOException {
-		this.name = name;
-		int i = dis.readByte();
-		this.Nparam = i & 0x7f;
-		this.hasReturn = (i & 0x80) != 0;
-		this.Nstack = dis.readByte() & 0xff;
-		this.code = new byte[dis.readShort() & 0xffff];
-		dis.read(code);
-		this.lineOfs = dis.readShort() & 0xffff;
-		i = dis.readShort();
-		this.lineNumbers = new short[i];
-		this.codeIndices = new short[i];
-		for (int j = 0; j < i; j++) {
-			codeIndices[j] = dis.readShort();
-			lineNumbers[j] = dis.readShort();
 		}
 	}
 
@@ -102,7 +107,7 @@ public class Function {
 		code.get(data);
 		return new String(data);
 	}
-	
+
 	public static void putName(ByteBuffer code, String name, boolean big) {
 		byte[] data = name.getBytes();
 		if (big) code.putShort((short)data.length);

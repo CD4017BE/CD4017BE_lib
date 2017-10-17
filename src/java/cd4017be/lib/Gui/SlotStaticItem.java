@@ -5,6 +5,10 @@ import net.minecraft.inventory.InventoryBasic;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class SlotStaticItem extends Slot {
 
 	public SlotStaticItem(int x, int y, ItemStack stack) {

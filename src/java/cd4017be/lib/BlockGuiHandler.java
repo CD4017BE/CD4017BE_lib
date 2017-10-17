@@ -1,6 +1,7 @@
 package cd4017be.lib;
 
 import cd4017be.lib.Gui.DataContainer;
+import cd4017be.lib.Gui.IGuiItem;
 import cd4017be.lib.Gui.DataContainer.IGuiData;
 import cd4017be.lib.util.Utils;
 import net.minecraftforge.fml.common.FMLLog;
@@ -108,36 +109,6 @@ public class BlockGuiHandler implements IGuiHandler {
 	 */
 	public static void openBlockGui(EntityPlayer player, World world, BlockPos pos) {
 		openGui(player, world, pos, -1);
-	}
-
-	/**
-	 * Will open a Gui registered for the block at given position.
-	 * @param player
-	 * @param world
-	 * @param x
-	 * @param y
-	 * @param z
-	 * @deprecated use openGui above
-	 */
-	@Deprecated
-	public static void openGui(EntityPlayer player, World world, int x, int y, int z) {
-		if (Lib.instance != null) player.openGui(Lib.instance, 0, world, x, y, z);
-		else FMLLog.severe("CD4017BE-lib: BlockGuiHandler failed to open Gui! No Mod registered!");
-	}
-
-	/**
-	 * Will open a Gui for the item currently held by the player. The item has to implement IGuiItem.
-	 * @param player
-	 * @param world
-	 * @param x
-	 * @param y
-	 * @param z
-	 * @deprecated use openItemGui above
-	 */
-	@Deprecated
-	public static void openItemGui(EntityPlayer player, World world, int x, int y, int z) {
-		if (Lib.instance != null) player.openGui(Lib.instance, 1, world, x, y, z);
-		else FMLLog.severe("CD4017BE-lib: BlockGuiHandler failed to open Gui! No Mod registered!");
 	}
 
 	/**

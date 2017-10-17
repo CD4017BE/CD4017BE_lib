@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package cd4017be.api.energy;
 
 import java.util.List;
@@ -19,22 +15,21 @@ import static cd4017be.api.energy.EnergyAPI.IA_value;
  *
  * @author CD4017BE
  */
-public class EnergyAutomation implements IEnergyHandler
-{
-	
+public class EnergyAutomation implements IEnergyHandler {
+
 	public static interface IEnergyItem {
 		public int getEnergyCap(ItemStack item);
 		public int getChargeSpeed(ItemStack item);
 		public String getEnergyTag();
 	}
-	
+
 	public static class EnergyItem implements IEnergyAccess {
 		private final ItemStack stack;
 		private final int s;
 		public final IEnergyItem item;
 		/** [kJ] remaining fraction for use with precision mode */
 		public float fractal = 0;
-		
+
 		/** @param s "access side": -2 = precision, -1 = unlimited, 0 = limited */
 		public EnergyItem(ItemStack stack, IEnergyItem item, int s) {
 			this.stack = stack;
@@ -42,7 +37,7 @@ public class EnergyAutomation implements IEnergyHandler
 			this.s = s;
 			if (!stack.hasTagCompound()) stack.setTagCompound(new NBTTagCompound());
 		}
-		
+
 		public void addInformation(List<String> list) {
 			list.add(String.format("Energy: %d / %d %s", this.getStorageI(), item.getEnergyCap(stack), TooltipUtil.getEnergyUnit()));
 		}

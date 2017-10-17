@@ -14,6 +14,10 @@ import java.util.Arrays;
 import net.minecraft.block.properties.PropertyEnum;
 import net.minecraft.client.renderer.block.model.ModelRotation;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public enum Orientation implements IStringSerializable {
 	N(NORTH),	E(EAST),	S(SOUTH),	W(WEST),
 	Bn(DOWN),	Be(DOWN),	Bs(DOWN),	Bw(DOWN),

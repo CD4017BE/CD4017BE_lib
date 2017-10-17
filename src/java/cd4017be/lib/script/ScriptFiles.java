@@ -11,6 +11,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class ScriptFiles {
 
 	public static Script[] createCompiledPackage(File out) {

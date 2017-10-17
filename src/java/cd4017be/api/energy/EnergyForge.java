@@ -10,6 +10,10 @@ import cd4017be.api.energy.EnergyAPI.IEnergyAccess;
 import cd4017be.api.energy.EnergyAPI.IEnergyHandler;
 import static cd4017be.api.energy.EnergyAPI.RF_value;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class EnergyForge implements IEnergyHandler {
 
 	@Override

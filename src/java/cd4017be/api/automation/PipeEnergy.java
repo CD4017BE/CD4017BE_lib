@@ -1,13 +1,8 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package cd4017be.api.automation;
 
 import cd4017be.api.Capabilities;
 import cd4017be.api.IAbstractTile;
 import cd4017be.api.energy.EnergyAPI.IEnergyAccess;
-import cd4017be.lib.util.TooltipUtil;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumFacing;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
@@ -16,8 +11,8 @@ import net.minecraftforge.common.capabilities.ICapabilityProvider;
  *
  * @author CD4017BE
  */
-public class PipeEnergy implements IEnergyAccess
-{
+public class PipeEnergy implements IEnergyAccess {
+
 	public boolean update;
 	public byte sideCfg;
 	public float Ucap;
@@ -41,7 +36,7 @@ public class PipeEnergy implements IEnergyAccess
 		if (R < 1) R = 1;
 		return (Ucap * Ucap - U * U) / R;
 	}
-	
+
 	@Override
 	public float getStorage() {
 		return Ucap * Ucap;

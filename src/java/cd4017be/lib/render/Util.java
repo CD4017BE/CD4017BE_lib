@@ -20,6 +20,10 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 @SideOnly(Side.CLIENT)
 public class Util {
 
@@ -170,7 +174,7 @@ public class Util {
 	private static int neg(int i) {
 		return Float.floatToRawIntBits(1F - Float.intBitsToFloat(i));
 	}
-	
+
 	public static final Util instance = new Util();
 	public static int RenderFrame = 0;
 

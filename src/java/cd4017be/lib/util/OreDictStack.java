@@ -5,24 +5,28 @@ import java.util.List;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.oredict.OreDictionary;
 
+/**
+ * 
+ * @author CD4017BE
+ */
 public class OreDictStack {
-	
+
 	public String id;
 	public int ID;
 	public int stacksize;
-	
+
 	public OreDictStack(String id, int n) {
 		this.id = id;
 		this.stacksize = n;
 		this.ID = OreDictionary.getOreID(id);
 	}
-	
+
 	public OreDictStack(int id, int n) {
 		this.ID = id;
 		this.id = OreDictionary.getOreName(id);
 		this.stacksize = n;
 	}
-	
+
 	public static OreDictStack deserialize(String s) {
 		int p = s.indexOf('*');
 		short n = 1;
@@ -34,7 +38,7 @@ public class OreDictStack {
 		if (s.isEmpty()) return null;
 		return new OreDictStack(s, n);
 	}
-	
+
 	public static OreDictStack[] get(ItemStack item) {
 		if (item.isEmpty()) return null;
 		int[] i = OreDictionary.getOreIDs(item);
@@ -42,14 +46,14 @@ public class OreDictStack {
 		for (int j = 0; j < i.length; j++) stacks[j] = new OreDictStack(i[j], item.getCount());
 		return stacks;
 	}
-	
+
 	public boolean isEqual(ItemStack item) {
 		if (item.isEmpty()) return false;
 		for (int id : OreDictionary.getOreIDs(item))
 			if (id == ID) return true;
 		return false;
 	}
-	
+
 	public ItemStack[] getItems() {
 		List<ItemStack> list = OreDictionary.getOres(id);
 		ItemStack[] items = new ItemStack[list.size()];
