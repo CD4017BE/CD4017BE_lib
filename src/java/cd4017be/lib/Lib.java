@@ -51,6 +51,8 @@ public class Lib {
 		BlockGuiHandler.register();
 		Capabilities.register();
 		EnergyAPI.init();
+		(materials = new ItemMaterial("m")).setCreativeTab(creativeTab);
+		creativeTab.item = new ItemStack(materials);
 		RecipeSorter.register(ID + ":shapedNBT", NBTRecipe.class, RecipeSorter.Category.SHAPED, "after:minecraft:shaped before:minecraft:shapeless");
 		RecipeScriptContext.instance = new RecipeScriptContext();
 		RecipeScriptContext.instance.setup();
@@ -85,8 +87,7 @@ public class Lib {
 
 	@SubscribeEvent
 	public void registerItems(RegistryEvent.Register<Item> ev) {
-		ev.getRegistry().register((materials = new ItemMaterial("m")).setCreativeTab(creativeTab));
-		creativeTab.item = new ItemStack(materials);
+		ev.getRegistry().register(materials);
 	}
 
 }
