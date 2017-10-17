@@ -5,7 +5,7 @@
 	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8/"/>
 	<classpathentry exported="true" kind="lib" path="C:/Users/CD4017BE/.gradle/caches/modules-2/files-2.1/li.cil.oc/OpenComputers/MC1.12.1-1.7.0.19/e07076d42d88f43da41292d8ec98074b8b31ff2/OpenComputers-MC1.12.1-1.7.0.19-api.jar"/>
 	<classpathentry exported="true" kind="lib" path="C:/Users/CD4017BE/.gradle/caches/modules-2/files-2.1/mezz.jei/jei_1.12.2/4.8.0.108/565816a5cf053c0eabd8738c40c40bf7adf1776a/jei_1.12.2-4.8.0.108.jar" sourcepath="C:/Users/CD4017BE/.gradle/caches/modules-2/files-2.1/mezz.jei/jei_1.12.2/4.8.0.108/a31c7740033023888deef0e4104d39f68f24345f/jei_1.12.2-4.8.0.108-sources.jar"/>
-	<classpathentry exported="true" kind="lib" path="C:/Users/CD4017BE/git/CD4017BE_lib/.gradle/minecraft/forgeSrc-1.12.2-14.23.0.2491-PROJECT(CD4017BE_lib).jar" sourcepath="C:/Users/CD4017BE/git/CD4017BE_lib/.gradle/minecraft/forgeSrc-1.12.2-14.23.0.2491-PROJECT(CD4017BE_lib)-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="C:/Users/CD4017BE/git/CD4017BE_lib/.gradle/minecraft/forgeSrc-1.12.2-14.23.0.2512-PROJECT(CD4017BE_lib).jar" sourcepath="C:/Users/CD4017BE/git/CD4017BE_lib/.gradle/minecraft/forgeSrc-1.12.2-14.23.0.2512-PROJECT(CD4017BE_lib)-sources.jar"/>
 	<classpathentry exported="true" kind="lib" path="C:/Users/CD4017BE/.gradle/caches/modules-2/files-2.1/com.mojang/authlib/1.5.25/9834cdf236c22e84b946bba989e2f94ef5897c3c/authlib-1.5.25.jar" sourcepath="C:/Users/CD4017BE/.gradle/caches/modules-2/files-2.1/com.mojang/authlib/1.5.25/18840707f662a3236542716fff61c659584f3e6c/authlib-1.5.25-sources.jar"/>
 	<classpathentry exported="true" kind="lib" path="C:/Users/CD4017BE/.gradle/caches/modules-2/files-2.1/com.google.code.findbugs/jsr305/3.0.1/f7be08ec23c21485b9b5a1cf1654c2ec8c58168d/jsr305-3.0.1.jar" sourcepath="C:/Users/CD4017BE/.gradle/caches/modules-2/files-2.1/com.google.code.findbugs/jsr305/3.0.1/a2926c057ca3b662b9db194c869bdbe7d3bb8aef/jsr305-3.0.1-sources.jar"/>
 	<classpathentry exported="true" kind="lib" path="C:/Users/CD4017BE/.gradle/caches/modules-2/files-2.1/com.mojang/patchy/1.1/aef610b34a1be37fa851825f12372b78424d8903/patchy-1.1.jar" sourcepath="C:/Users/CD4017BE/.gradle/caches/modules-2/files-2.1/com.mojang/patchy/1.1/5e398295fbcb8fb590e3e3bddace13f659792e50/patchy-1.1-sources.jar"/>
@@ -68,6 +68,6 @@
 	<classpathentry exported="true" kind="lib" path="C:/Users/CD4017BE/git/CD4017BE_lib/libs/industrialcraft-2-2.2.825-experimental-api.jar"/>
 	<classpathentry exported="true" kind="lib" path="C:/Users/CD4017BE/.gradle/caches/minecraft/deobfedDeps/compileDummy.jar"/>
 	<classpathentry exported="true" kind="lib" path="C:/Users/CD4017BE/.gradle/caches/minecraft/deobfedDeps/providedDummy.jar"/>
-	<classpathentry exported="true" kind="lib" path="C:/Users/CD4017BE/.gradle/caches/minecraft/net/minecraftforge/forge/1.12.2-14.23.0.2491/start"/>
+	<classpathentry exported="true" kind="lib" path="C:/Users/CD4017BE/.gradle/caches/minecraft/net/minecraftforge/forge/1.12.2-14.23.0.2512/start"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
