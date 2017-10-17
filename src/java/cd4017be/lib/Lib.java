@@ -6,7 +6,6 @@ import cd4017be.api.energy.EnergyAPI;
 import cd4017be.api.recipes.RecipeScriptContext;
 import cd4017be.lib.item.ItemMaterial;
 import cd4017be.lib.render.ItemMaterialMeshDefinition;
-import cd4017be.lib.templates.NBTRecipe;
 import cd4017be.lib.templates.TabMaterials;
 import cd4017be.lib.util.FileUtil;
 import cd4017be.lib.util.TooltipUtil;
@@ -53,7 +52,7 @@ public class Lib {
 		EnergyAPI.init();
 		(materials = new ItemMaterial("m")).setCreativeTab(creativeTab);
 		creativeTab.item = new ItemStack(materials);
-		RecipeSorter.register(ID + ":shapedNBT", NBTRecipe.class, RecipeSorter.Category.SHAPED, "after:minecraft:shaped before:minecraft:shapeless");
+		//RecipeSorter.register(ID + ":shapedNBT", NBTRecipe.class, RecipeSorter.Category.SHAPED, "after:minecraft:shaped before:minecraft:shapeless");
 		RecipeScriptContext.instance = new RecipeScriptContext();
 		RecipeScriptContext.instance.setup();
 		RecipeScriptContext.instance.run("core.PRE_INIT");
