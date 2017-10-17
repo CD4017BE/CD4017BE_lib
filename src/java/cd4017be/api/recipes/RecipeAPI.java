@@ -1,7 +1,6 @@
 package cd4017be.api.recipes;
 
 import java.util.Arrays;
-import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Predicate;
@@ -20,14 +19,20 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.CraftingManager;
 import net.minecraft.item.crafting.IRecipe;
-import net.minecraft.item.crafting.ShapedRecipes;
-import net.minecraft.item.crafting.ShapelessRecipes;
+import net.minecraft.item.crafting.Ingredient;
+import net.minecraft.util.NonNullList;
+import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.furnace.FurnaceFuelBurnTimeEvent;
 import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fml.common.IFuelHandler;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.oredict.OreDictionary;
+import net.minecraftforge.oredict.OreIngredient;
 import net.minecraftforge.oredict.ShapedOreRecipe;
 import net.minecraftforge.oredict.ShapelessOreRecipe;
+import net.minecraftforge.registries.IForgeRegistryEntry.Impl;
 
 /**
  * 
@@ -45,11 +50,12 @@ public class RecipeAPI {
 
 	public static final HashMap<String, IRecipeHandler> Handlers;
 	public static final HashMap<String, IRecipeList> Lists;
+	private static final HashMap<String, Integer> UsedNames;
 
 	static {
 		Handlers = new HashMap<String, IRecipeHandler>();
 		Lists = new HashMap<String, IRecipeList>();
-		
+		UsedNames = new HashMap<String, Integer>();
 		Handlers.put("shaped", (p) -> {
 			String[] pattern = p.getString(2).split("/");
 			int n = p.param.length - 3;
@@ -59,7 +65,7 @@ public class RecipeAPI {
 				arr[pattern.length + i * 2] = Character.forDigit(i, 9);
 				arr[pattern.length + i * 2 + 1] = p.param[i + 3];
 			}
-			GameRegistry.addRecipe(new ShapedOreRecipe(p.get(1, ItemStack.class), arr));
+			addRecipe(new ShapedOreRecipe(null, p.get(1, ItemStack.class), arr));
 		});
 		Handlers.put("shapedNBT", (p) -> {
 			String[] pattern = p.getString(3).split("/");
@@ -70,7 +76,7 @@ public class RecipeAPI {
 				arr[pattern.length + i * 2] = Character.forDigit(i, 9);
 				arr[pattern.length + i * 2 + 1] = p.param[i + 4];
 			}
-			GameRegistry.addRecipe(new NBTRecipe(p.get(2, ItemStack.class), p.getString(1), arr));
+			addRecipe(new NBTRecipe(null, p.get(2, ItemStack.class), p.getString(1), arr));
 		});
 		Handlers.put("ore", (p) -> {
 			String name = p.getString(1);
@@ -80,7 +86,7 @@ public class RecipeAPI {
 		Lists.put("ore", (p) -> new FilteredIterator(new ArrayIterator(OreDictionary.getOreNames()), new RegexFilter(p.getString(1))));
 		Lists.put("craftIng", (p) -> new CraftingRecipeIterator(getFilter(p.get(1)), false));
 		Lists.put("craftRes", (p) -> new CraftingRecipeIterator(getFilter(p.get(1)), true));
-		Handlers.put("shapeless", (p) -> GameRegistry.addRecipe(new ShapelessOreRecipe(p.get(1, ItemStack.class), Arrays.copyOfRange(p.param, 2, p.param.length))));
+		Handlers.put("shapeless", (p) -> addRecipe(new ShapelessOreRecipe(null, p.get(1, ItemStack.class), Arrays.copyOfRange(p.param, 2, p.param.length))));
 		Handlers.put("smelt", (p) -> GameRegistry.addSmelting(p.get(1, ItemStack.class), p.get(2, ItemStack.class), p.param.length > 3 ? (float)p.getNumber(3) : 0F));
 		Handlers.put("fuel", new FuelHandler());
 		Handlers.put("worldgen", new OreGenHandler());
@@ -88,24 +94,55 @@ public class RecipeAPI {
 		//TODO Handlers.put("fluidCont", (p) -> FluidContainerRegistry.registerFluidContainer(p.get(1, FluidStack.class), p.get(2, ItemStack.class), p.get(3, ItemStack.class)));
 	}
 
-	private static class FuelHandler implements IRecipeHandler, IFuelHandler {
+	public static String genericName(IRecipe rcp) {
+		ItemStack stack = rcp.getRecipeOutput();
+		Item item = stack.getItem();
+		ResourceLocation res = item.getRegistryName();
+		String name = res.getResourceDomain() + "/" + res.getResourcePath();
+		if (item.getHasSubtypes()) name += "_" + stack.getItemDamage();
+		int n = UsedNames.getOrDefault(name, 0);
+		UsedNames.put(name, n + 1);
+		if (n > 0) name += "_" + asLetter(n);
+		return name;
+	}
+
+	private static String asLetter(int i) {
+		String s = "";
+		do {
+			s += (char)(i % 26 + 'a');
+			i /= 26;
+		} while (i > 26);
+		return s;
+	}
+
+	private static <T extends Impl<IRecipe> & IRecipe> void addRecipe(T rcp) {
+		ForgeRegistries.RECIPES.register(rcp.setRegistryName(genericName(rcp)));
+	}
+
+	private static class FuelHandler implements IRecipeHandler {
+
 		HashMap<Integer, Integer> fuelList;
+
 		public FuelHandler() {
 			fuelList = new HashMap<Integer, Integer>();
-			GameRegistry.registerFuelHandler(this);
+			MinecraftForge.EVENT_BUS.register(this);
 		}
+
 		int key(ItemStack item) {
 			return Item.getIdFromItem(item.getItem()) & 0xffff | (item.getItemDamage() & 0xffff) << 16;
 		}
+
 		@Override
 		public void addRecipe(Parameters p) {
 			fuelList.put(key(p.get(1, ItemStack.class)), (int)p.getNumber(2));
 		}
-		@Override
-		public int getBurnTime(ItemStack fuel) {
-			Integer val = fuelList.get(key(fuel));
-			return val == null ? 0 : val;
+
+		@SubscribeEvent
+		public void getBurnTime(FurnaceFuelBurnTimeEvent ev) {
+			Integer val = fuelList.get(key(ev.getItemStack()));
+			if (val != null) ev.setBurnTime(val);
 		}
+
 	}
 
 	public static Predicate<Object> getFilter(Object o) {
@@ -138,18 +175,16 @@ public class RecipeAPI {
 	}
 
 	private static class CraftingRecipeIterator implements Iterator {
-		private final List<IRecipe> list;
+		private java.util.Iterator<IRecipe> list;
 		private final Predicate<Object> key;
 		private final boolean in;
-		private int idx;
 		private Object[] curElement;
 		private IRecipe curRecipe;
 
 		public CraftingRecipeIterator(Predicate<Object> key, boolean res) {
 			this.key = key;
-			this.list = CraftingManager.getInstance().getRecipeList();
+			this.list = CraftingManager.REGISTRY.iterator();
 			this.in = !res;
-			this.idx = -1;
 		}
 
 		@Override
@@ -159,43 +194,22 @@ public class RecipeAPI {
 
 		@Override
 		public void set(Object o) {
-			if (list.get(idx) != curRecipe) throw new ConcurrentModificationException();
-			if (o == null) list.remove(idx--);
+			if (o == null) list.remove();
 			else if (o == curElement && curElement[0] != curRecipe.getRecipeOutput()) {
 				if (!(curElement[0] instanceof ItemStack)) throw new IllegalArgumentException("ItemStack expected");
 				ItemStack item = (ItemStack)curElement[0];
 				ItemStack res = curRecipe.getRecipeOutput();
-				if (res != null) {
-					//TODO res.setItem(item.getItem());
-					res.setItemDamage(item.getItemDamage());
-					res.setTagCompound(item.getTagCompound());
-					res.setCount(item.getCount());
-				}
+				//TODO replace by new recipe with different result
 			}
 		}
 
 		@Override
 		public boolean next() {
-			int l = list.size();
-			while (++idx < l) {
-				curRecipe = list.get(idx);
+			while (list.hasNext()) {
+				curRecipe = list.next();
 				ItemStack result = curRecipe.getRecipeOutput();
 				if (!(in || key.test(result))) continue;
-				Iterator ingred;
-				if (curRecipe instanceof ShapedOreRecipe) ingred = new ShapedIngredients((ShapedOreRecipe)curRecipe, in ? key : null);
-				else if (curRecipe instanceof ShapelessOreRecipe) ingred = new ShapelessIngredients((ShapelessOreRecipe)curRecipe, in ? key : null);
-				else if (curRecipe instanceof ShapedRecipes) {
-					ingred = new ArrayIterator(((ShapedRecipes)curRecipe).recipeItems);
-					if (in) ingred = new FilteredIterator(ingred, key);
-				} else if (curRecipe instanceof ShapelessRecipes) {
-					ingred = new ListIterator<ItemStack>(((ShapelessRecipes)curRecipe).recipeItems);
-					if (in) ingred = new FilteredIterator(ingred, key);
-				}
-				else continue;
-				if (in) {
-					if (ingred.next()) ingred.reset();
-					else continue;
-				}
+				Iterator ingred = new IngredientIterator(curRecipe.getIngredients(), key);
 				curElement = new Object[]{result, ingred};
 				return true;
 			}
@@ -204,17 +218,17 @@ public class RecipeAPI {
 
 		@Override
 		public void reset() {
-			idx = -1;
+			list = CraftingManager.REGISTRY.iterator();
 		}
 
 	}
 
-	private static class ShapelessIngredients extends ListIterator<Object> {
+	private static class IngredientIterator extends ListIterator<Ingredient> {//TODO fix this
 		private final Predicate<Object> key;
 		private Object curElement;
 
-		public ShapelessIngredients(ShapelessOreRecipe rcp, Predicate<Object> key) {
-			super(rcp.getInput());
+		public IngredientIterator(NonNullList<Ingredient> rcp, Predicate<Object> key) {
+			super(rcp);
 			this.key = key;
 		}
 
@@ -226,8 +240,8 @@ public class RecipeAPI {
 		@Override
 		public void set(Object o) {
 			if (o == curElement) return;
-			if (o instanceof ItemStack) arr.set(idx, o);
-			else if (o instanceof OreDictStack) arr.set(idx, OreDictionary.getOres(((OreDictStack)o).id));
+			if (o instanceof ItemStack) arr.set(idx, (Ingredient)o);
+			else if (o instanceof OreDictStack) arr.set(idx, new OreIngredient(((OreDictStack)o).id));
 			else if (o == null) arr.remove(idx--);
 			else throw new IllegalArgumentException("exp. ItemStack or OreDictStack");
 		}
@@ -236,50 +250,6 @@ public class RecipeAPI {
 		public boolean next() {
 			while (++idx < arr.size()) {
 				curElement = arr.get(idx);
-				if (curElement instanceof List) {
-					List<?> list = (List<?>)curElement;
-					if (list.isEmpty()) continue;
-					if (key == null) {
-						curElement = list.get(0);
-						return true;
-					}
-					for (Object o : list)
-						if (key.test(o)) {
-							curElement = o;
-							return true;
-						}
-				} else if (key == null || key.test(curElement)) return true;
-			}
-			return false;
-		}
-	}
-
-	private static class ShapedIngredients extends ArrayIterator {
-		private final Predicate<Object> key;
-		private Object curElement;
-
-		public ShapedIngredients(ShapedOreRecipe rcp, Predicate<Object> key) {
-			super(rcp.getInput());
-			this.key = key;
-		}
-
-		@Override
-		public Object get() {
-			return curElement;
-		}
-
-		@Override
-		public void set(Object o) {
-			if (o == curElement) return;
-			if (o == null || o instanceof ItemStack) arr[idx] = o;
-			else if (o instanceof OreDictStack) arr[idx] = OreDictionary.getOres(((OreDictStack)o).id);
-			else throw new IllegalArgumentException("exp. ItemStack or OreDictStack");
-		}
-
-		@Override
-		public boolean next() {
-			while (++idx < arr.length) {
-				curElement = arr[idx];
 				if (curElement instanceof List) {
 					List<?> list = (List<?>)curElement;
 					if (list.isEmpty()) continue;

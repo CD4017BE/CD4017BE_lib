@@ -10,6 +10,7 @@ import net.minecraft.nbt.NBTTagFloat;
 import net.minecraft.nbt.NBTTagInt;
 import net.minecraft.nbt.NBTTagLong;
 import net.minecraft.nbt.NBTTagShort;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.oredict.ShapedOreRecipe;
 
 /**
@@ -28,8 +29,8 @@ public class NBTRecipe extends ShapedOreRecipe {
 	 * @param nbtTypes NBT-Tags
 	 * @param recipe 
 	 */
-	public NBTRecipe(ItemStack out, String nbtTypes, Object... recipe) {
-		super(out, recipe);
+	public NBTRecipe(ResourceLocation group, ItemStack out, String nbtTypes, Object... recipe) {
+		super(group, out, recipe);
 		this.nbtVars = nbtTypes.split(",");
 		this.addTypes = new byte[this.nbtVars.length];
 		for (int i = 0; i < nbtVars.length; i++) {
