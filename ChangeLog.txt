@@ -1,3 +1,11 @@
+v6.0.0
+Changes:
+- updated to MC-1.12.2
+- refactored package structure and removed depecated content
+Dependencies:
+- for MC-1.12.2
+- forge-14.23.0.2512 (or newer)
+
 v5.0.6
 Changes:
 - fix access transformer
