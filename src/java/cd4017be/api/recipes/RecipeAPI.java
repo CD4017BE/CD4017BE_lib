@@ -56,28 +56,8 @@ public class RecipeAPI {
 		Handlers = new HashMap<String, IRecipeHandler>();
 		Lists = new HashMap<String, IRecipeList>();
 		UsedNames = new HashMap<String, Integer>();
-		Handlers.put("shaped", (p) -> {
-			String[] pattern = p.getString(2).split("/");
-			int n = p.param.length - 3;
-			Object[] arr = new Object[n * 2 + pattern.length];
-			for (int i = 0; i < pattern.length; i++) arr[i] = pattern[i];
-			for (int i = 0; i < n; i++) {
-				arr[pattern.length + i * 2] = Character.forDigit(i, 9);
-				arr[pattern.length + i * 2 + 1] = p.param[i + 3];
-			}
-			addRecipe(new ShapedOreRecipe(null, p.get(1, ItemStack.class), arr));
-		});
-		Handlers.put("shapedNBT", (p) -> {
-			String[] pattern = p.getString(3).split("/");
-			int n = p.param.length - 4;
-			Object[] arr = new Object[n * 2 + pattern.length];
-			for (int i = 0; i < pattern.length; i++) arr[i] = pattern[i];
-			for (int i = 0; i < n; i++) {
-				arr[pattern.length + i * 2] = Character.forDigit(i, 9);
-				arr[pattern.length + i * 2 + 1] = p.param[i + 4];
-			}
-			addRecipe(new NBTRecipe(null, p.get(2, ItemStack.class), p.getString(1), arr));
-		});
+		Handlers.put("shaped", (p) -> addRecipe(new ShapedOreRecipe(null, p.get(1, ItemStack.class), decodePattern(p, 2))));
+		Handlers.put("shapedNBT", (p) -> addRecipe(new NBTRecipe(null, p.get(2, ItemStack.class), p.getString(1), decodePattern(p, 3))));
 		Handlers.put("ore", (p) -> {
 			String name = p.getString(1);
 			for (int i = 2; i < p.param.length; i++)
@@ -92,6 +72,22 @@ public class RecipeAPI {
 		Handlers.put("worldgen", new OreGenHandler());
 		Handlers.put("item", (p) -> Lib.materials.addMaterial((int)p.getNumber(1), p.getString(2)));
 		//TODO Handlers.put("fluidCont", (p) -> FluidContainerRegistry.registerFluidContainer(p.get(1, FluidStack.class), p.get(2, ItemStack.class), p.get(3, ItemStack.class)));
+	}
+
+	private static Object[] decodePattern(Parameters p, int i0) {
+		String s = p.getString(i0++);
+		String[] pattern = s.split("/");
+		int n = p.param.length - i0;
+		Object[] arr = new Object[n * 2 + pattern.length];
+		int j = 0;
+		for (String l : pattern) arr[j++] = l;
+		for (int i = 0; i < n; i++) {
+			char c = Character.forDigit(i, 9);
+			if (s.indexOf(c) < 0) continue;
+			arr[j++] = c;
+			arr[j++] = p.param[i + i0];
+		}
+		return j < arr.length ? Arrays.copyOf(arr, j) : arr;
 	}
 
 	public static String genericName(IRecipe rcp) {
