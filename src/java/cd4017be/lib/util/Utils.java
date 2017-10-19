@@ -8,6 +8,7 @@ import javax.annotation.Nullable;
 
 import cd4017be.api.circuits.IQuickRedstoneHandler;
 import cd4017be.lib.ModTileEntity;
+import cd4017be.lib.block.AdvancedBlock.IRedstoneTile;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
@@ -382,6 +383,13 @@ public class Utils {
 	public static void updateRedstoneOnSide(TileEntity te, int value, EnumFacing side) {
 		ICapabilityProvider cp = neighborTile(te, side);
 		if (cp != null && cp instanceof IQuickRedstoneHandler) ((IQuickRedstoneHandler)cp).onRedstoneStateChange(side.getOpposite(), value, te);
+		else te.getWorld().neighborChanged(te.getPos().offset(side), te.getBlockType(), te.getPos());
+	}
+
+	public static <T extends TileEntity & IRedstoneTile> void updateRedstoneOnSide(T te, EnumFacing side) {
+		ICapabilityProvider cp = neighborTile(te, side);
+		if (cp instanceof IQuickRedstoneHandler)
+			((IQuickRedstoneHandler)cp).onRedstoneStateChange(side.getOpposite(), te.redstoneLevel(side, false), te);
 		else te.getWorld().neighborChanged(te.getPos().offset(side), te.getBlockType(), te.getPos());
 	}
 
