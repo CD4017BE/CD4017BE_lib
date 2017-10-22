@@ -768,8 +768,13 @@ public abstract class AdvancedGui extends GuiContainer {
 			ArrayList<String> list = new ArrayList<String>();
 			String s = "";
 			for (int i = 0; i < headers.length; i++) {
+				String h = headers[i];
+				if (h.charAt(0) == ChatFormatting.PREFIX_CODE) {
+					s += h.substring(0, 2);
+					h = h.substring(2);
+				}
 				if (i == page) s += "" + ChatFormatting.PREFIX_CODE + ChatFormatting.UNDERLINE.getChar();
-				s += headers[i] + ChatFormatting.PREFIX_CODE + ChatFormatting.RESET.getChar() + " | ";
+				s += h + ChatFormatting.PREFIX_CODE + ChatFormatting.RESET.getChar() + " | ";
 			}
 			list.add(s.substring(0, s.length() - 3));
 			for (String l : TooltipUtil.getConfigFormat(keys[page]).split("\n"))
