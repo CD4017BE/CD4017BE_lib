@@ -1,3 +1,13 @@
+v6.0.1
+Changes:
+- fixed item multiplication bug in item extraction utility method
+- fixed color formating conflicting with selection underline in GUI info tabs
+- fixed rendering bugs for some blocks in side config overlay
+- fix crash in case no block/item has loaded script models before TESR
+Dependencies:
+- for MC-1.12.2
+- forge-14.23.0.2512 (or newer)
+
 v6.0.0
 Changes:
 - updated to MC-1.12.2
