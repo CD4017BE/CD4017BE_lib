@@ -169,11 +169,11 @@ public class ItemFluidUtil {
 		return stack;
 	}
 
-	public static int drain(IItemHandler inv, ItemStack item) {
-		int n = item.getCount(), m = 0;
-		for (int i = 0; i < inv.getSlots() && m < n; i++) 
-			if (item.isItemEqual(inv.getStackInSlot(i))) {
-				ItemStack stack = inv.extractItem(i, n - m, false);
+	public static int drain(IItemHandler inv, ItemStack type, int am) {
+		int m = 0;
+		for (int i = 0; i < inv.getSlots() && m < am; i++) 
+			if (type.isItemEqual(inv.getStackInSlot(i))) {
+				ItemStack stack = inv.extractItem(i, am - m, false);
 				m += stack.getCount();
 			}
 		return m;
@@ -217,9 +217,7 @@ public class ItemFluidUtil {
 		for (int i = 0; i < inv.getSlots(); i++) {
 			ItemStack stack = inv.extractItem(i, am, true);
 			if (stack.getCount() == 0) continue;
-			stack.setCount(mss ? stack.getMaxStackSize() : am);
-			stack.setCount(drain(inv, stack));
-			return stack;
+			return ItemHandlerHelper.copyStackWithSize(stack, drain(inv, stack, mss ? stack.getMaxStackSize() : am));
 		}
 		return ItemStack.EMPTY;
 	}

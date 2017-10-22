@@ -13,11 +13,13 @@ import java.util.Arrays;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.gui.inventory.GuiContainer;
+import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.player.EntityPlayer;
@@ -28,10 +30,13 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.ChatAllowedCharacters;
+import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.TextComponentString;
+import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidUtil;
 import net.minecraftforge.items.SlotItemHandler;
@@ -77,13 +82,6 @@ public abstract class AdvancedGui extends GuiContainer {
 				if (tile.energy != null) guiComps.add(new EnergySideCfg(guiComps.size(), xPos - 18, tabsY, tile));
 			}
 		}
-	}
-
-	@Override
-	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-		this.drawDefaultBackground();
-		super.drawScreen(mouseX, mouseY, partialTicks);
-		this.renderHoveredToolTip(mouseX, mouseY);
 	}
 
 	@Override
@@ -192,20 +190,27 @@ public abstract class AdvancedGui extends GuiContainer {
 
 	protected void drawSideCube(int x, int y, int s, byte dir) {
 		GlStateManager.enableDepth();
-		RenderHelper.enableGUIStandardItemLighting();
+		GlStateManager.disableLighting();
 		this.drawGradientRect(x, y, x + 64, y + 64, 0xff000000, 0xff000000);
 		this.mc.renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
-		GL11.glPushMatrix();
-		GL11.glTranslatef(x + 32, y + 32, 32);
-		GL11.glScalef(16F, -16F, 16F);
+		GlStateManager.pushMatrix();
+		GlStateManager.translate(x + 32, y + 32, 32);
+		GlStateManager.scale(16F, -16F, 16F);
 		EntityPlayer player = ((DataContainer)this.inventorySlots).player;
-		GL11.glRotatef(player.rotationPitch, 1, 0, 0);
-		GL11.glRotatef(player.rotationYaw + 90, 0, 1, 0);
-		GL11.glTranslatef(-0.5F, -0.5F, 0.5F);
+		GlStateManager.rotate(player.rotationPitch, 1, 0, 0);
+		GlStateManager.rotate(player.rotationYaw + 180, 0, 1, 0);
+		GlStateManager.translate(-0.5F, -0.5F, -0.5F);
 		IGuiData tile = ((DataContainer)this.inventorySlots).data;
-		this.mc.getBlockRendererDispatcher().renderBlockBrightness(tile.pos().getY() >= 0 ? player.world.getBlockState(tile.pos()) : Blocks.GLASS.getDefaultState(), 1);
-		//GL11.glRotatef(-90, 0, 1, 0);
-		GlStateManager.disableLighting();
+		
+		GlStateManager.pushMatrix();
+		BlockPos pos = tile.pos();
+		GlStateManager.translate(-pos.getX(), -pos.getY(), -pos.getZ());
+		BufferBuilder t = Tessellator.getInstance().getBuffer();
+		t.begin(GL11.GL_QUADS, DefaultVertexFormats.BLOCK);
+		renderBlock(player.world, pos, t);
+		Tessellator.getInstance().draw();
+		GlStateManager.popMatrix();
+		
 		this.mc.renderEngine.bindTexture(LIB_TEX);
 		Vec3 p = Vec3.Def(0.5, 0.5, 0.5), a, b;
 		switch(s) {
@@ -222,7 +227,6 @@ public abstract class AdvancedGui extends GuiContainer {
 		a = a.scale(1.5);
 		final float tx = (float)(144 + 16 * dir) / 256F, dtx = 16F / 256F, ty = 24F / 256F, dty = 8F / 256F;
 		
-		BufferBuilder t = Tessellator.getInstance().getBuffer();
 		t.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
 		t.pos(p.x + b.x, p.y + b.y, p.z + b.z).tex(tx, ty + dty).endVertex();
 		t.pos(p.x + a.x + b.x, p.y + a.y + b.y, p.z + a.z + b.z).tex(tx + dtx, ty + dty).endVertex();
@@ -230,6 +234,16 @@ public abstract class AdvancedGui extends GuiContainer {
 		t.pos(p.x, p.y, p.z).tex(tx, ty).endVertex();
 		Tessellator.getInstance().draw();
 		GL11.glPopMatrix();
+	}
+
+	protected void renderBlock(IBlockAccess world, BlockPos pos, BufferBuilder t) {
+		BlockRendererDispatcher render = mc.getBlockRendererDispatcher();
+		IBlockState state = world.getBlockState(pos);
+		if (state.getRenderType() != EnumBlockRenderType.MODEL) state = Blocks.GLASS.getDefaultState();
+		state = state.getActualState(world, pos);
+		IBakedModel model = render.getModelForState(state);
+		state = state.getBlock().getExtendedState(state, world, pos);
+		render.getBlockModelRenderer().renderModel(world, model, state, pos, t, false);
 	}
 
 	public void drawItemStack(ItemStack stack, int x, int y, String altText){
@@ -752,8 +766,13 @@ public abstract class AdvancedGui extends GuiContainer {
 			ArrayList<String> list = new ArrayList<String>();
 			String s = "";
 			for (int i = 0; i < headers.length; i++) {
+				String h = headers[i];
+				if (h.charAt(0) == ChatFormatting.PREFIX_CODE) {
+					s += h.substring(0, 2);
+					h = h.substring(2);
+				}
 				if (i == page) s += "" + ChatFormatting.PREFIX_CODE + ChatFormatting.UNDERLINE.getChar();
-				s += headers[i] + ChatFormatting.PREFIX_CODE + ChatFormatting.RESET.getChar() + " | ";
+				s += h + ChatFormatting.PREFIX_CODE + ChatFormatting.RESET.getChar() + " | ";
 			}
 			list.add(s.substring(0, s.length() - 3));
 			for (String l : TooltipUtil.getConfigFormat(keys[page]).split("\n"))
