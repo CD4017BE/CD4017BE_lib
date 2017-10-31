@@ -958,23 +958,24 @@ public abstract class AdvancedGui extends GuiContainer {
 		public void drawOverlay(int mx, int my) {
 			FluidStack stack = slot.getStack();
 			ArrayList<String> info = new ArrayList<String>();
-			info.add(stack != null ? stack.getLocalizedName() : "Empty");
-			info.add(String.format("%s/%s ", TooltipUtil.formatNumber(stack != null ? (float)stack.amount / 1000F : 0F, 3), TooltipUtil.formatNumber((float)slot.inventory.getCapacity(slot.tankNumber) / 1000F, 3)) + TooltipUtil.getFluidUnit());
+			info.add(stack != null ? stack.getLocalizedName() : TooltipUtil.translate("cd4017be.tankEmpty"));
+			info.add(TooltipUtil.format("cd4017be.tankAmount", stack != null ? (double)stack.amount / 1000D : 0D, (double)slot.inventory.getCapacity(slot.tankNumber) / 1000D));
 			drawHoveringText(info, mx, my, fontRendererObj);
 		}
 
 		@Override
 		public void draw() {
 			GlStateManager.disableAlpha();
-			GlStateManager.enableBlend();
 			ResourceLocation res;
 			FluidStack stack = slot.getStack();
-			if (stack != null && (res = stack.getFluid().getStill()) != null) {
+			if (stack != null && ((res = stack.getFluid().getStill(stack)) != null || (res = stack.getFluid().getFlowing(stack)) != null)) {
 				mc.renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
 				int c = slot.inventory.getCapacity(slot.tankNumber);
 				int n = c == 0 || stack.amount >= c ? h : (int)((long)h * (long)stack.amount / (long)c);
+				color(stack.getFluid().getColor(stack));
 				drawTexturedModalRect(px, py + h - n, mc.getTextureMapBlocks().getAtlasSprite(res.toString()), w, n);
 			}
+			color(0xffffffff);
 			mc.renderEngine.bindTexture(LIB_TEX);
 			drawTexturedModalRect(px + w - 16, py, 110, 52 - h, 16, h);
 			GlStateManager.disableBlend();
