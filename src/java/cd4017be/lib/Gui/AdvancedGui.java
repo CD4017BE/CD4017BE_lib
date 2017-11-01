@@ -95,7 +95,7 @@ public abstract class AdvancedGui extends GuiContainer {
 		GlStateManager.pushMatrix();
 		GlStateManager.translate(-guiLeft, -guiTop, 0);
 		for (GuiComp<?> comp : guiComps)
-			if (comp.isInside(mx, my))
+			if (comp.enabled && comp.isInside(mx, my))
 				comp.drawOverlay(mx, my);
 		GlStateManager.popMatrix();
 	}
@@ -116,14 +116,15 @@ public abstract class AdvancedGui extends GuiContainer {
 		if ((drawBG & 2) != 0 && inventorySlots instanceof DataContainer)
 			this.drawStringCentered(((DataContainer)inventorySlots).data.getName(), guiLeft + titleX, guiTop + titleY, 0x404040);
 		GlStateManager.color(1F, 1F, 1F, 1F);
-		for (GuiComp<?> comp : guiComps) comp.draw();
+		for (GuiComp<?> comp : guiComps)
+			if (comp.enabled) comp.draw();
 	}
 
 	@Override
 	protected void mouseClicked(int x, int y, int b) throws IOException {
 		boolean doSuper = true;
 		for (GuiComp<?> comp : guiComps) 
-			if (comp.isInside(x, y)) {
+			if (comp.enabled && comp.isInside(x, y)) {
 				if (comp.id != focus) this.setFocus(comp.id);
 				doSuper = !comp.mouseIn(x, y, b, 0);
 				if (!doSuper) break;
@@ -169,7 +170,7 @@ public abstract class AdvancedGui extends GuiContainer {
 			int x = Mouse.getEventX() * width / mc.displayWidth;
 			int y = height - Mouse.getEventY() * height / mc.displayHeight - 1;
 			for (GuiComp<?> comp : guiComps)
-				if (comp.isInside(x, y) && comp.mouseIn(x, y, -z, 3)) break;
+				if (comp.enabled && comp.isInside(x, y) && comp.mouseIn(x, y, -z, 3)) break;
 		}
 		super.handleMouseInput();
 	}
@@ -284,6 +285,12 @@ public abstract class AdvancedGui extends GuiContainer {
 		focus = id >= 0 && id < guiComps.size() && guiComps.get(id).focus() ? id : -1;
 	}
 
+	public void setEnabled(int id, boolean enable) {
+		GuiComp<?> comp = guiComps.get(id);
+		if (comp.enabled && !enable && focus == id) setFocus(-1);
+		comp.enabled = enable;
+	}
+
 	protected Object getDisplVar(int id) {return null;}
 	protected void setDisplVar(int id, Object obj, boolean send) {}
 
@@ -293,6 +300,7 @@ public abstract class AdvancedGui extends GuiContainer {
 		protected final Consumer<V> update;
 		public final int id, px, py, w, h;
 		public String tooltip;
+		public boolean enabled = true;
 
 		@SuppressWarnings("unchecked")
 		public GuiComp(int id, int px, int py, int w, int h) {
