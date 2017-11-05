@@ -432,6 +432,7 @@ public abstract class AdvancedGui extends GuiContainer {
 		public int tc = 0xff404040, cc = 0xff800000;
 		public String text = "";
 		public int cur;
+		public boolean allowFormat = false;
 
 		public TextField(int id, int x, int y, int w, int h, int max) {
 			super(id, x, y, w, h);
@@ -445,6 +446,11 @@ public abstract class AdvancedGui extends GuiContainer {
 
 		public TextField color(int text, int cursor) {
 			this.tc = text; this.cc = cursor;
+			return this;
+		}
+
+		public TextField allowFormat() {
+			this.allowFormat = true;
 			return this;
 		}
 
@@ -493,7 +499,7 @@ public abstract class AdvancedGui extends GuiContainer {
 						text = "";
 						break;
 					}
-				default: if (ChatAllowedCharacters.isAllowedCharacter(c) && cur < maxL){
+				default: if (cur < maxL && (allowFormat && c == '\u00a7' || ChatAllowedCharacters.isAllowedCharacter(c))){
 						text = text.substring(0, cur).concat("" + c).concat(text.substring(cur, Math.min(text.length(), maxL - 1)));
 						cur++;
 					}
