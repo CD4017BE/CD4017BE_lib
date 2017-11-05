@@ -95,7 +95,7 @@ public abstract class AdvancedGui extends GuiContainer {
 		GlStateManager.pushMatrix();
 		GlStateManager.translate(-guiLeft, -guiTop, 0);
 		for (GuiComp<?> comp : guiComps)
-			if (comp.isInside(mx, my))
+			if (comp.enabled && comp.isInside(mx, my))
 				comp.drawOverlay(mx, my);
 		GlStateManager.popMatrix();
 	}
@@ -116,14 +116,15 @@ public abstract class AdvancedGui extends GuiContainer {
 		if ((drawBG & 2) != 0 && inventorySlots instanceof DataContainer)
 			this.drawStringCentered(((DataContainer)inventorySlots).data.getName(), guiLeft + titleX, guiTop + titleY, 0x404040);
 		GlStateManager.color(1F, 1F, 1F, 1F);
-		for (GuiComp<?> comp : guiComps) comp.draw();
+		for (GuiComp<?> comp : guiComps)
+			if (comp.enabled) comp.draw();
 	}
 
 	@Override
 	protected void mouseClicked(int x, int y, int b) throws IOException {
 		boolean doSuper = true;
 		for (GuiComp<?> comp : guiComps) 
-			if (comp.isInside(x, y)) {
+			if (comp.enabled && comp.isInside(x, y)) {
 				if (comp.id != focus) this.setFocus(comp.id);
 				doSuper = !comp.mouseIn(x, y, b, 0);
 				if (!doSuper) break;
@@ -169,7 +170,7 @@ public abstract class AdvancedGui extends GuiContainer {
 			int x = Mouse.getEventX() * width / mc.displayWidth;
 			int y = height - Mouse.getEventY() * height / mc.displayHeight - 1;
 			for (GuiComp<?> comp : guiComps)
-				if (comp.isInside(x, y) && comp.mouseIn(x, y, -z, 3)) break;
+				if (comp.enabled && comp.isInside(x, y) && comp.mouseIn(x, y, -z, 3)) break;
 		}
 		super.handleMouseInput();
 	}
@@ -284,6 +285,12 @@ public abstract class AdvancedGui extends GuiContainer {
 		focus = id >= 0 && id < guiComps.size() && guiComps.get(id).focus() ? id : -1;
 	}
 
+	public void setEnabled(int id, boolean enable) {
+		GuiComp<?> comp = guiComps.get(id);
+		if (comp.enabled && !enable && focus == id) setFocus(-1);
+		comp.enabled = enable;
+	}
+
 	protected Object getDisplVar(int id) {return null;}
 	protected void setDisplVar(int id, Object obj, boolean send) {}
 
@@ -293,6 +300,7 @@ public abstract class AdvancedGui extends GuiContainer {
 		protected final Consumer<V> update;
 		public final int id, px, py, w, h;
 		public String tooltip;
+		public boolean enabled = true;
 
 		@SuppressWarnings("unchecked")
 		public GuiComp(int id, int px, int py, int w, int h) {
@@ -424,6 +432,7 @@ public abstract class AdvancedGui extends GuiContainer {
 		public int tc = 0xff404040, cc = 0xff800000;
 		public String text = "";
 		public int cur;
+		public boolean allowFormat = false;
 
 		public TextField(int id, int x, int y, int w, int h, int max) {
 			super(id, x, y, w, h);
@@ -437,6 +446,11 @@ public abstract class AdvancedGui extends GuiContainer {
 
 		public TextField color(int text, int cursor) {
 			this.tc = text; this.cc = cursor;
+			return this;
+		}
+
+		public TextField allowFormat() {
+			this.allowFormat = true;
 			return this;
 		}
 
@@ -485,7 +499,7 @@ public abstract class AdvancedGui extends GuiContainer {
 						text = "";
 						break;
 					}
-				default: if (ChatAllowedCharacters.isAllowedCharacter(c) && cur < maxL){
+				default: if (cur < maxL && (allowFormat && c == '\u00a7' || ChatAllowedCharacters.isAllowedCharacter(c))){
 						text = text.substring(0, cur).concat("" + c).concat(text.substring(cur, Math.min(text.length(), maxL - 1)));
 						cur++;
 					}
@@ -958,23 +972,24 @@ public abstract class AdvancedGui extends GuiContainer {
 		public void drawOverlay(int mx, int my) {
 			FluidStack stack = slot.getStack();
 			ArrayList<String> info = new ArrayList<String>();
-			info.add(stack != null ? stack.getLocalizedName() : "Empty");
-			info.add(String.format("%s/%s ", TooltipUtil.formatNumber(stack != null ? (float)stack.amount / 1000F : 0F, 3), TooltipUtil.formatNumber((float)slot.inventory.getCapacity(slot.tankNumber) / 1000F, 3)) + TooltipUtil.getFluidUnit());
+			info.add(stack != null ? stack.getLocalizedName() : TooltipUtil.translate("cd4017be.tankEmpty"));
+			info.add(TooltipUtil.format("cd4017be.tankAmount", stack != null ? (double)stack.amount / 1000D : 0D, (double)slot.inventory.getCapacity(slot.tankNumber) / 1000D));
 			drawHoveringText(info, mx, my, fontRendererObj);
 		}
 
 		@Override
 		public void draw() {
 			GlStateManager.disableAlpha();
-			GlStateManager.enableBlend();
 			ResourceLocation res;
 			FluidStack stack = slot.getStack();
-			if (stack != null && (res = stack.getFluid().getStill()) != null) {
+			if (stack != null && ((res = stack.getFluid().getStill(stack)) != null || (res = stack.getFluid().getFlowing(stack)) != null)) {
 				mc.renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
 				int c = slot.inventory.getCapacity(slot.tankNumber);
 				int n = c == 0 || stack.amount >= c ? h : (int)((long)h * (long)stack.amount / (long)c);
+				color(stack.getFluid().getColor(stack));
 				drawTexturedModalRect(px, py + h - n, mc.getTextureMapBlocks().getAtlasSprite(res.toString()), w, n);
 			}
+			color(0xffffffff);
 			mc.renderEngine.bindTexture(LIB_TEX);
 			drawTexturedModalRect(px + w - 16, py, 110, 52 - h, 16, h);
 			GlStateManager.disableBlend();
