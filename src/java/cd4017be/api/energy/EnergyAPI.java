@@ -71,7 +71,7 @@ public class EnergyAPI {
 			handlers.add(new EnergyAutomation());
 			FMLLog.log("CD4017BE_lib", Level.INFO, "added Inductive Automation Energy-API");
 		}
-		if (Loader.isModLoaded("OpenComputers")) {
+		if (Loader.isModLoaded("opencomputers")) {
 			handlers.add(new EnergyOpenComputers());
 			FMLLog.log("CD4017BE_lib", Level.INFO, "added Open Computers Energy-API");
 		}
