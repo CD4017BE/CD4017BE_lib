@@ -191,9 +191,10 @@ public class BlockGuiHandler implements IGuiHandler {
 			FMLLog.log(Level.WARN, "NetHandler not instanceof NetHandlerPlayServer!");
 		}
 		EntityPlayerMP player = ((NetHandlerPlayServer)event.getHandler()).player;
+		PacketBuffer data = new PacketBuffer(packet.payload());
+		BlockPos target = null;
 		try {
-			PacketBuffer data = new PacketBuffer(packet.payload());
-			BlockPos target = data.readBlockPos();
+			target = data.readBlockPos();
 			if (target.getY() < 0) {
 				int slot = target.getX();
 				ItemStack item = player.inventory.getStackInSlot(slot);
@@ -204,8 +205,11 @@ public class BlockGuiHandler implements IGuiHandler {
 				if (te instanceof ClientPacketReceiver)
 					((ClientPacketReceiver)te).onPacketFromClient(data, player);
 			}
-		} catch (IOException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			String s = " ";
+			byte[] d = data.array();
+			for (int i = 8; i < data.writerIndex(); i++) s += Integer.toHexString(d[i] & 0xff) + " ";
+			FMLLog.log("CD4017BE_packet", Level.ERROR, e, "reading client -> server packet for %s: [%s]", target, s);
 		}
 	}
 

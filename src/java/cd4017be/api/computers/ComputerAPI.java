@@ -35,7 +35,7 @@ public class ComputerAPI {
 	@SuppressWarnings("unchecked")
 	public static void register() {
 		//OpenComputers
-		OCinstalled = Loader.isModLoaded("OpenComputers");
+		OCinstalled = Loader.isModLoaded("opencomputers");
 		try {
 			OCcomp = Class.forName("li.cil.oc.api.machine.Context");
 			OCapi = Class.forName("li.cil.oc.api.API");
@@ -46,7 +46,6 @@ public class ComputerAPI {
 		if (OCcomp != null)
 			try {
 				OCevent = OCcomp.getMethod("signal", String.class, Object[].class);
-				EnergyAPI.handlers.add(1, new EnergyOpenComputers());//insert just after main to ensure it's called before RF.
 			} catch (Exception e) {
 				FMLLog.log("CD4017BE_lib", Level.ERROR, e, "can't get API methods:");
 			}
@@ -80,22 +79,22 @@ public class ComputerAPI {
 		removeOCnode1(node);
 	}
 
-	@Optional.Method(modid = "OpenComputers")
+	@Optional.Method(modid = "opencomputers")
 	public static void saveNode(Object node, NBTTagCompound nbt) {
 		((Node)node).save(nbt);
 	}
 
-	@Optional.Method(modid = "OpenComputers")
+	@Optional.Method(modid = "opencomputers")
 	public static void readNode(Object node, NBTTagCompound nbt) {
 		((Node)node).load(nbt);
 	}
 
-	@Optional.Method(modid = "OpenComputers")
+	@Optional.Method(modid = "opencomputers")
 	private static Object newOCnode1(TileEntity tile, String name, boolean power) {
 		return tile instanceof Environment && API.network != null ? power ? API.network.newNode((Environment)tile, Visibility.Network).withComponent(name).withConnector().create() : API.network.newNode((Environment)tile, Visibility.Network).withComponent(name).create() : null;
 	}
 
-	@Optional.Method(modid = "OpenComputers")
+	@Optional.Method(modid = "opencomputers")
 	private static double update1(TileEntity tile, Object node, double energy) {
 		if (!(node instanceof Component)) return 0;
 		if (((Component)node).network() == null) Network.joinOrCreateNetwork(tile);
@@ -103,7 +102,7 @@ public class ComputerAPI {
 		return 0;
 	}
 
-	@Optional.Method(modid = "OpenComputers")
+	@Optional.Method(modid = "opencomputers")
 	private static void removeOCnode1(Object node) {
 		if (node != null) ((Node)node).remove();
 	}

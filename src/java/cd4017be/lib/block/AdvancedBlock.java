@@ -35,7 +35,7 @@ public class AdvancedBlock extends BaseBlock {
 	public final Class<? extends TileEntity> tileEntity;
 	protected EnumBlockRenderType renderType;
 	protected AxisAlignedBB[] boundingBox;
-	/**1:NeighborAware, 2:BreakCleanup, 4:Interactive, 8:PlaceHarvest, 16:Redstone, 32:Collision, 64:hasGui, 65536:nonOpaque */
+	/**1:NeighborAware, 2:BreakCleanup, 4:Interactive, 8:PlaceHarvest, 0x10:Redstone, 0x20:Collision, 0x40:hasGui, 0x10000:nonOpaque, 0x40000:no sneak place */
 	protected int flags;
 
 	/**
