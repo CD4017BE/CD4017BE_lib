@@ -14,6 +14,7 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.BlockRenderLayer;
@@ -194,15 +195,21 @@ public class AdvancedBlock extends BaseBlock {
 
 	@Override
 	public void harvestBlock(World world, EntityPlayer player, BlockPos pos, IBlockState state, TileEntity te, ItemStack stack) {
-		if (te instanceof ITilePlaceHarvest) {
-			//TODO
-		} else super.harvestBlock(world, player, pos, state, te, stack);
+		super.harvestBlock(world, player, pos, state, te, stack);
+		world.setBlockState(pos, net.minecraft.init.Blocks.AIR.getDefaultState(), world.isRemote ? 11 : 3);
 	}
 
 	@Override
-	public void onBlockHarvested(World world, BlockPos pos, IBlockState state, EntityPlayer player) {
-		//TODO
-		if ((flags & 8) != 0) super.harvestBlock(world, player, pos, state, null, player.getHeldItemMainhand());
+	public boolean removedByPlayer(IBlockState state, World world, BlockPos pos, EntityPlayer player, boolean willHarvest) {
+		if (willHarvest) return true;
+		if ((flags & 8) != 0 && !world.isRemote && !world.restoringBlockSnapshots) {
+			Item item = getItemDropped(state, RANDOM, 0);
+			int dmg = damageDropped(state);
+			for (ItemStack stack : getDrops(world, pos, state, 0))
+				if (stack.getItem() != item || stack.getItemDamage() != dmg || stack.hasTagCompound())
+					spawnAsEntity(world, pos, stack);
+		}
+		return world.setBlockState(pos, net.minecraft.init.Blocks.AIR.getDefaultState(), world.isRemote ? 11 : 3);
 	}
 
 	@Override
