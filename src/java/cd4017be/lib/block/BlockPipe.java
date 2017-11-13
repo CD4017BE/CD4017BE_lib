@@ -37,7 +37,7 @@ public abstract class BlockPipe extends MultipartBlock {
 		};
 	}
 
-	private BlockPipe(String id, Material m, SoundType sound, Class<? extends TileEntity> tile) {
+	protected BlockPipe(String id, Material m, SoundType sound, Class<? extends TileEntity> tile) {
 		super(id, m, sound, 3, tile);
 	}
 

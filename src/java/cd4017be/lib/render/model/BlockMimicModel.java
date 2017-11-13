@@ -8,6 +8,7 @@ import com.google.common.base.Function;
 
 import cd4017be.lib.property.PropertyBlockMimic;
 import cd4017be.lib.render.IHardCodedModel;
+import cd4017be.lib.render.model.MultipartModel.IModelProvider;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -30,6 +31,7 @@ import net.minecraftforge.common.property.IExtendedBlockState;
 public class BlockMimicModel implements IModel, IBakedModel, IHardCodedModel {
 
 	public static final BlockMimicModel instance = new BlockMimicModel();
+	public static final IModelProvider provider = new ProviderBlockMimic();
 
 	private BlockMimicModel() {}
 
@@ -39,7 +41,8 @@ public class BlockMimicModel implements IModel, IBakedModel, IHardCodedModel {
 			IExtendedBlockState ext = (IExtendedBlockState) state;
 			IBlockState block = ext.getValue(PropertyBlockMimic.instance);
 			if (block != null) {
-				IBakedModel model = Minecraft.getMinecraft().getBlockRendererDispatcher().getModelForState(block);
+				IBakedModel model = Minecraft.getMinecraft().getBlockRendererDispatcher()
+						.getModelForState(block instanceof IExtendedBlockState ? ((IExtendedBlockState)block).getClean() : block);
 				return model.getQuads(block, side, rand);
 			}
 		}
@@ -98,5 +101,23 @@ public class BlockMimicModel implements IModel, IBakedModel, IHardCodedModel {
 
 	@Override
 	public void onReload() {}
+
+	private static class ProviderBlockMimic implements IModelProvider {
+
+		@Override
+		public IBakedModel getModelFor(Object val) {
+			return val instanceof IBlockState ? instance : null;
+		}
+
+		@Override
+		public Collection<ResourceLocation> getDependencies() {
+			return null;
+		}
+
+		@Override
+		public void bake(IModelState state, VertexFormat format, Function<ResourceLocation, TextureAtlasSprite> textureGetter) {
+		}
+
+	}
 
 }
