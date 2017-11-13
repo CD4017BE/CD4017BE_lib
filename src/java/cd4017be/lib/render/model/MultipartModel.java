@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.function.Function;
 
 import cd4017be.lib.block.MultipartBlock;
+import cd4017be.lib.property.PropertyBlockMimic;
 import cd4017be.lib.property.PropertyBoolean;
 import cd4017be.lib.property.PropertyByte;
 import cd4017be.lib.render.IHardCodedModel;
@@ -52,6 +53,8 @@ public class MultipartModel implements IModel, IHardCodedModel {
 			IUnlistedProperty<?> prop = block.modules[i];
 			if (prop instanceof PropertyBoolean)
 				modelProvider[i] = new ProviderBool(new ModelResourceLocation(block.getRegistryName(), prop.getName()));
+			else if (prop == PropertyBlockMimic.instance)
+				modelProvider[i] = BlockMimicModel.provider;
 		}
 	}
 
