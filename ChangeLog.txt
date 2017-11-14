@@ -1,3 +1,11 @@
+v6.0.3
+Changes:
+- remade block cover system
+- fixed blocks dropping unnecessary items in creative
+Dependencies:
+- for MC-1.12.2
+- forge-14.23.0.2512 (or newer)
+
 v6.0.2
 Changes:
 - allow blocks to not use special sneak placement
