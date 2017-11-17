@@ -206,6 +206,7 @@ public class MultipartModel implements IModel, IHardCodedModel {
 		
 		@Override
 		public IBakedModel getModelFor(Object val) {
+			if (!(val instanceof Byte)) return null;
 			byte var = (Byte)val;
 			return var >= 0 && var < models.length ? baked[var] : null;
 		}
