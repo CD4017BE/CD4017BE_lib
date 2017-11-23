@@ -6,7 +6,6 @@ import cd4017be.lib.BlockGuiHandler;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
-import net.minecraft.inventory.IContainerListener;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.BlockPos;
@@ -33,10 +32,10 @@ public class DataContainer extends Container {
 
 	@Override
 	public void detectAndSendChanges() {
-		PacketBuffer dos = BlockGuiHandler.getPacketTargetData(data.pos());
-		if (this.checkChanges(dos)) 
-			for (IContainerListener crafter : this.listeners)
-				if(crafter instanceof EntityPlayerMP) BlockGuiHandler.sendPacketToPlayer((EntityPlayerMP)crafter, dos);
+		if (player instanceof EntityPlayerMP) {
+			PacketBuffer dos = BlockGuiHandler.getPacketTargetData(data.pos());
+			if (this.checkChanges(dos)) BlockGuiHandler.sendPacketToPlayer((EntityPlayerMP)player, dos);
+		} else super.detectAndSendChanges();
 	}
 
 	protected boolean checkChanges(PacketBuffer dos) {
