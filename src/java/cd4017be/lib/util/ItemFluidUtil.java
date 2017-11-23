@@ -172,7 +172,7 @@ public class ItemFluidUtil {
 	public static int drain(IItemHandler inv, ItemStack type, int am) {
 		int m = 0;
 		for (int i = 0; i < inv.getSlots() && m < am; i++) 
-			if (type.isItemEqual(inv.getStackInSlot(i))) {
+			if (ItemHandlerHelper.canItemStacksStack(type, inv.getStackInSlot(i))) {
 				ItemStack stack = inv.extractItem(i, am - m, false);
 				m += stack.getCount();
 			}
@@ -195,7 +195,7 @@ public class ItemFluidUtil {
 
 	public static void addToList(ArrayList<ItemStack> list, ItemStack item) {
 		for (ItemStack stack : list)
-			if (item.isItemEqual(stack)) {
+			if (ItemHandlerHelper.canItemStacksStack(item, stack)) {
 				stack.grow(item.getCount());
 				return;
 			}
