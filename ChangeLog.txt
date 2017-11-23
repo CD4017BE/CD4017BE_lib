@@ -1,3 +1,10 @@
+v6.0.5
+Changes:
+- fixed AutomatedRedstone#6 : possible client crash when double clicking on items in GUIs
+Dependencies:
+- for MC-1.12.2
+- forge-14.23.0.2512 (or newer)
+
 v6.0.4
 Changes:
 - fixed possible render crash with pipes
