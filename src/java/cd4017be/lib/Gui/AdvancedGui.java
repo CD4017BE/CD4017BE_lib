@@ -39,6 +39,7 @@ import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidUtil;
+import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.items.SlotItemHandler;
 
 import org.lwjgl.input.Keyboard;
@@ -145,7 +146,7 @@ public abstract class AdvancedGui extends GuiContainer {
 			ItemStack itemstack = this.mc.player.inventory.getItemStack();
 			if (slot instanceof SlotHolo && slot != lastClickSlot) {
 				ItemStack slotstack = slot.getStack();
-				if (itemstack.isEmpty() || slotstack.isEmpty()|| itemstack.isItemEqual(slotstack))
+				if (itemstack.isEmpty() || slotstack.isEmpty() || ItemHandlerHelper.canItemStacksStack(itemstack, slotstack))
 					this.handleMouseClick(slot, slot.slotNumber, b, ClickType.PICKUP);
 			} else super.mouseClickMove(x, y, b, t);
 			lastClickSlot = slot;

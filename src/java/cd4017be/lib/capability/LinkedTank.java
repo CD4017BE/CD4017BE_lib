@@ -39,7 +39,7 @@ public class LinkedTank implements IFluidHandler, ITankContainer {
 			return m;
 		} else if (fluid.isFluidEqual(res)) {
 			int m = Math.min(res.amount, cap - fluid.amount);
-			if (doFill) {
+			if (m > 0 && doFill) {
 				fluid.amount += m;
 				set.accept(fluid);
 			}
@@ -50,7 +50,7 @@ public class LinkedTank implements IFluidHandler, ITankContainer {
 	@Override
 	public FluidStack drain(FluidStack res, boolean doDrain) {
 		FluidStack fluid = get.get();
-		if (fluid == null || !fluid.isFluidEqual(res)) return null;
+		if (fluid == null || fluid.amount <= 0 || !fluid.isFluidEqual(res)) return null;
 		int m = Math.min(res.amount, fluid.amount);
 		if (doDrain) set.accept((fluid.amount -= m) > 0 ? fluid : null);
 		return new FluidStack(fluid, m);
@@ -59,7 +59,7 @@ public class LinkedTank implements IFluidHandler, ITankContainer {
 	@Override
 	public FluidStack drain(int m, boolean doDrain) {
 		FluidStack fluid = get.get();
-		if (fluid == null) return null;
+		if (fluid == null || fluid.amount <= 0) return null;
 		if (fluid.amount < m) m = fluid.amount;
 		if (doDrain) set.accept((fluid.amount -= m) > 0 ? fluid : null);
 		return new FluidStack(fluid, m);
