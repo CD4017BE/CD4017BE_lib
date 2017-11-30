@@ -258,7 +258,7 @@ public class TileContainer extends DataContainer {
 			if (m == ClickType.PICKUP) {
 				ItemStack curItem = player.inventory.getItemStack();
 				if (curItem.getCount() > 0 && slot.isItemValid(curItem)) {
-					if (item.getCount() > 0 && item.isItemEqual(curItem)) {
+					if (item.getCount() > 0 && (b == 1 || ItemHandlerHelper.canItemStacksStack(item, curItem))) {
 						item.grow(b == 1 ? 1 : curItem.getCount());
 					} else {
 						item = curItem.copy();
@@ -355,7 +355,7 @@ public class TileContainer extends DataContainer {
 		int n = 0;
 		for (int i = 0; i < inv.mainInventory.size(); i++) {
 			ItemStack stack = inv.mainInventory.get(i);
-			if (item.isItemEqual(stack)) {
+			if (ItemHandlerHelper.canItemStacksStack(item, stack)) {
 				n += stack.getCount();
 				if (n <= item.getCount()) {
 					inv.mainInventory.set(i, ItemStack.EMPTY);
