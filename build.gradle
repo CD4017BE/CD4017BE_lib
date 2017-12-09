@@ -88,8 +88,9 @@ dependencies {
 	//TIS-3D
 	compile "li.cil.tis3d:TIS-3D:${tis3d_version}"
 	
-	compile files('./libs/Tesla-${tesla_version}-deobf.jar')
-	compile files('./libs/industrialcraft-${ic2_version}-api.jar')
+	String depDir = new File(file('./').getParentFile(), "Forge-${mc_version}").getAbsolutePath()
+	compile files("${depDir}/libs/Tesla-${tesla_version}-deobf.jar")
+	compile files("${depDir}/libs/industrialcraft-${ic2_version}-api.jar")
 }
 
 processResources
