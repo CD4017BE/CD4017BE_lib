@@ -80,6 +80,31 @@ public class Util {
 		OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, l & 0xffff, l >> 16);
 	}
 
+	public static int rotateNormal(int n, ModelRotation rot) {
+		switch (rot) {
+		//horizontal
+		default:       return n;
+		case X0_Y90:   return n & 0x00ff00 | n << 16 & 0xff0000 | ~n >> 16 & 0xff;
+		case X0_Y180:  return n ^ 0xff00ff;
+		case X0_Y270:  return n & 0x00ff00 | ~n << 16 & 0xff0000 | n >> 16 & 0xff;
+		//face down
+		case X90_Y0:   return n & 0x0000ff | ~n << 8 & 0xff0000 | n >> 8 & 0xff00;
+		case X90_Y90:  return n << 16 & 0xff0000 | n >> 8 & 0xffff;
+		case X90_Y180: return ~n & 0xff | n << 8 & 0xff0000 | n >> 8 & 0xff00;
+		case X90_Y270: return ~n << 16 & 0xff0000 | (n^0xff00) >> 8 & 0xffff;
+		//upside down
+		case X180_Y0:  return n ^ 0xffff00;
+		case X180_Y90: return ~n & 0xff00 | n << 16 & 0xff0000 | n >> 16 & 0xff;
+		case X180_Y180:return n ^ 0xffff;
+		case X180_Y270:return ~n & 0xff00 | ~n << 16 & 0xff0000 | ~n >> 16 & 0xff;
+		//face up
+		case X270_Y0:  return n & 0xff | n << 8 & 0xff0000 | ~n >> 8 & 0xff00;
+		case X270_Y90: return n << 16 & 0xff0000 | ~n >> 8 & 0xffff;
+		case X270_Y180:return ~n & 0xff | ~n << 8 & 0xff0000 | ~n >> 8 & 0xff00;
+		case X270_Y270:return ~n << 16 & 0xff0000 | (n^0xff0000) >> 8 & 0xffff;
+		}
+	}
+
 	public static void rotate(int[] data, int px, ModelRotation rot) {
 		int py = px + 1, pz = px + 2, i;
 		switch (rot) {
