@@ -44,7 +44,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class SpecialModelLoader implements ICustomModelLoader {
 
-	public static final String SCRIPT_PREFIX = "models/block/_";
+	public static final String SCRIPT_PREFIX = "models/block/_", NBT_PREFIX = "models/block/.";
 	public static final SpecialModelLoader instance = new SpecialModelLoader();
 	public static final StateMapper stateMapper = new StateMapper();
 	private static String mod = "";
@@ -88,7 +88,8 @@ public class SpecialModelLoader implements ICustomModelLoader {
 		MinecraftForge.EVENT_BUS.register(this);
 	}
 
-	public void cleanUp() {
+	@SubscribeEvent
+	public void bakeModels(ModelBakeEvent event) {
 		for (IModeledTESR tesr : tesrs) tesr.bakeModels(resourceManager);
 		for (ModelContext cont : scriptModels.values())
 			for (Iterator<Entry<String, Module>> it = cont.modules.entrySet().iterator(); it.hasNext();) {
@@ -96,11 +97,6 @@ public class SpecialModelLoader implements ICustomModelLoader {
 				Module m = e.getValue();
 				if (m instanceof Script && !e.getKey().startsWith("tesr.")) it.remove();
 			}
-	}
-
-	@SubscribeEvent
-	public void bakeModels(ModelBakeEvent event) {
-		cleanUp();
 	}
 
 	@Override
@@ -116,8 +112,10 @@ public class SpecialModelLoader implements ICustomModelLoader {
 
 	@Override
 	public boolean accepts(ResourceLocation modelLocation) {
-		return mods.contains(modelLocation.getResourceDomain()) &&
-			(modelLocation.getResourcePath().startsWith(SCRIPT_PREFIX) || models.containsKey(modelLocation));
+		if (mods.contains(modelLocation.getResourceDomain())) {
+			String path = modelLocation.getResourcePath();
+			return path.startsWith(SCRIPT_PREFIX) || path.startsWith(NBT_PREFIX) || models.containsKey(modelLocation);
+		} else return false;
 	}
 
 	@Override
@@ -131,11 +129,29 @@ public class SpecialModelLoader implements ICustomModelLoader {
 			Orientation o = Orientation.valueOf(s.substring(0, 1).toUpperCase() + s.substring(1));
 			model = loadModel(new ResourceLocation(modelLocation.getResourceDomain(), path.substring(0, p)));
 			return new ModelVariant(model, o.getModelRotation());
-		} else if (path.startsWith(SCRIPT_PREFIX)) {
+		} else if (path.startsWith(SCRIPT_PREFIX))
 			model = loadScriptModel(modelLocation);
-			if (model != null) models.put(modelLocation, model);
-		}
+		else if (path.startsWith(NBT_PREFIX))
+			model = loadNBTModel(modelLocation);
+		if (model != null) models.put(modelLocation, model);
 		return model;
+	}
+
+	private IModel loadNBTModel(ResourceLocation modelLocation) {
+		String domain = modelLocation.getResourceDomain();
+		String fileName = modelLocation.getResourcePath().substring(SCRIPT_PREFIX.length());
+		int p = fileName.indexOf('(');
+		String[] params, path;
+		if (p >= 0) {
+			String par = fileName.substring(p + 1);
+			if (par.endsWith(")")) par = par.substring(0, par.length() - 1);
+			params = par.split(",");
+			fileName = fileName.substring(0, p);
+		} else params = new String[0];
+		path = fileName.split(".");
+		fileName = path[0] + ".nbt";
+		
+		return null;
 	}
 
 	private IModel loadScriptModel(ResourceLocation modelLocation) throws Exception {

@@ -42,6 +42,82 @@ public class ModelContext extends Context {
 			state.texOfs = texOfs;
 			return state;
 		}
+
+		void mulMat(Matrix4d mat) {
+			matrix.mul(mat);
+		}
+
+		Quad transform(Quad quadi) {
+			Quad nQuad = new Quad();
+			nQuad.tex = quadi.tex + texOfs;
+			int i = 0;
+			for (double[] vertex : quadi.vertices) {
+				double[] vert2 = nQuad.vertices[i++];
+				Point3d vec = new Point3d(vertex);
+				matrix.transform(vec);
+				vert2[0] = vec.x;
+				vert2[1] = vec.y;
+				vert2[2] = vec.z;
+				vert2[3] = vertex[3] * sU + oU;
+				vert2[4] = vertex[4] * sV + oV;
+				for (int k = 0, j = 5; k < 4; k++, j++)
+					vert2[j] = vertex[j] * sColor[k];
+			}
+			return nQuad;
+		}
+	}
+
+	private static class AdvancedState extends State {
+		Matrix4d secMat;
+		Point3d origin, dir;
+
+		AdvancedState(State state) {
+			matrix = new Matrix4d(state.matrix);
+			oU = state.oU;
+			oV = state.oV;
+			sU = state.sU;
+			sV = state.sV;
+			sColor = state.sColor.clone();
+			texOfs = state.texOfs;
+		}
+
+		@Override
+		State copy() {
+			AdvancedState state = new AdvancedState(this);
+			state.secMat = new Matrix4d(secMat);
+			state.origin = new Point3d(origin);
+			state.dir = new Point3d(dir);
+			return super.copy();
+		}
+
+		@Override
+		void mulMat(Matrix4d mat) {
+			matrix.mul(mat);
+			secMat.mul(mat);
+		}
+
+		@Override
+		Quad transform(Quad quadi) {
+			Quad nQuad = new Quad();
+			nQuad.tex = quadi.tex + texOfs;
+			int i = 0;
+			for (double[] vertex : quadi.vertices) {
+				double[] vert2 = nQuad.vertices[i++];
+				Point3d vec = new Point3d(vertex);
+				Point3d vec1 = new Point3d(vec);
+				matrix.transform(vec);
+				secMat.transform(vec1);
+				double d = (vec.x - origin.x) * dir.x + (vec.y - origin.y) * dir.y + (vec.z - origin.z) * dir.z;
+				vert2[0] = vec.x + vec1.x * d;
+				vert2[1] = vec.y + vec1.y * d;
+				vert2[2] = vec.z + vec1.z * d;
+				vert2[3] = vertex[3] * sU + oU;
+				vert2[4] = vertex[4] * sV + oV;
+				for (int k = 0, j = 5; k < 4; k++, j++)
+					vert2[j] = vertex[j] * sColor[k];
+			}
+			return nQuad;
+		}
 	}
 
 	static class Quad {
@@ -60,31 +136,15 @@ public class ModelContext extends Context {
 	List<Quad>[] quads;
 	ResourceLocation loadPath;
 
-	private void add(Quad quadi) {
-		State state = states.get();
-		Quad nQuad = new Quad();
-		nQuad.tex = quadi.tex + state.texOfs;
-		int i = 0;
-		for (double[] vertex : quadi.vertices) {
-			double[] vert2 = nQuad.vertices[i++];
-			Point3d vec = new Point3d(vertex);
-			state.matrix.transform(vec);
-			vert2[0] = vec.x;
-			vert2[1] = vec.y;
-			vert2[2] = vec.z;
-			vert2[3] = vertex[3] * state.sU + state.oU;
-			vert2[4] = vertex[4] * state.sV + state.oV;
-			for (int k = 0, j = 5; k < 4; k++, j++)
-				vert2[j] = vertex[j] * state.sColor[k];
-		}
-		quads[quadi.cullFace + 1].add(nQuad);
-	}
-	
 	@SuppressWarnings("unchecked")
 	public ModelContext(ResourceLocation loadPath) {
 		this.loadPath = loadPath;
 		defFunc.put("add", (p) -> {
-			for (Object o : p.getArrayOrAll()) add((Quad)o);
+			State state = states.get();
+			for (Object o : p.getArrayOrAll()) {
+				Quad quadi = (Quad)o;
+				quads[quadi.cullFace + 1].add(state.transform(quadi));
+			}
 			return null;
 		});
 		defFunc.put("push", (p) -> {
@@ -103,7 +163,7 @@ public class ModelContext extends Context {
 			vec[3] = Math.toRadians(vec[3]);
 			Matrix4d mat = new Matrix4d();
 			mat.set(new AxisAngle4d(vec));
-			state.matrix.mul(mat);
+			state.mulMat(mat);
 			return null;
 		});
 		defFunc.put("translate", (p) -> {
@@ -111,7 +171,7 @@ public class ModelContext extends Context {
 			State state = states.get();
 			Matrix4d mat = new Matrix4d();
 			mat.set(new Vector3d(vec));
-			state.matrix.mul(mat);
+			state.mulMat(mat);
 			return null;
 		});
 		defFunc.put("scale", (p) -> {
@@ -122,7 +182,7 @@ public class ModelContext extends Context {
 			mat.setM11(vec[1]);
 			mat.setM22(vec[2]);
 			mat.setM33(1);
-			state.matrix.mul(mat);
+			state.mulMat(mat);
 			return null;
 		});
 		defFunc.put("offsetUV", (p) -> {
