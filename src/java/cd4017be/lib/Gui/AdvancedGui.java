@@ -109,7 +109,7 @@ public abstract class AdvancedGui extends GuiContainer {
 			TileContainer cont = (TileContainer)inventorySlots;
 			if (cont.invPlayerS != cont.invPlayerE) {
 				Slot pos = cont.inventorySlots.get(cont.invPlayerS);
-				this.drawStringCentered(TooltipUtil.translate("container.inventory"), this.guiLeft + pos.xPos + 80, this.guiTop + pos.yPos - 14, 0x404040);
+				this.drawStringCentered(TooltipUtil.translate("container.inventory"), this.guiLeft + pos.xPos + 80, this.guiTop + pos.yPos - 12, 0x404040);
 			}
 		}
 		if ((drawBG & 2) != 0 && inventorySlots instanceof DataContainer)
