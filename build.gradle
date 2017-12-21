@@ -89,7 +89,6 @@ dependencies {
 	compile "li.cil.tis3d:TIS-3D:${tis3d_version}"
 	
 	String depDir = new File(file('./').getParentFile(), "Forge-${mc_version}").getAbsolutePath()
-	compile files("${depDir}/libs/Tesla-${tesla_version}-deobf.jar")
 	compile files("${depDir}/libs/industrialcraft-${ic2_version}-api.jar")
 }
 
