@@ -63,6 +63,7 @@ public class Cover {
 		}
 		world.markAndNotifyBlock(pos, null, tile.getBlockState(), tile.getBlockState(), 3);
 		if (state.getLightValue() > 0 || state.getLightOpacity(world, pos) > 0) world.checkLight(pos);
+		tile.markDirty();
 		return true;
 	}
 
@@ -82,6 +83,7 @@ public class Cover {
 		state = null;
 		world.markAndNotifyBlock(pos, null, tile.getBlockState(), tile.getBlockState(), 3);
 		if (checkLight) world.checkLight(pos);
+		tile.markDirty();
 		return true;
 	}
 

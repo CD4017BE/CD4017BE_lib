@@ -17,6 +17,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -28,6 +29,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class BaseTileEntity extends TileEntity implements IAbstractTile {
 
 	private IBlockState blockState;
+	private Chunk chunk;
 
 	public BaseTileEntity() {}
 
@@ -38,7 +40,8 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 
 	public IBlockState getBlockState() {
 		if (blockState == null) {
-			blockState = world.getBlockState(pos);
+			if (chunk == null) chunk = world.getChunkFromBlockCoords(pos);
+			blockState = chunk.getBlockState(pos);
 			blockType = blockState.getBlock();
 		}	
 		return blockState;
@@ -64,6 +67,15 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 		world.notifyBlockUpdate(pos, blockState, blockState, 3);
 	}
 
+	@Override //cache chunk reference to speed this up
+	public void markDirty() {
+		if (chunk == null) {
+			if (tileEntityInvalid || world == null) return;
+			chunk = world.getChunkFromBlockCoords(pos);
+		}
+		chunk.setChunkModified();
+	}
+
 	@Override //just skip all the ugly hard-coding in superclass
 	@SideOnly(Side.CLIENT)
 	public AxisAlignedBB getRenderBoundingBox() {
@@ -74,12 +86,14 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 	public void onChunkUnload() {
 		//make sure that possible reference holders don't think this TileEntity still exists.
 		tileEntityInvalid = true;
+		chunk = null;
 		clearData();
 	}
 
 	@Override
 	public void invalidate() {
 		super.invalidate();
+		chunk = null;
 		clearData();
 	}
 

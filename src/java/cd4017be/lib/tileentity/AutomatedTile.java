@@ -1,9 +1,9 @@
 package cd4017be.lib.tileentity;
 
 import cd4017be.api.Capabilities;
-import cd4017be.api.automation.AreaProtect;
 import cd4017be.api.automation.IOperatingArea;
 import cd4017be.api.automation.PipeEnergy;
+import cd4017be.api.protect.PermissionUtil;
 import cd4017be.lib.BlockGuiHandler.ClientPacketReceiver;
 import cd4017be.lib.Gui.TileContainer;
 import cd4017be.lib.capability.Inventory;
@@ -65,7 +65,7 @@ public class AutomatedTile extends BaseTileEntity implements ITickable, ClientPa
 
 	@Override
 	public void onPacketFromClient(PacketBuffer dis, EntityPlayer player) throws IOException {
-		if (!AreaProtect.interactingAllowed(player.getGameProfile(), world, pos.getX() >> 4, pos.getZ() >> 4)) return;
+		if (!PermissionUtil.handler.canEdit(world, pos, player.getGameProfile())) return;
 		byte cmd = dis.readByte();
 		if (cmd == 0 && inventory != null) {
 			inventory.sideCfg = dis.readLong();

@@ -316,6 +316,7 @@ public class TileContainer extends DataContainer {
 		} else {
 			ItemStack ret = super.slotClick(s, b, m, player);
 			if (slot instanceof SlotItemHandler && slot.getStack() == item) slot.putStack(slot.getStack());
+			if (slot instanceof SlotTank) return slot.getStack();
 			return ret;
 		}
 	}
