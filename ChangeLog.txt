@@ -1,3 +1,12 @@
+v6.0.7
+Changes:
+- added utility to fix that TileEntities didn't notify chunks to get saved
+- added new area protection api
+- fixed visual glitches with fluid container slots and other bugs
+Dependencies:
+- for MC-1.12.2
+- forge-14.23.0.2512 (or newer)
+
 v6.0.6
 Changes:
 - fixed stacking bugs caused by comparing items without accounting for NBT
