@@ -73,7 +73,7 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 			if (tileEntityInvalid || world == null) return;
 			chunk = world.getChunkFromBlockCoords(pos);
 		}
-		chunk.setChunkModified();
+		chunk.markDirty();
 	}
 
 	@Override //just skip all the ugly hard-coding in superclass
