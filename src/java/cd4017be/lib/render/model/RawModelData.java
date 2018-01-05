@@ -8,8 +8,6 @@ import javax.vecmath.Matrix4f;
 import javax.vecmath.Vector3f;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.logging.log4j.Level;
-
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 
@@ -29,8 +27,6 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
@@ -38,8 +34,6 @@ import net.minecraftforge.client.model.IModel;
 import net.minecraftforge.client.model.IPerspectiveAwareModel;
 import net.minecraftforge.common.model.IModelState;
 import net.minecraftforge.common.model.TRSRTransformation;
-import net.minecraftforge.common.util.Constants.NBT;
-import net.minecraftforge.fml.common.FMLLog;
 
 /**
  * 
@@ -48,7 +42,7 @@ import net.minecraftforge.fml.common.FMLLog;
 public class RawModelData implements IModel {
 
 	public static final ImmutableMap<TransformType, TRSRTransformation> DEFAULT_TRANSFORM;
-	private static final String[] TRANSFORMS = {"none", "3PLefthand", "3PRighthand", "1PLefthand", "1PRighthand", "head", "gui", "ground", "fixed"};
+	protected static final String[] TRANSFORMS = {"none", "3PLefthand", "3PRighthand", "1PLefthand", "1PRighthand", "head", "gui", "ground", "fixed"};
 	static {
 		ImmutableMap.Builder<TransformType, TRSRTransformation> builder = ImmutableMap.builder();
 		builder.put(TransformType.GUI, getTransform(new double[][] {{0D, 0D, 0D}, {0.625, 0.625, 0.625}, {30D, 225D, 0D}}));
@@ -100,77 +94,6 @@ public class RawModelData implements IModel {
 					}
 				}
 				this.quads[i] = data;
-			}
-		}
-	}
-
-	private static final String
-			NBT_AMBIENT_OCCLUSION = "ambOcc",
-			NBT_GUI_3D = "gui3d",
-			NBT_TEXTURE = "textures",
-			NBT_TRANSFORM = "transform",
-			NBT_QUADS = "vertexData";
-
-	/**
-	 * loads a model in NBT format
-	 * @param parent optional parent model to inherit from
-	 * @param nbt Compound tag containing the model data
-	 * @param name the models resource name (used for error logs)
-	 */
-	public RawModelData(RawModelData parent, NBTTagCompound nbt, String name) {
-		diffuseLight = nbt.hasKey(NBT_AMBIENT_OCCLUSION, NBT.TAG_BYTE) ? nbt.getBoolean(NBT_AMBIENT_OCCLUSION) : parent == null || parent.diffuseLight;
-		gui3D = nbt.hasKey(NBT_GUI_3D, NBT.TAG_BYTE) ? nbt.getBoolean(NBT_GUI_3D) : parent == null || parent.gui3D;
-		if (nbt.hasKey(NBT_TRANSFORM, NBT.TAG_COMPOUND)) {
-			NBTTagCompound comp = nbt.getCompoundTag(NBT_TRANSFORM);
-			ImmutableMap.Builder<TransformType, TRSRTransformation> builder = ImmutableMap.builder();
-			builder.putAll(parent != null ? parent.transform : DEFAULT_TRANSFORM);
-			boolean edit = false;
-			for (TransformType type : TransformType.values()) {
-				String key = TRANSFORMS[type.ordinal()];
-				if (comp.hasKey(key, NBT.TAG_LIST)) {
-					NBTTagList list = comp.getTagList(key, NBT.TAG_FLOAT);
-					Vector3f ofs = new Vector3f(list.getFloatAt(0), list.getFloatAt(1), list.getFloatAt(2));
-					Vector3f scale = new Vector3f(list.getFloatAt(3), list.getFloatAt(4), list.getFloatAt(5));
-					Vector3f rot = new Vector3f(list.getFloatAt(6), list.getFloatAt(7), list.getFloatAt(8));
-					builder.put(type, new TRSRTransformation(ofs, null, scale, TRSRTransformation.quatFromXYZDegrees(rot)));
-					edit = true;
-				}
-			}
-			transform = edit ? builder.build() : parent != null ? parent.transform : DEFAULT_TRANSFORM;
-		} else if (parent != null) transform = parent.transform;
-		else transform = DEFAULT_TRANSFORM;
-		NBTTagList list = nbt.getTagList(NBT_TEXTURE, NBT.TAG_STRING);
-		int n = parent != null ? parent.textures.length : 0;
-		textures = n > 0 ? Arrays.copyOf(parent.textures, n + list.tagCount()) : new ResourceLocation[list.tagCount()];
-		if (list.tagCount() > 0) {
-			for (int i = n; i < textures.length; i++)
-				textures[i] = new ResourceLocation(list.getStringTagAt(i - n));
-		}
-		list = nbt.getTagList(NBT_QUADS, NBT.TAG_INT_ARRAY);
-		for (int i = 0; i < quads.length; i++) {
-			int[] arr = list.getIntArrayAt(i);
-			if (arr.length % 28 != 0) {
-				FMLLog.log("NBT-Model", Level.ERROR, "%s: vertex data entry %d has size %d which is not a multiple of 28!", name, i, arr.length);
-				arr = Arrays.copyOf(arr, arr.length / 28 * 28);
-			}
-			for (int j = 6; j < arr.length; j += 28) {
-				int t = arr[j];
-				if (t < 0 || t >= textures.length) {
-					FMLLog.log("NBT-Model", Level.ERROR, "%s: invalid texture index %d in quad %d:%d, model has only %d textures!", name, t, i, j / 28, textures.length);
-					arr[j] = 0;
-				}
-			}
-			quads[i] = arr;
-			if (parent != null) {
-				int[] arr1 = parent.quads[i];
-				n = arr1.length;
-				if (n > 0) {
-					if (arr.length > 0) {
-						arr1 = Arrays.copyOf(arr1, n + arr.length);
-						System.arraycopy(arr, 0, arr1, n, arr.length);
-					}
-					quads[i] = arr1;
-				}
 			}
 		}
 	}
