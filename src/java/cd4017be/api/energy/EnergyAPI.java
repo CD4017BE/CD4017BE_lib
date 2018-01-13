@@ -30,6 +30,8 @@ public class EnergyAPI {
 	public static float EU_value = 400F;
 	/**[J] energy conversion factor for OpenComputers*/
 	public static float OC_value = 1000F;
+	/**[J] energy conversion factor for VoidCraft*/
+	public static float VC_value = 1000F;
 
 	/** 
 	 * This is a wrapper used to access energy in ItemStacks or TileEntities. 
@@ -79,9 +81,15 @@ public class EnergyAPI {
 			handlers.add(new EnergyForge());
 			FMLLog.log("CD4017BE_lib", Level.INFO, "added Forge Energy-API");
 		}
-		if (Loader.isModLoaded("IC2")) {
+		if (Loader.isModLoaded("ic2")) {
 			handlers.add(new EnergyIndustrialCraft());
 			FMLLog.log("CD4017BE_lib", Level.INFO, "added IC2 Energy-API");
+		}
+		if (Loader.isModLoaded("voidcraft")) try {
+			handlers.add(new EnergyVoidcraft());
+			FMLLog.log("CD4017BE_lib", Level.INFO, "added VoidCraft Energy-API");
+		} catch(Exception e) {
+			FMLLog.log("CD4017BE_lib", Level.ERROR, e, "failed to add VoidCraft Energy-API!");
 		}
 	}
 
