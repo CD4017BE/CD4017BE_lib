@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import org.apache.logging.log4j.Level;
 
+import cd4017be.api.recipes.RecipeScriptContext.ConfigConstants;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
@@ -25,11 +26,13 @@ public class EnergyAPI {
 	/**[J] energy conversion factor for Item Charge*/
 	public static final float IA_value = 1000F;
 	/**[J] energy conversion factor for RedstoneFlux*/
-	public static float RF_value = 100F;
+	public static float RF_value;
 	/**[J] energy conversion factor for IndustrialCraft's EU*/
-	public static float EU_value = 400F;
+	public static float EU_value;
 	/**[J] energy conversion factor for OpenComputers*/
-	public static float OC_value = 1000F;
+	public static float OC_value;
+	/**[J] energy conversion factor for VoidCraft*/
+	public static float VC_value;
 
 	/** 
 	 * This is a wrapper used to access energy in ItemStacks or TileEntities. 
@@ -66,22 +69,40 @@ public class EnergyAPI {
 		public IEnergyAccess create(ItemStack item, int s);
 	}
 
-	public static void init() {
+	public static void init(ConfigConstants cfg) {
 		if (Loader.isModLoaded("Automation")) {
 			handlers.add(new EnergyAutomation());
 			FMLLog.log("CD4017BE_lib", Level.INFO, "added Inductive Automation Energy-API");
 		}
 		if (Loader.isModLoaded("opencomputers")) {
-			handlers.add(new EnergyOpenComputers());
-			FMLLog.log("CD4017BE_lib", Level.INFO, "added Open Computers Energy-API");
+			OC_value = (float) cfg.getNumber("energy_value_OC", 1000);
+			if (!Float.isNaN(OC_value)) {
+				handlers.add(new EnergyOpenComputers());
+				FMLLog.log("CD4017BE_lib", Level.INFO, "added Open Computers Energy-API with %s J / OC-unit", OC_value);
+			} else FMLLog.log("CD4017BE_lib", Level.INFO, "NOT added Open Computers Energy-API (disabled by config)");
 		}
 		if (true) {
-			handlers.add(new EnergyForge());
-			FMLLog.log("CD4017BE_lib", Level.INFO, "added Forge Energy-API");
+			RF_value = (float) cfg.getNumber("energy_value_RF", 100);
+			if (!Float.isNaN(RF_value)) {
+				handlers.add(new EnergyForge());
+				FMLLog.log("CD4017BE_lib", Level.INFO, "added Forge Energy-API with %s J / Flux", RF_value);
+			} else FMLLog.log("CD4017BE_lib", Level.INFO, "NOT added Forge Energy-API (disabled by config)");
 		}
-		if (Loader.isModLoaded("IC2")) {
-			handlers.add(new EnergyIndustrialCraft());
-			FMLLog.log("CD4017BE_lib", Level.INFO, "added IC2 Energy-API");
+		if (Loader.isModLoaded("ic2")) {
+			EU_value = (float) cfg.getNumber("energy_value_EU", 400);
+			if (!Float.isNaN(EU_value)) {
+				handlers.add(new EnergyIndustrialCraft());
+				FMLLog.log("CD4017BE_lib", Level.INFO, "added IC2 Energy-API with %s J / EU", EU_value);
+			} else FMLLog.log("CD4017BE_lib", Level.INFO, "NOT added IC2 Energy-API (disabled by config)");
+		}
+		if (Loader.isModLoaded("voidcraft")) try {
+			VC_value = (float) cfg.getNumber("energy_value_VC", 1000);
+			if (!Float.isNaN(VC_value)) {
+				handlers.add(new EnergyVoidcraft());
+				FMLLog.log("CD4017BE_lib", Level.INFO, "added VoidCraft Energy-API with %s J / VC-unit", VC_value);
+			} else FMLLog.log("CD4017BE_lib", Level.INFO, "NOT added VoidCraft Energy-API (disabled by config)");
+		} catch(Exception e) {
+			FMLLog.log("CD4017BE_lib", Level.ERROR, e, "failed to add VoidCraft Energy-API!");
 		}
 	}
 
