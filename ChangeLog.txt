@@ -1,3 +1,12 @@
+v6.0.8
+Changes:
+- added energy API integration for VoidCraft (still experimental)
+- energy conversions can be changed or disabled via config now
+- fixed some item rendering crash
+Dependencies:
+- for MC-1.12.2
+- forge-14.23.0.2512 (or newer)
+
 v6.0.7
 Changes:
 - added utility to fix that TileEntities didn't notify chunks to get saved
