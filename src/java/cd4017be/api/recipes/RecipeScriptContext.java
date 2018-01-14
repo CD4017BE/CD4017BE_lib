@@ -234,6 +234,7 @@ public class RecipeScriptContext extends Context {
 		public ConfigConstants(Module m) {this.m = m;}
 
 		public double getNumber(String name, double fallback) {
+			if (m == null) return fallback;
 			Object o = m.read(name);
 			if (o instanceof Double) return (Double)o;
 			m.assign(name, fallback);
@@ -241,6 +242,7 @@ public class RecipeScriptContext extends Context {
 		}
 
 		public double[] getVect(String name, double[] pre) {
+			if (m == null) return pre;
 			Object o = m.read(name);
 			if (o instanceof double[]) {
 				double[] vec = (double[])o;
@@ -259,6 +261,7 @@ public class RecipeScriptContext extends Context {
 		}
 
 		public int[] getVect(String name, int[] pre) {
+			if (m == null) return pre;
 			Object o = m.read(name);
 			if (o instanceof double[]) {
 				double[] vec = (double[])o;
@@ -277,6 +280,7 @@ public class RecipeScriptContext extends Context {
 		}
 
 		public float[] getVect(String name, float[] pre) {
+			if (m == null) return pre;
 			Object o = m.read(name);
 			if (o instanceof double[]) {
 				double[] vec = (double[])o;
@@ -295,6 +299,7 @@ public class RecipeScriptContext extends Context {
 		}
 
 		public <T> T get(String name, Class<T> type, T fallback) {
+			if (m == null) return fallback;
 			Object o = m.read(name);
 			if (type.isInstance(o)) return type.cast(o);
 			m.assign(name, fallback);
@@ -302,6 +307,7 @@ public class RecipeScriptContext extends Context {
 		}
 
 		public Object[] getArray(String name, int size) {
+			if (m == null) return new Object[size];
 			Object o = m.read(name);
 			if (o instanceof Object[]) {
 				Object[] vec = (Object[])o;

@@ -50,6 +50,8 @@ public class RawModelData implements IModel {
 		builder.put(TransformType.THIRD_PERSON_LEFT_HAND, getTransform(new double[][] {{0D, 2.5, 0D}, {0.375, 0.375, 0.375}, {75D, 45D, 0D}}));
 		builder.put(TransformType.FIRST_PERSON_RIGHT_HAND, getTransform(new double[][] {{0D, 0D, 0D}, {0.4, 0.4, 0.4}, {0D, 45D, 0D}}));
 		builder.put(TransformType.FIRST_PERSON_LEFT_HAND, getTransform(new double[][] {{0D, 0D, 0D}, {0.4, 0.4, 0.4}, {0D, 225D, 0D}}));
+		builder.put(TransformType.HEAD, TRSRTransformation.identity());
+		builder.put(TransformType.NONE, TRSRTransformation.identity());
 		DEFAULT_TRANSFORM = builder.build();
 	}
 	private final int[][] quads = new int[7][];
