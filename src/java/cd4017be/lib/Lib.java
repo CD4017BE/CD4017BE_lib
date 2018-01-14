@@ -4,8 +4,10 @@ import cd4017be.api.Capabilities;
 import cd4017be.api.computers.ComputerAPI;
 import cd4017be.api.energy.EnergyAPI;
 import cd4017be.api.recipes.RecipeScriptContext;
+import cd4017be.api.recipes.RecipeScriptContext.ConfigConstants;
 import cd4017be.lib.item.ItemMaterial;
 import cd4017be.lib.render.ItemMaterialMeshDefinition;
+import cd4017be.lib.script.ScriptFiles.Version;
 import cd4017be.lib.templates.NBTRecipe;
 import cd4017be.lib.templates.TabMaterials;
 import cd4017be.lib.util.FileUtil;
@@ -33,6 +35,7 @@ import net.minecraftforge.oredict.RecipeSorter;
 public class Lib {
 
 	public static final String ID = "cd4017be_lib";
+	public static final String ConfigName = "core";
 
 	@Instance
 	public static Lib instance;
@@ -43,6 +46,7 @@ public class Lib {
 
 	public Lib() {
 		MinecraftForge.EVENT_BUS.register(this);
+		RecipeScriptContext.scriptRegistry.add(new Version(ConfigName, 0, "/assets/" + ID + "/config/core.rcp"));
 	}
 
 	@Mod.EventHandler
@@ -50,11 +54,12 @@ public class Lib {
 		FileUtil.initConfigDir(event);
 		BlockGuiHandler.register();
 		Capabilities.register();
-		EnergyAPI.init();
 		RecipeSorter.register(ID + ":shapedNBT", NBTRecipe.class, RecipeSorter.Category.SHAPED, "after:minecraft:shaped before:minecraft:shapeless");
 		RecipeScriptContext.instance = new RecipeScriptContext();
 		RecipeScriptContext.instance.setup();
-		RecipeScriptContext.instance.run("core.PRE_INIT");
+		RecipeScriptContext.instance.run(ConfigName + ".PRE_INIT");
+		ConfigConstants cfg = new ConfigConstants(RecipeScriptContext.instance.modules.get(ConfigName));
+		EnergyAPI.init(cfg);
 	}
 
 	@Mod.EventHandler
