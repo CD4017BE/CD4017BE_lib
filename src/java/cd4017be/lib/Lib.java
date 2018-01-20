@@ -7,6 +7,7 @@ import cd4017be.api.recipes.RecipeScriptContext;
 import cd4017be.api.recipes.RecipeScriptContext.ConfigConstants;
 import cd4017be.lib.item.ItemMaterial;
 import cd4017be.lib.render.ItemMaterialMeshDefinition;
+import cd4017be.lib.render.SpecialModelLoader;
 import cd4017be.lib.script.ScriptFiles.Version;
 import cd4017be.lib.templates.NBTRecipe;
 import cd4017be.lib.templates.TabMaterials;
@@ -77,6 +78,7 @@ public class Lib {
 
 	@SideOnly(Side.CLIENT)
 	private static void clientPostInit() {
+		SpecialModelLoader.setMod(ID);
 		BlockItemRegistry.registerRender(materials);
 		BlockItemRegistry.registerRender(materials, new ItemMaterialMeshDefinition(materials));
 	}
