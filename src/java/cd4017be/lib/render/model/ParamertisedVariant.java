@@ -31,16 +31,12 @@ public class ParamertisedVariant implements IModelState {
 	public ParamertisedVariant(ModelRotation orient) {this(orient, "model", null);}
 
 	public String splitPath() {
-		int i = subModel.lastIndexOf('.');
-		String path;
-		if (i >= 0) {
-			path = subModel.substring(0, i);
-			subModel = subModel.substring(i + 1);
-		} else {
-			path = subModel;
-			subModel = "model";
-		}
-		return path;
+		String[] parts = subModel.split("\\.");
+		String path = parts[0];
+		if (parts.length > 1) path += parts[1];
+		if (parts.length > 2) subModel = parts[2];
+		else subModel = "model";
+		return path + ".nbt";
 	}
 
 	public boolean isBase() {

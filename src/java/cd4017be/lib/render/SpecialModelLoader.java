@@ -1,7 +1,6 @@
 package cd4017be.lib.render;
 
 import java.io.DataInputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -23,7 +22,6 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.client.renderer.block.statemap.IStateMapper;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
-import net.minecraft.client.resources.IResource;
 import net.minecraft.client.resources.IResourceManager;
 import net.minecraft.item.Item;
 import net.minecraft.nbt.CompressedStreamTools;
@@ -50,7 +48,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class SpecialModelLoader implements ICustomModelLoader {
 
-	public static final String SCRIPT_PREFIX = "models/block/_", NBT_PREFIX = "models/block/.";
+	public static final String SCRIPT_PREFIX = "models/block/_", NBT_PREFIX = "models/block/.", NBT_PREFIX_IT = "models/item/.";
 	public static final SpecialModelLoader instance = new SpecialModelLoader();
 	public static final StateMapper stateMapper = new StateMapper();
 	private static String mod = "";
@@ -120,7 +118,7 @@ public class SpecialModelLoader implements ICustomModelLoader {
 	public boolean accepts(ResourceLocation modelLocation) {
 		if (mods.contains(modelLocation.getResourceDomain())) {
 			String path = modelLocation.getResourcePath();
-			return path.startsWith(SCRIPT_PREFIX) || path.startsWith(NBT_PREFIX) || models.containsKey(modelLocation);
+			return path.startsWith(SCRIPT_PREFIX) || path.startsWith(NBT_PREFIX) || path.startsWith(NBT_PREFIX_IT) || models.containsKey(modelLocation);
 		} else return false;
 	}
 
@@ -130,12 +128,14 @@ public class SpecialModelLoader implements ICustomModelLoader {
 		if (model != null) return model;
 		String path = modelLocation.getResourcePath();
 		int p;
-		if (path.startsWith(NBT_PREFIX)) {
+		if (path.startsWith(NBT_PREFIX) || path.startsWith(NBT_PREFIX_IT)) {
 			ParamertisedVariant v = ParamertisedVariant.parse(path);
 			String filePath = v.splitPath();
 			modelLocation = new ResourceLocation(modelLocation.getResourceDomain(), filePath);
-			if (v.isBase()) model = loadNBTModel(modelLocation);
-			else return new ModelVariant(loadModel(modelLocation), v);
+			if (v.isBase())
+				return new NBTModel(CompressedStreamTools.read(new DataInputStream(resourceManager.getResource(modelLocation).getInputStream())));
+			else
+				return new ModelVariant(loadModel(modelLocation), v);
 		} else if ((p = path.indexOf('#')) >= 0) {
 			String s = path.substring(p + 1);
 			Orientation o = Orientation.valueOf(s.substring(0, 1).toUpperCase() + s.substring(1));
@@ -145,13 +145,6 @@ public class SpecialModelLoader implements ICustomModelLoader {
 			model = loadScriptModel(modelLocation);
 		if (model != null) models.put(modelLocation, model);
 		return model;
-	}
-
-	private IModel loadNBTModel(ResourceLocation modelLocation) throws IOException {
-		String domain = modelLocation.getResourceDomain();
-		String fileName = modelLocation.getResourcePath().substring(NBT_PREFIX.length());
-		IResource res = resourceManager.getResource(new ResourceLocation(domain, "models/block/" + fileName + ".nbt"));
-		return new NBTModel(CompressedStreamTools.read(new DataInputStream(res.getInputStream())));
 	}
 
 	private IModel loadScriptModel(ResourceLocation modelLocation) throws Exception {

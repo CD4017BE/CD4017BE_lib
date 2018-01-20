@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import javax.vecmath.Vector3f;
 
@@ -94,7 +96,7 @@ public class NBTModel implements IModel {
 
 	@Override
 	public Collection<ResourceLocation> getDependencies() {
-		return null;
+		return Collections.emptyList();
 	}
 
 	@Override
@@ -145,8 +147,7 @@ public class NBTModel implements IModel {
 		BakedModel model = new BakedModel(getTexture(cache, tag.getByte(NBT_PARTICLE), texidx, bakedTextureGetter), transform, diffuseLight, gui3D);
 		byte[] cf = tag.getByteArray(NBT_CULLFACE);
 		
-		@SuppressWarnings("unchecked")
-		ArrayList<BakedQuad>[] quads = new ArrayList[7];
+		List<BakedQuad>[] quads = model.quads;
 		for (int i = 0; i < quads.length; i++) quads[i] = new ArrayList<BakedQuad>();
 		int o = cmode == 0 ? 7 : cmode == 1 ? 4 : 3, n = faces.length / o;
 		for (int i = 0; i < n; i++) {
@@ -170,6 +171,9 @@ public class NBTModel implements IModel {
 			quads[i < cf.length && (j = cf[i] & 0xff) < 6 ? j + 1 : 0].add(
 					new BakedQuad(vertexData, -1, FaceBakery.getFacingFromVertexData(vertexData), tex, diffuseLight, format));
 		}
+		for (int i = 0; i < quads.length; i++)
+			if (quads[i].isEmpty())
+				quads[i] = Collections.emptyList();
 		return model;
 	}
 

@@ -1,7 +1,5 @@
 package cd4017be.lib.render.model;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import javax.vecmath.Matrix4f;
@@ -24,22 +22,22 @@ import net.minecraftforge.common.model.TRSRTransformation;
 public class BakedModel implements IPerspectiveAwareModel {
 
 	public final ImmutableMap<TransformType, TRSRTransformation> transform;
-	public final BakedQuad[][] quads;
+	public final List<BakedQuad>[] quads;
 	public final TextureAtlasSprite particle;
 	public final boolean diffuse, gui3d;
 
+	@SuppressWarnings("unchecked")
 	public BakedModel(TextureAtlasSprite texture, ImmutableMap<TransformType, TRSRTransformation> transform, boolean diffuse, boolean gui3d) {
 		this.transform = transform;
 		this.particle = texture;
 		this.diffuse = diffuse;
 		this.gui3d = gui3d;
-		this.quads = new BakedQuad[7][];
+		this.quads = new List[7];
 	}
 
 	@Override
 	public List<BakedQuad> getQuads(IBlockState state, EnumFacing side, long rand) {
-		int i = side == null ? 0 : side.getIndex() + 1;
-		return quads[i] == null ? Collections.<BakedQuad>emptyList() : Arrays.asList(quads[i]);
+		return quads[side == null ? 0 : side.getIndex() + 1];
 	}
 
 	@Override
