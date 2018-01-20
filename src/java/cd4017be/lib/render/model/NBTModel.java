@@ -45,6 +45,7 @@ public class NBTModel implements IModel {
 		NBT_UV_TRANSFORM = "uv_transf",
 		NBT_TEX_TRANSFORM = "tex_remap",
 		NBT_PARTICLE = "particle_tex",
+		NBT_COLOR = "hasColor",
 		NBT_CULLFACE = "cullfaces",
 		NBT_TEXTURE = "textures",
 		NBT_VERTEX = "vertices",
@@ -104,22 +105,24 @@ public class NBTModel implements IModel {
 	public IntArrayModel bakeTESR(ParamertisedVariant variant) {
 		int[][] vdata = getModelData(variant);
 		int[] vertices = vdata[0], uvs = vdata[1], faces = vdata[2], texidx = vdata[3];
+		int cmode = vdata[4][0], c = vdata[4][1];
 		TextureAtlasSprite[] cache = new TextureAtlasSprite[textures.length];
 		TextureMap map = Minecraft.getMinecraft().getTextureMapBlocks();
 		Function<ResourceLocation, TextureAtlasSprite> texGetter = (rl)-> map.getAtlasSprite(rl.toString());
-		int n = faces.length / 4;
+		int o = cmode == 0 ? 7 : cmode == 1 ? 4 : 3, n = faces.length / o;
 		int[] vertexData = new int[n * 28];
 		int l = 0;
 		for (int i = 0; i < n; i++) {
-			int j = i * 4;
-			int vi = faces[j++], uvi = faces[j++], nti = faces[j++], c = faces[j];
+			int j = i * o;
+			int vi = faces[j++], uvi = faces[j++], nti = faces[j++];
+			if (cmode == 1) c = faces[j];
 			TextureAtlasSprite tex = getTexture(cache, nti >> 24 & 0xff, texidx, texGetter);
 			for (int k, m = 0; m < 4; m++, vi >>= 8, uvi >>= 8) {
 				k = (vi & 0xff) * 3; 
 				vertexData[l++] = vertices[k++];	//X
 				vertexData[l++] = vertices[k++];	//Y
 				vertexData[l++] = vertices[k];		//Z
-				vertexData[l++] = c;	//color
+				vertexData[l++] = cmode == 0 ? faces[j++] : c;	//color
 				k = (uvi & 0xff) * 2;
 				vertexData[l++] = Float.floatToRawIntBits(tex.getInterpolatedU(Float.intBitsToFloat(uvs[k++])));	//U
 				vertexData[l++] = Float.floatToRawIntBits(tex.getInterpolatedV(Float.intBitsToFloat(uvs[k])));		//V
@@ -137,6 +140,7 @@ public class NBTModel implements IModel {
 		NBTTagCompound tag = data.getCompoundTag(pstate.subModel);
 		int[][] vdata = getModelData(pstate);
 		int[] vertices = vdata[0], uvs = vdata[1], faces = vdata[2], texidx = vdata[3];
+		int cmode = vdata[4][0], c = vdata[4][1];
 		TextureAtlasSprite[] cache = new TextureAtlasSprite[textures.length];
 		BakedModel model = new BakedModel(getTexture(cache, tag.getByte(NBT_PARTICLE), texidx, bakedTextureGetter), transform, diffuseLight, gui3D);
 		byte[] cf = tag.getByteArray(NBT_CULLFACE);
@@ -144,10 +148,11 @@ public class NBTModel implements IModel {
 		@SuppressWarnings("unchecked")
 		ArrayList<BakedQuad>[] quads = new ArrayList[7];
 		for (int i = 0; i < quads.length; i++) quads[i] = new ArrayList<BakedQuad>();
-		int n = faces.length / 4;
+		int o = cmode == 0 ? 7 : cmode == 1 ? 4 : 3, n = faces.length / o;
 		for (int i = 0; i < n; i++) {
-			int j = i * 4;
-			int vi = faces[j++], uvi = faces[j++], nti = faces[j++], c = faces[j];
+			int j = i * o;
+			int vi = faces[j++], uvi = faces[j++], nti = faces[j++];
+			if (cmode == 1) c = faces[j];
 			TextureAtlasSprite tex = getTexture(cache, nti >> 24 & 0xff, texidx, bakedTextureGetter);
 			nti = hasNormal ? Util.rotateNormal(nti & 0xffffff, pstate.orient) : 0;
 			int[] vertexData = new int[28];
@@ -156,13 +161,13 @@ public class NBTModel implements IModel {
 				vertexData[l++] = vertices[k++];	//X
 				vertexData[l++] = vertices[k++];	//Y
 				vertexData[l++] = vertices[k];		//Z
-				vertexData[l++] = c;	//color
+				vertexData[l++] = cmode == 0 ? faces[j++] : c;	//color
 				k = (uvi & 0xff) * 2;
 				vertexData[l++] = Float.floatToRawIntBits(tex.getInterpolatedU(Float.intBitsToFloat(uvs[k++])));	//U
 				vertexData[l++] = Float.floatToRawIntBits(tex.getInterpolatedV(Float.intBitsToFloat(uvs[k])));		//V
 				vertexData[l++] = nti;	//normal
 			}
-			quads[i < cf.length && (j = cf[j] & 0xff) < 6 ? j + 1 : 0].add(
+			quads[i < cf.length && (j = cf[i] & 0xff) < 6 ? j + 1 : 0].add(
 					new BakedQuad(vertexData, -1, FaceBakery.getFacingFromVertexData(vertexData), tex, diffuseLight, format));
 		}
 		return model;
@@ -173,6 +178,8 @@ public class NBTModel implements IModel {
 		int[] vertices = (coreVertices ? data : tag).getIntArray(NBT_VERTEX);
 		int[] uvs = (coreUVs ? data : tag).getIntArray(NBT_UV);
 		int[] remap = null;
+		byte colorMode = tag.getByte(NBT_COLOR);
+		int color = 0xffffffff;
 		if (variant.params != null) {
 			NBTTagList vt = tag.getTagList(NBT_TEX_TRANSFORM, NBT.TAG_COMPOUND);
 			if (vt.hasNoTags()) vt = data.getTagList(NBT_TEX_TRANSFORM, NBT.TAG_COMPOUND);
@@ -210,8 +217,15 @@ public class NBTModel implements IModel {
 				for (int i = 0; i < vertices.length; i += 3)
 					Util.rotate(vertices, i, orient);
 			}
+			if (colorMode >= 0) {
+				try {
+					String s = variant.params.getString(colorMode);
+					if (s.startsWith("0x")) color = Integer.parseUnsignedInt(s.substring(2), 16) | 0xff000000;
+				} catch(IllegalArgumentException e) {}
+				colorMode = -1;
+			}
 		}
-		return new int[][] {vertices, uvs, tag.getIntArray(NBT_QUAD), remap};
+		return new int[][] {vertices, uvs, tag.getIntArray(NBT_QUAD), remap, new int[] {colorMode + 3, color}};
 	}
 
 	private TextureAtlasSprite getTexture(TextureAtlasSprite[] cache, int i, int[] remap, Function<ResourceLocation, TextureAtlasSprite> bakedTextureGetter) {
