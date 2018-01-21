@@ -121,7 +121,7 @@ def writeObject(fd, obj, images):
     writeTag(fd, 11, "uvs")
     os.write(fd, struct.pack('>i', l * 2))
     for uv in uvlist:
-        os.write(fd, struct.pack('>2f', uv.x, uv.y))
+        os.write(fd, struct.pack('>2f', uv.x, 1.0 - uv.y))
     print("- done")
     writeEnd(fd)
 

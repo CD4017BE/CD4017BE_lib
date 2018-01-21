@@ -14,6 +14,7 @@ import cd4017be.lib.render.model.ModelVariant;
 import cd4017be.lib.render.model.NBTModel;
 import cd4017be.lib.render.model.ParamertisedVariant;
 import cd4017be.lib.render.model.RawModelData;
+import cd4017be.lib.render.model.TextureReplacement;
 import cd4017be.lib.script.Module;
 import cd4017be.lib.script.Script;
 import cd4017be.lib.util.Orientation;
@@ -128,19 +129,21 @@ public class SpecialModelLoader implements ICustomModelLoader {
 		if (model != null) return model;
 		String path = modelLocation.getResourcePath();
 		int p;
-		if (path.startsWith(NBT_PREFIX) || path.startsWith(NBT_PREFIX_IT)) {
+		if ((p = path.indexOf('$')) >= 0) {
+			model = loadModel(new ResourceLocation(modelLocation.getResourceDomain(), path.substring(0, p)));
+			model = new TextureReplacement(model, new ResourceLocation(path.substring(p + 1)));
+		} else if (path.startsWith(NBT_PREFIX) || path.startsWith(NBT_PREFIX_IT)) {
 			ParamertisedVariant v = ParamertisedVariant.parse(path);
 			String filePath = v.splitPath();
-			modelLocation = new ResourceLocation(modelLocation.getResourceDomain(), filePath);
 			if (v.isBase())
-				return new NBTModel(CompressedStreamTools.read(new DataInputStream(resourceManager.getResource(modelLocation).getInputStream())));
+				model = new NBTModel(CompressedStreamTools.read(new DataInputStream(resourceManager.getResource(new ResourceLocation(modelLocation.getResourceDomain(), filePath.replaceAll("\\.", "") + ".nbt")).getInputStream())));
 			else
-				return new ModelVariant(loadModel(modelLocation), v);
+				model = new ModelVariant(loadModel(new ResourceLocation(modelLocation.getResourceDomain(), filePath)), v);
 		} else if ((p = path.indexOf('#')) >= 0) {
 			String s = path.substring(p + 1);
 			Orientation o = Orientation.valueOf(s.substring(0, 1).toUpperCase() + s.substring(1));
 			model = loadModel(new ResourceLocation(modelLocation.getResourceDomain(), path.substring(0, p)));
-			return new ModelVariant(model, o.getModelRotation());
+			model = new ModelVariant(model, o.getModelRotation());
 		} else if (path.startsWith(SCRIPT_PREFIX))
 			model = loadScriptModel(modelLocation);
 		if (model != null) models.put(modelLocation, model);

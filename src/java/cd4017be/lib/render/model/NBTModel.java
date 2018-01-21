@@ -164,8 +164,8 @@ public class NBTModel implements IModel {
 				vertexData[l++] = vertices[k];		//Z
 				vertexData[l++] = cmode == 0 ? faces[j++] : c;	//color
 				k = (uvi & 0xff) * 2;
-				vertexData[l++] = Float.floatToRawIntBits(tex.getInterpolatedU(Float.intBitsToFloat(uvs[k++])));	//U
-				vertexData[l++] = Float.floatToRawIntBits(tex.getInterpolatedV(Float.intBitsToFloat(uvs[k])));		//V
+				vertexData[l++] = Float.floatToRawIntBits(tex.getInterpolatedU(Float.intBitsToFloat(uvs[k++]) * 16F));	//U
+				vertexData[l++] = Float.floatToRawIntBits(tex.getInterpolatedV(Float.intBitsToFloat(uvs[k]) * 16F));		//V
 				vertexData[l++] = nti;	//normal
 			}
 			quads[i < cf.length && (j = cf[i] & 0xff) < 6 ? j + 1 : 0].add(
@@ -221,14 +221,15 @@ public class NBTModel implements IModel {
 				for (int i = 0; i < vertices.length; i += 3)
 					Util.rotate(vertices, i, orient);
 			}
-			if (colorMode >= 0) {
-				try {
-					String s = variant.params.getString(colorMode);
-					if (s.startsWith("0x")) color = Integer.parseUnsignedInt(s.substring(2), 16) | 0xff000000;
-				} catch(IllegalArgumentException e) {}
-				colorMode = -1;
-			}
+			if (colorMode >= 0) try {
+				String s = variant.params.getString(colorMode);
+				if (s.startsWith("0x")) {
+					color = Integer.parseUnsignedInt(s.substring(2), 16) | 0xff000000;
+					color = color & 0xff00ff00 | color << 16 & 0xff0000 | color >> 16 & 0xff;
+				}
+			} catch(IllegalArgumentException e) {}
 		}
+		if (colorMode >= 0) colorMode = -1;
 		return new int[][] {vertices, uvs, tag.getIntArray(NBT_QUAD), remap, new int[] {colorMode + 3, color}};
 	}
 

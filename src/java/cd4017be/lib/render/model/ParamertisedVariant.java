@@ -33,10 +33,10 @@ public class ParamertisedVariant implements IModelState {
 	public String splitPath() {
 		String[] parts = subModel.split("\\.");
 		String path = parts[0];
-		if (parts.length > 1) path += parts[1];
+		if (parts.length > 1) path += "." + parts[1];
 		if (parts.length > 2) subModel = parts[2];
 		else subModel = "model";
-		return path + ".nbt";
+		return path;
 	}
 
 	public boolean isBase() {
@@ -61,9 +61,9 @@ public class ParamertisedVariant implements IModelState {
 				Object[] arr = new Object[pars.length];
 				for (int j = 0; j < pars.length; j++)
 					try {
-						arr[i] = Double.parseDouble(pars[i]);
+						arr[j] = Double.parseDouble(pars[j]);
 					} catch (NumberFormatException e) {
-						arr[i] = pars[i];
+						arr[j] = pars[j];
 					}
 				params = new Parameters(arr);
 			}
