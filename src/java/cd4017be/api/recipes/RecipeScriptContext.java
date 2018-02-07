@@ -152,6 +152,8 @@ public class RecipeScriptContext extends Context {
 	}
 
 	public void setup() {
+		RecipeAPI.addModModules(this);
+		
 		File dir = FileUtil.configDir;
 		File comp = new File(dir, "compiled.dat");
 		HashMap<String, Version> versions = new HashMap<String, Version>();

@@ -88,6 +88,10 @@ public class RecipeAPI {
 		//TODO Handlers.put("fluidCont", (p) -> FluidContainerRegistry.registerFluidContainer(p.get(1, FluidStack.class), p.get(2, ItemStack.class), p.get(3, ItemStack.class)));
 	}
 
+	public static void addModModules(RecipeScriptContext cont) {
+		//TODO include more mods
+	}
+
 	public static Predicate<Object> getFilter(Object o) {
 		if (o instanceof String) return new RegexFilter((String)o);
 		else if (o instanceof ItemStack) {
