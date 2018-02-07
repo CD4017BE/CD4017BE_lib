@@ -24,6 +24,7 @@ import net.minecraftforge.oredict.OreDictionary;
 import cd4017be.api.recipes.RecipeAPI.IRecipeHandler;
 import cd4017be.api.recipes.RecipeAPI.IRecipeList;
 import cd4017be.lib.BlockItemRegistry;
+import cd4017be.lib.Lib;
 import cd4017be.lib.script.Context;
 import cd4017be.lib.script.Module;
 import cd4017be.lib.script.Parameters;
@@ -131,7 +132,7 @@ public class RecipeScriptContext extends Context {
 
 	public static final List<Version> scriptRegistry = new ArrayList<Version>();
 	static {
-		scriptRegistry.add(new Version("core"));
+		scriptRegistry.add(new Version(Lib.ConfigName, 0, "/assets/" + Lib.ID + "/config/core.rcp"));
 	}
 	public static RecipeScriptContext instance;
 
