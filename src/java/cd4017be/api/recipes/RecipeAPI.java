@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
+import cd4017be.api.recipes.mods.ImmersiveEngineeringModule;
 import cd4017be.api.recipes.vanilla.CraftingRecipeIterator;
 import cd4017be.api.recipes.vanilla.FuelHandler;
 import cd4017be.api.recipes.vanilla.SmeltingIterator;
@@ -19,6 +20,7 @@ import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.oredict.OreDictionary;
 import net.minecraftforge.oredict.ShapedOreRecipe;
@@ -89,6 +91,7 @@ public class RecipeAPI {
 	}
 
 	public static void addModModules(RecipeScriptContext cont) {
+		if (Loader.isModLoaded("immersiveengineering")) cont.add(new ImmersiveEngineeringModule());
 		//TODO include more mods
 	}
 
