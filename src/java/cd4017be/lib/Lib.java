@@ -7,7 +7,7 @@ import cd4017be.api.recipes.RecipeScriptContext;
 import cd4017be.api.recipes.RecipeScriptContext.ConfigConstants;
 import cd4017be.lib.item.ItemMaterial;
 import cd4017be.lib.render.ItemMaterialMeshDefinition;
-import cd4017be.lib.script.ScriptFiles.Version;
+import cd4017be.lib.render.SpecialModelLoader;
 import cd4017be.lib.templates.TabMaterials;
 import cd4017be.lib.util.FileUtil;
 import cd4017be.lib.util.TooltipUtil;
@@ -45,7 +45,6 @@ public class Lib {
 
 	public Lib() {
 		MinecraftForge.EVENT_BUS.register(this);
-		RecipeScriptContext.scriptRegistry.add(new Version(ConfigName, 0, "/assets/" + ID + "/config/core.rcp"));
 	}
 
 	@Mod.EventHandler
@@ -90,6 +89,8 @@ public class Lib {
 	@SideOnly(Side.CLIENT)
 	@SubscribeEvent
 	public void registerMaterialModels(ModelRegistryEvent ev) {
+		SpecialModelLoader.setMod(ID);
+		BlockItemRegistry.registerRender(materials);
 		BlockItemRegistry.registerRender(materials, new ItemMaterialMeshDefinition(materials));
 	}
 

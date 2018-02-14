@@ -1,5 +1,6 @@
 package cd4017be.lib.render.model;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -16,6 +17,7 @@ import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.block.model.ItemOverrideList;
 import net.minecraft.client.renderer.block.model.ModelRotation;
+import net.minecraft.client.renderer.color.BlockColors;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.util.EnumFacing;
@@ -41,9 +43,28 @@ public class BlockMimicModel implements IModel, IBakedModel, IHardCodedModel {
 			IExtendedBlockState ext = (IExtendedBlockState) state;
 			IBlockState block = ext.getValue(PropertyBlockMimic.instance);
 			if (block != null) {
-				IBakedModel model = Minecraft.getMinecraft().getBlockRendererDispatcher()
+				Minecraft mc = Minecraft.getMinecraft();
+				IBakedModel model = mc.getBlockRendererDispatcher()
 						.getModelForState(block instanceof IExtendedBlockState ? ((IExtendedBlockState)block).getClean() : block);
-				return model.getQuads(block, side, rand);
+				BlockColors bc = mc.getBlockColors();
+				List<BakedQuad> quads = model.getQuads(block, side, rand);
+				boolean edit = false;
+				for (int i = 0; i < quads.size(); i++) {
+					BakedQuad q = quads.get(i);
+					if (q.hasTintIndex()) {
+						int c = bc.colorMultiplier(block, null, null, q.getTintIndex()) | 0xff000000;
+						if (c != -1) {
+							int[] data = q.getVertexData().clone();
+							for (int j = 3; j < 28; j+=7) data[j] = c;
+							if (!edit) {
+								quads = new ArrayList<BakedQuad>(quads);
+								edit = true;
+							}
+							quads.set(i, new BakedQuad(data, -1, q.getFace(), q.getSprite(), q.shouldApplyDiffuseLighting(), q.getFormat()));
+						}
+					}
+				}
+				return quads;
 			}
 		}
 		return Collections.emptyList();

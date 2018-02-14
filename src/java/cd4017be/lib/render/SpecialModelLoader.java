@@ -1,5 +1,6 @@
 package cd4017be.lib.render;
 
+import java.io.DataInputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -10,7 +11,10 @@ import java.util.Map.Entry;
 import cd4017be.lib.render.model.IntArrayModel;
 import cd4017be.lib.render.model.ModelContext;
 import cd4017be.lib.render.model.ModelVariant;
+import cd4017be.lib.render.model.NBTModel;
+import cd4017be.lib.render.model.ParamertisedVariant;
 import cd4017be.lib.render.model.RawModelData;
+import cd4017be.lib.render.model.TextureReplacement;
 import cd4017be.lib.script.Module;
 import cd4017be.lib.script.Script;
 import cd4017be.lib.util.Orientation;
@@ -21,6 +25,7 @@ import net.minecraft.client.renderer.block.statemap.IStateMapper;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.client.resources.IResourceManager;
 import net.minecraft.item.Item;
+import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.event.ModelBakeEvent;
@@ -44,7 +49,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class SpecialModelLoader implements ICustomModelLoader {
 
-	public static final String SCRIPT_PREFIX = "models/block/_";
+	public static final String SCRIPT_PREFIX = "models/block/_", NBT_PREFIX = "models/block/.", NBT_PREFIX_IT = "models/item/.";
 	public static final SpecialModelLoader instance = new SpecialModelLoader();
 	public static final StateMapper stateMapper = new StateMapper();
 	private static String mod = "";
@@ -88,7 +93,8 @@ public class SpecialModelLoader implements ICustomModelLoader {
 		MinecraftForge.EVENT_BUS.register(this);
 	}
 
-	public void cleanUp() {
+	@SubscribeEvent
+	public void bakeModels(ModelBakeEvent event) {
 		for (IModeledTESR tesr : tesrs) tesr.bakeModels(resourceManager);
 		for (ModelContext cont : scriptModels.values())
 			for (Iterator<Entry<String, Module>> it = cont.modules.entrySet().iterator(); it.hasNext();) {
@@ -96,11 +102,6 @@ public class SpecialModelLoader implements ICustomModelLoader {
 				Module m = e.getValue();
 				if (m instanceof Script && !e.getKey().startsWith("tesr.")) it.remove();
 			}
-	}
-
-	@SubscribeEvent
-	public void bakeModels(ModelBakeEvent event) {
-		cleanUp();
 	}
 
 	@Override
@@ -116,8 +117,10 @@ public class SpecialModelLoader implements ICustomModelLoader {
 
 	@Override
 	public boolean accepts(ResourceLocation modelLocation) {
-		return mods.contains(modelLocation.getResourceDomain()) &&
-			(modelLocation.getResourcePath().startsWith(SCRIPT_PREFIX) || models.containsKey(modelLocation));
+		if (mods.contains(modelLocation.getResourceDomain())) {
+			String path = modelLocation.getResourcePath();
+			return path.startsWith(SCRIPT_PREFIX) || path.startsWith(NBT_PREFIX) || path.startsWith(NBT_PREFIX_IT) || models.containsKey(modelLocation);
+		} else return false;
 	}
 
 	@Override
@@ -125,16 +128,25 @@ public class SpecialModelLoader implements ICustomModelLoader {
 		IModel model = models.get(modelLocation);
 		if (model != null) return model;
 		String path = modelLocation.getResourcePath();
-		int p = path.indexOf('#');
-		if (p >= 0) {
+		int p;
+		if ((p = path.indexOf('$')) >= 0) {
+			model = loadModel(new ResourceLocation(modelLocation.getResourceDomain(), path.substring(0, p)));
+			model = new TextureReplacement(model, new ResourceLocation(path.substring(p + 1)));
+		} else if (path.startsWith(NBT_PREFIX) || path.startsWith(NBT_PREFIX_IT)) {
+			ParamertisedVariant v = ParamertisedVariant.parse(path);
+			String filePath = v.splitPath();
+			if (v.isBase())
+				model = new NBTModel(CompressedStreamTools.read(new DataInputStream(resourceManager.getResource(new ResourceLocation(modelLocation.getResourceDomain(), filePath.replaceAll("\\.", "") + ".nbt")).getInputStream())));
+			else
+				model = new ModelVariant(loadModel(new ResourceLocation(modelLocation.getResourceDomain(), filePath)), v);
+		} else if ((p = path.indexOf('#')) >= 0) {
 			String s = path.substring(p + 1);
 			Orientation o = Orientation.valueOf(s.substring(0, 1).toUpperCase() + s.substring(1));
 			model = loadModel(new ResourceLocation(modelLocation.getResourceDomain(), path.substring(0, p)));
-			return new ModelVariant(model, o.getModelRotation());
-		} else if (path.startsWith(SCRIPT_PREFIX)) {
+			model = new ModelVariant(model, o.getModelRotation());
+		} else if (path.startsWith(SCRIPT_PREFIX))
 			model = loadScriptModel(modelLocation);
-			if (model != null) models.put(modelLocation, model);
-		}
+		if (model != null) models.put(modelLocation, model);
 		return model;
 	}
 

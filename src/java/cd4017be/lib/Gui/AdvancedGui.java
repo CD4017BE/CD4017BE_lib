@@ -285,6 +285,26 @@ public abstract class AdvancedGui extends GuiContainer {
 		BlockGuiHandler.sendPacketToServer(buff);
 	}
 
+	/**
+	 * sends a packet to the server that is addressed to this GUI's data provider and contains the given values as payload.<br>
+	 * (convenience method for handling button events)
+	 * @param args data to send (supports: byte, short, int, long, float, double, String)
+	 */
+	public void sendPkt(Object... args) {
+		PacketBuffer buff = BlockGuiHandler.getPacketTargetData(((DataContainer)inventorySlots).data.pos());
+		for (Object arg : args) {
+			if (arg instanceof Byte) buff.writeByte((Byte)arg);
+			else if (arg instanceof Short) buff.writeShort((Short)arg);
+			else if (arg instanceof Integer) buff.writeInt((Integer)arg);
+			else if (arg instanceof Long) buff.writeLong((Long)arg);
+			else if (arg instanceof Float) buff.writeFloat((Float)arg);
+			else if (arg instanceof Double) buff.writeDouble((Double)arg);
+			else if (arg instanceof String) buff.writeString((String)arg);
+			else throw new IllegalArgumentException();
+		}
+		BlockGuiHandler.sendPacketToServer(buff);
+	}
+
 	public void setFocus(int id) {
 		if (focus >= 0 && focus < guiComps.size()) guiComps.get(focus).unfocus();
 		focus = id >= 0 && id < guiComps.size() && guiComps.get(id).focus() ? id : -1;
@@ -788,7 +808,7 @@ public abstract class AdvancedGui extends GuiContainer {
 			String s = "";
 			for (int i = 0; i < headers.length; i++) {
 				String h = headers[i];
-				if (h.charAt(0) == ChatFormatting.PREFIX_CODE) {
+				if (!h.isEmpty() && h.charAt(0) == ChatFormatting.PREFIX_CODE) {
 					s += h.substring(0, 2);
 					h = h.substring(2);
 				}
