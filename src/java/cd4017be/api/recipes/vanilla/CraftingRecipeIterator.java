@@ -1,20 +1,18 @@
 package cd4017be.api.recipes.vanilla;
 
-import java.util.ConcurrentModificationException;
-import java.util.List;
 import java.util.function.Predicate;
 
 import org.apache.logging.log4j.Level;
 
-import cd4017be.lib.script.Function.ArrayIterator;
-import cd4017be.lib.script.Function.FilteredIterator;
 import cd4017be.lib.script.Function.Iterator;
-import cd4017be.lib.script.Function.ListIterator;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.CraftingManager;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.ShapedRecipes;
 import net.minecraft.item.crafting.ShapelessRecipes;
+import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.common.crafting.CraftingHelper.ShapedPrimer;
+import net.minecraftforge.common.crafting.IShapedRecipe;
 import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.oredict.ShapedOreRecipe;
 import net.minecraftforge.oredict.ShapelessOreRecipe;
@@ -44,31 +42,31 @@ public class CraftingRecipeIterator implements Iterator {
 
 	@Override
 	public void set(Object o) {
-		if (o == null) list.remove();
+		if (o == null) list.remove();//TODO potential fail
 		else if (o == curElement && curElement[0] != curRecipe.getRecipeOutput()) {
 			if (!(curElement[0] instanceof ItemStack)) throw new IllegalArgumentException("ItemStack expected");
 			ItemStack item = (ItemStack)curElement[0];
 			if (curRecipe instanceof ShapedRecipes) {
 				ShapedRecipes sr = (ShapedRecipes)curRecipe;
-				curRecipe = new ShapedRecipes(sr.recipeWidth, sr.recipeHeight, sr.recipeItems, item);
+				curRecipe = new ShapedRecipes(sr.getGroup(), sr.recipeWidth, sr.recipeHeight, sr.recipeItems, item);
 			} else if (curRecipe instanceof ShapelessRecipes) {
 				ShapelessRecipes sr = (ShapelessRecipes)curRecipe;
-				curRecipe = new ShapelessRecipes(item, sr.recipeItems);
+				curRecipe = new ShapelessRecipes(sr.getGroup(), item, sr.recipeItems);
 			} else if (curRecipe instanceof ShapedOreRecipe) {
 				ShapedOreRecipe sr = (ShapedOreRecipe)curRecipe;
-				ShapedOreRecipe nr = new ShapedOreRecipe(item, emptyGrid(sr.getWidth(), sr.getHeight()));
-				System.arraycopy(sr.getInput(), 0, nr.getInput(), 0, sr.getInput().length); //<- HACKING
-				curRecipe = nr;
+				ShapedPrimer p = new ShapedPrimer();
+				p.width = sr.getRecipeWidth();
+				p.height = sr.getRecipeHeight();
+				p.input = sr.getIngredients();
+				curRecipe = new ShapedOreRecipe(new ResourceLocation(sr.getGroup()), item, p);
 			} else if (curRecipe instanceof ShapelessOreRecipe) {
 				ShapelessOreRecipe sr = (ShapelessOreRecipe)curRecipe;
-				ShapelessOreRecipe nr = new ShapelessOreRecipe(item);
-				nr.getInput().addAll(sr.getInput()); //<- HACKING
-				curRecipe = nr;
+				curRecipe = new ShapelessOreRecipe(new ResourceLocation(sr.getGroup()), sr.getIngredients(), item);
 			} else {
 				FMLLog.log("RECIPE_SCRIPT", Level.WARN, "could not replicate unknown recipe type: %s!", curRecipe.getClass());
 				return;
 			}
-			list.set(curRecipe);
+			CraftingManager.REGISTRY.putObject(curRecipe.getRegistryName(), curRecipe);
 		}
 	}
 
@@ -78,7 +76,7 @@ public class CraftingRecipeIterator implements Iterator {
 			curRecipe = list.next();
 			ItemStack result = curRecipe.getRecipeOutput();
 			if (!(in || key.test(result))) continue;
-			Iterator ingred = new IngredientIterator(curRecipe.getIngredients(), key);
+			Iterator ingred = new IngredientIterator(curRecipe.getIngredients(), key, curRecipe instanceof IShapedRecipe);
 			curElement = new Object[]{result, ingred};
 			return true;
 		}
@@ -88,14 +86,6 @@ public class CraftingRecipeIterator implements Iterator {
 	@Override
 	public void reset() {
 		list = CraftingManager.REGISTRY.iterator();
-	}
-
-	private static Object[] emptyGrid(int w, int h) {
-		String line = "";
-		for (int i = 0; i < w; i++) line += " ";
-		Object[] rcp = new Object[h];
-		for (int i = 0; i < h; i++) rcp[i] = line;
-		return rcp;
 	}
 
 }
