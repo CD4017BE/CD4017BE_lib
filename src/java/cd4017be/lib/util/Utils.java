@@ -2,6 +2,7 @@ package cd4017be.lib.util;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.IntFunction;
 import java.util.function.ObjIntConsumer;
 
 import javax.annotation.Nullable;
@@ -373,6 +374,28 @@ public class Utils {
 	 */
 	public static long setState(long cfg, int i, long m, int x) {
 		return cfg & ~(m << i) | ((long)x & m) << i;
+	}
+
+	/**
+	 * sets all elements of the array to a given value
+	 * @param arr
+	 * @param val
+	 * @return the same array
+	 */
+	public static <T> T[] init(T[] arr, T val) {
+		for (int i = 0; i < arr.length; i++) arr[i] = val;
+		return arr;
+	}
+
+	/**
+	 * sets all elements of the array to a value computed by the given function
+	 * @param arr
+	 * @param val function to compute array elements
+	 * @return the same array
+	 */
+	public static <T> T[] init(T[] arr, IntFunction<T> val) {
+		for (int i = 0; i < arr.length; i++) arr[i] = val.apply(i);
+		return arr;
 	}
 
 }

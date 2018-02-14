@@ -77,6 +77,9 @@ repositories {
 	maven {
 		url = "http://maven.cil.li/"
 	}
+	maven {
+		url = "http://maven.ic2.player.to/"
+	}
 }
 
 dependencies {
@@ -85,11 +88,10 @@ dependencies {
 	runtime "mezz.jei:jei_${mc_version}:${jei_version}"
 	// OC
 	compile "li.cil.oc:OpenComputers:${oc_version}"
-	//TIS-3D
+	// TIS-3D
 	compile "li.cil.tis3d:TIS-3D:${tis3d_version}"
-	
-	String depDir = new File(file('./').getParentFile(), "Forge-${mc_version}").getAbsolutePath()
-	compile files("${depDir}/libs/industrialcraft-${ic2_version}-api.jar")
+	// IC2
+	compile "net.industrial-craft:industrialcraft-2:${ic2_version}:api"
 }
 
 processResources

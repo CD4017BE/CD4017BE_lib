@@ -1,16 +1,17 @@
 package cd4017be.api.recipes;
 
 import java.util.Arrays;
-import java.util.ConcurrentModificationException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
+import cd4017be.api.recipes.mods.ImmersiveEngineeringModule;
+import cd4017be.api.recipes.vanilla.CraftingRecipeIterator;
+import cd4017be.api.recipes.vanilla.FuelHandler;
+import cd4017be.api.recipes.vanilla.SmeltingIterator;
 import cd4017be.lib.Lib;
 import cd4017be.lib.script.Function.Iterator;
 import cd4017be.lib.script.Function.ArrayIterator;
-import cd4017be.lib.script.Function.ListIterator;
 import cd4017be.lib.templates.NBTRecipe;
 import cd4017be.lib.script.Function.FilteredIterator;
 import cd4017be.lib.script.Parameters;
@@ -18,12 +19,8 @@ import cd4017be.lib.util.OreDictStack;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.CraftingManager;
-import net.minecraft.item.crafting.IRecipe;
-import net.minecraft.item.crafting.ShapedRecipes;
-import net.minecraft.item.crafting.ShapelessRecipes;
 import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fml.common.IFuelHandler;
+import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.oredict.OreDictionary;
 import net.minecraftforge.oredict.ShapedOreRecipe;
@@ -80,32 +77,22 @@ public class RecipeAPI {
 		Lists.put("ore", (p) -> new FilteredIterator(new ArrayIterator(OreDictionary.getOreNames()), new RegexFilter(p.getString(1))));
 		Lists.put("craftIng", (p) -> new CraftingRecipeIterator(getFilter(p.get(1)), false));
 		Lists.put("craftRes", (p) -> new CraftingRecipeIterator(getFilter(p.get(1)), true));
+		Lists.put("smeltIng", (p) -> new SmeltingIterator(getFilter(p.get(1)), false));
+		Lists.put("smeltRes", (p) -> new SmeltingIterator(getFilter(p.get(1)), true));
 		Handlers.put("shapeless", (p) -> GameRegistry.addRecipe(new ShapelessOreRecipe(p.get(1, ItemStack.class), Arrays.copyOfRange(p.param, 2, p.param.length))));
 		Handlers.put("smelt", (p) -> GameRegistry.addSmelting(p.get(1, ItemStack.class), p.get(2, ItemStack.class), p.param.length > 3 ? (float)p.getNumber(3) : 0F));
 		Handlers.put("fuel", new FuelHandler());
 		Handlers.put("worldgen", new OreGenHandler());
-		Handlers.put("item", (p) -> Lib.materials.addMaterial((int)p.getNumber(1), p.getString(2)));
+		Handlers.put("item", (p) -> {
+			int n = p.param.length;
+			Lib.materials.addMaterial((int)p.getNumber(1), p.getString(2), n > 3 ? p.getString(3) : null, n > 4 ? p.getString(4) : null);
+		});
 		//TODO Handlers.put("fluidCont", (p) -> FluidContainerRegistry.registerFluidContainer(p.get(1, FluidStack.class), p.get(2, ItemStack.class), p.get(3, ItemStack.class)));
 	}
 
-	private static class FuelHandler implements IRecipeHandler, IFuelHandler {
-		HashMap<Integer, Integer> fuelList;
-		public FuelHandler() {
-			fuelList = new HashMap<Integer, Integer>();
-			GameRegistry.registerFuelHandler(this);
-		}
-		int key(ItemStack item) {
-			return Item.getIdFromItem(item.getItem()) & 0xffff | (item.getItemDamage() & 0xffff) << 16;
-		}
-		@Override
-		public void addRecipe(Parameters p) {
-			fuelList.put(key(p.get(1, ItemStack.class)), (int)p.getNumber(2));
-		}
-		@Override
-		public int getBurnTime(ItemStack fuel) {
-			Integer val = fuelList.get(key(fuel));
-			return val == null ? 0 : val;
-		}
+	public static void addModModules(RecipeScriptContext cont) {
+		if (Loader.isModLoaded("immersiveengineering")) cont.add(new ImmersiveEngineeringModule());
+		//TODO include more mods
 	}
 
 	public static Predicate<Object> getFilter(Object o) {
@@ -134,167 +121,6 @@ public class RecipeAPI {
 		@Override
 		public boolean test(Object o) {
 			return o != null && pattern.matcher(o.toString()).matches();
-		}
-	}
-
-	private static class CraftingRecipeIterator implements Iterator {
-		private final List<IRecipe> list;
-		private final Predicate<Object> key;
-		private final boolean in;
-		private int idx;
-		private Object[] curElement;
-		private IRecipe curRecipe;
-
-		public CraftingRecipeIterator(Predicate<Object> key, boolean res) {
-			this.key = key;
-			this.list = CraftingManager.getInstance().getRecipeList();
-			this.in = !res;
-			this.idx = -1;
-		}
-
-		@Override
-		public Object get() {
-			return curElement;
-		}
-
-		@Override
-		public void set(Object o) {
-			if (list.get(idx) != curRecipe) throw new ConcurrentModificationException();
-			if (o == null) list.remove(idx--);
-			else if (o == curElement && curElement[0] != curRecipe.getRecipeOutput()) {
-				if (!(curElement[0] instanceof ItemStack)) throw new IllegalArgumentException("ItemStack expected");
-				ItemStack item = (ItemStack)curElement[0];
-				ItemStack res = curRecipe.getRecipeOutput();
-				if (res != null) {
-					//TODO res.setItem(item.getItem());
-					res.setItemDamage(item.getItemDamage());
-					res.setTagCompound(item.getTagCompound());
-					res.setCount(item.getCount());
-				}
-			}
-		}
-
-		@Override
-		public boolean next() {
-			int l = list.size();
-			while (++idx < l) {
-				curRecipe = list.get(idx);
-				ItemStack result = curRecipe.getRecipeOutput();
-				if (!(in || key.test(result))) continue;
-				Iterator ingred;
-				if (curRecipe instanceof ShapedOreRecipe) ingred = new ShapedIngredients((ShapedOreRecipe)curRecipe, in ? key : null);
-				else if (curRecipe instanceof ShapelessOreRecipe) ingred = new ShapelessIngredients((ShapelessOreRecipe)curRecipe, in ? key : null);
-				else if (curRecipe instanceof ShapedRecipes) {
-					ingred = new ArrayIterator(((ShapedRecipes)curRecipe).recipeItems);
-					if (in) ingred = new FilteredIterator(ingred, key);
-				} else if (curRecipe instanceof ShapelessRecipes) {
-					ingred = new ListIterator<ItemStack>(((ShapelessRecipes)curRecipe).recipeItems);
-					if (in) ingred = new FilteredIterator(ingred, key);
-				}
-				else continue;
-				if (in) {
-					if (ingred.next()) ingred.reset();
-					else continue;
-				}
-				curElement = new Object[]{result, ingred};
-				return true;
-			}
-			return false;
-		}
-
-		@Override
-		public void reset() {
-			idx = -1;
-		}
-
-	}
-
-	private static class ShapelessIngredients extends ListIterator<Object> {
-		private final Predicate<Object> key;
-		private Object curElement;
-
-		public ShapelessIngredients(ShapelessOreRecipe rcp, Predicate<Object> key) {
-			super(rcp.getInput());
-			this.key = key;
-		}
-
-		@Override
-		public Object get() {
-			return curElement;
-		}
-
-		@Override
-		public void set(Object o) {
-			if (o == curElement) return;
-			if (o instanceof ItemStack) arr.set(idx, o);
-			else if (o instanceof OreDictStack) arr.set(idx, OreDictionary.getOres(((OreDictStack)o).id));
-			else if (o == null) arr.remove(idx--);
-			else throw new IllegalArgumentException("exp. ItemStack or OreDictStack");
-		}
-
-		@Override
-		public boolean next() {
-			while (++idx < arr.size()) {
-				curElement = arr.get(idx);
-				if (curElement instanceof List) {
-					List<?> list = (List<?>)curElement;
-					if (list.isEmpty()) continue;
-					if (key == null) {
-						curElement = list.get(0);
-						return true;
-					}
-					for (Object o : list)
-						if (key.test(o)) {
-							curElement = o;
-							return true;
-						}
-				} else if (key == null || key.test(curElement)) return true;
-			}
-			return false;
-		}
-	}
-
-	private static class ShapedIngredients extends ArrayIterator {
-		private final Predicate<Object> key;
-		private Object curElement;
-
-		public ShapedIngredients(ShapedOreRecipe rcp, Predicate<Object> key) {
-			super(rcp.getInput());
-			this.key = key;
-		}
-
-		@Override
-		public Object get() {
-			return curElement;
-		}
-
-		@Override
-		public void set(Object o) {
-			if (o == curElement) return;
-			if (o == null || o instanceof ItemStack) arr[idx] = o;
-			else if (o instanceof OreDictStack) arr[idx] = OreDictionary.getOres(((OreDictStack)o).id);
-			else throw new IllegalArgumentException("exp. ItemStack or OreDictStack");
-		}
-
-		@Override
-		public boolean next() {
-			while (++idx < arr.length) {
-				curElement = arr[idx];
-				if (curElement instanceof List) {
-					List<?> list = (List<?>)curElement;
-					if (list.isEmpty()) continue;
-					if (key == null) {
-						curElement = list.get(0);
-						return true;
-					}
-					for (Object o : list)
-						if (key.test(o)) {
-							curElement = o;
-							return true;
-						}
-				} else if (key == null || key.test(curElement)) return true;
-			}
-			return false;
 		}
 	}
 

@@ -1,0 +1,129 @@
+type: ".nbt"
+compressed: false
+
+{
+ "ambOcc": true # apply ambient occlusion lightning
+ "gui3d": true # render 3D in gui
+ "item_transf": {
+  "none": [
+   0: F 0.0 # offset X
+   1: F 0.0 # offset Y
+   2: F 0.0 # offset Z
+   3: F 1.0 # scale X
+   4: F 1.0 # scale Y
+   5: F 1.0 # scale Z
+   6: F 0.0 # rotation Roll
+   7: F 0.0 # rotation Yaw
+   8: F 0.0 # rotation Pitch
+  ]
+  "3PLefthand": [...] # other item perspectives
+  "3PRighthand": [...]
+  "1PLefthand": [...]
+  "1PRighthand": [...]
+  "head": [...]
+  "gui": [...]
+  "ground": [...]
+  "fixed": [...]
+ }
+
+ "textures": [
+  0: "domain:path/texture"
+  ... # more textures
+ ]
+
+ "model": {
+  "vertices": I [
+   0: 0.0     # X-coord
+   1: -0.5    # Y-coord
+   2: -0.1875 # Z-coord
+   ... # more vertices
+  ]
+  "uvs": I [
+   0: 0.0625 # U-coord
+   1: 0.125  # V-coord
+   ... # more uvs
+  ]
+  "quads": I [
+   0: 0x01030200 # vertex indices: 0xDDCCBBAA
+   1: 0x01030200 # uv indices: 0xDDCCBBAA
+   2: 0x81000000 # normals & texture index: 0xTTZZYYXX
+   3: 0xFFFFFFFF # color: 0xAABBGGRR (depends on hasColor)
+   ... # more quads
+  ]
+  "particle_tex": B 0x00 # texture index
+  "cullfaces": B [
+   0: -1 # 0:Bot, 1:Top, 2:North, 3:South, 4:West, 5:East, else:none
+   ... # more quads
+  ]
+
+  "hasColor": B 0 # -3:per vertex, -2:per face, -1:none, i:use parameter i
+  "tex_remap": [
+   0: {
+    "ids": B [
+     0: 0x00 # original texture index
+     ... # more textures
+    ]
+    "par": B 0 # parameter index
+    "shift": B 1 # texture index shift factor
+   }
+   ... # more texture remapping groups
+  ]
+  "uv_transf": [
+   0: {
+    "mask": B [
+     0: 0x01 # bit mask of selected uvs
+     ...
+    ]
+    "o_": [
+     0: F 0.0 # base offset U
+     1: F 0.0 # base offset V
+    ]
+    "s_": [
+     0: F 1.0 # base scale U
+     1: F 1.0 # base scale V
+    ]
+    "o1": [
+     0: F 0.0 # par1 offset factor U
+     1: F 0.0 # par1 offset factor V
+    ]
+    "s1": [
+     3: F 1.0 # par1 scale factor U
+     4: F 1.0 # par1 scale factor V
+    ]
+    ... # more parameters
+   }
+   ... # more uv transformation groups
+  ]
+  "vert_transf": [
+   0: {
+    "mask": B [
+     0: 0x01 # bit mask of selected vertices
+     ...
+    ]
+    "o_": [
+     0: F 0.0 # base offset X
+     1: F 0.0 # base offset Y
+     2: F 0.0 # base offset Z
+    ]
+    "s_": [
+     0: F 1.0 # base scale X
+     1: F 1.0 # base scale Y
+     2: F 1.0 # base scale Z
+    ]
+    "o1": [
+     0: F 0.0 # par1 offset factor X
+     1: F 0.0 # par1 offset factor Y
+     2: F 0.0 # par1 offset factor Z
+    ]
+    "s1": [
+     3: F 1.0 # par1 scale factor X
+     4: F 1.0 # par1 scale factor Y
+     5: F 1.0 # par1 scale factor Z
+    ]
+    ... # more parameters
+   }
+   ... # more vertex transformation groups
+  ]
+ }
+ ... # more sub-models
+}

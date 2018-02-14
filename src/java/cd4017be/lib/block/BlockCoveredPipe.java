@@ -31,7 +31,6 @@ public abstract class BlockCoveredPipe extends BlockPipe {
 
 	protected BlockCoveredPipe(String id, Material m, SoundType sound, Class<? extends TileEntity> tile) {
 		super(id, m, sound, tile);
-		//TODO setBlockLayer(BlockRenderLayer.CUTOUT);
 	}
 
 	@Override
@@ -47,6 +46,7 @@ public abstract class BlockCoveredPipe extends BlockPipe {
 		IBlockState cover = eState.getValue(PropertyBlockMimic.instance);
 		if (cover == null) return eState;
 		cover = cover.getActualState(world, pos);
+		if (cover.isOpaqueCube()) eState = (IExtendedBlockState)state;
 		return eState.withProperty(PropertyBlockMimic.instance, cover.getBlock().getExtendedState(cover, world, pos));
 	}
 
