@@ -1,3 +1,17 @@
+v5.2.0
+Changes:
+- added Chinese localization made by @Snownee
+- cover blocks rendered on pipes now support Tint-colors and semi-transparency
+- added new modelloader that uses NBT-files (that can be exported from a Blender script)
+- added a builtin 3D ingot model (for use with custom crafting items)
+- crafting items defined in config can now have custom model path and display name
+- added config script module for Immersive Engineering to add / remove machine recipes
+- fixed manipulation of crafting recipes via config not being fully implemented
+- fixed init methods in core.rcp config script being executed twice
+Dependencies:
+- for MC-1.11.2
+- forge-13.20.0.2315 (or newer)
+
 v5.1.5
 Changes:
 - added energy API integration for VoidCraft (still experimental)
