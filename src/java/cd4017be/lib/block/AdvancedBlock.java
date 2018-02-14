@@ -10,6 +10,7 @@ import cd4017be.lib.Gui.DataContainer.IGuiData;
 import net.minecraft.block.Block;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
+import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -20,6 +21,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumFacing.AxisDirection;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
@@ -310,15 +312,44 @@ public class AdvancedBlock extends BaseBlock {
 	public boolean isSideSolid(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing side) {
 		AxisAlignedBB box = getBoundingBox(state, world, pos);
 		if (box == FULL_BLOCK_AABB) return true;
-		switch (side) {
-		case DOWN: return box.minY == FULL_BLOCK_AABB.minY;
-		case UP: return box.maxY == FULL_BLOCK_AABB.maxY;
-		case NORTH: return box.minZ == FULL_BLOCK_AABB.minZ;
-		case SOUTH: return box.maxZ == FULL_BLOCK_AABB.maxZ;
-		case WEST: return box.minX == FULL_BLOCK_AABB.minX;
-		case EAST: return box.maxX == FULL_BLOCK_AABB.maxX;
-		default: return true;
+		return getFace(box, side) == (side.getAxisDirection() == AxisDirection.POSITIVE ? 1.0 : 0.0);
+	}
+
+	@Override
+	public BlockFaceShape getBlockFaceShape(IBlockAccess world, IBlockState state, BlockPos pos, EnumFacing side) {
+		AxisAlignedBB box = getBoundingBox(state, world, pos);
+		if (box == FULL_BLOCK_AABB) return BlockFaceShape.SOLID;
+		double radA = 1.0, radB = 1.0;
+		int o = 3 - (side.ordinal() >> 1);
+		for (EnumFacing f : EnumFacing.values()) {
+			if (f == side.getOpposite()) continue;
+			double d = getFace(box, f) / 2.0 * (double)f.getAxisDirection().getOffset();
+			if (d < 0.0625 || (f == side && d < 0.5)) return BlockFaceShape.UNDEFINED;
+			if (((f.ordinal() >> 1) + o) % 3 == 1) {
+				if (d < radA) radA = d;
+			} else if (d < radB) radB = d;
 		}
+		if (radB > radA) {double r = radB; radB = radA; radA = r;}
+		return radA < 0.5 ? (radB >= 0.25 ? BlockFaceShape.CENTER_BIG : radB >= 0.125 ? BlockFaceShape.CENTER : BlockFaceShape.CENTER_SMALL)
+			: radB < 0.5 ? (radB >= 0.25 ? BlockFaceShape.MIDDLE_POLE_THICK : radB >= 0.125 ? BlockFaceShape.MIDDLE_POLE : BlockFaceShape.MIDDLE_POLE_THIN)
+			: BlockFaceShape.SOLID;
+	}
+
+	private static double getFace(AxisAlignedBB box, EnumFacing side) {
+		switch (side) {
+		case DOWN: return box.minY;
+		case UP: return box.maxY;
+		case NORTH: return box.minZ;
+		case SOUTH: return box.maxZ;
+		case WEST: return box.minX;
+		case EAST: return box.maxX;
+		default: return Double.NaN;
+		}
+	}
+
+	@Override
+	public boolean isTopSolid(IBlockState state) {
+		return isNormalCube(state);
 	}
 
 	@Override
