@@ -30,6 +30,7 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 
 	private IBlockState blockState;
 	private Chunk chunk;
+	protected boolean unloaded;
 
 	public BaseTileEntity() {}
 
@@ -83,18 +84,32 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 	}
 
 	@Override
+	public void onLoad() {
+		unloaded = false;
+		setupData();
+	}
+
+	@Override
 	public void onChunkUnload() {
-		//make sure that possible reference holders don't think this TileEntity still exists.
-		tileEntityInvalid = true;
+		unloaded = true;
 		chunk = null;
 		clearData();
 	}
 
 	@Override
+	public void validate() {
+		tileEntityInvalid = unloaded = false;
+		setupData();
+	}
+
+	@Override
 	public void invalidate() {
-		super.invalidate();
+		tileEntityInvalid = unloaded = true;
 		chunk = null;
 		clearData();
+	}
+
+	protected void setupData() {
 	}
 
 	protected void clearData() {
@@ -102,7 +117,7 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 
 	@Override
 	public boolean invalid() {
-		return tileEntityInvalid;
+		return unloaded;
 	}
 
 	@Override

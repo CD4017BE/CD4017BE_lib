@@ -1,6 +1,7 @@
 package cd4017be.lib.tileentity;
 
 import net.minecraft.block.Block;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.common.capabilities.Capability;
@@ -48,7 +49,7 @@ public class PassiveMultiblockTile<C extends MultiblockComp<C, N>, N extends Sha
 	}
 
 	@Override
-	public void neighborTileChange(BlockPos src) {
+	public void neighborTileChange(TileEntity te, EnumFacing side) {
 		if (!comp.updateCon) {
 			comp.updateCon = true;
 			TickRegistry.instance.updates.add(this);
@@ -56,21 +57,13 @@ public class PassiveMultiblockTile<C extends MultiblockComp<C, N>, N extends Sha
 	}
 
 	@Override
-	public void validate() {
-		super.validate();
+	protected void setupData() {
 		comp.setUID(SharedNetwork.ExtPosUID(pos, world.provider.getDimension()));
 		TickRegistry.instance.updates.add(this);
 	}
 
 	@Override
-	public void invalidate() {
-		super.invalidate();
-		if (comp.network != null) comp.network.remove(comp);
-	}
-
-	@Override
-	public void onChunkUnload() {
-		super.onChunkUnload();
+	protected void clearData() {
 		if (comp.network != null) comp.network.remove(comp);
 	}
 
