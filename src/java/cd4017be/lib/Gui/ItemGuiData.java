@@ -72,7 +72,7 @@ public class ItemGuiData implements IGuiData {
 
 	@Override
 	public String getName() {
-		return TooltipUtil.translate(item.getUnlocalizedName() + ".name");
+		return TooltipUtil.translate(item.getUnlocalizedName().replace("item.", "gui.") + ".name");
 	}
 
 	public interface IInventoryItem extends IItemHandlerModifiable {
