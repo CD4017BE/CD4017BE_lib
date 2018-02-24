@@ -1,3 +1,12 @@
+v6.2.0
+Changes:
+- fixed GUI titles using Item name instead of own locstring
+- changed internal neighbor event system in order to get rid of some TileEntity invalidation hacking that could potentially have had problematic side effects.
+- fixed certain TileEntities running into ploblems with forge's dormant chunk caching.
+Dependencies:
+- for MC-1.12.2
+- forge-14.23.0.2512 (or newer)
+
 v6.1.0
 Changes:
 - added Chinese localization made by @Snownee
