@@ -97,10 +97,11 @@ public class AdvancedBlock extends BaseBlock {
 		 */
 		void neighborBlockChange(Block b, BlockPos src);
 		/**
-		 * when neighboring tileEntity added/removed
-		 * @param src event source position
+		 * when neighboring tileEntity added/removed by chunk load/unload
+		 * @param te new TileEntity or null if got removed
+		 * @param side on which the TileEntity changed
 		 */
-		void neighborTileChange(BlockPos src);
+		void neighborTileChange(TileEntity te, EnumFacing side);
 	}
 
 	@Override
@@ -108,13 +109,6 @@ public class AdvancedBlock extends BaseBlock {
 		if ((flags & 1) == 0) return;
 		TileEntity te = world.getTileEntity(pos);
 		if (te instanceof INeighborAwareTile) ((INeighborAwareTile)te).neighborBlockChange(b, src);
-	}
-
-	@Override
-	public void onNeighborChange(IBlockAccess world, BlockPos pos, BlockPos npos) {
-		if ((flags & 1) == 0) return;
-		TileEntity te = world.getTileEntity(pos);
-		if (te instanceof INeighborAwareTile) ((INeighborAwareTile)te).neighborTileChange(npos);
 	}
 
 	public interface ISelfAwareTile {

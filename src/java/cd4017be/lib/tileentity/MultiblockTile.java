@@ -4,6 +4,7 @@ import cd4017be.lib.block.AdvancedBlock.INeighborAwareTile;
 import cd4017be.lib.templates.MultiblockComp;
 import cd4017be.lib.templates.SharedNetwork;
 import net.minecraft.block.Block;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ITickable;
 import net.minecraft.util.math.BlockPos;
@@ -40,7 +41,7 @@ public class MultiblockTile<C extends MultiblockComp<C, N>, N extends SharedNetw
 	}
 
 	@Override
-	public void neighborTileChange(BlockPos src) {
+	public void neighborTileChange(TileEntity te, EnumFacing side) {
 		comp.updateCon = true;
 	}
 
@@ -50,20 +51,12 @@ public class MultiblockTile<C extends MultiblockComp<C, N>, N extends SharedNetw
 	}
 
 	@Override
-	public void validate() {
-		super.validate();
+	protected void setupData() {
 		comp.setUID(SharedNetwork.ExtPosUID(pos, world.provider.getDimension()));
 	}
 
 	@Override
-	public void invalidate() {
-		super.invalidate();
-		if (comp.network != null) comp.network.remove(comp);
-	}
-
-	@Override
-	public void onChunkUnload() {
-		super.onChunkUnload();
+	protected void clearData() {
 		if (comp.network != null) comp.network.remove(comp);
 	}
 
