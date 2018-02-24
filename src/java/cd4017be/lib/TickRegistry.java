@@ -1,6 +1,8 @@
 package cd4017be.lib;
 
 import java.util.ArrayList;
+import java.util.Map.Entry;
+
 import cd4017be.lib.block.AdvancedBlock.INeighborAwareTile;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
@@ -66,33 +68,45 @@ public class TickRegistry {
 				loadedS = world.isBlockLoaded(cp.getBlock(0, 0, 16)),
 				loadedW = world.isBlockLoaded(cp.getBlock(-1, 0, 0)),
 				loadedE = world.isBlockLoaded(cp.getBlock(16, 0, 0));
-		for (BlockPos pos : chunk.getTileEntityMap().keySet()) {
+		for (Entry<BlockPos, TileEntity> e : chunk.getTileEntityMap().entrySet()) {
 			//only check for TileEntitys that sit on the chunk border
+			BlockPos pos = e.getKey();
 			int x = pos.getX() & 15, z = pos.getZ() & 15;
-			if (z == 0 && loadedN) notifyNeighborTile(world, pos, EnumFacing.NORTH);
-			else if (z == 15 && loadedS) notifyNeighborTile(world, pos, EnumFacing.SOUTH);
-			if (x == 0 && loadedW) notifyNeighborTile(world, pos, EnumFacing.WEST);
-			else if (x == 15 && loadedE) notifyNeighborTile(world, pos, EnumFacing.EAST);
+			if (z == 0 && loadedN) notifyNeighborTile(world, pos, EnumFacing.NORTH, e.getValue());
+			else if (z == 15 && loadedS) notifyNeighborTile(world, pos, EnumFacing.SOUTH, e.getValue());
+			if (x == 0 && loadedW) notifyNeighborTile(world, pos, EnumFacing.WEST, e.getValue());
+			else if (x == 15 && loadedE) notifyNeighborTile(world, pos, EnumFacing.EAST, e.getValue());
 		}
 	}
 
-	private void notifyNeighborTile(World world, BlockPos pos, EnumFacing side) {
-		TileEntity te = world.getTileEntity(pos.offset(side));
-		//only do it for TileEntities that explicitly want notification to not screw up other mods
-		if (te instanceof INeighborAwareTile)
-			((INeighborAwareTile)te).neighborTileChange(pos);
-	}
-
 	/**
-	 * since MC-1.11 TileEntities are by default not invalidated when their chunk unloads which causes some problems when working with references to other TileEntity instances. <br>
-	 * So they are quietly invalidated here to fix that (in the hope it won't screw things up).
+	 * Some TileEntities in my mods need to be notified when neighboring TileEntities appear or disappear (especially on multiblock structures).
+	 * Unfortunately since 1.11 Minecraft won't let TileEntities notify their neighbors on Chunk unload anymore, so I have to do it manually now.
 	 */
 	@SubscribeEvent
 	public void chunkUnload(ChunkEvent.Unload ev) {
-		for (TileEntity te : ev.getChunk().getTileEntityMap().values())
-			//set field directly instead of calling invalidate() as modders may have added additional logic to that method
-			//which was eventually only intended for regular TileEntity removal.
-			te.tileEntityInvalid = true;
+		Chunk chunk = ev.getChunk();
+		World world = chunk.getWorld();
+		ChunkPos cp = chunk.getPos();
+		boolean loadedN = world.isBlockLoaded(cp.getBlock(0, 0, -1)),
+				loadedS = world.isBlockLoaded(cp.getBlock(0, 0, 16)),
+				loadedW = world.isBlockLoaded(cp.getBlock(-1, 0, 0)),
+				loadedE = world.isBlockLoaded(cp.getBlock(16, 0, 0));
+		if (loadedN | loadedS | loadedW | loadedE)
+			for (BlockPos pos : chunk.getTileEntityMap().keySet()) {
+				int x = pos.getX() & 15, z = pos.getZ() & 15;
+				if (z == 0 && loadedN) notifyNeighborTile(world, pos, EnumFacing.NORTH, null);
+				else if (z == 15 && loadedS) notifyNeighborTile(world, pos, EnumFacing.SOUTH, null);
+				if (x == 0 && loadedW) notifyNeighborTile(world, pos, EnumFacing.WEST, null);
+				else if (x == 15 && loadedE) notifyNeighborTile(world, pos, EnumFacing.EAST, null);
+			}
+	}
+
+	private void notifyNeighborTile(World world, BlockPos pos, EnumFacing side, TileEntity newTe) {
+		TileEntity te = world.getTileEntity(pos.offset(side));
+		//only do it for TileEntities that explicitly want notification to not screw up other mods
+		if (te instanceof INeighborAwareTile)
+			((INeighborAwareTile)te).neighborTileChange(newTe, side.getOpposite());
 	}
 
 }
