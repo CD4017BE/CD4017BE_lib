@@ -20,6 +20,7 @@ import net.minecraft.client.renderer.block.model.ModelRotation;
 import net.minecraft.client.renderer.color.BlockColors;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.VertexFormat;
+import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.model.IModel;
@@ -128,6 +129,16 @@ public class BlockMimicModel implements IModel, IBakedModel, IHardCodedModel {
 		@Override
 		public IBakedModel getModelFor(Object val) {
 			return val instanceof IBlockState ? instance : null;
+		}
+
+		@Override
+		public IBakedModel getModelFor(Object val, BlockRenderLayer layer) {
+			if (val instanceof IBlockState) {
+				IBlockState state = (IBlockState)val;
+				if (state.getBlock().canRenderInLayer(state, layer))
+					return instance;
+			}
+			return null;
 		}
 
 		@Override

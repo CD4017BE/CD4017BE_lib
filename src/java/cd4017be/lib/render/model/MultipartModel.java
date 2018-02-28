@@ -5,6 +5,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import javax.annotation.Nonnull;
+
 import java.util.function.Function;
 
 import cd4017be.lib.block.MultipartBlock;
@@ -21,8 +24,10 @@ import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.client.renderer.block.model.ModelRotation;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.VertexFormat;
+import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.client.MinecraftForgeClient;
 import net.minecraftforge.client.model.IModel;
 import net.minecraftforge.client.model.ModelLoaderRegistry;
 import net.minecraftforge.common.model.IModelState;
@@ -118,11 +123,13 @@ public class MultipartModel implements IModel, IHardCodedModel {
 		@Override
 		public List<BakedQuad> getQuads(IBlockState state, EnumFacing side, long rand) {
 			ArrayList<BakedQuad> list = new ArrayList<BakedQuad>();
-			list.addAll(base[block.baseState == null ? 0 : state.getValue(block.baseState)].getQuads(state, side, rand));
+			BlockRenderLayer layer = block.renderMultilayer ? MinecraftForgeClient.getRenderLayer() : null;
+			if (layer == null || layer == BlockRenderLayer.CUTOUT) list.addAll(base[block.baseState == null ? 0 : state.getValue(block.baseState)].getQuads(state, side, rand));
 			if (state instanceof IExtendedBlockState) {
 				IExtendedBlockState exState = (IExtendedBlockState) state;
 				for (int i = 0; i < block.modules.length; i++) {
-					IBakedModel model = modelProvider[i].getModelFor(exState.getValue(block.modules[i]));
+					Object val = exState.getValue(block.modules[i]);
+					IBakedModel model = layer == null ? modelProvider[i].getModelFor(val) : modelProvider[i].getModelFor(val, layer);
 					if (model != null) list.addAll(model.getQuads(state, side, rand));
 				}
 			}
@@ -163,6 +170,9 @@ public class MultipartModel implements IModel, IHardCodedModel {
 
 	public interface IModelProvider {
 		public IBakedModel getModelFor(Object val);
+		public default IBakedModel getModelFor(Object val, @Nonnull BlockRenderLayer layer) {
+			return layer == BlockRenderLayer.CUTOUT ? getModelFor(val) : null;
+		}
 		public Collection<ResourceLocation> getDependencies();
 		public void bake(IModelState state, VertexFormat format, Function<ResourceLocation, TextureAtlasSprite> textureGetter);
 	}

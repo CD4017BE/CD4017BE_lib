@@ -10,6 +10,7 @@ import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
@@ -134,6 +135,18 @@ public abstract class MultipartBlock extends AdvancedBlock {
 			}
 		}
 		return eState;
+	}
+
+	public boolean renderMultilayer = false;
+
+	public MultipartBlock setMultilayer() {
+		renderMultilayer = true;
+		return this;
+	}
+
+	@Override
+	public boolean canRenderInLayer(IBlockState state, BlockRenderLayer layer) {
+		return renderMultilayer || layer == getBlockLayer();
 	}
 
 	public interface IModularTile {
