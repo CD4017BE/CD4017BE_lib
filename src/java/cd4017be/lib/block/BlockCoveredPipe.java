@@ -31,6 +31,7 @@ public abstract class BlockCoveredPipe extends BlockPipe {
 
 	protected BlockCoveredPipe(String id, Material m, SoundType sound, Class<? extends TileEntity> tile) {
 		super(id, m, sound, tile);
+		setMultilayer();
 	}
 
 	@Override
