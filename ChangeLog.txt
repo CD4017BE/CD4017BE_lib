@@ -1,3 +1,10 @@
+v5.3.2
+Changes:
+- fixed bugs in multiblock shared networks where components where added into dead networks
+Dependencies:
+- for MC-1.11.2
+- forge-13.20.0.2315 (or newer)
+
 v5.3.1
 Changes:
 - fixed graphics glitches in pipe covers (incorrect Z-level arrangement) and also chisel blocks used as cover should no longer be invisible.
