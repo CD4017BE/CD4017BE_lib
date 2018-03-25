@@ -43,6 +43,7 @@ public class MultipartModel implements IModel, IHardCodedModel {
 	public final IModelProvider[] modelProvider;
 	public final ResourceLocation[] baseModels;
 	public final MultipartBlock block;
+	public ItemOverrideList itemHandler = ItemOverrideList.NONE;
 
 	public MultipartModel(MultipartBlock block) {
 		this.block = block;
@@ -114,7 +115,7 @@ public class MultipartModel implements IModel, IHardCodedModel {
 
 	public class BakedMultipart implements IBakedModel {
 
-		private final IBakedModel[] base;
+		public final IBakedModel[] base;
 
 		private BakedMultipart(IBakedModel[] base) {
 			this.base = base;
@@ -163,7 +164,11 @@ public class MultipartModel implements IModel, IHardCodedModel {
 
 		@Override
 		public ItemOverrideList getOverrides() {
-			return ItemOverrideList.NONE;
+			return itemHandler;
+		}
+
+		public MultipartBlock getOwner() {
+			return block;
 		}
 
 	}

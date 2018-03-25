@@ -30,7 +30,7 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 
 	private IBlockState blockState;
 	private Chunk chunk;
-	protected boolean unloaded;
+	protected boolean unloaded = true;
 
 	public BaseTileEntity() {}
 
