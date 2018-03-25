@@ -89,7 +89,7 @@ public abstract class SharedNetwork<C extends MultiblockComp<C, N>, N extends Sh
 		C obj;
 		for (byte i : sides())
 			if (comp.canConnect(i) && (obj = comp.getNeighbor(i)) != null)
-				add(obj);
+				comp.network.add(obj);
 		comp.updateCon = false;
 	}
 
@@ -128,10 +128,10 @@ public abstract class SharedNetwork<C extends MultiblockComp<C, N>, N extends Sh
 			queue.add(core);
 			while (!queue.isEmpty()) {
 				obj = queue.remove(queue.size() - 1);
-				comps.put(obj.uid, obj);
-				for (byte i : sides())
-					if (obj.canConnect(i) && (obj1 = obj.getNeighbor(i)) != null && !comps.containsKey(obj1.uid))
-						queue.add(obj1);
+				if (comps.put(obj.uid, obj) == null)
+					for (byte i : sides())
+						if (obj.canConnect(i) && (obj1 = obj.getNeighbor(i)) != null && components.containsKey(obj1.uid))
+							queue.add(obj1);
 			}
 			if (comps.size() == components.size()) return;
 			N network = onSplit(comps);

@@ -2,6 +2,7 @@ package cd4017be.lib.templates;
 
 import cd4017be.api.IAbstractTile;
 import cd4017be.lib.util.ICachableInstance;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
@@ -20,7 +21,7 @@ public abstract class MultiblockComp<C extends MultiblockComp<C, N>, N extends S
 	/** the unique identifier of this component. This should be calculated from it's coordinates and never change within one instance. */
 	protected long uid;
 	public byte con = 0x3f;
-	public boolean updateCon = true;
+	public boolean updateCon;
 
 	public MultiblockComp(IAbstractTile tile) {
 		this.tile = tile;
@@ -31,12 +32,15 @@ public abstract class MultiblockComp<C extends MultiblockComp<C, N>, N extends S
 	}
 	
 	public void setUID(long uid) {
-		if (this.uid != 0) return;
-		this.uid = uid;
+		if (this.uid == uid) return;
 		if (network != null) {
-			network.components.remove(0L);
+			C c = network.components.remove(this.uid);
+			if (c != this)
+				throw new IllegalStateException(String.format("Changing uid of %s into %d, but network had the wrong component %s stored under old uid", this, uid, c));
 			network.components.put(uid, (C)this);
 		}
+		this.uid = uid;
+		updateCon = true;
 	}
 
 	/**
@@ -78,6 +82,12 @@ public abstract class MultiblockComp<C extends MultiblockComp<C, N>, N extends S
 
 	public boolean invalid() {
 		return network == null || tile.invalid();
+	}
+
+	@Override
+	public String toString() {
+		return "MultiblockComp [network=" + (network == null ? "none" : network.components.size()) + ", tile=" + (tile.invalid() ? "invalid " : "") + (tile instanceof TileEntity ? ((TileEntity)tile).getPos() : tile) + ", uid=" + uid + ", con=" + con
+				+ ", update=" + updateCon + "]";
 	}
 
 }
