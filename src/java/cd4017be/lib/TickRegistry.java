@@ -2,6 +2,7 @@ package cd4017be.lib;
 
 import java.util.ArrayList;
 import java.util.Map.Entry;
+import java.util.Arrays;
 
 import cd4017be.lib.block.AdvancedBlock.INeighborAwareTile;
 import net.minecraft.tileentity.TileEntity;
@@ -32,6 +33,8 @@ public class TickRegistry {
 	/**added entries will be processed next tick */
 	public ArrayList<IUpdatable> updates = new ArrayList<IUpdatable>();
 	private ArrayList<IUpdatable> swapList = new ArrayList<IUpdatable>();
+	private ITickReceiver[] tickList = new ITickReceiver[8];
+	private int tickers = 0;
 
 	private TickRegistry() {
 		MinecraftForge.EVENT_BUS.register(this);
@@ -39,7 +42,8 @@ public class TickRegistry {
 
 	@SubscribeEvent
 	public void tick(TickEvent.ServerTickEvent ev) {
-		if (ev.phase == TickEvent.Phase.END && !updates.isEmpty()) {
+		if (ev.phase != TickEvent.Phase.END) return;
+		if (!updates.isEmpty()) {
 			//swap lists to prevent adding more components while still processing them
 			ArrayList<IUpdatable> list = updates;
 			updates = swapList;
@@ -49,10 +53,39 @@ public class TickRegistry {
 				update.process();
 			list.clear();
 		}
+		if (tickers > 0) {
+			int i = 0;
+			for (int j = 0; j < tickers; j++) {
+				ITickReceiver tick = tickList[j];
+				if (tick.tick()) {
+					if (i < j) tickList[i] = tick;
+					i++;
+				}
+			}
+			if (i < tickers) {
+				Arrays.fill(tickList, i, tickers, null);
+				tickers = i;
+			}
+		}
+	}
+
+	/** @param tick will receive update ticks */
+	public void add(ITickReceiver tick) {
+		if (tickers == tickList.length) {
+			ITickReceiver[] arr = new ITickReceiver[tickers << 1];
+			System.arraycopy(tickList, 0, arr, 0, tickers);
+			tickList = arr;
+		}
+		tickList[tickers++] = tick;
 	}
 
 	public interface IUpdatable {
 		public void process();
+	}
+
+	public interface ITickReceiver {
+		/** @return whether to continue sending ticks to this */
+		public boolean tick();
 	}
 
 	/**
