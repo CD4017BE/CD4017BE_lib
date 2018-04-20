@@ -30,6 +30,7 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 
 	private IBlockState blockState;
 	private Chunk chunk;
+	/** whether this TileEntity is currently not part of the loaded world and therefore shouldn't perform any actions */
 	protected boolean unloaded = true;
 
 	public BaseTileEntity() {}

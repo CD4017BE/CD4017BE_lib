@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
+import cd4017be.lib.TickRegistry;
+import cd4017be.lib.TickRegistry.IUpdatable;
 import net.minecraft.util.math.BlockPos;
 
 /**
@@ -13,7 +15,7 @@ import net.minecraft.util.math.BlockPos;
  * @author CD4017BE
  */
 @SuppressWarnings("unchecked")
-public abstract class SharedNetwork<C extends MultiblockComp<C, N>, N extends SharedNetwork<C, N>> { 
+public abstract class SharedNetwork<C extends MultiblockComp<C, N>, N extends SharedNetwork<C, N>> implements IUpdatable { 
 
 	protected C core;
 	public final HashMap<Long, C> components;
@@ -48,6 +50,7 @@ public abstract class SharedNetwork<C extends MultiblockComp<C, N>, N extends Sh
 	public void onMerged(N network) {
 		for (C c : network.components.values()) c.network = (N)this;
 		components.putAll(network.components);
+		network.components.clear();
 	}
 
 	/**
@@ -55,8 +58,7 @@ public abstract class SharedNetwork<C extends MultiblockComp<C, N>, N extends Sh
 	 * @param comp
 	 */
 	public void add(C comp) {
-		if (comp.network == this) return;
-		if (comp.invalid()) {comp.updateCon = true; return;}
+		if (comp.network == this || comp.invalid()) return;
 		if (components.size() >= comp.network.components.size()) onMerged(comp.network);
 		else comp.network.onMerged((N)this);
 	}
@@ -84,7 +86,9 @@ public abstract class SharedNetwork<C extends MultiblockComp<C, N>, N extends Sh
 	/**
 	 * called to check if there are new neighboring blocks to connect with
 	 * @param comp
+	 * @deprecated use {@link MultiblockComp#updateCons()} instead
 	 */
+	@Deprecated
 	public void updateCompCon(C comp) {
 		C obj;
 		for (byte i : sides())
@@ -94,9 +98,9 @@ public abstract class SharedNetwork<C extends MultiblockComp<C, N>, N extends Sh
 	}
 
 	/**
-	 * should be called by each component every tick
-	 * @param comp
+	 * @deprecated not needed anymore: network will update itself now
 	 */
+	@Deprecated
 	public void updateTick(C comp) {
 		if (comp.updateCon) updateCompCon(comp);
 		if (core == null) core = comp;
@@ -108,13 +112,27 @@ public abstract class SharedNetwork<C extends MultiblockComp<C, N>, N extends Sh
 		}
 	}
 
+	@Override
+	public void process() {
+		if (update) {
+			if (core == null)
+				for (C c : components.values()) { core = c; break; }
+			reassembleNetwork();
+			update = false;
+		}
+	}
+
 	public void markDirty() {
-		update = true;
+		if (!update) {
+			update = true;
+			TickRegistry.instance.updates.add(this);
+		}
 	}
 
 	/**
-	 * called every tick
+	 * @deprecated use your own tick handling or modify {@link #process()}
 	 */
+	@Deprecated
 	protected void updatePhysics() {}
 
 	protected byte[] sides() {return defaultSides;}
