@@ -158,4 +158,9 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 		return newState.getBlock() != oldState.getBlock();
 	}
 
+	@Override
+	public boolean isClient() {
+		return world.isRemote;
+	}
+
 }

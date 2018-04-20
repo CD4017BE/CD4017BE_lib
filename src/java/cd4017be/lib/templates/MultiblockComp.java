@@ -58,7 +58,7 @@ public abstract class MultiblockComp<C extends MultiblockComp<C, N>, N extends S
 	}
 
 	public void markDirty() {
-		if (!updateCon && tile instanceof IUpdatable) TickRegistry.instance.updates.add((IUpdatable)tile);
+		if (!updateCon && tile instanceof IUpdatable && !tile.isClient()) TickRegistry.instance.updates.add((IUpdatable)tile);
 		updateCon = true;
 	}
 

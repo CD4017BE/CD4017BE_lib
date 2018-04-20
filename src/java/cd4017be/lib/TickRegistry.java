@@ -2,6 +2,9 @@ package cd4017be.lib;
 
 import java.util.ArrayList;
 import java.util.Map.Entry;
+
+import org.apache.logging.log4j.Level;
+
 import java.util.Arrays;
 
 import cd4017be.lib.block.AdvancedBlock.INeighborAwareTile;
@@ -13,6 +16,7 @@ import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.world.ChunkEvent;
+import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
@@ -24,6 +28,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
  */
 public class TickRegistry {
 
+	public static boolean DEBUG = true;
 	public static final TickRegistry instance = new TickRegistry();
 
 	public static void register() {
@@ -34,7 +39,7 @@ public class TickRegistry {
 	public ArrayList<IUpdatable> updates = new ArrayList<IUpdatable>();
 	private ArrayList<IUpdatable> swapList = new ArrayList<IUpdatable>();
 	private ITickReceiver[] tickList = new ITickReceiver[8];
-	private int tickers = 0;
+	private int tickers = 0, added;
 
 	private TickRegistry() {
 		MinecraftForge.EVENT_BUS.register(this);
@@ -43,12 +48,14 @@ public class TickRegistry {
 	@SubscribeEvent
 	public void tick(TickEvent.ServerTickEvent ev) {
 		if (ev.phase != TickEvent.Phase.END) return;
+		String msg = "";
 		if (!updates.isEmpty()) {
 			//swap lists to prevent adding more components while still processing them
 			ArrayList<IUpdatable> list = updates;
 			updates = swapList;
 			swapList = list;
 			//process updates
+			if (DEBUG) msg += String.format("%d singleTicks ", list.size());
 			for (IUpdatable update : list)
 				update.process();
 			list.clear();
@@ -64,19 +71,30 @@ public class TickRegistry {
 			}
 			if (i < tickers) {
 				Arrays.fill(tickList, i, tickers, null);
+				if (DEBUG) msg += String.format("%d ", i - tickers);
 				tickers = i;
 			}
 		}
+		if (DEBUG) {
+			if (added > 0) msg += String.format("+%d ", added);
+			if (!msg.isEmpty()) {
+				msg += String.format("%d contTicks", tickers);
+				FMLLog.log("cd4017be_lib", Level.INFO, msg);
+			}
+		}
+		added = 0;
 	}
 
 	/** @param tick will receive update ticks */
 	public void add(ITickReceiver tick) {
+		if (Thread.currentThread().getName().startsWith("Client")) throw new IllegalStateException("Adding ITickReceivers not allowed on client side!");
 		if (tickers == tickList.length) {
 			ITickReceiver[] arr = new ITickReceiver[tickers << 1];
 			System.arraycopy(tickList, 0, arr, 0, tickers);
 			tickList = arr;
 		}
 		tickList[tickers++] = tick;
+		added++;
 	}
 
 	public interface IUpdatable {

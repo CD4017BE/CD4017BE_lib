@@ -58,7 +58,7 @@ public abstract class SharedNetwork<C extends MultiblockComp<C, N>, N extends Sh
 	 * @param comp
 	 */
 	public void add(C comp) {
-		if (comp.network == this || comp.invalid()) return;
+		if (comp.network == this || comp.invalid() || comp.tile.isClient()) return;
 		if (components.size() >= comp.network.components.size()) onMerged(comp.network);
 		else comp.network.onMerged((N)this);
 	}
@@ -71,7 +71,7 @@ public abstract class SharedNetwork<C extends MultiblockComp<C, N>, N extends Sh
 		components.remove(comp.uid);
 		comp.network = null;
 		if (core == comp) core = null;
-		markDirty();
+		if (!components.isEmpty()) markDirty();
 	}
 
 	/**
@@ -80,7 +80,7 @@ public abstract class SharedNetwork<C extends MultiblockComp<C, N>, N extends Sh
 	 * @param side the side that disconnected
 	 */
 	public void onDisconnect(C comp, byte side) {
-		if (comp.getNeighbor(side) != null) markDirty();
+		if (comp.getNeighbor(side) != null && !comp.tile.isClient()) markDirty();
 	}
 
 	/**
