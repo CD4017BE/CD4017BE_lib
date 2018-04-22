@@ -16,4 +16,7 @@ public interface IAbstractTile extends ICapabilityProvider, ICachableInstance {
 	 * @return the neighbor 'TileEntity' on that side. Could theoretically be anything.
 	 */
 	public @Nullable ICapabilityProvider getTileOnSide(@Nullable EnumFacing s);
+
+	/**@return whether this is a client side instance */
+	public boolean isClient();
 }

@@ -6,7 +6,6 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
-import cd4017be.lib.TickRegistry;
 import cd4017be.lib.TickRegistry.IUpdatable;
 import cd4017be.lib.block.AdvancedBlock.INeighborAwareTile;
 import cd4017be.lib.templates.MultiblockComp;
@@ -22,7 +21,7 @@ public class PassiveMultiblockTile<C extends MultiblockComp<C, N>, N extends Sha
 
 	@Override
 	public void process() {
-		if (!tileEntityInvalid && comp.network != null) comp.network.updateTick(comp);
+		if (!unloaded && comp.updateCon) comp.updateCons();
 	}
 
 	@Override
@@ -42,29 +41,23 @@ public class PassiveMultiblockTile<C extends MultiblockComp<C, N>, N extends Sha
 
 	@Override
 	public void neighborBlockChange(Block b, BlockPos src) {
-		if (!comp.updateCon) {
-			comp.updateCon = true;
-			TickRegistry.instance.updates.add(this);
-		}
+		comp.markDirty();
 	}
 
 	@Override
 	public void neighborTileChange(TileEntity te, EnumFacing side) {
-		if (!comp.updateCon) {
-			comp.updateCon = true;
-			TickRegistry.instance.updates.add(this);
-		}
+		comp.markDirty();
 	}
 
 	@Override
 	protected void setupData() {
 		comp.setUID(SharedNetwork.ExtPosUID(pos, world.provider.getDimension()));
-		TickRegistry.instance.updates.add(this);
 	}
 
 	@Override
 	protected void clearData() {
 		if (comp.network != null) comp.network.remove(comp);
+		comp.updateCon = false;
 	}
 
 }

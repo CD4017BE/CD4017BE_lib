@@ -22,6 +22,7 @@ import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerAboutToStartEvent;
+import net.minecraftforge.fml.common.event.FMLServerStoppingEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -79,6 +80,11 @@ public class Lib {
 		//trash stuff that's not needed anymore
 		RecipeScriptContext.instance = null;
 		System.gc();
+	}
+
+	@Mod.EventHandler
+	public void onShutdown(FMLServerStoppingEvent event) {
+		TickRegistry.instance.clear();
 	}
 
 	@SubscribeEvent

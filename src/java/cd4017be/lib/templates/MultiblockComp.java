@@ -1,6 +1,8 @@
 package cd4017be.lib.templates;
 
 import cd4017be.api.IAbstractTile;
+import cd4017be.lib.TickRegistry;
+import cd4017be.lib.TickRegistry.IUpdatable;
 import cd4017be.lib.util.ICachableInstance;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
@@ -30,8 +32,9 @@ public abstract class MultiblockComp<C extends MultiblockComp<C, N>, N extends S
 	public long getUID() {
 		return uid;
 	}
-	
+
 	public void setUID(long uid) {
+		markDirty();
 		if (this.uid == uid) return;
 		if (network != null) {
 			C c = network.components.remove(this.uid);
@@ -40,6 +43,22 @@ public abstract class MultiblockComp<C extends MultiblockComp<C, N>, N extends S
 			network.components.put(uid, (C)this);
 		}
 		this.uid = uid;
+	}
+
+	/**
+	 * call this on block updates or similar events to make this component auto connect with surrounding structures
+	 */
+	public void updateCons() {
+		if (network == null) return;
+		C obj;
+		for (byte i : network.sides())
+			if (canConnect(i) && (obj = getNeighbor(i)) != null)
+				network.add(obj);
+		updateCon = false;
+	}
+
+	public void markDirty() {
+		if (!updateCon && tile instanceof IUpdatable && !tile.isClient()) TickRegistry.instance.updates.add((IUpdatable)tile);
 		updateCon = true;
 	}
 
@@ -61,7 +80,7 @@ public abstract class MultiblockComp<C extends MultiblockComp<C, N>, N extends S
 			network.onDisconnect((C)this, side);
 			con &= ~(1 << side);
 		} else if (c && !c0) {
-			updateCon = true;
+			markDirty();
 			con |= 1 << side;
 		}
 	}

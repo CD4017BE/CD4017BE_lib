@@ -14,7 +14,9 @@ import net.minecraftforge.common.capabilities.ICapabilityProvider;
 /**
  * 
  * @author CD4017BE
+ * @deprecated use {@link PassiveMultiblockTile}
  */
+@Deprecated
 public class MultiblockTile<C extends MultiblockComp<C, N>, N extends SharedNetwork<C, N>> extends BaseTileEntity implements ITickable, INeighborAwareTile {
 
 	protected C comp;
