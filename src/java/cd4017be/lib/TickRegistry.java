@@ -85,6 +85,16 @@ public class TickRegistry {
 		added = 0;
 	}
 
+	/**
+	 * clear the list of continuous tick receivers to prevent memory leaks
+	 */
+	public void clear() {
+		if (DEBUG) FMLLog.log("cd4017be_lib", Level.INFO, "-%d contTicks due to server shutdown", tickers);
+		Arrays.fill(tickList, 0, tickers, null);
+		tickers = 0;
+		updates.clear();
+	}
+
 	/** @param tick will receive update ticks */
 	public void add(ITickReceiver tick) {
 		if (Thread.currentThread().getName().startsWith("Client")) throw new IllegalStateException("Adding ITickReceivers not allowed on client side!");
