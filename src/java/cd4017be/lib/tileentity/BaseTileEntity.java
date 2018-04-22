@@ -30,6 +30,7 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 
 	private IBlockState blockState;
 	private Chunk chunk;
+	/** whether this TileEntity is currently not part of the loaded world and therefore shouldn't perform any actions */
 	protected boolean unloaded = true;
 
 	public BaseTileEntity() {}
@@ -155,6 +156,11 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 	@Override
 	public boolean shouldRefresh(World world, BlockPos pos, IBlockState oldState, IBlockState newState) {
 		return newState.getBlock() != oldState.getBlock();
+	}
+
+	@Override
+	public boolean isClient() {
+		return world.isRemote;
 	}
 
 }
