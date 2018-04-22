@@ -1,3 +1,12 @@
+v6.2.3
+Changes:
+- maintenance of multiblock-networks is now using delayed tick events only
+- added a continuous tick subscription system to TickRegistry
+- fixed TickRegistry sometimes getting tick requests from client side
+Dependencies:
+- for MC-1.12.2
+- forge-14.23.0.2512 (or newer)
+
 v6.2.2
 Changes:
 - fixed bugs in multiblock shared networks where components where added into dead networks
