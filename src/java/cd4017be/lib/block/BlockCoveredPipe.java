@@ -1,10 +1,11 @@
 package cd4017be.lib.block;
 
-import java.util.Arrays;
 import cd4017be.lib.property.PropertyBlockMimic;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
+import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.properties.PropertyInteger;
+import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.tileentity.TileEntity;
@@ -15,13 +16,16 @@ import net.minecraft.world.Explosion;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.common.IPlantable;
+import net.minecraftforge.common.property.ExtendedBlockState;
 import net.minecraftforge.common.property.IExtendedBlockState;
 import net.minecraftforge.common.property.IUnlistedProperty;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 public abstract class BlockCoveredPipe extends BlockPipe {
 
 	public static BlockCoveredPipe create(String id, Material m, SoundType sound, Class<? extends TileEntity> tile, int states) {
-		return new BlockCoveredPipe(id, m, sound, tile) {
+		return new BlockCoveredPipe(id, m, sound, CON_PROPS.length + 1, tile) {
 			@Override
 			protected PropertyInteger createBaseState() {
 				return states > 1 ? PropertyInteger.create("type", 0, states - 1) : null;
@@ -29,26 +33,37 @@ public abstract class BlockCoveredPipe extends BlockPipe {
 		};
 	}
 
-	protected BlockCoveredPipe(String id, Material m, SoundType sound, Class<? extends TileEntity> tile) {
-		super(id, m, sound, tile);
+	protected BlockCoveredPipe(String id, Material m, SoundType sound, int mods, Class<? extends TileEntity> tile) {
+		super(id, m, sound, mods, tile);
 		setMultilayer();
 	}
 
 	@Override
-	protected IUnlistedProperty<?>[] createModules() {
-		IUnlistedProperty<?>[] props = Arrays.copyOf(CON_PROPS, 7);
-		props[6] = PropertyBlockMimic.instance;
-		return props;
+	@SideOnly(Side.CLIENT)
+	public String moduleVariant(int i) {
+		return i < CON_PROPS.length ? CON_PROPS[i] : PropertyBlockMimic.instance.getName();
+	}
+
+	@Override
+	@SideOnly(Side.CLIENT)
+	public Class<?> moduleType(int i) {
+		return i < CON_PROPS.length ? Byte.class : IBlockState.class;
+	}
+
+	@Override
+	protected BlockStateContainer createBlockState() {
+		baseState = createBaseState();
+		return new ExtendedBlockState(this, baseState == null ? new IProperty[0] : new IProperty[] {baseState}, new IUnlistedProperty[] {moduleRef, PropertyBlockMimic.instance});
 	}
 
 	@Override
 	public IBlockState getExtendedState(IBlockState state, IBlockAccess world, BlockPos pos) {
 		IExtendedBlockState eState = (IExtendedBlockState)super.getExtendedState(state, world, pos);
-		IBlockState cover = eState.getValue(PropertyBlockMimic.instance);
+		IModularTile tile = eState.getValue(moduleRef);
+		if (tile == null) return eState;
+		IBlockState cover = tile.getModuleState(CON_PROPS.length);
 		if (cover == null) return eState;
-		cover = cover.getActualState(world, pos);
-		if (cover.isOpaqueCube()) eState = (IExtendedBlockState)state;
-		return eState.withProperty(PropertyBlockMimic.instance, cover.getBlock().getExtendedState(cover, world, pos));
+		return eState.withProperty(PropertyBlockMimic.instance, cover.getBlock().getExtendedState(cover.getActualState(world, pos), world, pos));
 	}
 
 	@Override

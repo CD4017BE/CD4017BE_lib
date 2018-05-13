@@ -1,6 +1,5 @@
 package cd4017be.lib.block;
 
-import cd4017be.lib.property.PropertyByte;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.PropertyInteger;
@@ -11,7 +10,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraftforge.common.property.IUnlistedProperty;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 /**
  * 
@@ -19,17 +19,12 @@ import net.minecraftforge.common.property.IUnlistedProperty;
  */
 public abstract class BlockPipe extends MultipartBlock {
 
-	public static final IUnlistedProperty<?>[] CON_PROPS = {
-		new PropertyByte("cb"),
-		new PropertyByte("ct"),
-		new PropertyByte("cn"),
-		new PropertyByte("cs"),
-		new PropertyByte("cw"),
-		new PropertyByte("ce")
+	public static final String[] CON_PROPS = {
+		"cb", "ct", "cn", "cs", "cw", "ce"
 	};
 
 	public static BlockPipe create(String id, Material m, SoundType sound, Class<? extends TileEntity> tile, int states) {
-		return new BlockPipe(id, m, sound, tile) {
+		return new BlockPipe(id, m, sound, CON_PROPS.length, tile) {
 			@Override
 			protected PropertyInteger createBaseState() {
 				return states > 1 ? PropertyInteger.create("type", 0, states - 1) : null;
@@ -37,13 +32,20 @@ public abstract class BlockPipe extends MultipartBlock {
 		};
 	}
 
-	protected BlockPipe(String id, Material m, SoundType sound, Class<? extends TileEntity> tile) {
-		super(id, m, sound, 3, tile);
+	protected BlockPipe(String id, Material m, SoundType sound, int mods, Class<? extends TileEntity> tile) {
+		super(id, m, sound, 3, mods, tile);
 	}
 
 	@Override
-	protected IUnlistedProperty<?>[] createModules() {
-		return CON_PROPS;
+	@SideOnly(Side.CLIENT)
+	public String moduleVariant(int i) {
+		return CON_PROPS[i];
+	}
+
+	@Override
+	@SideOnly(Side.CLIENT)
+	public Class<?> moduleType(int i) {
+		return Byte.class;
 	}
 
 	@Override
