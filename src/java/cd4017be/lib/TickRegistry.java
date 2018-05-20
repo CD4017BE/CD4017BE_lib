@@ -28,7 +28,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
  */
 public class TickRegistry {
 
-	public static boolean DEBUG = true;
+	public static boolean DEBUG = false;
 	public static final TickRegistry instance = new TickRegistry();
 
 	public static void register() {
