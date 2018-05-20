@@ -1,3 +1,13 @@
+v6.2.4
+Changes:
+- added center culling feature to multipart block renderer
+- added opaqueness feature to block covers (for use in render optimization)
+- added improved FakePlayer implementation
+- disabled debug logging of ticks (fixes spam issues)
+Dependencies:
+- for MC-1.12.2
+- forge-14.23.0.2512 (or newer)
+
 v6.2.3
 Changes:
 - maintenance of multiblock-networks is now using delayed tick events only
