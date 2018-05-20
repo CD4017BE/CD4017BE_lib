@@ -2,6 +2,7 @@ package cd4017be.lib.block;
 
 import java.util.List;
 
+import cd4017be.lib.property.PropertyWrapObj;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
@@ -20,6 +21,8 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.property.ExtendedBlockState;
 import net.minecraftforge.common.property.IExtendedBlockState;
 import net.minecraftforge.common.property.IUnlistedProperty;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 /**
  * 
@@ -28,20 +31,31 @@ import net.minecraftforge.common.property.IUnlistedProperty;
 public abstract class MultipartBlock extends AdvancedBlock {
 
 	public PropertyInteger baseState;
-	public IUnlistedProperty<?>[] modules;
+	public static final IUnlistedProperty<IModularTile> moduleRef = new PropertyWrapObj<IModularTile>("tile", IModularTile.class);
 
-	public MultipartBlock(String id, Material m, SoundType sound, int flags, Class<? extends TileEntity> tile) {
+	public final int numModules;
+
+	/**
+	 * @see AdvancedBlock#AdvancedBlock(String, Material, SoundType, int, Class)
+	 * @param mods number of modules handled by renderer
+	 */
+	public MultipartBlock(String id, Material m, SoundType sound, int flags, int mods, Class<? extends TileEntity> tile) {
 		super(id, m, sound, flags, tile);
+		this.numModules = mods;
 	}
 
-	protected abstract IUnlistedProperty<?>[] createModules();
 	protected abstract PropertyInteger createBaseState();
+
+	@SideOnly(Side.CLIENT)
+	public abstract String moduleVariant(int i);
+
+	@SideOnly(Side.CLIENT)
+	public abstract Class<?> moduleType(int i);
 
 	@Override
 	protected BlockStateContainer createBlockState() {
 		baseState = createBaseState();
-		modules = createModules();
-		return new ExtendedBlockState(this, baseState == null ? new IProperty[0] : new IProperty[] {baseState}, modules);
+		return new ExtendedBlockState(this, baseState == null ? new IProperty[0] : new IProperty[] {baseState}, new IUnlistedProperty[] {moduleRef});
 	}
 
 	@Override
@@ -127,13 +141,8 @@ public abstract class MultipartBlock extends AdvancedBlock {
 	public IBlockState getExtendedState(IBlockState state, IBlockAccess world, BlockPos pos) {
 		IExtendedBlockState eState = (IExtendedBlockState)state;
 		TileEntity te = world.getTileEntity(pos);
-		if (te instanceof IModularTile) {
-			IModularTile tile = (IModularTile)te;
-			for (int i = 0; i < modules.length; i++) {
-				IUnlistedProperty<?> module = modules[i];
-				eState = eState.withProperty(module, tile.getModuleState(i));
-			}
-		}
+		if (te instanceof IModularTile)
+			return eState.withProperty(moduleRef, (IModularTile)te);
 		return eState;
 	}
 
@@ -160,6 +169,11 @@ public abstract class MultipartBlock extends AdvancedBlock {
 		 * @return whether given module exists (= has collision box)
 		 */
 		public boolean isModulePresent(int m);
+		/**
+		 * @return whether the current state is a full opaque block (to render only sided quads)
+		 */
+		@SideOnly(Side.CLIENT)
+		public default boolean isOpaque() {return false;}
 	}
 
 }
