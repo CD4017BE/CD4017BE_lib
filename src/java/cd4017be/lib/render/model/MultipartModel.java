@@ -11,9 +11,7 @@ import javax.annotation.Nonnull;
 import java.util.function.Function;
 
 import cd4017be.lib.block.MultipartBlock;
-import cd4017be.lib.property.PropertyBlockMimic;
-import cd4017be.lib.property.PropertyBoolean;
-import cd4017be.lib.property.PropertyByte;
+import cd4017be.lib.block.MultipartBlock.IModularTile;
 import cd4017be.lib.render.IHardCodedModel;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -32,7 +30,6 @@ import net.minecraftforge.client.model.IModel;
 import net.minecraftforge.client.model.ModelLoaderRegistry;
 import net.minecraftforge.common.model.IModelState;
 import net.minecraftforge.common.property.IExtendedBlockState;
-import net.minecraftforge.common.property.IUnlistedProperty;
 
 /**
  * 
@@ -54,23 +51,23 @@ public class MultipartModel implements IModel, IHardCodedModel {
 			this.baseModels = new ResourceLocation[states.size()];
 			for (int s : states) baseModels[s] = new ModelResourceLocation(block.getRegistryName(), "base" + s);
 		}
-		this.modelProvider = new IModelProvider[block.modules.length];
-		for (int i = 0; i < block.modules.length; i++) {
-			IUnlistedProperty<?> prop = block.modules[i];
-			if (prop instanceof PropertyBoolean)
-				modelProvider[i] = new ProviderBool(new ModelResourceLocation(block.getRegistryName(), prop.getName()));
-			else if (prop == PropertyBlockMimic.instance)
+		this.modelProvider = new IModelProvider[block.numModules];
+		for (int i = 0; i < block.numModules; i++) {
+			Class<?> type = block.moduleType(i);
+			if (type == Boolean.class)
+				modelProvider[i] = new ProviderBool(new ModelResourceLocation(block.getRegistryName(), block.moduleVariant(i)));
+			else if (type == IBlockState.class)
 				modelProvider[i] = BlockMimicModel.provider;
 		}
 	}
 
 	public MultipartModel setPipeVariants(int n) {
-		for (int i = 0; i < block.modules.length; i++) {
-			IUnlistedProperty<?> prop = block.modules[i];
-			if (prop instanceof PropertyByte && modelProvider[i] == null) {
+		for (int i = 0; i < block.numModules; i++) {
+			Class<?> type = block.moduleType(i);
+			if (type == Byte.class && modelProvider[i] == null) {
 				ResourceLocation[] locs = new ResourceLocation[n];
 				for (int j = 0; j < n; j++)
-					locs[j] = new ModelResourceLocation(block.getRegistryName(), prop.getName() + j);
+					locs[j] = new ModelResourceLocation(block.getRegistryName(), block.moduleVariant(i) + j);
 				modelProvider[i] = new ProviderByte(locs);
 			}
 		}
@@ -125,15 +122,18 @@ public class MultipartModel implements IModel, IHardCodedModel {
 		public List<BakedQuad> getQuads(IBlockState state, EnumFacing side, long rand) {
 			ArrayList<BakedQuad> list = new ArrayList<BakedQuad>();
 			BlockRenderLayer layer = block.renderMultilayer ? MinecraftForgeClient.getRenderLayer() : null;
-			if (layer == null || layer == BlockRenderLayer.CUTOUT) list.addAll(base[block.baseState == null ? 0 : state.getValue(block.baseState)].getQuads(state, side, rand));
+			boolean render = true;
 			if (state instanceof IExtendedBlockState) {
 				IExtendedBlockState exState = (IExtendedBlockState) state;
-				for (int i = 0; i < block.modules.length; i++) {
-					Object val = exState.getValue(block.modules[i]);
-					IBakedModel model = layer == null ? modelProvider[i].getModelFor(val) : modelProvider[i].getModelFor(val, layer);
-					if (model != null) list.addAll(model.getQuads(state, side, rand));
-				}
+				IModularTile tile = exState.getValue(MultipartBlock.moduleRef);
+				if (render = tile != null && !(side == null && tile.isOpaque()))
+					for (int i = 0; i < block.numModules; i++) {
+						Object val = tile.getModuleState(i);
+						IBakedModel model = layer == null ? modelProvider[i].getModelFor(val) : modelProvider[i].getModelFor(val, layer);
+						if (model != null) list.addAll(model.getQuads(state, side, rand));
+					}
 			}
+			if (render && (layer == null || layer == BlockRenderLayer.CUTOUT)) list.addAll(base[block.baseState == null ? 0 : state.getValue(block.baseState)].getQuads(state, side, rand));
 			return list;
 		}
 
