@@ -44,6 +44,6 @@ public class SaferFakePlayer extends FakePlayer {
 	@Override public void setPositionAndUpdate(double x, double y, double z) {}
 	@Override public SleepResult trySleep(BlockPos bedLocation) {return SleepResult.OTHER_PROBLEM;}
 	@Override public boolean startRiding(Entity entityIn, boolean force) {return false;}
-	@Override public void updateCraftingInventory(Container containerToSend, NonNullList<ItemStack> itemsList) {}
+	@Override public void sendAllContents(Container containerToSend, NonNullList<ItemStack> itemsList) {}
 
 }
