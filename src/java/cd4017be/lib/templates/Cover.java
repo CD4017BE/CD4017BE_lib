@@ -29,6 +29,8 @@ public class Cover {
 	public ItemStack stack;
 	/**the block state of the cover */
 	public IBlockState state;
+	/**whether the cover is fully opaque, so the block itself doesn't need to render or update its visuals */
+	public boolean opaque;
 
 	/**
 	 * handles player right-click on the coverable block
@@ -57,6 +59,7 @@ public class Cover {
 		if (!isBlockValid(tile, state)) return false;
 		this.stack = ItemHandlerHelper.copyStackWithSize(item, 1);
 		this.state = state;
+		this.opaque = state.isOpaqueCube();
 		if (!player.isCreative()) {
 			item.grow(-1);
 			player.setHeldItem(hand, item);
@@ -81,6 +84,7 @@ public class Cover {
 		boolean checkLight = state.getLightValue() > 0 || state.getLightOpacity(world, pos) > 0;
 		stack = null;
 		state = null;
+		opaque = false;
 		world.markAndNotifyBlock(pos, null, tile.getBlockState(), tile.getBlockState(), 3);
 		if (checkLight) world.checkLight(pos);
 		tile.markDirty();
@@ -113,6 +117,7 @@ public class Cover {
 				if (!isBlockValid(null, state)) state = null;
 			}
 		}
+		opaque = state != null && state.isOpaqueCube();
 		if (packetReceiver != null) packetReceiver.getWorld().checkLight(packetReceiver.getPos());
 	}
 
