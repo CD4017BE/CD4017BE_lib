@@ -172,7 +172,6 @@ public abstract class MultipartBlock extends AdvancedBlock {
 		/**
 		 * @return whether the current state is a full opaque block (to render only sided quads)
 		 */
-		@SideOnly(Side.CLIENT)
 		public default boolean isOpaque() {return false;}
 	}
 
