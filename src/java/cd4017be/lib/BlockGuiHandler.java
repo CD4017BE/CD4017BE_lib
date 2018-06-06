@@ -18,6 +18,7 @@ import io.netty.buffer.Unpooled;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
 import java.util.HashMap;
 
 import org.apache.logging.log4j.Level;
@@ -126,6 +127,17 @@ public class BlockGuiHandler implements IGuiHandler {
 	 */
 	public static void sendPacketToPlayer(EntityPlayerMP player, PacketBuffer data) {
 		eventChannel.sendTo(new FMLProxyPacket(data, guiChannel), player);
+	}
+
+	/**
+	 * Sends a Gui update packet to the given player.
+	 * @param player
+	 * @param data
+	 */
+	public static void sendPacketToPlayers(PacketBuffer data, Collection<EntityPlayerMP> players) {
+		FMLProxyPacket packet = new FMLProxyPacket(data, guiChannel);
+		for (EntityPlayerMP player : players)
+			eventChannel.sendTo(packet, player);
 	}
 
 	/**

@@ -2,6 +2,7 @@ package cd4017be.lib.util;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.function.ToIntFunction;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
@@ -218,6 +219,22 @@ public class ItemFluidUtil {
 			ItemStack stack = inv.extractItem(i, am, true);
 			if (stack.getCount() == 0) continue;
 			return ItemHandlerHelper.copyStackWithSize(stack, drain(inv, stack, mss ? stack.getMaxStackSize() : am));
+		}
+		return ItemStack.EMPTY;
+	}
+
+	public static ItemStack drain(IItemHandler inv, ToIntFunction<ItemStack> filter) {
+		for (int i = 0; i < inv.getSlots(); i++) {
+			ItemStack stack = inv.extractItem(i, 1, true);
+			int m;
+			if (stack.getCount() > 0 && (m = filter.applyAsInt(stack)) > 0) {
+				int n = inv.extractItem(i, m, false).getCount();
+				while (n < m && ++i < inv.getSlots())
+					if (ItemHandlerHelper.canItemStacksStack(inv.getStackInSlot(i), stack))
+						n += inv.extractItem(i, m, false).getCount();
+				stack.setCount(n);
+				return stack;
+			}
 		}
 		return ItemStack.EMPTY;
 	}
