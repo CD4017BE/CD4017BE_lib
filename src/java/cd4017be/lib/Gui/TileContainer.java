@@ -120,7 +120,7 @@ public class TileContainer extends DataContainer {
 					} else {
 						dos.writeShort(Item.getIdFromItem(item0.getItem()));
 						dos.writeInt(item0.getCount());
-						dos.writeShort(item0.getItemDamage());
+						dos.writeShort(item0.getMetadata());
 						dos.writeCompoundTag(item0.getTagCompound());
 					}
 					n++;

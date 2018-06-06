@@ -1,6 +1,5 @@
 package cd4017be.lib.util;
 
-import li.cil.oc.common.block.Item;
 import net.minecraft.item.ItemStack;
 
 /**
@@ -17,7 +16,7 @@ public class ItemKey {
 		final int prime = 31;
 		int result = 1;
 		for (ItemStack item : items)
-			result = prime * result + (item.isEmpty() ? 0 : Item.getIdFromItem(item.getItem()) ^ item.getItemDamage() << 16);
+			result = prime * result + (item.isEmpty() ? 0 : item.getItem().getRegistryName().hashCode() ^ item.getMetadata());
 		this.hash = result;
 	}
 

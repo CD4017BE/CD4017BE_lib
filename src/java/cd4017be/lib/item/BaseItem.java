@@ -52,7 +52,7 @@ public class BaseItem extends Item {
 	@Override
 	public String getUnlocalizedName(ItemStack item) {
 		String s = super.getUnlocalizedName(item);
-		return this.hasSubtypes ? s + ":" + item.getItemDamage() : s;
+		return this.hasSubtypes ? s + ":" + item.getMetadata() : s;
 	}
 
 	@Override
