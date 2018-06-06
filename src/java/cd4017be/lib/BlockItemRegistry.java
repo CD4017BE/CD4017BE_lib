@@ -40,7 +40,11 @@ public class BlockItemRegistry {
 
 	@SideOnly(Side.CLIENT)
 	public static void registerRender(Item item, ItemMeshDefinition def) {
-		if (def == null) def = new SingleTextureDefinition(item.getRegistryName().toString());
+		if (def == null) {
+			ResourceLocation loc = item.getRegistryName();
+			def = new SingleTextureDefinition(loc.toString());
+			ModelBakery.registerItemVariants(item, loc);
+		}
 		ModelLoader.setCustomMeshDefinition(item, def);
 	}
 

@@ -159,7 +159,7 @@ public class MultipartModel implements IModel, IHardCodedModel {
 
 		@Override
 		public ItemCameraTransforms getItemCameraTransforms() {
-			return null;
+			return ItemCameraTransforms.DEFAULT;
 		}
 
 		@Override

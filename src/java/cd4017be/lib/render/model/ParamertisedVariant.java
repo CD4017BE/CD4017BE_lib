@@ -79,7 +79,7 @@ public class ParamertisedVariant implements IModelState {
 		ModelRotation orient;
 		if (i < 0) orient = ModelRotation.X0_Y0;
 		else {
-			Orientation or = Orientation.valueOf(name.substring(i + 1));
+			Orientation or = Orientation.valueOf(Character.toUpperCase(name.charAt(i+1)) + name.substring(i+2));
 			orient = or == null ? ModelRotation.X0_Y0 : or.getModelRotation();
 			name = name.substring(0, i);
 		}

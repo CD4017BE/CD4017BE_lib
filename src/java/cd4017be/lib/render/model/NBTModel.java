@@ -27,6 +27,7 @@ import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.model.IModel;
 import net.minecraftforge.common.model.IModelState;
@@ -168,7 +169,10 @@ public class NBTModel implements IModel {
 				vertexData[l++] = Float.floatToRawIntBits(tex.getInterpolatedV(Float.intBitsToFloat(uvs[k]) * 16F));		//V
 				vertexData[l++] = nti;	//normal
 			}
-			quads[i < cf.length && (j = cf[i] & 0xff) < 6 ? j + 1 : 0].add(
+			int cull = i < cf.length && (j = cf[i] & 0xff) < 6 ? j + 1 : 0;
+			if (cull > 0 && pstate.orient != ModelRotation.X0_Y0)
+				cull = pstate.orient.rotateFace(EnumFacing.VALUES[cull - 1]).getIndex() + 1;
+			quads[cull].add(
 					new BakedQuad(vertexData, -1, FaceBakery.getFacingFromVertexData(vertexData), tex, diffuseLight, format));
 		}
 		for (int i = 0; i < quads.length; i++)
@@ -184,6 +188,7 @@ public class NBTModel implements IModel {
 		int[] remap = null;
 		byte colorMode = tag.getByte(NBT_COLOR);
 		int color = 0xffffffff;
+		boolean flag = true;
 		if (variant.params != null) {
 			NBTTagList vt = tag.getTagList(NBT_TEX_TRANSFORM, NBT.TAG_COMPOUND);
 			if (vt.hasNoTags()) vt = data.getTagList(NBT_TEX_TRANSFORM, NBT.TAG_COMPOUND);
@@ -213,14 +218,8 @@ public class NBTModel implements IModel {
 			vt = tag.getTagList(NBT_VERTEX_TRANSFORM, NBT.TAG_COMPOUND);
 			if (coreVertices && vt.hasNoTags())
 				vt = data.getTagList(NBT_VERTEX_TRANSFORM, NBT.TAG_COMPOUND);
-			boolean flag = vt.hasNoTags();
+			flag = vt.hasNoTags();
 			if (!flag) vertices = transform(vertices, 3, vt, variant.params);
-			ModelRotation orient = variant.orient;
-			if (orient != ModelRotation.X0_Y0) {
-				if (flag) vertices = vertices.clone();
-				for (int i = 0; i < vertices.length; i += 3)
-					Util.rotate(vertices, i, orient);
-			}
 			if (colorMode >= 0) try {
 				String s = variant.params.getString(colorMode);
 				if (s.startsWith("0x")) {
@@ -230,6 +229,12 @@ public class NBTModel implements IModel {
 			} catch(IllegalArgumentException e) {}
 		}
 		if (colorMode >= 0) colorMode = -1;
+		ModelRotation orient = variant.orient;
+		if (orient != ModelRotation.X0_Y0) {
+			if (flag) vertices = vertices.clone();
+			for (int i = 0; i < vertices.length; i += 3)
+				Util.rotate(vertices, i, orient);
+		}
 		return new int[][] {vertices, uvs, tag.getIntArray(NBT_QUAD), remap, new int[] {colorMode + 3, color}};
 	}
 
