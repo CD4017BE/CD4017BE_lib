@@ -155,9 +155,9 @@ public class TooltipUtil {
 			Matcher m = variantReplacement.matcher(s);
 			if (!m.find()) return lastValue = s;
 			String n = m.group(1);
-			s = s.substring(0, m.start(1)) + "i" + s.substring(m.end(1));
-			t = editor != null ? editor.getTranslation(s) : I18n.translateToLocal(s);
-			if (t.equals(s)) return lastValue = s;
+			String s1 = s.substring(0, m.start(1)) + "i" + s.substring(m.end(1));
+			t = editor != null ? editor.getTranslation(s1) : I18n.translateToLocal(s1);
+			if (t.equals(s1)) return lastValue = s;
 			t = t.replace("\\i", n);
 		}
 		s = t.trim().replace("\\n", "\n");
@@ -190,9 +190,13 @@ public class TooltipUtil {
 				int exp = 0, n = 3;
 				String g = m.group(1);
 				if (g != null) val = (Double)args[Integer.parseInt(g)];
-				else for (Object o : args)
-					if (o instanceof Double) {
-						val = (Double)o;
+				else for (int i = 0; i < args.length; i++)
+					if (args[i] instanceof Double) {
+						val = (Double)args[i];
+						Object[] nargs = new Object[args.length - 1];
+						if (i > 0) System.arraycopy(args, 0, nargs, 0, i);
+						if (i < nargs.length) System.arraycopy(args, i + 1, nargs, i, nargs.length - i);
+						args = nargs;
 						break;
 					}
 				if ((g = m.group(2)) != null && !g.isEmpty()) exp = Integer.parseInt(g);
