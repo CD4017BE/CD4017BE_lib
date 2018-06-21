@@ -15,7 +15,7 @@ import net.minecraft.util.math.BlockPos;
  * @author CD4017BE
  */
 @SuppressWarnings("unchecked")
-public abstract class SharedNetwork<C extends MultiblockComp<C, N>, N extends SharedNetwork<C, N>> implements IUpdatable { 
+public abstract class SharedNetwork<C extends NetworkNode<C, N, ?>, N extends SharedNetwork<C, N>> implements IUpdatable { 
 
 	protected C core;
 	public final HashMap<Long, C> components;
@@ -86,7 +86,7 @@ public abstract class SharedNetwork<C extends MultiblockComp<C, N>, N extends Sh
 	/**
 	 * called to check if there are new neighboring blocks to connect with
 	 * @param comp
-	 * @deprecated use {@link MultiblockComp#updateCons()} instead
+	 * @deprecated use {@link NetworkNode#updateCons()} instead
 	 */
 	@Deprecated
 	public void updateCompCon(C comp) {
