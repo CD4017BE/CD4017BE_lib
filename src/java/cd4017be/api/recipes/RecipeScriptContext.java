@@ -159,8 +159,10 @@ public class RecipeScriptContext extends Context {
 		File comp = new File(dir, "compiled.dat");
 		HashMap<String, Version> versions = new HashMap<String, Version>();
 		for (Version v : scriptRegistry)
-			if (v.fallback != null)
+			if (v.fallback != null) {
+				v.checkVersion();
 				versions.put(v.name, v);
+			}
 		Script[] scripts;
 		boolean reload = true;
 		try {
