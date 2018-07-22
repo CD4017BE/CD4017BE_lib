@@ -475,11 +475,33 @@ public abstract class AdvancedGui extends GuiContainer {
 
 		@Override
 		public void draw() {
+			String t;
+			int ofs = 0;
 			if (focus == id) {
 				if (cur > text.length()) cur = text.length();
-				drawVerticalLine(px - 1 + fontRendererObj.getStringWidth(text.substring(0, cur)), py + (h - 9) / 2, py + (h + 7) / 2, cc);
-			} else text = get.get();
-			fontRendererObj.drawString(text, px, py + (h - 8) / 2, tc);
+				int l = fontRendererObj.getStringWidth(text);
+				int k = fontRendererObj.getStringWidth(text.substring(0, cur));
+				if (l > w)
+					if (k <= w/2) {
+						t = fontRendererObj.trimStringToWidth(text, w, false);
+					} else if (l - k < w/2) {
+						k = k - l + w;
+						t = fontRendererObj.trimStringToWidth(text, w, true);
+						ofs = w - fontRendererObj.getStringWidth(t);
+					} else {
+						k = w/2;
+						t = fontRendererObj.trimStringToWidth(text.substring(0, cur), k, true);
+						ofs = k - fontRendererObj.getStringWidth(t);
+						t += fontRendererObj.trimStringToWidth(text.substring(cur), w - k, false);
+					}
+				else t = text;
+				drawVerticalLine(px - 1 + k, py + (h - 9) / 2, py + (h + 7) / 2, cc);
+			} else {
+				text = get.get();
+				t = fontRendererObj.trimStringToWidth(text, w, true);
+				if (t.length() < text.length()) ofs = w - fontRendererObj.getStringWidth(t);
+			}
+			fontRendererObj.drawString(t, px + ofs, py + (h - 8) / 2, tc);
 			GlStateManager.color(1, 1, 1, 1);
 		}
 
