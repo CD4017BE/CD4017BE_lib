@@ -7,12 +7,15 @@ import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.translation.I18n;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.registry.IForgeRegistryEntry;
+import net.minecraftforge.fml.relauncher.Side;
 import cd4017be.api.recipes.RecipeScriptContext;
 import cd4017be.lib.script.Script;
 import cd4017be.lib.script.ScriptFiles.Version;
@@ -46,12 +49,20 @@ public class TooltipUtil {
 		return ShiftHint;
 	}
 
+	public static boolean showShiftHint() {
+		return overrideModifiers ? shiftOverride : GuiScreen.isShiftKeyDown();
+	}
+
 	public static String getAltHint() {
 		if (AltHint == null){
 			AltHint = I18n.translateToLocal("cd4017be.altHint");
 			if (AltHint == "cd4017be.altHint") AltHint = "<ALT for extra>";
 		}
 		return AltHint;
+	}
+
+	public static boolean showAltHint() {
+		return overrideModifiers ? altOverride : GuiScreen.isAltKeyDown();
 	}
 
 	public static String getFluidUnit() {
@@ -129,6 +140,7 @@ public class TooltipUtil {
 	private static final Pattern numberFormat = Pattern.compile("%(?:(\\d+)\\$)?(?:(-?\\d?)\\.(\\d+))?u");
 	private static String lastKey, lastValue;
 	public static TooltipEditor editor;
+	public static boolean shiftOverride = true, altOverride = false, overrideModifiers = FMLCommonHandler.instance().getSide() == Side.SERVER;
 
 	public static String getConfigFormat(String s) {
 		if (s.equals(lastKey) && editor == null) return lastValue; //speed up tooltip rendering performance

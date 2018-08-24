@@ -807,6 +807,10 @@ public abstract class AdvancedGui extends GuiContainer {
 			setTooltip(tooltip);
 			headers = TooltipUtil.translate("gui.cd4017be." + tooltip).split("\n");
 			keys = new String[headers.length];
+			initHeader();
+		}
+
+		private void initHeader() {
 			for (int i = 0; i < keys.length; i++) {
 				String s = headers[i];
 				int p = s.indexOf('@');
@@ -820,6 +824,11 @@ public abstract class AdvancedGui extends GuiContainer {
 
 		@Override
 		public void drawOverlay(int mx, int my) {
+			if (TooltipUtil.editor != null) {
+				String[] s = TooltipUtil.translate("gui.cd4017be." + tooltip).split("\n");
+				System.arraycopy(s, 0, headers, 0, Math.min(s.length, headers.length));
+				initHeader();
+			}
 			ArrayList<String> list = new ArrayList<String>();
 			String s = "";
 			for (int i = 0; i < headers.length; i++) {

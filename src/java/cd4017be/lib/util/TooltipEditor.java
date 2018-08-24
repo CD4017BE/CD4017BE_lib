@@ -123,6 +123,9 @@ public class TooltipEditor {
 					cursor = cursor2 = editingValue.length();
 					editingKey = key;
 					ofs = 0;
+					TooltipUtil.altOverride = GuiScreen.isAltKeyDown();
+					TooltipUtil.shiftOverride = GuiScreen.isShiftKeyDown();
+					TooltipUtil.overrideModifiers = true;
 				}
 			}
 		} else return;
@@ -198,6 +201,7 @@ public class TooltipEditor {
 			String key = editingKey;
 			editingKey = null;
 			if (!editingValue.equals(getTranslation(key))) edited.put(key, editingValue);
+			TooltipUtil.overrideModifiers = false;
 		}	break;
 		case KEY_PRIOR: {
 			if (ofs < 7) ofs++;
@@ -209,7 +213,7 @@ public class TooltipEditor {
 				editingValue = getTranslation(nkey);
 				editingKey = nkey;
 				cursor = cursor2 = editingValue.length();
-			}
+			} else TooltipUtil.overrideModifiers = false;
 		}	break;
 		case KEY_NEXT: {
 			if (ofs > 0) ofs--;
@@ -221,7 +225,7 @@ public class TooltipEditor {
 				editingValue = getTranslation(nkey);
 				editingKey = nkey;
 				cursor = cursor2 = editingValue.length();
-			}
+			} else TooltipUtil.overrideModifiers = false;
 		}	break;
 		default:
 			if (GuiScreen.isCtrlKeyDown() && !shift && !GuiScreen.isAltKeyDown()) {
