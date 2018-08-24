@@ -132,7 +132,7 @@ public class RecipeScriptContext extends Context {
 
 	public static final List<Version> scriptRegistry = new ArrayList<Version>();
 	static {
-		scriptRegistry.add(new Version(Lib.ConfigName, 0, "/assets/" + Lib.ID + "/config/core.rcp"));
+		scriptRegistry.add(new Version(Lib.ConfigName, "/assets/" + Lib.ID + "/config/core.rcp"));
 	}
 	public static RecipeScriptContext instance;
 
