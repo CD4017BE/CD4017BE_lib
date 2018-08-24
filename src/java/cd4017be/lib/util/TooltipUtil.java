@@ -128,17 +128,18 @@ public class TooltipUtil {
 	private static final Pattern variantReplacement = Pattern.compile("\\:(\\d+)");
 	private static final Pattern numberFormat = Pattern.compile("%(?:(\\d+)\\$)?(?:(-?\\d?)\\.(\\d+))?u");
 	private static String lastKey, lastValue;
+	public static TooltipEditor editor;
 
 	public static String getConfigFormat(String s) {
-		if (s.equals(lastKey)) return lastValue; //speed up tooltip rendering performance
+		if (s.equals(lastKey) && editor == null) return lastValue; //speed up tooltip rendering performance
 		lastKey = s;
-		String t = I18n.translateToLocal(s);
+		String t = editor != null ? editor.getTranslation(s) : I18n.translateToLocal(s);
 		if (t.equals(s)) {
 			Matcher m = variantReplacement.matcher(s);
 			if (!m.find()) return lastValue = s;
 			String n = m.group(1);
 			s = s.substring(0, m.start(1)) + "i" + s.substring(m.end(1));
-			t = I18n.translateToLocal(s);
+			t = editor != null ? editor.getTranslation(s) : I18n.translateToLocal(s);
 			if (t.equals(s)) return lastValue = s;
 			t = t.replace("\\i", n);
 		}
@@ -156,7 +157,7 @@ public class TooltipUtil {
 	}
 
 	public static String format(String s, Object... args) {
-		s = I18n.translateToLocal(s).trim().replace("\\n", "\n");
+		s = (editor != null ? editor.getTranslation(s) : I18n.translateToLocal(s)).trim().replace("\\n", "\n");
 		try {
 			Matcher m = numberFormat.matcher(s);
 			String s1 = "";
@@ -182,11 +183,11 @@ public class TooltipUtil {
 	}
 
 	public static String translate(String s) {
-		return I18n.translateToLocal(s);
+		return editor != null ? editor.getTranslation(s) : I18n.translateToLocal(s);
 	}
 
 	public static boolean hasTranslation(String s) {
-		return I18n.canTranslate(s);
+		return I18n.canTranslate(s) || editor != null && editor.hasEdited(s);
 	}
 
 	private static final String[] DecScale  = {"a", "f", "p", "n", "u", "m", "", "k", "M", "G", "T", "P", "E"};

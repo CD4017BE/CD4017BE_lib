@@ -11,6 +11,7 @@ import cd4017be.lib.render.SpecialModelLoader;
 import cd4017be.lib.templates.NBTRecipe;
 import cd4017be.lib.templates.TabMaterials;
 import cd4017be.lib.util.FileUtil;
+import cd4017be.lib.util.TooltipEditor;
 import cd4017be.lib.util.TooltipUtil;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -80,6 +81,7 @@ public class Lib {
 		SpecialModelLoader.setMod(ID);
 		BlockItemRegistry.registerRender(materials);
 		BlockItemRegistry.registerRender(materials, new ItemMaterialMeshDefinition(materials));
+		TooltipEditor.init();
 	}
 
 	@Mod.EventHandler
@@ -92,6 +94,8 @@ public class Lib {
 	@Mod.EventHandler
 	public void onShutdown(FMLServerStoppingEvent event) {
 		TickRegistry.instance.clear();
+		if (TooltipUtil.editor != null)
+			TooltipUtil.editor.save();
 	}
 
 	@SubscribeEvent
