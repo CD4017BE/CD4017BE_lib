@@ -39,7 +39,7 @@ public class LinkedTank implements IFluidHandler, ITankContainer {
 			return m;
 		} else if (fluid.isFluidEqual(res)) {
 			int m = Math.min(res.amount, cap - fluid.amount);
-			if (m > 0 && doFill) {
+			if (m != 0 && doFill) {
 				fluid.amount += m;
 				set.accept(fluid);
 			}
