@@ -127,6 +127,17 @@ public class Utils {
 	}
 
 	/**
+	 * @param world World
+	 * @param pos starting position (assumed to be loaded)
+	 * @return whether neighbouring blocks are loaded too
+	 */
+	public static boolean neighboursLoaded(World world, BlockPos pos) {
+		int x = pos.getX() & 15, z = pos.getZ() & 15;
+		return (x == 0 ? world.isBlockLoaded(pos.add(-1, 0, 0)) : x == 15 ? world.isBlockLoaded(pos.add(1, 0, 0)) : true)
+			&& (z == 0 ? world.isBlockLoaded(pos.add(0, 0, -1)) : z == 15 ? world.isBlockLoaded(pos.add(0, 0, 1)) : true);
+	}
+
+	/**
 	 * checks to which block side the given position belongs
 	 * @param X block relative x
 	 * @param Y block relative y
