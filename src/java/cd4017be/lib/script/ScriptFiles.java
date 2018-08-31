@@ -1,5 +1,6 @@
 package cd4017be.lib.script;
 
+import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -7,6 +8,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
@@ -165,10 +168,25 @@ public class ScriptFiles {
 	}
 
 	public static class Version {
-		public final int version;
+		public int version;
 		public final String fallback, name;
 		public Version(String name, int version, String fallback) {this.name = name; this.version = version; this.fallback = fallback;}
-		public Version(String name) {this(name, 0, null);}
+		public Version(String name, String fallback) {this(name, -1, fallback);}
+		public Version(String name) {this(name, -1, null);}
+
+		public void checkVersion() {
+			if (version >= 0 || fallback == null) return;
+			InputStream in = Version.class.getResourceAsStream(fallback);
+			if (in == null) return;
+			try (BufferedReader r = new BufferedReader(new InputStreamReader(in))) {
+				String l = r.readLine();
+				int p = l.indexOf('='), q = l.indexOf(';');
+				if (p > 0 && l.substring(0, p).trim().equals("VERSION")) {
+					if (q < 0) q = l.length();
+					try {version = (int)Double.parseDouble(l.substring(p + 1, q).trim());} catch (NumberFormatException e) {}
+				}
+			} catch (IOException e) {e.printStackTrace();}
+		}
 	}
 
 }
