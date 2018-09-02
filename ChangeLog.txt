@@ -1,3 +1,15 @@
+v6.2.5
+Changes:
+- generalized filtering implementation for filtered GUI slots
+- added an improved variant of Multiblock Network system
+- added internal autodetection of config versions
+- made Text Fields trim over long strings and support cursor scrolling
+- fix fluid duplication bug in case a tank gets overfull
+- some added internal utility methods
+Dependencies:
+- for MC-1.12.2
+- forge-14.23.0.2512 (or newer)
+
 v6.2.4
 Changes:
 - added center culling feature to multipart block renderer
