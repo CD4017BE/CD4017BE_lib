@@ -666,7 +666,7 @@ public abstract class AdvancedGui extends GuiContainer {
 		@Override
 		public boolean mouseIn(int x, int y, int b, int d) {
 			int ofs;
-			if (d == 3) ofs = b;
+			if (d == 3) ofs = -b * (isShiftKeyDown() ? exp : 1);
 			else if (d == 0) {
 				if (above) {
 					int p = (px + w - 1 - x) * nb / w + b;
