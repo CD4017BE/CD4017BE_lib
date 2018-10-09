@@ -4,7 +4,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.IntFunction;
 import java.util.function.ObjIntConsumer;
-
 import javax.annotation.Nullable;
 
 import cd4017be.api.circuits.IQuickRedstoneHandler;
@@ -15,6 +14,8 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagList;
+import net.minecraft.nbt.NBTTagString;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.EnumFacing;
@@ -406,6 +407,30 @@ public class Utils {
 	 */
 	public static <T> T[] init(T[] arr, IntFunction<T> val) {
 		for (int i = 0; i < arr.length; i++) arr[i] = val.apply(i);
+		return arr;
+	}
+
+	/**
+	 * @param arr array of Strings
+	 * @return list tag containing the serialized NBT data of each element
+	 */
+	public static NBTTagList writeStringArray(String[] arr) {
+		NBTTagList list = new NBTTagList();
+		for (String s : arr)
+			list.appendTag(new NBTTagString(s));
+		return list;
+	}
+
+	/**
+	 * @param list NBT data
+	 * @param arr optional pre-initialized array
+	 * @return String array from given NBT data
+	 */
+	public static String[] readStringArray(NBTTagList list, String[] arr) {
+		int l = list.tagCount();
+		if (arr == null || arr.length < l) arr = new String[l];
+		for (int i = 0; i < l; i++)
+			arr[i] = list.getStringTagAt(i);
 		return arr;
 	}
 
