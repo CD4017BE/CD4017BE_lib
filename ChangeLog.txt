@@ -1,3 +1,12 @@
+v6.2.6
+Changes:
+- added an ingame tooltip editor for dev purposes
+- fixed fluid duplication if tank gets overfull
+- fixed scroll input being backwards for number spinner GUI components
+Dependencies:
+- for MC-1.12.2
+- forge-14.23.0.2512 (or newer)
+
 v6.2.5
 Changes:
 - generalized filtering implementation for filtered GUI slots
