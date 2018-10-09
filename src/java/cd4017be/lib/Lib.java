@@ -10,6 +10,7 @@ import cd4017be.lib.render.ItemMaterialMeshDefinition;
 import cd4017be.lib.render.SpecialModelLoader;
 import cd4017be.lib.templates.TabMaterials;
 import cd4017be.lib.util.FileUtil;
+import cd4017be.lib.util.TooltipEditor;
 import cd4017be.lib.util.TooltipUtil;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -73,6 +74,7 @@ public class Lib {
 	public void postInit(FMLPostInitializationEvent event) {
 		RecipeScriptContext.instance.runAll("POST_INIT");
 		TooltipUtil.addScriptVariables();
+		if (event.getSide().isClient()) TooltipEditor.init();
 	}
 
 	@Mod.EventHandler
@@ -85,6 +87,8 @@ public class Lib {
 	@Mod.EventHandler
 	public void onShutdown(FMLServerStoppingEvent event) {
 		TickRegistry.instance.clear();
+		if (TooltipUtil.editor != null)
+			TooltipUtil.editor.save();
 	}
 
 	@SubscribeEvent

@@ -7,12 +7,15 @@ import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.translation.I18n;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.registries.IForgeRegistryEntry;
+import net.minecraftforge.fml.relauncher.Side;
 import cd4017be.api.recipes.RecipeScriptContext;
 import cd4017be.lib.script.Script;
 import cd4017be.lib.script.ScriptFiles.Version;
@@ -46,12 +49,20 @@ public class TooltipUtil {
 		return ShiftHint;
 	}
 
+	public static boolean showShiftHint() {
+		return overrideModifiers ? shiftOverride : GuiScreen.isShiftKeyDown();
+	}
+
 	public static String getAltHint() {
 		if (AltHint == null){
 			AltHint = I18n.translateToLocal("cd4017be.altHint");
 			if (AltHint == "cd4017be.altHint") AltHint = "<ALT for extra>";
 		}
 		return AltHint;
+	}
+
+	public static boolean showAltHint() {
+		return overrideModifiers ? altOverride : GuiScreen.isAltKeyDown();
 	}
 
 	public static String getFluidUnit() {
@@ -128,17 +139,19 @@ public class TooltipUtil {
 	private static final Pattern variantReplacement = Pattern.compile("\\:(\\d+)");
 	private static final Pattern numberFormat = Pattern.compile("%(?:(\\d+)\\$)?(?:(-?\\d?)\\.(\\d+))?u");
 	private static String lastKey, lastValue;
+	public static TooltipEditor editor;
+	public static boolean shiftOverride = true, altOverride = false, overrideModifiers = FMLCommonHandler.instance().getSide() == Side.SERVER;
 
 	public static String getConfigFormat(String s) {
-		if (s.equals(lastKey)) return lastValue; //speed up tooltip rendering performance
+		if (s.equals(lastKey) && editor == null) return lastValue; //speed up tooltip rendering performance
 		lastKey = s;
-		String t = I18n.translateToLocal(s);
+		String t = editor != null ? editor.getTranslation(s) : I18n.translateToLocal(s);
 		if (t.equals(s)) {
 			Matcher m = variantReplacement.matcher(s);
 			if (!m.find()) return lastValue = s;
 			String n = m.group(1);
 			s = s.substring(0, m.start(1)) + "i" + s.substring(m.end(1));
-			t = I18n.translateToLocal(s);
+			t = editor != null ? editor.getTranslation(s) : I18n.translateToLocal(s);
 			if (t.equals(s)) return lastValue = s;
 			t = t.replace("\\i", n);
 		}
@@ -156,7 +169,7 @@ public class TooltipUtil {
 	}
 
 	public static String format(String s, Object... args) {
-		s = I18n.translateToLocal(s).trim().replace("\\n", "\n");
+		s = (editor != null ? editor.getTranslation(s) : I18n.translateToLocal(s)).trim().replace("\\n", "\n");
 		try {
 			Matcher m = numberFormat.matcher(s);
 			String s1 = "";
@@ -182,11 +195,11 @@ public class TooltipUtil {
 	}
 
 	public static String translate(String s) {
-		return I18n.translateToLocal(s);
+		return editor != null ? editor.getTranslation(s) : I18n.translateToLocal(s);
 	}
 
 	public static boolean hasTranslation(String s) {
-		return I18n.canTranslate(s);
+		return I18n.canTranslate(s) || editor != null && editor.hasEdited(s);
 	}
 
 	private static final String[] DecScale  = {"a", "f", "p", "n", "u", "m", "", "k", "M", "G", "T", "P", "E"};

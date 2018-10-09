@@ -11,8 +11,6 @@ import java.util.List;
 import net.minecraft.block.Block;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
-import org.lwjgl.input.Keyboard;
-
 import cd4017be.lib.BlockItemRegistry;
 import cd4017be.lib.util.TooltipUtil;
 
@@ -36,10 +34,10 @@ public class BaseItemBlock extends ItemBlock {
 	@SideOnly(Side.CLIENT)
 	public void addInformation(ItemStack item, @Nullable World player, List<String> list, ITooltipFlag b) {
 		String s = this.getUnlocalizedName(item) + ".tip";
-		if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)) {
+		if (TooltipUtil.showShiftHint()) {
 			String s1 = TooltipUtil.getConfigFormat(s);
 			if (!s1.equals(s)) list.addAll(Arrays.asList(s1.split("\n")));
-		} else if (Keyboard.isKeyDown(Keyboard.KEY_LMENU) || Keyboard.isKeyDown(Keyboard.KEY_RMENU)) {
+		} else if (TooltipUtil.showAltHint()) {
 			String sA = s + "A";
 			String s1 = TooltipUtil.getConfigFormat(sA);
 			if (!s1.equals(sA)) list.addAll(Arrays.asList(s1.split("\n")));
