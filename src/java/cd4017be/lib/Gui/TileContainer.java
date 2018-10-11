@@ -270,10 +270,14 @@ public class TileContainer extends DataContainer {
 					slot.decrStackSize(b == 0 ? slot.getSlotStackLimit() : 1);
 				} else return ItemStack.EMPTY;
 				slot.onSlotChanged();
-			}
+			} else if (m == ClickType.CLONE) quickSelect(player, item);
 			return ItemStack.EMPTY;
 		} else if (slot instanceof GlitchSaveSlot) {
-			if (m != ClickType.PICKUP && m != ClickType.QUICK_MOVE) return ItemStack.EMPTY;
+			if (m == ClickType.CLONE) {
+				quickSelect(player, item);
+				return ItemStack.EMPTY;
+			} else if (m != ClickType.PICKUP && m != ClickType.QUICK_MOVE)
+				return ItemStack.EMPTY;
 			boolean boost = m == ClickType.QUICK_MOVE;
 			GlitchSaveSlot gss = (GlitchSaveSlot)slot;
 			if (!gss.clientInteract) {
@@ -283,7 +287,7 @@ public class TileContainer extends DataContainer {
 			IItemHandler acc = gss.getItemHandler();
 			int p = gss.index;
 			ItemStack curItem = player.inventory.getItemStack();
-			if (curItem.getCount() > 0) {
+			if (curItem.getCount() > 0 && (item.isEmpty() || ItemHandlerHelper.canItemStacksStack(item, curItem))) {
 				if (boost) {
 					ItemStack rem = acc.insertItem(p, ItemHandlerHelper.copyStackWithSize(curItem, 65536), true);
 					int n = 65536 - rem.getCount(), n1 = 0;
@@ -319,6 +323,16 @@ public class TileContainer extends DataContainer {
 			if (slot instanceof SlotTank) return slot.getStack();
 			return ret;
 		}
+	}
+
+	private void quickSelect(EntityPlayer player, ItemStack item) {
+		ItemStack stack = player.inventory.getItemStack();
+		if (!stack.isEmpty() && !ItemHandlerHelper.canItemStacksStack(item, stack)) return;
+		item = ItemHandlerHelper.copyStackWithSize(item, item.getMaxStackSize() - stack.getCount());
+		if (item.isEmpty()) return;
+		int n = stack.getCount() + getFromPlayerInv(item, player.inventory);
+		stack = ItemHandlerHelper.copyStackWithSize(item, player.capabilities.isCreativeMode ? item.getMaxStackSize() : n);
+		player.inventory.setItemStack(stack);
 	}
 
 	public static int putInPlayerInv(ItemStack item, InventoryPlayer inv) {

@@ -38,7 +38,7 @@ public class AdvancedBlock extends BaseBlock {
 	public final Class<? extends TileEntity> tileEntity;
 	protected EnumBlockRenderType renderType;
 	protected AxisAlignedBB[] boundingBox;
-	/**1:NeighborAware, 2:BreakCleanup, 4:Interactive, 8:PlaceHarvest, 0x10:Redstone, 0x20:Collision, 0x40:hasGui, 0x10000:nonOpaque, 0x40000:no sneak place */
+	/**1:NeighborAware, 2:BreakCleanup, 4:Interactive, 8:PlaceHarvest, 0x10:Redstone, 0x20:Collision, 0x40:hasGui, 0x80:Comparator, 0x10000:nonOpaque, 0x40000:no sneak place */
 	protected int flags;
 
 	/**
@@ -62,6 +62,7 @@ public class AdvancedBlock extends BaseBlock {
 			if (IRedstoneTile.class.isAssignableFrom(tile)) this.flags |= 16;
 			if (ITileCollision.class.isAssignableFrom(tile)) this.flags |= 32;
 			if ((flags & 4) == 0 && IGuiData.class.isAssignableFrom(tile)) this.flags |= 64;
+			if (IComparatorSource.class.isAssignableFrom(tile)) this.flags |= 128;
 			GameRegistry.registerTileEntity(tileEntity, getRegistryName().toString());
 		}
 		this.renderType = EnumBlockRenderType.MODEL;
@@ -265,6 +266,27 @@ public class AdvancedBlock extends BaseBlock {
 		TileEntity te = world.getTileEntity(pos);
 		if (te instanceof IRedstoneTile) return ((IRedstoneTile)te).connectRedstone(side.getOpposite());
 		return false;
+	}
+
+	public interface IComparatorSource {
+		/**
+		 * ask for comparator value
+		 * @return comparator signal
+		 */
+		int comparatorValue();
+	}
+
+	@Override
+	public boolean hasComparatorInputOverride(IBlockState state) {
+		return (flags & 128) != 0;
+	}
+
+	@Override
+	public int getComparatorInputOverride(IBlockState state, World world, BlockPos pos) {
+		if ((flags & 128) == 0) return 0;
+		TileEntity te = world.getTileEntity(pos);
+		if (te instanceof IComparatorSource) return ((IComparatorSource)te).comparatorValue();
+		return 0;
 	}
 
 	public interface ITileCollision {
