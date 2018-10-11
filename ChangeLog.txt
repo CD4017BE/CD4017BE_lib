@@ -1,3 +1,11 @@
+v6.2.7
+Changes:
+- added comparator support for my universal block template
+- added middle-click quick select and other tweaks to slot interaction with "GlitchSaveSlots" and "HoloSlots"
+Dependencies:
+- for MC-1.12.2
+- forge-14.23.0.2512 (or newer)
+
 v6.2.6
 Changes:
 - added an ingame tooltip editor for dev purposes
