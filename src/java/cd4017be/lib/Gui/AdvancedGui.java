@@ -375,7 +375,9 @@ public abstract class AdvancedGui extends GuiContainer {
 
 		public void draw() {}
 		public void keyTyped(char c, int k) {}
-		/** @param b mouse button: 0=left 1=right 2=middle or +/-1 for scroll
+		/** @param x absolute screen X
+		 *  @param y absolute screen Y
+		 *  @param b mouse button: 0=left 1=right 2=middle or +/-1 for scroll
 		 *  @param d event type: 0=click 1=clickMove 2=release 3=scroll
 		 *  @return consume event*/
 		public boolean mouseIn(int x, int y, int b, int d) {return false;}
