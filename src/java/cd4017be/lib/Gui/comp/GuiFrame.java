@@ -3,8 +3,8 @@ package cd4017be.lib.Gui.comp;
 import javax.annotation.Nonnull;
 import cd4017be.lib.Gui.ModularGui;
 import cd4017be.lib.util.TooltipUtil;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.fml.client.config.GuiUtils;
 
 /**
  * A component group to be managed by a {@link ModularGui}. Optionally includes a texture context for rendering other components, a background icon (for window frames) and a title text.
@@ -15,10 +15,9 @@ import net.minecraft.util.ResourceLocation;
 public class GuiFrame extends GuiCompGroup {
 
 	public final ModularGui gui;
-	public ResourceLocation texture;
-	public int bgX = 0, bgY = Integer.MIN_VALUE, titleY = 4;
+	public ResourceLocation bgTexture;
+	public int bgX, bgY, titleY = 4;
 	public float titleX = 0.5F;
-	public boolean drawBG = false;
 	public String title = null;
 
 	/**
@@ -56,44 +55,29 @@ public class GuiFrame extends GuiCompGroup {
 	}
 
 	/**
-	 * sets the rendering context texture
-	 * @param tex image resource path
-	 * @return this
-	 */
-	public GuiFrame texture(ResourceLocation tex) {
-		this.texture = tex;
-		return this;
-	}
-
-	/**
-	 * configures a background icon to be rendered
+	 * configures a background icon to be rendered (also sets that icon to be the default component texture)
+	 * @param tex background texture
 	 * @param tx texture X-coord
 	 * @param ty texture Y-coord
 	 * @return
 	 */
-	public GuiFrame background(int tx, int ty) {
+	public GuiFrame background(ResourceLocation tex, int tx, int ty) {
+		this.bgTexture = tex;
 		this.bgX = tx;
 		this.bgY = ty;
+		texture(tex, 256, 256);
 		return this;
 	}
 
 	@Override
 	public void drawBackground(int mx, int my, float t) {
-		if (texture != null) gui.mc.renderEngine.bindTexture(texture);
-		if (bgY != Integer.MIN_VALUE) gui.drawTexturedModalRect(x, y, bgX, bgY, w, h);
-		super.drawBackground(mx, my, t);
-		if (title != null) {
-			FontRenderer fr = gui.mc.fontRenderer;
-			fr.drawString(title, x + (int)(titleX * (float)(w-fr.getStringWidth(title))), y + titleY, 0x404040);
+		if (bgTexture != null) {
+			bindTexture(bgTexture);
+			GuiUtils.drawTexturedModalRect(x, y, bgX, bgY, w, h, zLevel);
 		}
-	}
-
-	/**
-	 * helper method to bind a given texture
-	 * @param tex texture to bind
-	 */
-	public void bindTexture(ResourceLocation tex) {
-		gui.mc.renderEngine.bindTexture(tex);
+		super.drawBackground(mx, my, t);
+		if (title != null)
+			fontRenderer.drawString(title, x + (int)(titleX * (float)(w - fontRenderer.getStringWidth(title))), y + titleY, 0x404040);
 	}
 
 }

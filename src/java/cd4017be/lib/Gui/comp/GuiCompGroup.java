@@ -1,8 +1,19 @@
 package cd4017be.lib.Gui.comp;
 
+import java.util.List;
+
 import javax.annotation.Nullable;
 
+import org.lwjgl.opengl.GL11;
+
 import cd4017be.lib.util.IndexedSet;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.fml.client.config.GuiUtils;
 
 /**
  * {@link IGuiComp} implementation that holds other gui-components inside it.
@@ -15,6 +26,13 @@ public class GuiCompGroup extends IndexedSet<IGuiComp> implements IGuiComp {
 	protected int x = 0, y = 0, focus = -1;
 	protected boolean enabled = true;
 	private int idx = -1;
+	
+	public int screenWidth, screenHeight, texW, texH;
+	public float zLevel;
+	public FontRenderer fontRenderer;
+	public BufferBuilder renderBuff;
+	public ResourceLocation mainTex;
+	protected boolean bound;
 
 	/**
 	 * @param parent optional parent container to register with
@@ -28,6 +46,31 @@ public class GuiCompGroup extends IndexedSet<IGuiComp> implements IGuiComp {
 		this.w = w;
 		this.h = h;
 		if (parent != null) parent.add(this);
+	}
+
+	/**
+	 * initialize this GuiComp for rendering
+	 * @param sw total width of underlying screen
+	 * @param sh total height of underlying screen
+	 * @param fr font renderer to draw text
+	 */
+	public void init(int sw, int sh, float z, FontRenderer fr) {
+		this.screenWidth = sw;
+		this.screenHeight = sh;
+		this.zLevel = z;
+		this.fontRenderer = fr;
+	}
+
+	/**
+	 * sets this component group's default texture image
+	 * @param tex texture resource location
+	 * @param w width of image
+	 * @param h height of image
+	 */
+	public void texture(ResourceLocation tex, int w, int h) {
+		this.mainTex = tex;
+		this.texW = w;
+		this.texH = h;
 	}
 
 	@Override
@@ -78,10 +121,16 @@ public class GuiCompGroup extends IndexedSet<IGuiComp> implements IGuiComp {
 
 	@Override
 	public void drawBackground(int mx, int my, float t) {
+		bound = false;
 		IGuiComp c;
 		for(int i = 0; i < count; i++)
 			if ((c = array[i]).enabled())
 				c.drawBackground(mx, my, t);
+		if (renderBuff != null) {
+			bindTexture(mainTex);
+			Tessellator.getInstance().draw();
+			renderBuff = null;
+		}
 	}
 
 	@Override
@@ -153,6 +202,54 @@ public class GuiCompGroup extends IndexedSet<IGuiComp> implements IGuiComp {
 				return;
 			}
 		}
+	}
+
+	/**
+	 * helper method to bind a given texture
+	 * @param tex texture to bind
+	 */
+	public void bindTexture(ResourceLocation tex) {
+		if (tex != mainTex) bound = false;
+		else if (bound) return;
+		else bound = true;
+		Minecraft.getMinecraft().renderEngine.bindTexture(tex);
+	}
+
+	/**
+	 * draw a textured rectangle using this component group's default texture image
+	 * @param x screen x-coord
+	 * @param y screen y-coord
+	 * @param tx image x-coord
+	 * @param ty image y-coord
+	 * @param w width in pixels
+	 * @param h height in pixels
+	 */
+	public void drawRect(int x, int y, int tx, int ty, int w, int h) {
+		BufferBuilder b = renderBuff;
+		if (b == null) {
+			b = Tessellator.getInstance().getBuffer();
+			b.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+			renderBuff = b;
+		}
+		int X = x + w, Y = y + h;
+		double u = (double)tx / (double)texW, U = (double)(tx + w) / (double)texW,
+				v = (double)ty / (double)texH, V = (double)(ty + h) / (double)texH,
+				z = zLevel;
+		b.pos(x, Y, z).tex(u, V).endVertex();
+		b.pos(X, Y, z).tex(U, V).endVertex();
+		b.pos(X, y, z).tex(U, v).endVertex();
+		b.pos(x, y, z).tex(u, v).endVertex();
+	}
+
+	/**
+	 * draw a tooltip overlay
+	 * @param text text lines
+	 * @param mx mouse X position
+	 * @param my mouse Y position
+	 * @see GuiUtils#drawHoveringText(List, int, int, int, int, int, FontRenderer)
+	 */
+	public void drawTooltip(List<String> text, int mx, int my) {
+		GuiUtils.drawHoveringText(text, mx, my, screenWidth, screenHeight, -1, fontRenderer);
 	}
 
 }

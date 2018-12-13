@@ -28,7 +28,7 @@ public class Button extends Tooltip {
 	 * @param get state supplier
 	 * @param set state consumer. If states == 0, this will receive the encoded click operation instead: {@link IGuiComp#B_LEFT}, {@link IGuiComp#B_RIGHT}, {@link IGuiComp#B_MID}, {@link #B_SCROLL_UP} or {@link #B_SCROLL_DOWN}.
 	 */
-	public Button(GuiFrame parent, int w, int h, int x, int y, int states, @Nullable IntSupplier get, @Nullable IntConsumer set) {
+	public Button(GuiCompGroup parent, int w, int h, int x, int y, int states, @Nullable IntSupplier get, @Nullable IntConsumer set) {
 		super(parent, w, h, x, y, null, get == null ? null : ()-> new Object[] {get.getAsInt()});
 		this.states = states;
 		this.get = get;
@@ -51,7 +51,7 @@ public class Button extends Tooltip {
 	public void drawBackground(int mx, int my, float t) {
 		if (ty == Integer.MIN_VALUE) return;
 		int s = get == null ? 0 : get.getAsInt();
-		parent.gui.drawTexturedModalRect(x, y, tx, ty + s * h, w, h);
+		parent.drawRect(x, y, tx, ty + s * h, w, h);
 	}
 
 	@Override

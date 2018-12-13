@@ -11,7 +11,7 @@ import cd4017be.lib.util.TooltipUtil;
  * @author CD4017BE
  *
  */
-public class InfoTab extends GuiCompBase<GuiFrame> {
+public class InfoTab extends GuiCompBase<GuiCompGroup> {
 
 	private final String tooltip;
 	private final String[] headers, keys;
@@ -25,7 +25,7 @@ public class InfoTab extends GuiCompBase<GuiFrame> {
 	 * @param y initial Y-coord
 	 * @param tooltip localization key of the header line
 	 */
-	public InfoTab(GuiFrame parent, int w, int h, int x, int y, String tooltip) {
+	public InfoTab(GuiCompGroup parent, int w, int h, int x, int y, String tooltip) {
 		super(parent, w, h, x, y);
 		this.tooltip = tooltip;
 		headers = TooltipUtil.translate(tooltip).split("\n");
@@ -66,7 +66,7 @@ public class InfoTab extends GuiCompBase<GuiFrame> {
 		list.add(s.substring(0, s.length() - 3));
 		for (String l : TooltipUtil.getConfigFormat(keys[page]).split("\n"))
 			list.add(l);
-		parent.gui.drawHoveringText(list, mx, my);
+		parent.drawTooltip(list, mx, my);
 	}
 
 	@Override

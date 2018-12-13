@@ -13,7 +13,7 @@ import net.minecraft.client.renderer.GlStateManager;
  * @author CD4017BE
  *
  */
-public class FormatText extends GuiCompBase<GuiFrame> {
+public class FormatText extends GuiCompBase<GuiCompGroup> {
 
 	private final Supplier<Object[]> params;
 	public String text;
@@ -28,7 +28,7 @@ public class FormatText extends GuiCompBase<GuiFrame> {
 	 * @param format either a localization key or when prefixed with {@code '\'} the actual format string.
 	 * @param params format arguments supplier
 	 */
-	public FormatText(GuiFrame parent, int w, int h, int x, int y, String format, @Nullable Supplier<Object[]> params) {
+	public FormatText(GuiCompGroup parent, int w, int h, int x, int y, String format, @Nullable Supplier<Object[]> params) {
 		super(parent, w, h, x, y);
 		this.params = params;
 		this.text = format;
@@ -51,7 +51,7 @@ public class FormatText extends GuiCompBase<GuiFrame> {
 				String.format(text.substring(1), obj) : 
 				TooltipUtil.format(text, obj)
 			);
-		parent.gui.mc.fontRenderer.drawSplitString(lines, x, y, w, tc);
+		parent.fontRenderer.drawSplitString(lines, x, y, w, tc);
 		GlStateManager.color(1F, 1F, 1F, 1F);
 	}
 

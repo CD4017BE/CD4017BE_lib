@@ -12,7 +12,7 @@ import cd4017be.lib.util.TooltipUtil;
  * @author CD4017BE
  *
  */
-public class Tooltip extends GuiCompBase<GuiFrame> {
+public class Tooltip extends GuiCompBase<GuiCompGroup> {
 
 	private final Supplier<Object[]> params;
 	public String tooltip;
@@ -26,7 +26,7 @@ public class Tooltip extends GuiCompBase<GuiFrame> {
 	 * @param tooltip localization key of the tool-tip format string
 	 * @param params format arguments supplier function
 	 */
-	public Tooltip(GuiFrame parent, int w, int h, int x, int y, @Nullable String tooltip, @Nullable Supplier<Object[]> params) {
+	public Tooltip(GuiCompGroup parent, int w, int h, int x, int y, @Nullable String tooltip, @Nullable Supplier<Object[]> params) {
 		super(parent, w, h, x, y);
 		this.tooltip = tooltip;
 		this.params = params;
@@ -47,7 +47,7 @@ public class Tooltip extends GuiCompBase<GuiFrame> {
 		if (tooltip == null) return;
 		Object[] obj = params == null ? new Object[0] : params.get();
 		String s = tooltip.startsWith("\\") ? String.format(tooltip.substring(1), obj) : TooltipUtil.format(tooltip, obj);
-		parent.gui.drawHoveringText(Arrays.asList(s.split("\n")), mx, my);
+		parent.drawTooltip(Arrays.asList(s.split("\n")), mx, my);
 	}
 
 }

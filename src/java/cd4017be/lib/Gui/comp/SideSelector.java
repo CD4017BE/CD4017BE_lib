@@ -7,6 +7,7 @@ import java.util.function.Supplier;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import cd4017be.lib.Gui.ModularGui;
 import net.minecraft.util.EnumFacing;
 
 /**
@@ -19,6 +20,7 @@ public class SideSelector extends Tooltip {
 	private final Supplier<EnumFacing> get;
 	private final Predicate<EnumFacing> filter;
 	private final Consumer<EnumFacing> set;
+	private final ModularGui gui;
 	public int type = 3, tx = 0, ty = Integer.MIN_VALUE;
 
 	/**
@@ -27,12 +29,14 @@ public class SideSelector extends Tooltip {
 	 * @param h height in pixels
 	 * @param x initial X-coord
 	 * @param y initial Y-coord
+	 * @param gui the underlying gui instance
 	 * @param get side state supplier function (can be all 6 directions + null for none/invalid)
 	 * @param filter optional filter function to restrict the set of allowed sides.
 	 * @param set side state consumer function
 	 */
-	public SideSelector(GuiFrame parent, int w, int h, int x, int y, @Nonnull Supplier<EnumFacing> get, @Nullable Predicate<EnumFacing> filter, @Nullable Consumer<EnumFacing> set) {
+	public SideSelector(GuiCompGroup parent, ModularGui gui, int w, int h, int x, int y, @Nonnull Supplier<EnumFacing> get, @Nullable Predicate<EnumFacing> filter, @Nullable Consumer<EnumFacing> set) {
 		super(parent, w, h, x, y, null, ()-> new Object[] {get.get()});
+		this.gui = gui;
 		this.get = get;
 		this.filter = filter;
 		this.set = set;
@@ -63,14 +67,14 @@ public class SideSelector extends Tooltip {
 	@Override
 	public void drawOverlay(int mx, int my) {
 		super.drawOverlay(mx, my);
-		parent.gui.drawSideConfig(get.get(), type);
+		gui.drawSideConfig(get.get(), type);
 	}
 
 	@Override
 	public void drawBackground(int mx, int my, float t) {
 		if (ty == Integer.MIN_VALUE) return;
 		EnumFacing s = get.get();
-		parent.gui.drawTexturedModalRect(x, y, tx, ty + (s == null ? -1 : s.ordinal()) * h, w, h);
+		parent.drawRect(x, y, tx, ty + (s == null ? -1 : s.ordinal()) * h, w, h);
 	}
 
 	@Override

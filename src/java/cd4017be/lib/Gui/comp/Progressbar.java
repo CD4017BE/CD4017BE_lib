@@ -29,7 +29,7 @@ public class Progressbar extends Tooltip {
 	 * @param min minimum value representing the empty bar
 	 * @param max maximum value representing the full bar. (if {@code max < min} then the progress bar will fill from the opposite side)
 	 */
-	public Progressbar(GuiFrame parent, int w, int h, int x, int y, int tx, int ty, byte type, @Nonnull DoubleSupplier get, double min, double max) {
+	public Progressbar(GuiCompGroup parent, int w, int h, int x, int y, int tx, int ty, byte type, @Nonnull DoubleSupplier get, double min, double max) {
 		super(parent, w, h, x, y, null, ()-> new Object[] {get.getAsDouble(), min, max});
 		this.type = type;
 		this.tx = tx;
@@ -60,29 +60,29 @@ public class Progressbar extends Tooltip {
 		switch (type) {
 		case H_FILL:
 			if (n >= w) break;
-			if (rev) parent.gui.drawTexturedModalRect(x + w - n, y, tx + w - n, ty, n, h);
-			else parent.gui.drawTexturedModalRect(x, y, tx, ty, n, h);
+			if (rev) parent.drawRect(x + w - n, y, tx + w - n, ty, n, h);
+			else parent.drawRect(x, y, tx, ty, n, h);
 			return;
 		case V_FILL:
 			if (n >= h) break;
-			if (rev) parent.gui.drawTexturedModalRect(x, y, tx, ty, w, n);
-			else parent.gui.drawTexturedModalRect(x, y + h - n, tx, ty + h - n, w, n);
+			if (rev) parent.drawRect(x, y, tx, ty, w, n);
+			else parent.drawRect(x, y + h - n, tx, ty + h - n, w, n);
 			return;
-		case H_SLIDE: parent.gui.drawTexturedModalRect(x, y, tx + n, ty, w, h); return;
-		case V_SLIDE: parent.gui.drawTexturedModalRect(x, y, tx, ty + n, w, h); return;
+		case H_SLIDE: parent.drawRect(x, y, tx + n, ty, w, h); return;
+		case V_SLIDE: parent.drawRect(x, y, tx, ty + n, w, h); return;
 		case PIXELS:
 			int m = n / h; n %= h;
 			if (m >= w) break;
 			if (rev) {
-				parent.gui.drawTexturedModalRect(x + w - m, y, tx + w - m, ty, m, h);
+				parent.drawRect(x + w - m, y, tx + w - m, ty, m, h);
 				int dx1 = w - m - 1, dy1 = h - n;
-				parent.gui.drawTexturedModalRect(x + dx1, y + dy1, tx + dx1, ty + dy1, 1, n);
+				parent.drawRect(x + dx1, y + dy1, tx + dx1, ty + dy1, 1, n);
 			} else {
-				parent.gui.drawTexturedModalRect(x, y, tx, ty, m, h);
-				parent.gui.drawTexturedModalRect(x + m, y, tx + m, ty, 1, n);
+				parent.drawRect(x, y, tx, ty, m, h);
+				parent.drawRect(x + m, y, tx + m, ty, 1, n);
 			} return;
 		}
-		parent.gui.drawTexturedModalRect(x, y, tx, ty, w, h);
+		parent.drawRect(x, y, tx, ty, w, h);
 	}
 
 	/** design variant codes */

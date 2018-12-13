@@ -2,13 +2,14 @@ package cd4017be.lib.Gui;
 
 import cd4017be.lib.BlockGuiHandler;
 import cd4017be.lib.Gui.TileContainer.TankSlot;
-import cd4017be.lib.Gui.comp.GuiFrame;
+import cd4017be.lib.Gui.comp.GuiCompGroup;
 import cd4017be.lib.Gui.comp.TankInterface;
 import cd4017be.lib.util.TooltipUtil;
 import cd4017be.lib.util.Vec3;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.function.IntConsumer;
 import java.util.function.ObjIntConsumer;
 
 import javax.annotation.Nullable;
@@ -36,6 +37,8 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.fluids.Fluid;
+import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.FluidUtil;
 import net.minecraftforge.items.ItemHandlerHelper;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
@@ -53,10 +56,12 @@ public abstract class ModularGui extends GuiContainer {
 	/** whether to draw the player inventory title */
 	protected boolean drawInvTitle;
 	private Slot lastClickSlot;
-	public GuiFrame compGroup;
+	public GuiCompGroup compGroup;
 	public final DataContainer container;
 
 	/**
+	 * Creates a new ModularGui instance<br>
+	 * Note: the GuiFrame {@link #compGroup} is still null, it must be initialized before {@link #initGui()} is called!
 	 * @param container container providing the state from server
 	 */
 	public ModularGui(DataContainer container) {
@@ -70,8 +75,13 @@ public abstract class ModularGui extends GuiContainer {
 	 * @param handler optional function to handle fluid container drops
 	 */
 	protected void addTanks(@Nullable ObjIntConsumer<Fluid> handler) {
+		IntConsumer handle = handler == null ? null :
+			(s)-> {
+				FluidStack fluid = FluidUtil.getFluidContained(container.player.inventory.getItemStack());
+				handler.accept(fluid == null ? null : fluid.getFluid(), s);
+			};
 		for (TankSlot slot : ((TileContainer)container).tankSlots)
-			new TankInterface(compGroup, slot, handler);
+			new TankInterface(compGroup, slot, handle);
 	}
 
 	@Override
@@ -79,6 +89,7 @@ public abstract class ModularGui extends GuiContainer {
 		this.xSize = compGroup.w;
 		this.ySize = compGroup.h;
 		super.initGui();
+		compGroup.init(width, height, zLevel, fontRenderer);
 		compGroup.position(guiLeft, guiTop);
 	}
 

@@ -36,7 +36,7 @@ public class Slider extends Tooltip {
 	 * @param min minimum value (left or bottom)
 	 * @param max maximum value (right or top)
 	 */
-	public Slider(GuiFrame parent, int w, int h, int l, int x, int y, int tx, int ty, boolean hor, @Nonnull DoubleSupplier get, @Nonnull DoubleConsumer set, @Nullable Runnable update, double min, double max) {
+	public Slider(GuiCompGroup parent, int w, int h, int l, int x, int y, int tx, int ty, boolean hor, @Nonnull DoubleSupplier get, @Nonnull DoubleConsumer set, @Nullable Runnable update, double min, double max) {
 		super(parent, hor?l:w, hor?h:l, x, y, null, ()-> new Object[] {get.getAsDouble(), min, max});
 		this.hor = hor;
 		this.l = l - (hor?w:h);
@@ -73,8 +73,8 @@ public class Slider extends Tooltip {
 	@Override
 	public void drawBackground(int mx, int my, float t) {
 		int n = (int)Math.round((get.getAsDouble() - min) / (max - min) * (double)l);
-		if (hor) parent.gui.drawTexturedModalRect(x + n, y, tx, ty, tw, th);
-		else parent.gui.drawTexturedModalRect(x, y + h - th - n, tx, ty, tw, th);
+		if (hor) parent.drawRect(x + n, y, tx, ty, tw, th);
+		else parent.drawRect(x, y + h - th - n, tx, ty, tw, th);
 	}
 
 	@Override

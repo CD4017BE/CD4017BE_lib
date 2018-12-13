@@ -8,7 +8,7 @@ import java.util.function.DoubleSupplier;
  * @author CD4017BE
  *
  */
-public class Spinner extends GuiFrame {
+public class Spinner extends GuiCompGroup {
 
 	private final DoubleSupplier get;
 	private final DoubleConsumer set;
@@ -29,7 +29,7 @@ public class Spinner extends GuiFrame {
 	 * @param max maximum value
 	 * @param steps step sizes of the different increment/decrement buttons (in order left->right or outer->inner).
 	 */
-	public Spinner(GuiFrame parent, int w, int h, int x, int y, boolean hor, String format, DoubleSupplier get, DoubleConsumer set, double min, double max, double... steps) {
+	public Spinner(GuiCompGroup parent, int w, int h, int x, int y, boolean hor, String format, DoubleSupplier get, DoubleConsumer set, double min, double max, double... steps) {
 		super(parent, w, h, 2 * steps.length + 2);
 		this.get = get;
 		this.set = set;

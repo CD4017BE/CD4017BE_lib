@@ -18,7 +18,7 @@ import net.minecraft.util.ChatAllowedCharacters;
  * @author CD4017BE
  *
  */
-public class TextField extends GuiCompBase<GuiFrame> {
+public class TextField extends GuiCompBase<GuiCompGroup> {
 
 	private final Supplier<String> get;
 	private final Consumer<String> set;
@@ -38,7 +38,7 @@ public class TextField extends GuiCompBase<GuiFrame> {
 	 * @param get text supplier function
 	 * @param set text consumer function
 	 */
-	public TextField(GuiFrame parent, int w, int h, int x, int y, int max, @Nonnull Supplier<String> get, @Nonnull Consumer<String> set) {
+	public TextField(GuiCompGroup parent, int w, int h, int x, int y, int max, @Nonnull Supplier<String> get, @Nonnull Consumer<String> set) {
 		super(parent, w, h, x, y);
 		this.maxL = max;
 		this.get = get;
@@ -67,7 +67,7 @@ public class TextField extends GuiCompBase<GuiFrame> {
 
 	@Override
 	public void drawBackground(int mx, int my, float ft) {//TODO support multiline
-		FontRenderer fr = parent.gui.mc.fontRenderer;
+		FontRenderer fr = parent.fontRenderer;
 		String t;
 		int ofs = 0;
 		if (focused()) {
