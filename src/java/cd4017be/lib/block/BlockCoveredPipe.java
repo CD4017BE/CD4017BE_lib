@@ -22,6 +22,10 @@ import net.minecraftforge.common.property.IUnlistedProperty;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
+/**
+ * @author cd4017be
+ *
+ */
 public abstract class BlockCoveredPipe extends BlockPipe {
 
 	public static BlockCoveredPipe create(String id, Material m, SoundType sound, Class<? extends TileEntity> tile, int states) {
@@ -31,6 +35,19 @@ public abstract class BlockCoveredPipe extends BlockPipe {
 				return states > 1 ? PropertyInteger.create("type", 0, states - 1) : null;
 			}
 		};
+	}
+
+	public static final byte NEVER = -1, BY_BOUNDING_BOX = 0, BY_CONNECTION = 1, ALWAYS = 2;
+
+	protected byte solidMode;
+
+	/**
+	 * @param mode = {@link #NEVER}, {@link #BY_BOUNDING_BOX}, {@link #BY_CONNECTION} or {@link #ALWAYS}
+	 * @return this
+	 */
+	public BlockCoveredPipe setSolid(byte mode) {
+		solidMode = mode;
+		return this;
 	}
 
 	protected BlockCoveredPipe(String id, Material m, SoundType sound, int mods, Class<? extends TileEntity> tile) {
@@ -87,6 +104,20 @@ public abstract class BlockCoveredPipe extends BlockPipe {
 		TileEntity te = world.getTileEntity(pos);
 		if (te instanceof IModularTile) return ((IModularTile)te).getModuleState(6);
 		else return null;
+	}
+
+	@Override
+	public boolean isSideSolid(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing side) {
+		byte mode = solidMode;
+		if (mode == ALWAYS) return true;
+		if (mode == BY_BOUNDING_BOX) return super.isSideSolid(state, world, pos, side);
+		TileEntity te = world.getTileEntity(pos);
+		if (te instanceof IModularTile) {
+			IModularTile mt = (IModularTile)te;
+			if (mode == BY_CONNECTION && mt.isModulePresent(side.ordinal())) return true;
+			IBlockState cover = mt.getModuleState(6);
+			return cover != null && cover.isSideSolid(world, pos, side);
+		} else return false;
 	}
 
 	@Override
