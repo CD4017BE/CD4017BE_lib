@@ -68,7 +68,7 @@ public class Progressbar extends Tooltip {
 			if (rev) parent.drawRect(x, y, tx, ty, w, n);
 			else parent.drawRect(x, y + h - n, tx, ty + h - n, w, n);
 			return;
-		case H_SLIDE: parent.drawRect(x, y, tx + n, ty, w, h); return;
+		case H_SLIDE: parent.drawRect(x, y, tx + w - n, ty, w, h); return;
 		case V_SLIDE: parent.drawRect(x, y, tx, ty + n, w, h); return;
 		case PIXELS:
 			int m = n / h; n %= h;

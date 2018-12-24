@@ -8,6 +8,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import cd4017be.lib.Gui.ModularGui;
+import cd4017be.lib.util.TooltipUtil;
 import net.minecraft.util.EnumFacing;
 
 /**
@@ -15,13 +16,14 @@ import net.minecraft.util.EnumFacing;
  * @author CD4017BE
  *
  */
-public class SideSelector extends Tooltip {
+public class SideSelector extends GuiCompBase<GuiCompGroup> {
 
 	private final Supplier<EnumFacing> get;
 	private final Predicate<EnumFacing> filter;
 	private final Consumer<EnumFacing> set;
 	private final ModularGui gui;
 	public int type = 3, tx = 0, ty = Integer.MIN_VALUE;
+	public String tooltip;
 
 	/**
 	 * @param parent the gui-component container this will register to
@@ -35,7 +37,7 @@ public class SideSelector extends Tooltip {
 	 * @param set side state consumer function
 	 */
 	public SideSelector(GuiCompGroup parent, ModularGui gui, int w, int h, int x, int y, @Nonnull Supplier<EnumFacing> get, @Nullable Predicate<EnumFacing> filter, @Nullable Consumer<EnumFacing> set) {
-		super(parent, w, h, x, y, null, ()-> new Object[] {get.get()});
+		super(parent, w, h, x, y);
 		this.gui = gui;
 		this.get = get;
 		this.filter = filter;
@@ -64,10 +66,26 @@ public class SideSelector extends Tooltip {
 		return this;
 	}
 
+	/**
+	 * specifies this component to show a tool-tip overlay
+	 * @param tooltip localization key of the tool-tip format string
+	 * @return this
+	 */
+	public SideSelector tooltip(String tooltip) {
+		this.tooltip = tooltip;
+		return this;
+	}
+
 	@Override
 	public void drawOverlay(int mx, int my) {
-		super.drawOverlay(mx, my);
-		gui.drawSideConfig(get.get(), type);
+		EnumFacing side = get.get();
+		String s = tooltip;
+		if (s != null) {
+			if (s.endsWith("#"))
+				s = s.substring(0, s.length()-1) + (side == null ? "0" : "1");
+			parent.drawTooltip(TooltipUtil.format(s, TooltipUtil.translate("enumfacing." + side)), mx, my);
+		}
+		gui.drawSideConfig(side, type);
 	}
 
 	@Override

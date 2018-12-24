@@ -18,7 +18,7 @@ import net.minecraft.util.ChatAllowedCharacters;
  * @author CD4017BE
  *
  */
-public class TextField extends GuiCompBase<GuiCompGroup> {
+public class TextField extends Tooltip {
 
 	private final Supplier<String> get;
 	private final Consumer<String> set;
@@ -39,7 +39,7 @@ public class TextField extends GuiCompBase<GuiCompGroup> {
 	 * @param set text consumer function
 	 */
 	public TextField(GuiCompGroup parent, int w, int h, int x, int y, int max, @Nonnull Supplier<String> get, @Nonnull Consumer<String> set) {
-		super(parent, w, h, x, y);
+		super(parent, w, h, x, y, null, null);
 		this.maxL = max;
 		this.get = get;
 		this.set = set;
@@ -57,7 +57,7 @@ public class TextField extends GuiCompBase<GuiCompGroup> {
 	}
 
 	/**
-	 * specifies that minecraft's text formatting code prefix character ({@code '§'}) should be allowed in this text field.
+	 * specifies that minecraft's text formatting code prefix character ({@code 'ï¿½'}) should be allowed in this text field.
 	 * @return this
 	 */
 	public TextField allowFormat() {
@@ -67,6 +67,7 @@ public class TextField extends GuiCompBase<GuiCompGroup> {
 
 	@Override
 	public void drawBackground(int mx, int my, float ft) {//TODO support multiline
+		parent.bindTexture(null);
 		FontRenderer fr = parent.fontRenderer;
 		String t;
 		int ofs = 0;

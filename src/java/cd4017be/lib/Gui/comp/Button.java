@@ -5,18 +5,21 @@ import java.util.function.IntSupplier;
 
 import javax.annotation.Nullable;
 
+import cd4017be.lib.util.TooltipUtil;
+
 /**
  * A button than can have different states with different icon textures (optional) and automatically cycles through a fixed number of states on mouse clicks (optional).<br>
  * The state is handled as integer via Supplier and Consumer functions.
  * @author CD4017BE
  *
  */
-public class Button extends Tooltip {
+public class Button extends GuiCompBase<GuiCompGroup> {
 
 	private final IntSupplier get;
 	private final IntConsumer set;
 	public final int states;
 	public int tx = 0, ty = Integer.MIN_VALUE;
+	public String tooltip;
 
 	/**
 	 * @param parent the gui-component container this will register to
@@ -29,7 +32,7 @@ public class Button extends Tooltip {
 	 * @param set state consumer. If states == 0, this will receive the encoded click operation instead: {@link IGuiComp#B_LEFT}, {@link IGuiComp#B_RIGHT}, {@link IGuiComp#B_MID}, {@link #B_SCROLL_UP} or {@link #B_SCROLL_DOWN}.
 	 */
 	public Button(GuiCompGroup parent, int w, int h, int x, int y, int states, @Nullable IntSupplier get, @Nullable IntConsumer set) {
-		super(parent, w, h, x, y, null, get == null ? null : ()-> new Object[] {get.getAsInt()});
+		super(parent, w, h, x, y);
 		this.states = states;
 		this.get = get;
 		this.set = set;
@@ -45,6 +48,25 @@ public class Button extends Tooltip {
 		this.tx = tx;
 		this.ty = ty;
 		return this;
+	}
+
+	/**
+	 * specifies this component to show a tool-tip overlay
+	 * @param tooltip localization key of the tool-tip format string
+	 * @return this
+	 */
+	public Button tooltip(String tooltip) {
+		this.tooltip = tooltip;
+		return this;
+	}
+
+	@Override
+	public void drawOverlay(int mx, int my) {
+		if (tooltip == null) return;
+		String s = tooltip;
+		if (get != null && s.endsWith("#"))
+			s = s.substring(0, s.length() - 1) + get.getAsInt();
+		parent.drawTooltip(TooltipUtil.translate(s), mx, my);
 	}
 
 	@Override

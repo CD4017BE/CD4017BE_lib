@@ -1,6 +1,5 @@
 package cd4017be.lib.Gui.comp;
 
-import java.util.Arrays;
 import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
@@ -45,9 +44,9 @@ public class Tooltip extends GuiCompBase<GuiCompGroup> {
 	@Override
 	public void drawOverlay(int mx, int my) {
 		if (tooltip == null) return;
-		Object[] obj = params == null ? new Object[0] : params.get();
-		String s = tooltip.startsWith("\\") ? String.format(tooltip.substring(1), obj) : TooltipUtil.format(tooltip, obj);
-		parent.drawTooltip(Arrays.asList(s.split("\n")), mx, my);
+		parent.drawTooltip(params == null ?
+				TooltipUtil.translate(tooltip) :
+				TooltipUtil.format(tooltip, params.get()), mx, my);
 	}
 
 }

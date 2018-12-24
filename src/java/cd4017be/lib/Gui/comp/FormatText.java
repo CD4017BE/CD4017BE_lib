@@ -5,6 +5,7 @@ import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 import cd4017be.lib.util.TooltipUtil;
+import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.GlStateManager;
 
 /**
@@ -18,6 +19,7 @@ public class FormatText extends GuiCompBase<GuiCompGroup> {
 	private final Supplier<Object[]> params;
 	public String text;
 	public int tc = 0xff404040;
+	public float align = 0.5F;
 
 	/**
 	 * @param parent the gui-component container this will register to
@@ -44,14 +46,28 @@ public class FormatText extends GuiCompBase<GuiCompGroup> {
 		return this;
 	}
 
+	/**
+	 * Changes the text alignment
+	 * @param x relative alignment: 0.0 = left, 0.5 = middle, 1.0 = right
+	 * @return this
+	 */
+	public FormatText align(float x) {
+		this.align = x;
+		return this;
+	}
+
 	@Override
 	public void drawBackground(int mx, int my, float t) {
 		Object[] obj = params == null ? new Object[0] : params.get();
-		String lines = (text.startsWith("\\") ? 
-				String.format(text.substring(1), obj) : 
-				TooltipUtil.format(text, obj)
-			);
-		parent.fontRenderer.drawSplitString(lines, x, y, w, tc);
+		String lines = TooltipUtil.format(text, obj);
+		parent.bound = false;
+		FontRenderer fr = parent.fontRenderer;
+		int y = this.y;
+		for (String s : lines.split("\n")) {
+			int x = this.x + (align == 0 ? 0 : (int)Math.round((float)(w - fr.getStringWidth(s)) * align));
+			fr.drawString(s, x, y, tc);
+			y += fr.FONT_HEIGHT;
+		}
 		GlStateManager.color(1F, 1F, 1F, 1F);
 	}
 

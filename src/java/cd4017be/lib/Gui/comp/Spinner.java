@@ -42,14 +42,14 @@ public class Spinner extends GuiCompGroup {
 				new Button(this, 5, h, i++ * 5, 0, 0, null, (b)-> click(b, d));
 				new Button(this, 5, h, w - i * 5, 0, 0, null, (b)-> click(b, -d));
 			}
-			new FormatText(this, l * 5, 0, w - l * 10, h, format, this::formatInfo);
+			new FormatText(this, w - l * 10, h, l * 5, 0, format, this::formatInfo);
 		} else {
 			int i = 0;
 			for (double d : steps) {
 				new Button(this, w / l, 5, i * w / l, 0, 0, null, (b)-> click(b, d));
 				new Button(this, w / l, 5, i++ * w / l, h - 5, 0, null, (b)-> click(b, -d));
 			}
-			new FormatText(this, 0, 5, w, h - 10, format, this::formatInfo);
+			new FormatText(this, w, h - 10, 0, 5, format, this::formatInfo);
 		}
 		position(x, y);
 		parent.add(this);
