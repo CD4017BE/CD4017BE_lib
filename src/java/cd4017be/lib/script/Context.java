@@ -50,6 +50,10 @@ public class Context implements Module {
 		defFunc.put("nvec", NVEC);
 	}
 
+	public void handleError(ScriptException e, Script s, String op) throws ScriptException {
+		throw e;
+	}
+
 	private String[] split(String name) {
 		int p = name.lastIndexOf('.');
 		if (p >= 0) return new String[]{name.substring(0, p), name.substring(p + 1)};

@@ -203,6 +203,11 @@ public class RecipeScriptContext extends Context {
 		}
 	}
 
+	@Override
+	public void handleError(ScriptException e, Script s, String op) throws ScriptException {
+		FMLLog.log("RECIPE_SCRIPT", Level.ERROR, e, "failed operation %s in script %s", op, s.fileName);
+	}
+
 	public static class ItemMatcher {
 		private final ItemStack ref;
 		private final boolean ignDmg, ignAm;

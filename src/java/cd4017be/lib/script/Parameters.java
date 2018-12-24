@@ -82,6 +82,10 @@ public class Parameters {
 	}
 
 	private IllegalArgumentException ex(String exp, Object got, int pos) {
+		if (got instanceof Exception) {
+			Exception e = (Exception)got;
+			return new IllegalArgumentException(String.format("Evaluation of paramter %s @ %d returned an error:\n%s: %s", exp, pos, e.getClass().getSimpleName(), e.getMessage()), e);
+		}
 		return new IllegalArgumentException(String.format("expected %s @ %d , got %s", exp, pos, got == null ? "null" : got.getClass().getSimpleName()));
 	}
 
