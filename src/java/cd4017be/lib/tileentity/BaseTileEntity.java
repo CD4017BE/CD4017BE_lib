@@ -14,6 +14,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.ITickable;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -87,6 +88,8 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 	@Override
 	public void onLoad() {
 		unloaded = false;
+		if (world.isRemote && this instanceof ITickableServerOnly)
+			world.tickableTileEntities.remove(this);
 		setupData();
 	}
 
@@ -162,5 +165,11 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 	public boolean isClient() {
 		return world.isRemote;
 	}
+
+	/**
+	 * Indicates that the implementing TileEntity should only receive server side update ticks.
+	 * @author CD4017BE
+	 */
+	public static interface ITickableServerOnly extends ITickable {}
 
 }
