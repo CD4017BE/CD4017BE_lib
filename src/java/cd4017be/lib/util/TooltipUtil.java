@@ -142,6 +142,10 @@ public class TooltipUtil {
 	public static TooltipEditor editor;
 	public static boolean shiftOverride = true, altOverride = false, overrideModifiers = FMLCommonHandler.instance().getSide() == Side.SERVER;
 
+	/**
+	 * @param s translation key
+	 * @return localized text with config variable references resolved
+	 */
 	public static String getConfigFormat(String s) {
 		if (s.equals(lastKey) && editor == null) return lastValue; //speed up tooltip rendering performance
 		lastKey = s;
@@ -168,8 +172,15 @@ public class TooltipUtil {
 		return lastValue = s1 + s;
 	}
 
+	/**
+	 * @param s translation key or literal format string prefixed with '\'<br>
+	 * Note: the special added pattern {@code "%u"} formats a floating point number in the SI unit scale system.<br>
+	 * A number after a '.' specifies the significant digits count (default 3) and a number before a '.' the minimum digit count before the comma (default 1).
+	 * @param args format arguments
+	 * @return formatted localized text
+	 */
 	public static String format(String s, Object... args) {
-		s = (editor != null ? editor.getTranslation(s) : I18n.translateToLocal(s)).trim().replace("\\n", "\n");
+		s = translate(s).trim().replace("\\n", "\n");
 		try {
 			Matcher m = numberFormat.matcher(s);
 			String s1 = "";
@@ -194,8 +205,12 @@ public class TooltipUtil {
 		}
 	}
 
+	/**
+	 * @param s translation key or literal string prefixed with '\'
+	 * @return localized text
+	 */
 	public static String translate(String s) {
-		return editor != null ? editor.getTranslation(s) : I18n.translateToLocal(s);
+		return s.startsWith("\\") ? s.substring(1) : editor != null ? editor.getTranslation(s) : I18n.translateToLocal(s);
 	}
 
 	public static boolean hasTranslation(String s) {
