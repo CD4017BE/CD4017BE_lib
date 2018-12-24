@@ -106,8 +106,10 @@ public abstract class ModularGui extends GuiContainer {
 		GlStateManager.disableDepth();
 		GlStateManager.disableAlpha();
 		GlStateManager.enableBlend();
-		if (compGroup.isInside(mx, my))
-			compGroup.drawOverlay(mx, my);
+		GlStateManager.pushMatrix();
+		GlStateManager.translate(-guiLeft, -guiTop, 0);//undo transformation done by GuiContainer's draw
+		compGroup.drawOverlay(mx, my);
+		GlStateManager.popMatrix();
 	}
 
 	@Override

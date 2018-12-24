@@ -1,5 +1,6 @@
 package cd4017be.lib.Gui.comp;
 
+import java.util.Arrays;
 import java.util.List;
 
 import javax.annotation.Nullable;
@@ -10,6 +11,7 @@ import cd4017be.lib.util.IndexedSet;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.ResourceLocation;
@@ -30,9 +32,9 @@ public class GuiCompGroup extends IndexedSet<IGuiComp> implements IGuiComp {
 	public int screenWidth, screenHeight, texW, texH;
 	public float zLevel;
 	public FontRenderer fontRenderer;
-	public BufferBuilder renderBuff;
+	public Tessellator tessellator;
 	public ResourceLocation mainTex;
-	protected boolean bound;
+	protected boolean bound, drawing;
 
 	/**
 	 * @param parent optional parent container to register with
@@ -59,6 +61,10 @@ public class GuiCompGroup extends IndexedSet<IGuiComp> implements IGuiComp {
 		this.screenHeight = sh;
 		this.zLevel = z;
 		this.fontRenderer = fr;
+		IGuiComp c;
+		for(int i = 0; i < count; i++)
+			if ((c = array[i]) instanceof GuiCompGroup)
+				((GuiCompGroup)c).init(sw, sh, z, fr);
 	}
 
 	/**
@@ -121,16 +127,13 @@ public class GuiCompGroup extends IndexedSet<IGuiComp> implements IGuiComp {
 
 	@Override
 	public void drawBackground(int mx, int my, float t) {
+		if (parent != null) parent.bound = false;
 		bound = false;
 		IGuiComp c;
 		for(int i = 0; i < count; i++)
 			if ((c = array[i]).enabled())
 				c.drawBackground(mx, my, t);
-		if (renderBuff != null) {
-			bindTexture(mainTex);
-			Tessellator.getInstance().draw();
-			renderBuff = null;
-		}
+		drawNow();
 	}
 
 	@Override
@@ -142,15 +145,15 @@ public class GuiCompGroup extends IndexedSet<IGuiComp> implements IGuiComp {
 	public boolean mouseIn(int mx, int my, int b, byte d) {
 		if (d == A_DOWN) {
 			IGuiComp c;
-			for(int i = 0; i < count; i++)
+			for(int i = count - 1; i >= 0 ; i--)
 				if ((c = array[i]).enabled() && c.isInside(mx, my)) {
 					if (c.getIdx() != focus) setFocus(c);
-					if (c.mouseIn(x, y, b, d)) return true;
+					if (c.mouseIn(mx, my, b, d)) return true;
 				}
 			if (focus >= 0 && focus < count && !array[focus].isInside(mx, my)) setFocus(null);
 		} else if (d == A_SCROLL) {
 			IGuiComp c;
-			for(int i = 0; i < count; i++)
+			for(int i = count - 1; i >= 0 ; i--)
 				if ((c = array[i]).enabled() && c.isInside(mx, my) && c.mouseIn(mx, my, b, d))
 					return true;
 		} else return focus >= 0 && focus < count && array[focus].mouseIn(mx, my, b, d);
@@ -212,7 +215,32 @@ public class GuiCompGroup extends IndexedSet<IGuiComp> implements IGuiComp {
 		if (tex != mainTex) bound = false;
 		else if (bound) return;
 		else bound = true;
-		Minecraft.getMinecraft().renderEngine.bindTexture(tex);
+		if (tex != null) Minecraft.getMinecraft().renderEngine.bindTexture(tex);
+	}
+
+	/**
+	 * @return a local render buffer instance for drawing rectangular shapes with this component group's default texture image (at the end of current background draw)
+	 */
+	public BufferBuilder getDraw() {
+		if (tessellator == null) tessellator = new Tessellator(256 * 5);
+		BufferBuilder b = tessellator.getBuffer();
+		if (!drawing) {
+			b.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+			drawing = true;
+		}
+		return b;
+	}
+
+	/**
+	 * draws queued vertices immediately instead of waiting till the end of current background draw cycle.
+	 */
+	public void drawNow() {
+		if (drawing) {
+			GlStateManager.color(1F, 1F, 1F, 1F);
+			bindTexture(mainTex);
+			tessellator.draw();
+			drawing = false;
+		}
 	}
 
 	/**
@@ -225,12 +253,7 @@ public class GuiCompGroup extends IndexedSet<IGuiComp> implements IGuiComp {
 	 * @param h height in pixels
 	 */
 	public void drawRect(int x, int y, int tx, int ty, int w, int h) {
-		BufferBuilder b = renderBuff;
-		if (b == null) {
-			b = Tessellator.getInstance().getBuffer();
-			b.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-			renderBuff = b;
-		}
+		BufferBuilder b = getDraw();
 		int X = x + w, Y = y + h;
 		double u = (double)tx / (double)texW, U = (double)(tx + w) / (double)texW,
 				v = (double)ty / (double)texH, V = (double)(ty + h) / (double)texH,
@@ -250,6 +273,17 @@ public class GuiCompGroup extends IndexedSet<IGuiComp> implements IGuiComp {
 	 */
 	public void drawTooltip(List<String> text, int mx, int my) {
 		GuiUtils.drawHoveringText(text, mx, my, screenWidth, screenHeight, -1, fontRenderer);
+	}
+
+	/**
+	 * draw a tooltip overlay
+	 * @param text text, where lines are separated by the '\n' character
+	 * @param mx mouse X position
+	 * @param my mouse Y position
+	 * @see GuiUtils#drawHoveringText(List, int, int, int, int, int, FontRenderer)
+	 */
+	public void drawTooltip(String text, int mx, int my) {
+		GuiUtils.drawHoveringText(Arrays.asList(text.split("\n")), mx, my, screenWidth, screenHeight, -1, fontRenderer);
 	}
 
 }
