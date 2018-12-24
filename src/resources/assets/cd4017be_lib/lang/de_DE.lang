@@ -18,3 +18,6 @@ enumfacing.south=Süden
 enumfacing.east=Osten
 enumfacing.west=Westen
 enumfacing.null=Keine
+# Gui
+gui.cd4017be.move=Fenster verschieben
+gui.cd4017be.close=Fenster schließen

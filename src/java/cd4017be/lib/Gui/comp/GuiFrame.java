@@ -49,7 +49,7 @@ public class GuiFrame extends GuiCompGroup {
 	 * @return this
 	 */
 	public GuiFrame title(String title, float relX) {
-		this.title = title.startsWith("\\") ? title.substring(1) : TooltipUtil.translate(title);
+		this.title = TooltipUtil.translate(title);
 		this.titleX = relX;
 		return this;
 	}
@@ -71,13 +71,29 @@ public class GuiFrame extends GuiCompGroup {
 
 	@Override
 	public void drawBackground(int mx, int my, float t) {
+		if (parent != null) {
+			parent.drawNow();
+			parent.bound = false;
+		}
 		if (bgTexture != null) {
 			bindTexture(bgTexture);
 			GuiUtils.drawTexturedModalRect(x, y, bgX, bgY, w, h, zLevel);
 		}
-		super.drawBackground(mx, my, t);
-		if (title != null)
+		if (title != null) {
+			bound = false;
 			fontRenderer.drawString(title, x + (int)(titleX * (float)(w - fontRenderer.getStringWidth(title))), y + titleY, 0x404040);
+		}
+		super.drawBackground(mx, my, t);
+	}
+
+	@Override
+	public boolean focus() {
+		return true;
+	}
+
+	@Override
+	public boolean mouseIn(int mx, int my, int b, byte d) {
+		return super.mouseIn(mx, my, b, d) || parent != null && parent.focus == getIdx();
 	}
 
 }

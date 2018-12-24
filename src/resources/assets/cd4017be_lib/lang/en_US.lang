@@ -20,3 +20,6 @@ enumfacing.south=South
 enumfacing.east=East
 enumfacing.west=West
 enumfacing.null=None
+# Gui
+gui.cd4017be.move=Move Window
+gui.cd4017be.close=Close Window
