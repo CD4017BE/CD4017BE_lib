@@ -12,6 +12,10 @@ public class Parameters {
 		this.param = param;
 	}
 
+	public boolean has(int i) {
+		return param.length > i;
+	}
+
 	public String getString(int i) {
 		if (i >= param.length) throw num(i);
 		Object o = param[i];

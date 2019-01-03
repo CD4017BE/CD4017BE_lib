@@ -2,6 +2,7 @@ package cd4017be.api.recipes;
 
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.function.IntPredicate;
 
 import com.google.common.base.Predicate;
 
@@ -16,6 +17,8 @@ import net.minecraft.world.World;
 import net.minecraft.world.gen.IChunkGenerator;
 import net.minecraft.world.chunk.IChunkProvider;
 import net.minecraft.world.gen.feature.WorldGenMinable;
+import net.minecraftforge.event.terraingen.OreGenEvent.GenerateMinable.EventType;
+import net.minecraftforge.event.terraingen.TerrainGen;
 import net.minecraftforge.fml.common.IWorldGenerator;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 import cd4017be.api.recipes.RecipeAPI.IRecipeHandler;
@@ -25,7 +28,7 @@ import cd4017be.lib.script.Parameters;
  * 
  * @author CD4017BE
  */
-public class OreGenHandler implements IRecipeHandler, IWorldGenerator{
+public class OreGenHandler implements IRecipeHandler, IWorldGenerator {
 
 	ArrayList<OreGen> generators;
 
@@ -36,10 +39,14 @@ public class OreGenHandler implements IRecipeHandler, IWorldGenerator{
 
 	@Override
 	public void generate(Random random, int chunkX, int chunkZ, World world, IChunkGenerator chunkGenerator, IChunkProvider chunkProvider) {
-		for (OreGen gen : generators) 
-			gen.generate(world, random, new BlockPos(chunkX << 4, 0, chunkZ << 4));
+		BlockPos pos = new BlockPos(chunkX << 4, 0, chunkZ << 4);
+		int dim = world.provider.getDimension();
+		for (OreGen gen : generators)
+			if ((gen.dim == null || gen.dim.test(dim)) && TerrainGen.generateOre(world, random, gen, pos, EventType.CUSTOM))
+				gen.generate(world, random, pos);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public void addRecipe(Parameters p) {
 		ItemStack is = p.get(2, ItemStack.class);
@@ -50,19 +57,22 @@ public class OreGenHandler implements IRecipeHandler, IWorldGenerator{
 		IBlockState out = ((ItemBlock)i).getBlock().getStateFromMeta(i.getMetadata(is.getMetadata()));
 		Block in = Block.getBlockFromName(p.getString(1));
 		if (in == null) throw new IllegalArgumentException("block type does not exists");
-		generators.add(new OreGen(out, is.getCount(), (int)p.getNumber(3), (int)vec[0], (int)vec[1], (int)vec[2], BlockMatcher.forBlock(in)));
+		double dim = p.has(5) ? p.getNumber(5) : Double.NaN;
+		generators.add(new OreGen(out, is.getCount(), (int)p.getNumber(3), (int)vec[0], (int)vec[1], (int)vec[2], BlockMatcher.forBlock(in), Double.isNaN(dim) ? null : (d)-> d == (int)dim));
 	}
 
-	class OreGen extends WorldGenMinable{
+	class OreGen extends WorldGenMinable {
 		final int numV, hgt;
 		final float min, max;
+		final IntPredicate dim;
 		
-		public OreGen(IBlockState state, int numB, int numV, int minH, int mainH, int maxH, Predicate<IBlockState> target) {
+		public OreGen(IBlockState state, int numB, int numV, int minH, int mainH, int maxH, Predicate<IBlockState> target, IntPredicate dim) {
 			super(state, numB, target);
 			this.numV = numV;
 			this.min = mainH - minH;
 			this.max = maxH - mainH;
 			this.hgt = mainH;
+			this.dim = dim;
 		}
 
 		@Override

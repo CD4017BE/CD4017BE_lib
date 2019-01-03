@@ -119,6 +119,11 @@ public class Function {
 		code.put(data);
 	}
 
+	public static int asInt(Object o) {
+		return o instanceof Number ? ((Number)o).intValue() :
+			o == null || o == Boolean.FALSE ? 0 : 1;
+	}
+
 	public static enum Operator {
 		gloc(1) {
 			@Override
@@ -238,12 +243,12 @@ public class Function {
 				Object pos = stack.rem();
 				Object obj = stack.rem();
 				if (obj instanceof double[])
-					stack.add(((double[])obj)[((Double)pos).intValue()]);
+					stack.add(((double[])obj)[asInt(pos)]);
 				else if (obj instanceof String) {
 					Object[] ind = (Object[])pos;
 					stack.add(((String)obj).substring(((Double)ind[0]).intValue(), ((Double)ind[1]).intValue()));
 				} else if (obj instanceof Object[])
-					stack.add(((Object[])obj)[((Double)pos).intValue()]);
+					stack.add(((Object[])obj)[asInt(pos)]);
 				else throw new IllegalArgumentException("array expected!");
 			}
 		}, arr_set(-3) {
@@ -253,14 +258,14 @@ public class Function {
 				Object obj = stack.rem();
 				Object arr = stack.rem();
 				if (arr instanceof double[])
-					((double[])arr)[((Double)pos).intValue()] = (Double)obj;
+					((double[])arr)[asInt(pos)] = (Double)obj;
 				else if (arr instanceof String) {
 					Object[] ind = (Object[])pos;
 					int p0 = ((Double)ind[0]).intValue(), p1 = ((Double)ind[1]).intValue();
 					String s0 = (String)arr, s1 = obj.toString();
 					stack.add(s0.substring(0, p0).concat(s1).concat(s0.substring(p1)));
 				} else if (arr instanceof Object[])
-					((Object[])arr)[((Double)pos).intValue()] = obj;
+					((Object[])arr)[asInt(pos)] = obj;
 				else throw new IllegalArgumentException("array expected!");
 			}
 		}, arr_l(0) {
