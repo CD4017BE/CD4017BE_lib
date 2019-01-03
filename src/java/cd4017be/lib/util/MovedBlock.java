@@ -1,5 +1,7 @@
 package cd4017be.lib.util;
 
+import java.util.List;
+
 import cd4017be.api.automation.IOperatingArea;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
@@ -7,7 +9,12 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.play.server.SPacketEntityEffect;
+import net.minecraft.network.play.server.SPacketPlayerAbilities;
+import net.minecraft.network.play.server.SPacketRespawn;
+import net.minecraft.potion.PotionEffect;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.management.PlayerList;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.EnumSkyBlock;
@@ -114,7 +121,7 @@ public class MovedBlock {
 		int y = pos.getY();
 		int bz = pos.getZ() & 15;
 		int p = bz << 4 | bx;
-
+		
 		if (y >= chunk.precipitationHeightMap[p] - 1) chunk.precipitationHeightMap[p] = -999;
 		int h = chunk.getHeightMap()[p];
 		
@@ -126,14 +133,14 @@ public class MovedBlock {
 			extendedblockstorage = storageArrays[y >> 4] = new ExtendedBlockStorage(y >> 4 << 4, world.provider.hasSkyLight());
 			flag = y >= h;
 		}
-
+		
 		extendedblockstorage.set(bx, y & 15, bz, state);
 		if (extendedblockstorage.get(bx, y & 15, bz).getBlock() != block) return false;
 		
 		if (flag) chunk.generateSkylightMap();
 		else {
 			int opac = state.getLightOpacity(world, pos);
-
+			
 			if (opac > 0) {
 				if (y >= h) chunk.relightBlock(bx, y + 1, bz);
 			} else if (y == h - 1) chunk.relightBlock(bx, y, bz);
@@ -148,11 +155,10 @@ public class MovedBlock {
 		
 		//}
 		
-		if (state.getLightOpacity(world, pos) != oldOpac || state.getLightValue(world, pos) != oldLight)
-		{
+		if (state.getLightOpacity(world, pos) != oldOpac || state.getLightValue(world, pos) != oldLight) {
 			world.profiler.startSection("checkLight");
-		   	world.checkLight(pos);
-		   	world.profiler.endSection();
+			world.checkLight(pos);
+			world.profiler.endSection();
 		}
 		world.notifyBlockUpdate(pos, state0, state, 3);
 		return true;
@@ -166,36 +172,55 @@ public class MovedBlock {
 	 * @param y new y position
 	 * @param z new z position
 	 */
-	public static void moveEntity(Entity entity, int dim, double x, double y, double z) {
-		int dimO = entity.world.provider.getDimension();
-		if (dim != dimO) {
-			MinecraftServer server = ((WorldServer)entity.world).getMinecraftServer();
-			WorldServer worldO = server.getWorld(dimO);
-			WorldServer worldN = server.getWorld(dim);
-			if (entity instanceof EntityPlayerMP) {
-				server.getPlayerList().transferPlayerToDimension((EntityPlayerMP)entity, dim, new Teleporter(worldN, x, y, z));
-			} else {
-				entity.dimension = dim;
-				entity.world.removeEntity(entity);
-				entity.isDead = false;
-				server.getPlayerList().transferEntityToWorld(entity, 0, worldO, worldN, new Teleporter(worldN, x, y, z));
-			}
-		} else if (entity instanceof EntityPlayerMP) {
-			((EntityPlayerMP)entity).setPositionAndUpdate(x, y, z);
-		} else entity.setPosition(x, y, z);
+	public static void moveEntity(Entity entity, int dimN, double x, double y, double z) {
+		if (!entity.isEntityAlive() || entity.isRiding()) return;
+		WorldServer worldO = (WorldServer)entity.world;
+		int dimO = entity.dimension;
+		if (dimN == dimO) {
+			if (entity instanceof EntityPlayerMP)
+				((EntityPlayerMP)entity).setPositionAndUpdate(x, y, z);
+			else
+				entity.setLocationAndAngles(x, y, z, entity.rotationYaw, entity.rotationPitch);
+			return;
+		}
+		List<Entity> passengers = entity.getPassengers();
+		for (Entity e : passengers) {
+			e.dismountRidingEntity();
+			moveEntity(e, dimN, x, y, z);
+		}
+		MinecraftServer server = worldO.getMinecraftServer();
+		WorldServer worldN = server.getWorld(dimN);
+		if (entity instanceof EntityPlayerMP) {
+			PlayerList pl = server.getPlayerList();
+			EntityPlayerMP player = (EntityPlayerMP)entity;
+			player.dimension = dimN;
+			player.connection.sendPacket(new SPacketRespawn(player.dimension, worldN.getDifficulty(), worldN.getWorldInfo().getTerrainType(), player.interactionManager.getGameType()));
+			pl.updatePermissionLevel(player);
+			worldO.removeEntityDangerously(player);
+			transferEntityToWorld(player, worldN, x, y, z);
+			pl.preparePlayer(player, worldO);
+			player.connection.setPlayerLocation(player.posX, player.posY, player.posZ, player.rotationYaw, player.rotationPitch);
+			player.interactionManager.setWorld(worldN);
+			player.connection.sendPacket(new SPacketPlayerAbilities(player.capabilities));
+			pl.updateTimeAndWeatherForPlayer(player, worldN);
+			pl.syncPlayerInventory(player);
+			for (PotionEffect potioneffect : player.getActivePotionEffects())
+				player.connection.sendPacket(new SPacketEntityEffect(player.getEntityId(), potioneffect));
+			net.minecraftforge.fml.common.FMLCommonHandler.instance().firePlayerChangedDimensionEvent(player, dimO, dimN);
+		} else {
+			entity.dimension = dimN;
+			entity.world.removeEntity(entity);
+			transferEntityToWorld(entity, worldN, x, y, z);
+		}
+		for (Entity e : passengers) e.startRiding(entity, true);
 	}
 
-	public static class Teleporter extends net.minecraft.world.Teleporter {
-		private final double x, y, z;
-		public Teleporter(WorldServer worldIn, double x, double y, double z) {
-			super(worldIn);
-			this.x = x; this.y = y; this.z = z;
-		}
-		@Override
-		public void placeInPortal(Entity entity, float rot) {
-			entity.setLocationAndAngles(x, y, z, rot, entity.rotationPitch);
-		}
-		
+	private static void transferEntityToWorld(Entity entity, WorldServer world, double x, double y, double z) {
+		entity.isDead = false;
+		entity.setLocationAndAngles(x, y, z, entity.rotationYaw, entity.rotationPitch);
+		world.spawnEntity(entity);
+		world.updateEntityWithOptionalForce(entity, false);
+		entity.setWorld(world);
 	}
 
 }
