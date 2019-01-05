@@ -14,6 +14,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
+import cd4017be.lib.script.obj.Array;
+import cd4017be.lib.script.obj.IOperand;
+import cd4017be.lib.script.obj.Nil;
+import cd4017be.lib.script.obj.Number;
+import cd4017be.lib.script.obj.Text;
+import cd4017be.lib.script.obj.Vector;
+
 /**
  * 
  * @author CD4017BE
@@ -70,7 +77,7 @@ public class ScriptFiles {
 			for (Script s : scripts) {
 				System.out.printf("> %s: v. %d, const %d, func %d\n", s.fileName, s.version, s.variables.size(), s.methods.size());
 				dos.writeShort(s.variables.size());
-				for (Entry<String, Object> e : s.variables.entrySet()) {
+				for (Entry<String, IOperand> e : s.variables.entrySet()) {
 					dos.writeUTF(e.getKey());
 					serialize(e.getValue(), dos);
 				}
@@ -95,7 +102,7 @@ public class ScriptFiles {
 			boolean outdated = false;
 			for (int i = 0; i < scripts.length; i++) {
 				String name = dis.readUTF();
-				Script s = new Script(name, new HashMap<String, Function>(), new HashMap<String, Object>());
+				Script s = new Script(name, new HashMap<String, Function>(), new HashMap<String, IOperand>());
 				s.editDate = dis.readLong();
 				File f = new File(dir, name + ".rcp");
 				outdated |= f.exists() && s.editDate < f.lastModified();
@@ -125,45 +132,43 @@ public class ScriptFiles {
 		}
 	}
 
-	private static void serialize(Object v, DataOutputStream dos) throws IOException {
-		if (v instanceof Boolean) {
-			dos.writeByte((Boolean)v ? 2 : 1);
-		} else if (v instanceof Double) {
+	private static void serialize(IOperand v, DataOutputStream dos) throws IOException {
+		if (v instanceof Number) {
 			dos.writeByte(3);
-			dos.writeDouble((Double)v);
-		} else if (v instanceof String) {
+			dos.writeDouble(((Number)v).value);
+		} else if (v instanceof Text) {
 			dos.writeByte(4);
-			dos.writeUTF((String)v);
-		} else if (v instanceof double[]) {
+			dos.writeUTF(((Text)v).value);
+		} else if (v instanceof Vector) {
 			dos.writeByte(5);
-			double[] vec = (double[])v;
+			double[] vec = ((Vector)v).value;
 			dos.writeByte(vec.length);
 			for (double d : vec) dos.writeDouble(d);
-		} else if (v instanceof Object[]) {
+		} else if (v instanceof Array) {
 			dos.writeByte(6);
-			Object[] arr = (Object[])v;
+			IOperand[] arr = ((Array)v).array;
 			dos.writeByte(arr.length);
-			for (Object o : arr) serialize(o, dos);
+			for (IOperand o : arr) serialize(o, dos);
 		} else {
 			dos.writeByte(0);
 		}
 	}
 
-	private static Object deserialize(DataInputStream dis) throws IOException {
+	private static IOperand deserialize(DataInputStream dis) throws IOException {
 		switch(dis.readByte()) {
-		case 1: return false;
-		case 2: return true;
-		case 3: return dis.readDouble();
-		case 4: return dis.readUTF();
+		case 1: return Number.FALSE;
+		case 2: return Number.TRUE;
+		case 3: return new Number(dis.readDouble());
+		case 4: return new Text(dis.readUTF());
 		case 5: 
-			double[] vec = new double[dis.readByte() & 0xff];
-			for (int i = 0; i < vec.length; i++) vec[i] = dis.readDouble();
+			Vector vec = new Vector(dis.readByte() & 0xff);
+			for (int i = 0, l = vec.value.length; i < l; i++) vec.value[i] = dis.readDouble();
 			return vec;
 		case 6:
-			Object[] arr = new Object[dis.readByte() & 0xff];
-			for (int i = 0; i < arr.length; i++) arr[i] = deserialize(dis);
+			Array arr = new Array(dis.readByte() & 0xff);
+			for (int i = 0, l = arr.array.length; i < l; i++) arr.array[i] = deserialize(dis);
 			return arr;
-		default: return null;
+		default: return Nil.NIL;
 		}
 	}
 

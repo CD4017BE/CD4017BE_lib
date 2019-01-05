@@ -6,13 +6,17 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
-import java.util.function.Predicate;
-
 import javax.script.ScriptException;
 
+import cd4017be.lib.script.obj.IOperand;
+import cd4017be.lib.script.obj.IOperand.OperandIterator;
+import cd4017be.lib.script.obj.Number;
+import cd4017be.lib.script.obj.Text;
+import cd4017be.lib.script.obj.Vector;
+import cd4017be.lib.script.obj.Array;
+import cd4017be.lib.script.obj.Nil;
+import cd4017be.lib.script.obj.Error;
 import cd4017be.lib.util.Stack;
-import static cd4017be.lib.util.ArrayMath.*;
 
 /**
  * 
@@ -21,6 +25,15 @@ import static cd4017be.lib.util.ArrayMath.*;
 public class Function {
 
 	private static final int TICK_LIMIT = 262144, REC_LIMIT = 64;
+	public static final byte
+		gloc = 0, gvar = 1, sloc = 2, svar = 3,
+		cst_N = 4, cst_T = 5, cst_true = 6, cst_false = 7, cst_nil = 8,
+		go = 9, goif = 10, goifn = 11, call = 12, gosucc = 13,
+		arr_get = 14, arr_set = 15, arr_l = 16, arr_pack = 17, vec_pack = 18, text_pack = 19,
+		add = 20, sub = 21, mul = 22, div = 23, neg = 24, inv = 25, mod = 26,
+		eq = 27, neq = 28, ls = 29, nls = 30, gr = 31, ngr = 32,
+		and = 33, or = 34, nand = 35, nor = 36, xor = 37, xnor = 38,
+		form = 39, clear = 40, iterate = 41, end = 42, gofail = 43;
 
 	private final byte[] code;
 	public final int Nparam, lineOfs, Nstack;
@@ -63,23 +76,223 @@ public class Function {
 		}
 	}
 
-	public Object apply(Parameters param) throws ScriptException {
+	public IOperand apply(Parameters param) throws ScriptException {
 		if (param.param.length != Nparam) throw new ScriptException("wrong number of parameters!", name, lineOfs);
-		Stack<Object> stack = new Stack<Object>(Nstack);
+		Stack<IOperand> stack = new Stack<IOperand>(Nstack);
 		stack.fill(param.param);
 		ByteBuffer code = ByteBuffer.wrap(this.code);
-		int n = 0;
+		int tc = TICK_LIMIT;
 		try {
 			while(code.hasRemaining()) {
-				if (++n > TICK_LIMIT) throw new Exception("ran for more than " + TICK_LIMIT + " cycles: infinite loop?");
-				Operator lo = Operator.operators[code.get()];
-				lo.eval(code, stack, this);
+				if (--tc < 0) throw err(new Exception("ran for more than " + TICK_LIMIT + " cycles: infinite loop?"), code);
+				IOperand a, b;
+				switch(code.get()) {
+				case gloc:
+					stack.add(stack.get(code.get()).onCopy());
+					break;
+				case gvar: {
+					String name = getName(code, false);
+					Module m = name.indexOf('.') < 0 ? script : script.context;
+					stack.add(m.read(name).onCopy());
+				}	break;
+				case sloc:
+					stack.set(code.get(), stack.rem());
+					break;
+				case svar: {
+					String name = getName(code, false);
+					a = stack.rem();
+					if (name.indexOf('.') < 0) script.variables.put(name, a);
+					else script.context.assign(name, a);
+				}	break;
+				case cst_N:
+					stack.add(new Number(code.getDouble()));
+					break;
+				case cst_T:
+					stack.add(new Text(getName(code, true)));
+					break;
+				case cst_true:
+					stack.add(Number.TRUE);
+					break;
+				case cst_false:
+					stack.add(Number.FALSE);
+					break;
+				case cst_nil:
+					stack.add(Nil.NIL);
+					break;
+				case go:
+					code.position(code.getShort() & 0xffff);
+					break;
+				case goif: {
+					int pos = code.getShort() & 0xffff;
+					if (stack.rem().asBool()) code.position(pos);
+				}	break;
+				case goifn: {
+					int pos = code.getShort() & 0xffff;
+					if (!stack.rem().asBool()) code.position(pos);
+				}	break;
+				case gosucc:{
+					int pos = code.getShort() & 0xffff;
+					if (!stack.rem().isError()) code.position(pos);
+				}	break;
+				case gofail: {
+					int pos = code.getShort() & 0xffff;
+					if (stack.rem().isError()) code.position(pos);
+				}	break;
+				case call: {
+					Context c = script.context;
+					String name = getName(code, false);
+					int n = code.get();
+					boolean doRet = (n & 0x80) != 0;
+					try {
+						if (++c.recursion > REC_LIMIT)
+							throw new Exception("more than " + REC_LIMIT + " recursive function calls");
+						IOperand[] param1 = new IOperand[n & 0x7f];
+						stack.drain(param1);
+						Module m = name.indexOf('.') < 0 ? script : c;
+						a = m.invoke(name, new Parameters(param1));
+						if (doRet) stack.add(a);
+					} catch (Exception e) {
+						if (doRet) stack.add(Error.of(err(e, code)));
+						else c.LOG.error(Context.ERROR, "failed operation " + name + " in script " + script.fileName, err(e, code));
+					} finally {
+						c.recursion--;
+					}
+				}	break;
+				case arr_get:
+					b = stack.rem(); a = stack.rem();
+					stack.add(a.get(b));
+					break;
+				case arr_set:
+					b = stack.rem(); a = stack.rem();
+					stack.rem().put(b, a);
+					break;
+				case arr_l:
+					stack.add(stack.rem().len());
+					break;
+				case arr_pack: {
+					Array list = new Array(code.get() & 0xff);
+					stack.drain(list.array);
+					stack.add(list);
+				}	break;
+				case vec_pack: {
+					IOperand[] arr = new IOperand[code.get() & 0xff];
+					stack.drain(arr);
+					stack.add(new Vector(arr));
+				}	break;
+				case text_pack: {
+					IOperand[] arr = new IOperand[code.get() & 0xff];
+					stack.drain(arr);
+					StringBuilder s = new StringBuilder();
+					for (Object obj : arr) 
+						s.append(obj.toString());
+					stack.add(new Text(s.toString()));
+				}	break;
+				case add:
+					b = stack.rem(); a = stack.rem();
+					stack.add(a.addR(b));
+					break;
+				case sub:
+					b = stack.rem(); a = stack.rem();
+					stack.add(a.subR(b));
+					break;
+				case mul:
+					b = stack.rem(); a = stack.rem();
+					stack.add(a.mulR(b));
+					break;
+				case div:
+					b = stack.rem(); a = stack.rem();
+					stack.add(a.divR(b));
+					break;
+				case neg:
+					stack.add(stack.rem().neg());
+					break;
+				case inv:
+					stack.add(stack.rem().inv());
+					break;
+				case mod:
+					b = stack.rem(); a = stack.rem();
+					stack.add(a.modR(b));
+					break;
+				case eq:
+					b = stack.rem(); a = stack.rem();
+					stack.add(a.equals(b) ? Number.TRUE : Number.FALSE);
+					break;
+				case neq:
+					b = stack.rem(); a = stack.rem();
+					stack.add(a.equals(b) ? Number.FALSE : Number.TRUE);
+					break;
+				case ls:
+					b = stack.rem(); a = stack.rem();
+					stack.add(a.ls(b));
+					break;
+				case nls:
+					b = stack.rem(); a = stack.rem();
+					stack.add(a.nls(b));
+					break;
+				case gr:
+					b = stack.rem(); a = stack.rem();
+					stack.add(a.gr(b));
+					break;
+				case ngr:
+					b = stack.rem(); a = stack.rem();
+					stack.add(a.ngr(b));
+					break;
+				case and:
+					b = stack.rem(); a = stack.rem();
+					stack.add(a.and(b));
+					break;
+				case or:
+					b = stack.rem(); a = stack.rem();
+					stack.add(a.or(b));
+					break;
+				case nand:
+					b = stack.rem(); a = stack.rem();
+					stack.add(a.nand(b));
+					break;
+				case nor:
+					b = stack.rem(); a = stack.rem();
+					stack.add(a.nor(b));
+					break;
+				case xor:
+					b = stack.rem(); a = stack.rem();
+					stack.add(a.xor(b));
+					break;
+				case xnor:
+					b = stack.rem(); a = stack.rem();
+					stack.add(a.xnor(b));
+					break;
+				case form:
+					stack.add(new Text(getName(code, false), stack.rem()));
+					break;
+				case clear:
+					stack.setPos(code.get());
+					break;
+				case iterate: {
+					a = stack.get();
+					OperandIterator it;
+					if (a instanceof OperandIterator)
+						it = (OperandIterator)a;
+					else
+						stack.set(it = a.iterator());
+					int p = code.getShort() & 0xffff;
+					if (it.hasNext())
+						stack.add(it.next());
+					else {
+						stack.rem();
+						code.position(p);
+					}
+				}	break;
+				case end: {
+					stack.setPos(code.get());
+					a = stack.rem();
+					((OperandIterator)stack.get()).set(a);
+					code.position(code.getShort() & 0xffff);
+				}	break;
+				}
 			}
 			return hasReturn ? stack.rem() : null;
-		} catch (ScriptException ex) {
-			throw ex;
-		} catch (Exception ex) {
-			throw err(ex, code);
+		} catch (Error e) {
+			throw err(e, code);
 		}
 	}
 
@@ -103,7 +316,9 @@ public class Function {
 		}
 	}
 
-	public int size() {return code.length;}
+	public int size() {
+		return code.length;
+	}
 
 	public static String getName(ByteBuffer code, boolean big) {
 		int n = big ? code.getShort() & 0xffff : code.get() & 0xff;
@@ -117,504 +332,6 @@ public class Function {
 		if (big) code.putShort((short)data.length);
 		else code.put((byte)data.length);
 		code.put(data);
-	}
-
-	public static int asInt(Object o) {
-		return o instanceof Number ? ((Number)o).intValue() :
-			o == null || o == Boolean.FALSE ? 0 : 1;
-	}
-
-	public static enum Operator {
-		gloc(1) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) {
-				stack.add(stack.get(code.get()));
-			}
-		}, gvar(1) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) {
-				String name = getName(code, false);
-				Module m = name.indexOf('.') < 0 ? cont.script : cont.script.context;
-				stack.add(m.read(name));
-			}
-		}, sloc(-1) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) {
-				stack.set(code.get(), stack.rem());
-			}
-		}, svar(-1) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) {
-				String name = getName(code, false);
-				Object obj = stack.rem();
-				if (name.indexOf('.') < 0) cont.script.variables.put(name, obj);
-				else cont.script.context.assign(name, obj);
-			}
-		}, cst_N(1) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) {
-				stack.add(code.getDouble());
-			}
-		}, cst_T(1) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) {
-				stack.add(getName(code, true));
-			}
-		}, cst_true(1) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) {
-				stack.add(true);
-			}
-		}, cst_false(1) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) {
-				stack.add(false);
-			}
-		}, cst_nil(1) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) {
-				stack.add(null);
-			}
-		}, go(0) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) {
-				int p = code.getShort() & 0xffff;
-				code.position(p);
-			}
-		}, goif(-1) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) {
-				int pos = code.getShort() & 0xffff;
-				if ((Boolean)stack.rem())
-					code.position(pos);
-			}
-		}, goifn(-1) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) {
-				int pos = code.getShort() & 0xffff;
-				if (!(Boolean)stack.rem())
-					code.position(pos);
-			}
-		}, call(0) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) throws Exception {
-				Context c = cont.script.context;
-				if (++c.recursion > REC_LIMIT) throw new Exception("more than " + REC_LIMIT + " recursive function calls");
-				String name = getName(code, false);
-				int n = code.get();
-				Object[] param = new Object[n & 0x7f];
-				stack.drain(param);
-				Module m = name.indexOf('.') < 0 ? cont.script : c;
-				boolean doRet = (n & 0x80) != 0;
-				try {
-					Object ret = m.invoke(name, new Parameters(param));
-					if (doRet) stack.add(ret);
-				} catch (Exception e) {
-					if (doRet) stack.add(cont.err(e, code));
-					else c.handleError(cont.err(e, code), cont.script, name);
-				} finally {
-					c.recursion--;
-				}
-			}
-		}, call_save(1) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) throws Exception {
-				Context c = cont.script.context;
-				int r = c.recursion++;
-				if (r >= REC_LIMIT) throw new Exception("more than " + REC_LIMIT + " recursive function calls");
-				String name = getName(code, false);
-				int n = code.get();
-				Object[] param = new Object[n & 0x7f];
-				stack.drain(param);
-				Module m = name.indexOf('.') < 0 ? cont.script : c;
-				try {
-					Object ret = m.invoke(name, new Parameters(param));
-					if ((n & 0x80) != 0) stack.add(ret);
-					stack.add(true);
-				} catch (Exception e) {
-					stack.add(false);
-				} finally {
-					c.recursion = r;
-				}
-			}
-		}, arr_get(-1) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) {
-				Object pos = stack.rem();
-				Object obj = stack.rem();
-				if (obj instanceof double[])
-					stack.add(((double[])obj)[asInt(pos)]);
-				else if (obj instanceof String) {
-					Object[] ind = (Object[])pos;
-					stack.add(((String)obj).substring(((Double)ind[0]).intValue(), ((Double)ind[1]).intValue()));
-				} else if (obj instanceof Object[])
-					stack.add(((Object[])obj)[asInt(pos)]);
-				else throw new IllegalArgumentException("array expected!");
-			}
-		}, arr_set(-3) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) {
-				Object pos = stack.rem();
-				Object obj = stack.rem();
-				Object arr = stack.rem();
-				if (arr instanceof double[])
-					((double[])arr)[asInt(pos)] = (Double)obj;
-				else if (arr instanceof String) {
-					Object[] ind = (Object[])pos;
-					int p0 = ((Double)ind[0]).intValue(), p1 = ((Double)ind[1]).intValue();
-					String s0 = (String)arr, s1 = obj.toString();
-					stack.add(s0.substring(0, p0).concat(s1).concat(s0.substring(p1)));
-				} else if (arr instanceof Object[])
-					((Object[])arr)[asInt(pos)] = obj;
-				else throw new IllegalArgumentException("array expected!");
-			}
-		}, arr_l(0) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) {
-				Object obj = stack.rem();
-				if (obj instanceof double[])
-					stack.add((double)((double[])obj).length);
-				else if (obj instanceof String)
-					stack.add((double)((String)obj).length());
-				else if (obj instanceof Object[])
-					stack.add((double)((Object[])obj).length);
-				else throw new IllegalArgumentException("array expected!");
-			}
-		}, arr_pack(1) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) {
-				Object[] arr = new Object[code.get() & 0xff];
-				stack.drain(arr);
-				stack.add(arr);
-			}
-		}, vec_pack(1) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) throws Exception {
-				Object[] arr = new Object[code.get() & 0xff];
-				stack.drain(arr);
-				int n = 0;
-				for (Object obj : arr) {
-					if (obj instanceof double[]) n += ((double[])obj).length;
-					else n++;
-				}
-				double[] vec = new double[n];
-				for (int i = 0, j = 0; i < arr.length; i++) {
-					Object obj = arr[i];
-					if (obj instanceof double[]) {
-						double[] sub = (double[])obj;
-						System.arraycopy(sub, 0, vec, j, sub.length);
-						j += sub.length;
-					} else vec[j++] = (Double)obj;
-				}
-				stack.add(vec);
-			}
-		}, text_pack(1) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) throws Exception {
-				Object[] arr = new Object[code.get() & 0xff];
-				stack.drain(arr);
-				String s = "";
-				for (Object obj : arr) s += obj.toString();
-				stack.add(s);
-			}
-		}, add(-1) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) {
-				Object b = stack.rem(), a = stack.rem(), c;
-				if (b instanceof double[])
-					if (a instanceof double[])	c = add((double[])a, (double[])b);
-					else						c = ofs((double[])b, (Double)a);
-				else
-					if (a instanceof double[])	c = ofs((double[])a, (Double)b);
-					else						c = (Double)a + (Double)b;
-				stack.add(c);
-			}
-		}, sub(-1) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) {
-				Object b = stack.rem(), a = stack.rem(), c;
-				if (b instanceof double[])
-					if (a instanceof double[])	c = sub((double[])a, (double[])b);
-					else						c = neg((double[])b, (Double)a);
-				else
-					if (a instanceof double[])	c = ofs((double[])a, -(Double)b);
-					else						c = (Double)a - (Double)b;
-				stack.add(c);
-			}
-		}, mul(-1) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) {
-				Object b = stack.rem(), a = stack.rem(), c;
-				if (b instanceof double[])
-					if (a instanceof double[])	c = mul((double[])a, (double[])b);
-					else						c = sca((double[])b, (Double)a);
-				else
-					if (a instanceof double[])	c = sca((double[])a, (Double)b);
-					else						c = (Double)a * (Double)b;
-				stack.add(c);
-			}
-		}, div(-1) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) {
-				Object b = stack.rem(), a = stack.rem(), c;
-				if (b instanceof double[])
-					if (a instanceof double[])	c = div((double[])a, (double[])b);
-					else						c = inv((double[])b, (Double)a);
-				else
-					if (a instanceof double[])	c = sca((double[])a, 1.0 / (Double)b);
-					else						c = (Double)a / (Double)b;
-				stack.add(c);
-			}
-		}, neg(0) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) throws Exception {
-				Object a = stack.rem(), c;
-				if (a instanceof double[]) c = neg((double[])a, 0.0);
-				else c = -(Double)a;
-				stack.add(c);
-			}
-		}, inv(0) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) throws Exception {
-				Object a = stack.rem(), c;
-				if (a instanceof double[]) c = inv((double[])a, 1.0);
-				else c = 1.0 / (Double)a;
-				stack.add(c);
-			}
-		}, mod(-1) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) {
-				double b = (Double)stack.rem(), a = (Double)stack.rem();
-				stack.add(a % b);
-			}
-		}, eq(-1) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) throws Exception {
-				Object b = stack.rem(), a = stack.rem();
-				stack.add(a == null ? b == null : b.equals(a));
-			}
-		}, neq(-1) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) throws Exception {
-				Object b = stack.rem(), a = stack.rem();
-				stack.add(a == null ? b != null : !b.equals(a));
-			}
-		}, ls(-1) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) throws Exception {
-				double b = (Double)stack.rem(), a = (Double)stack.rem();
-				stack.add(a < b);
-			}
-		}, nls(-1) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) throws Exception {
-				double b = (Double)stack.rem(), a = (Double)stack.rem();
-				stack.add(a >= b);
-			}
-		}, gr(-1) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) throws Exception {
-				double b = (Double)stack.rem(), a = (Double)stack.rem();
-				stack.add(a > b);
-			}
-		}, ngr(-1) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) throws Exception {
-				double b = (Double)stack.rem(), a = (Double)stack.rem();
-				stack.add(a <= b);
-			}
-		}, and(-1) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) {
-				boolean b = (Boolean)stack.rem(), a = (Boolean)stack.rem();
-				stack.add(a & b);
-			}
-		}, or(-1) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) {
-				boolean b = (Boolean)stack.rem(), a = (Boolean)stack.rem();
-				stack.add(a | b);
-			}
-		}, nand(-1) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) {
-				boolean b = (Boolean)stack.rem(), a = (Boolean)stack.rem();
-				stack.add(!(a & b));
-			}
-		}, nor(-1) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) {
-				boolean b = (Boolean)stack.rem(), a = (Boolean)stack.rem();
-				stack.add(!(a | b));
-			}
-		}, xor(-1) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) {
-				boolean b = (Boolean)stack.rem(), a = (Boolean)stack.rem();
-				stack.add(a ^ b);
-			}
-		}, xnor(-1) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) {
-				boolean b = (Boolean)stack.rem(), a = (Boolean)stack.rem();
-				stack.add(!a ^ b);
-			}
-		}, form(0) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) throws Exception {
-				stack.add(String.format(getName(code, false), stack.rem()));
-			}
-		}, clear(0) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) throws Exception {
-				stack.setPos(code.get());
-			}
-		}, iterate(-1) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) throws Exception {
-				Object arr = stack.get();
-				Iterator it;
-				if (arr instanceof Iterator) it = (Iterator)arr;
-				else if (arr instanceof Object[]) stack.set(it = new ArrayIterator((Object[])arr));
-				else if (arr instanceof double[]) stack.set(it = new VectIterator((double[])arr));
-				else stack.set(it = new NumIterator((Double)arr));
-				int p = code.getShort() & 0xffff;
-				if (it.next()) {
-					stack.add(it.get());
-				} else {
-					stack.rem();
-					code.position(p);
-				}
-			}
-		}, end(0) {
-			@Override
-			public void eval(ByteBuffer code, Stack<Object> stack, Function cont) throws Exception {
-				stack.setPos(code.get());
-				Object val = stack.rem();
-				Iterator it = (Iterator)stack.get();
-				it.set(val);
-				code.position(code.getShort() & 0xffff);
-			}
-		};
-		public final int stack;
-		private Operator(int stack) {this.stack = stack;}
-		public abstract void eval(ByteBuffer code, Stack<Object> stack, Function function) throws Exception;
-		public static final Operator[] operators = values();
-	}
-
-	public interface Iterator {
-		public Object get();
-		public void set(Object o);
-		public boolean next();
-		public void reset();
-	}
-
-	private static class NumIterator implements Iterator {
-		public NumIterator(double max) {this.max = max; idx = -1;}
-		private final double max;
-		private double idx;
-		@Override
-		public Object get() {
-			return idx;
-		}
-		@Override
-		public void set(Object o) {
-			idx = (Double)o;
-		}
-		@Override
-		public boolean next() {
-			return ++idx < max;
-		}
-		@Override
-		public void reset() {
-			idx = -1;
-		}
-	}
-
-	private static class VectIterator implements Iterator {
-		public VectIterator(double[] vec) {this.vec = vec; idx = -1;}
-		private final double[] vec;
-		private int idx;
-		@Override
-		public Object get() {
-			return vec[idx];
-		}
-		@Override
-		public void set(Object o) {
-			vec[idx] = (Double)o;
-		}
-		@Override
-		public boolean next() {
-			return ++idx < vec.length;
-		}
-		@Override
-		public void reset() {
-			idx = -1;
-		}
-	}
-
-	public static class ArrayIterator implements Iterator {
-		public ArrayIterator(Object[] arr) {this.arr = arr; idx = -1;}
-		protected final Object[] arr;
-		protected int idx;
-		@Override
-		public Object get() {
-			return arr[idx];
-		}
-		@Override
-		public void set(Object o) {
-			arr[idx] = o;
-		}
-		@Override
-		public boolean next() {
-			return ++idx < arr.length;
-		}
-		@Override
-		public void reset() {
-			idx = -1;
-		}
-	}
-
-	public static class ListIterator<T> implements Iterator {
-		public ListIterator(List<T> arr) {this.arr = arr; idx = -1;}
-		protected final List<T> arr;
-		protected int idx;
-		@Override
-		public Object get() {
-			return arr.get(idx);
-		}
-		@SuppressWarnings("unchecked")
-		@Override
-		public void set(Object o) {
-			arr.set(idx, (T)o);
-		}
-		@Override
-		public boolean next() {
-			return ++idx < arr.size();
-		}
-		@Override
-		public void reset() {
-			idx = -1;
-		}
-	}
-
-	public static class FilteredIterator implements Iterator {
-		public FilteredIterator(Iterator it, Predicate<Object> key) {this.it = it; this.key = key;}
-		private final Iterator it;
-		private final Predicate<Object> key;
-		@Override
-		public Object get() {return it.get();}
-		@Override
-		public void set(Object o) {it.set(o);}
-		@Override
-		public boolean next() {
-			while(it.next())
-				if (key.test(it.get()))
-					return true;
-			return false;
-		}
-		@Override
-		public void reset() {it.reset();}
 	}
 
 }

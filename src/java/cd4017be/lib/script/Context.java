@@ -3,8 +3,15 @@ package cd4017be.lib.script;
 import java.util.HashMap;
 import java.util.function.Function;
 import javax.script.ScriptException;
-import org.apache.logging.log4j.Level;
-import net.minecraftforge.fml.common.FMLLog;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.Marker;
+import org.apache.logging.log4j.MarkerManager;
+
+import cd4017be.lib.script.obj.Array;
+import cd4017be.lib.script.obj.IOperand;
+import cd4017be.lib.script.obj.Number;
+import cd4017be.lib.script.obj.Text;
+import cd4017be.lib.script.obj.Vector;
 
 /**
  * 
@@ -12,46 +19,32 @@ import net.minecraftforge.fml.common.FMLLog;
  */
 public class Context implements Module {
 
-	private static final Function<Parameters, Object>
-		PRINT = (p) -> {
-			FMLLog.log("RECIPE_SCRIPT", Level.INFO, "> %s", p.get(0));
-			return null;
-		}, TIME = (p) -> (double)System.currentTimeMillis(),
-		REPL = (p) -> p.getString(0).replaceFirst(p.getString(1), p.getString(2)),
-		CONC = (p) -> {
-			int n = 0;
-			for (Object obj : p.param) {
-				if (obj instanceof Object[]) n += ((Object[])obj).length;
-				else n++;
-			}
-			Object[] vec = new Object[n];
-			for (int i = 0, j = 0; i < p.param.length; i++) {
-				Object obj = p.param[i];
-				if (obj instanceof Object[]) {
-					Object[] sub = (Object[])obj;
-					System.arraycopy(sub, 0, vec, j, sub.length);
-					j += sub.length;
-				} else vec[j++] = obj;
-			}
-			return vec; 
-		}, NARR = (p) -> new Object[(int)p.getNumber(0)],
-		NVEC = (p) -> new double[(int)p.getNumber(0)];
+	public static final Marker
+		SCRIPT = MarkerManager.getMarker("SCRIPT"),
+		PRINT = MarkerManager.getMarker("PRINT").setParents(SCRIPT),
+		ERROR = MarkerManager.getMarker("ERROR").setParents(SCRIPT);
 
-	public HashMap<String, Module> modules = new HashMap<String, Module>();
-	public HashMap<String, Function<Parameters, Object>> defFunc = new HashMap<String, Function<Parameters, Object>>();
+	private static final Function<Parameters, IOperand>
+		TIME = (p) -> new Number((double)System.currentTimeMillis() / 1000D),
+		REPL = (p) -> new Text(p.getString(0).replaceFirst(p.getString(1), p.getString(2))),
+		NARR = (p) -> new Array((int)p.getNumber(0)),
+		NVEC = (p) -> new Vector((int)p.getNumber(0));
+
+	public HashMap<String, Module> modules = new HashMap<>();
+	public HashMap<String, Function<Parameters, IOperand>> defFunc = new HashMap<>();
 	public int recursion = 0;
+	public final Logger LOG;
 
-	public Context() {
-		defFunc.put("print", PRINT);
+	public Context(Logger log) {
+		this.LOG = log;
+		defFunc.put("print", (p)-> {
+			LOG.info(PRINT, p.get(0));
+			return null;
+		});
 		defFunc.put("time", TIME);
 		defFunc.put("repl", REPL);
-		defFunc.put("conc", CONC);
 		defFunc.put("narr", NARR);
 		defFunc.put("nvec", NVEC);
-	}
-
-	public void handleError(ScriptException e, Script s, String op) throws ScriptException {
-		throw e;
 	}
 
 	private String[] split(String name) {
@@ -61,10 +54,10 @@ public class Context implements Module {
 	}
 
 	@Override
-	public Object invoke(String name, Parameters args) throws NoSuchMethodException, ScriptException {
+	public IOperand invoke(String name, Parameters args) throws NoSuchMethodException, ScriptException {
 		String[] s = split(name);
 		if (s[0] == null) {
-			Function<Parameters, Object> f = defFunc.get(s[1]);
+			Function<Parameters, IOperand> f = defFunc.get(s[1]);
 			if (f != null) return f.apply(args);
 		} else {
 			Module m = modules.get(s[0]);
@@ -74,14 +67,14 @@ public class Context implements Module {
 	}
 
 	@Override
-	public void assign(String name, Object val) {
+	public void assign(String name, IOperand val) {
 		String[] s = split(name);
 		Module m = modules.get(s[0]);
 		if (m != null) m.assign(s[1], val);
 	}
 
 	@Override
-	public Object read(String name) {
+	public IOperand read(String name) {
 		String[] s = split(name);
 		Module m = modules.get(s[0]);
 		if (m != null) return m.read(s[1]);

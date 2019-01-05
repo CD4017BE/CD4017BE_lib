@@ -1,14 +1,20 @@
 package cd4017be.lib.script;
 
+import cd4017be.lib.script.obj.Array;
+import cd4017be.lib.script.obj.IOperand;
+import cd4017be.lib.script.obj.Text;
+import cd4017be.lib.script.obj.Vector;
+import cd4017be.lib.script.obj.Error;
+
 /**
  * 
  * @author CD4017BE
  */
 public class Parameters {
 
-	public final Object[] param;
+	public final IOperand[] param;
 
-	public Parameters(Object... param) {
+	public Parameters(IOperand... param) {
 		this.param = param;
 	}
 
@@ -18,23 +24,25 @@ public class Parameters {
 
 	public String getString(int i) {
 		if (i >= param.length) throw num(i);
-		Object o = param[i];
-		if (o instanceof String) return (String)o;
+		IOperand o = param[i];
+		if (o instanceof Text) return ((Text)o).value;
 		throw ex("String", o, i);
 	}
 
 	public double getNumber(int i) {
 		if (i >= param.length) throw num(i);
-		Object o = param[i];
-		if (o instanceof Double) return (Double)o;
-		throw ex("Number", o, i);
+		return param[i].asDouble();
+	}
+
+	public int getIndex(int i) {
+		if (i >= param.length) throw num(i);
+		return param[i].asIndex();
 	}
 
 	public boolean getBool(int i) {
 		if (i >= param.length) throw num(i);
-		Object o = param[i];
-		if (o instanceof Double) return (Boolean)o;
-		throw ex("Boolean", o, i);
+		try {return param[i].asBool();}
+		catch(Error e) {throw ex("Boolean", e, i);}
 	}
 
 	public Object[] getArray(int i) {
@@ -53,31 +61,31 @@ public class Parameters {
 
 	public <T> T get(int i, Class<T> c) {
 		if (i >= param.length) throw num(i);
-		Object o = param[i];
+		Object o = param[i].value();
 		if (c.isInstance(o)) return c.cast(o);
 		throw ex(c.getSimpleName(), o, i);
 	}
 
 	public Object get(int i) {
 		if (i >= param.length) throw num(i);
-		return param[i];
+		return param[i].value();
 	}
 
 	public Object[] getArrayOrAll() {
 		if (param.length != 1) return param;
-		Object o = param[0];
-		if(o instanceof Object[]) return (Object[])o;
-		return param;
+		IOperand o = param[0];
+		if(o instanceof Array) return (Object[])o.value();
+		return new Array(param).value();
 	}
 
 	public double[] getVectorOrAll() {
 		if (param.length == 1) {
-			Object o = param[0];
-			if (o instanceof double[]) return (double[])o;
+			IOperand o = param[0];
+			if (o instanceof Vector) return ((Vector)o).value;
 		}
 		double[] vec = new double[param.length];
 		for (int i = 0; i < vec.length; i++)
-			vec[i] = getNumber(i);
+			vec[i] = param[i].asDouble();
 		return vec;
 	}
 

@@ -13,7 +13,12 @@ import java.util.NoSuchElementException;
 
 import javax.script.ScriptException;
 
-import cd4017be.lib.script.Function.Operator;
+import cd4017be.lib.script.obj.IOperand;
+import cd4017be.lib.script.obj.Nil;
+import cd4017be.lib.script.obj.Text;
+import cd4017be.lib.script.obj.Number;
+
+import static cd4017be.lib.script.Function.*;
 
 /**
  * 
@@ -32,8 +37,8 @@ public class Compiler {
 	}
 
 	private Iterator<Comp> code;
-	private HashMap<String, Function> functions = new HashMap<String, Function>();
-	private HashMap<String, Object> globals = new HashMap<String, Object>();
+	private HashMap<String, Function> functions = new HashMap<>();
+	private HashMap<String, IOperand> globals = new HashMap<>();
 	public final String fileName;
 
 	public Compiler(String fileName, List<Comp> code) {
@@ -100,7 +105,7 @@ public class Compiler {
 						if (c < 0) break;
 						s += (char)c;
 					}
-					code.add(new ConstValue(s));
+					code.add(new ConstValue(new Text(s)));
 				} break;
 				case '!': //comment
 					while((c = code.next()) >= 0 && c != '\n');
@@ -122,7 +127,7 @@ public class Compiler {
 								code.remPrev();
 								x = -x;
 							}
-							code.add(new ConstValue(x));
+							code.add(new ConstValue(new Number(x)));
 						} catch(NumberFormatException e) {
 							throw new ScriptException("illegal number format: " + s, name, code.line, code.col);
 						}
@@ -135,13 +140,13 @@ public class Compiler {
 							else {read = false; break;}
 						}
 						if ("nil".equals(s))
-							code.add(new ConstValue(null));
+							code.add(new ConstValue(Nil.NIL));
 						else if ("false".equals(s))
-							code.add(new ConstValue(false));
+							code.add(new ConstValue(Number.FALSE));
 						else if ("true".equals(s))
-							code.add(new ConstValue(true));
+							code.add(new ConstValue(Number.TRUE));
 						else if ("NaN".equals(s))
-							code.add(new ConstValue(Double.NaN));
+							code.add(new ConstValue(Number.NAN));
 						else if ("fail".equals(s))
 							code.add(new Comp(Type.K_fail));
 						else if ("if".equals(s))
@@ -260,28 +265,28 @@ public class Compiler {
 					check(c1, Type.sep_cmd);
 					Byte p = state.varIds.get(name);
 					if (p != null) {
-						state.op(Operator.sloc, c1);
+						state.op(sloc, c1);
 						buffer.put(p);
 					} else {
-						state.op(Operator.svar, c1);
+						state.op(svar, c1);
 						Function.putName(buffer, name, false);
 					}
 				} else if (c1.type == Type.op_ind) {//Array set
 					Byte p = state.varIds.get(name);
 					if (p != null) {
-						state.op(Operator.gloc, c1);
+						state.op(gloc, c1);
 						buffer.put(p);
 					} else {
-						state.op(Operator.gvar, c1);
+						state.op(gvar, c1);
 						Function.putName(buffer, name, false);
 					}
 					c1 = eval(state, null);
 					check(c1, Type.op_asn);
 					c1 = eval(state, null);
 					check(c1, Type.sep_cmd);
-					state.op(Operator.arr_set, c1);
+					state.op(arr_set, c1);
 				} else if (c1.type == Type.B_par) {//Function call
-					func(state, name, false, false);
+					func(state, name, false);
 					state.next(Type.sep_cmd);
 				} else throw state.err(c1);
 			} break;
@@ -298,44 +303,6 @@ public class Compiler {
 				if (c2.type == Type.sep_cmd) break;
 				check(c2, Type.sep_par);
 			} break;
-			case K_fail:{
-				state.next(Type.B_par);
-				Comp c2 = state.next(Type.id), c3 = code.next();
-				String var;
-				if (c3.type == Type.op_asn) {
-					var = ((Identifier)c2).id;
-					c2 = state.next(Type.id); c3 = code.next();
-				} else var = null;
-				check(c3, Type.B_par);
-				func(state, ((Identifier)c2).id, var != null, true);
-				c3 = state.next(Type.E_par);
-				state.op(Operator.goifn, c3);
-				int p = buffer.position();
-				buffer.position(p + 2);
-				if (var != null) {
-					Byte b = state.varIds.get(var);
-					if (b != null) {
-						state.op(Operator.sloc, null);
-						buffer.put(b);
-					} else {
-						state.op(Operator.svar, null);
-						Function.putName(buffer, var, false);
-					}
-				}
-				c2 = code.next();
-				if (jump(state, c2, p)) break;
-				if (c2.type == Type.B_block) {
-					state.op(Operator.go, c2);
-					int p1 = p; p = buffer.position();
-					buffer.position(p + 2);
-					buffer.putShort(p1, (short)(p + 2));
-					if (compBlock(state)) {
-						buffer.putShort(p, (short)(buffer.position() - 2));
-						break;
-					}
-				} else check(c2, Type.sep_cmd);
-				buffer.putShort(p, (short)buffer.position());
-			} break;
 			case K_else: {
 				if (lastElse >= 0 || lastIf < 0) state.err("else without if", c);
 				Comp c1 = code.next();
@@ -343,7 +310,7 @@ public class Compiler {
 					lastIf = -1;
 					break;
 				}
-				state.op(Operator.go, c);
+				state.op(go, c);
 				lastElse = buffer.position();
 				buffer.position(lastElse + 2);
 				buffer.putShort(lastIf, (short)(lastElse + 2));
@@ -355,6 +322,7 @@ public class Compiler {
 				}
 				check(c1, Type.K_if);
 			}
+			case K_fail:
 			case K_if: {
 				state.next(Type.B_par);
 				check(eval(state, null), Type.E_par);
@@ -362,11 +330,11 @@ public class Compiler {
 				lastIf = buffer.position() + 1;
 				int p;
 				if (jump(state, c1, lastIf)) {
-					state.op(Operator.goif, c1);
+					state.op(c.type == Type.K_fail ? gofail : goif, c1);
 					buffer.position(p = lastIf + 2);
 					lastIf = -1;
 				} else {
-					state.op(Operator.goifn, c1);
+					state.op(c.type == Type.K_fail ? gosucc : goifn, c1);
 					buffer.position(lastIf + 2);
 					check(c1, Type.B_block);
 					boolean st = compBlock(state);
@@ -393,7 +361,7 @@ public class Compiler {
 				state.lastId++;
 				state.regVar(c1.id);
 				int p = buffer.position();
-				state.op(Operator.iterate, state.next(Type.B_block));
+				state.op(iterate, state.next(Type.B_block));
 				int p1 = buffer.position();
 				buffer.position(p1 + 2);
 				//body
@@ -401,7 +369,7 @@ public class Compiler {
 				int p2 = buffer.position();
 				if (st) buffer.position(p2 -= 2);
 				for (int i : state.continuePos) buffer.putShort(i, (short)p2);
-				state.op(Operator.end, null);
+				state.op(end, null);
 				buffer.put((byte)(state.lastId - 1));
 				buffer.putShort((short)p);
 				state.varIds.remove(c1.id);
@@ -409,7 +377,7 @@ public class Compiler {
 				p2 = buffer.position();
 				buffer.putShort(p1, (short)p2);
 				if (!state.breakPos.isEmpty()) {
-					state.op(Operator.clear, null);
+					state.op(clear, null);
 					buffer.put((byte)(state.lastId - 1));
 					for (int i : state.breakPos) buffer.putShort(i, (short)p2);
 				}
@@ -418,7 +386,7 @@ public class Compiler {
 				state.continuePos = continuePos;
 			} break;
 			case K_br: case K_cont: {
-				state.op(Operator.go, c);
+				state.op(go, c);
 				int p = buffer.position();
 				buffer.position(p + 2);
 				jump(state, c, p);
@@ -429,7 +397,7 @@ public class Compiler {
 					state.hasRet = true;
 					check(c1, Type.sep_cmd);
 				} else c1 = c;
-				state.op(Operator.go, c1);
+				state.op(go, c1);
 				int p = buffer.position();
 				state.returnPos.add(p);
 				buffer.position(p + 2);
@@ -444,8 +412,8 @@ public class Compiler {
 			if (e.getValue() >= variables) it.remove();
 		}
 		int p = buffer.position();
-		if (buffer.get(p - 2) == Operator.clear.ordinal()) buffer.position(p - 1);
-		else state.op(Operator.clear, null);
+		if (buffer.get(p - 2) == clear) buffer.position(p - 1);
+		else state.op(clear, null);
 		buffer.put((byte)(variables - 1));
 		state.lastId = variables;
 		return true;
@@ -487,24 +455,24 @@ public class Compiler {
 		Comp c = ops.get(i);
 		while (c.type.prior >= prior) {
 			switch(c.type) {
-			case op_or: state.op(Operator.or, c); break;
-			case op_nor: state.op(Operator.nor, c); break;
-			case op_and: state.op(Operator.and, c); break;
-			case op_nand: state.op(Operator.nand, c); break;
-			case op_xor: state.op(Operator.xor, c); break;
-			case op_xnor: state.op(Operator.xnor, c); break;
-			case op_eq: state.op(Operator.eq, c); break;
-			case op_neq: state.op(Operator.neq, c); break;
-			case op_ls: state.op(Operator.ls, c); break;
-			case op_nls: state.op(Operator.nls, c); break;
-			case op_gr: state.op(Operator.gr, c); break;
-			case op_ngr: state.op(Operator.ngr, c); break;
-			case op_add: state.op(Operator.add, c); break;
-			case op_sub: state.op(Operator.sub, c); break;
-			case op_mul: state.op(Operator.mul, c); break;
-			case op_div: state.op(Operator.div, c); break;
-			case op_mod: state.op(Operator.mod, c); break;
-			case op_ind: state.op(Operator.arr_get, c); break;
+			case op_or: state.op(or, c); break;
+			case op_nor: state.op(nor, c); break;
+			case op_and: state.op(and, c); break;
+			case op_nand: state.op(nand, c); break;
+			case op_xor: state.op(xor, c); break;
+			case op_xnor: state.op(xnor, c); break;
+			case op_eq: state.op(eq, c); break;
+			case op_neq: state.op(neq, c); break;
+			case op_ls: state.op(ls, c); break;
+			case op_nls: state.op(nls, c); break;
+			case op_gr: state.op(gr, c); break;
+			case op_ngr: state.op(ngr, c); break;
+			case op_add: state.op(add, c); break;
+			case op_sub: state.op(sub, c); break;
+			case op_mul: state.op(mul, c); break;
+			case op_div: state.op(div, c); break;
+			case op_mod: state.op(mod, c); break;
+			case op_ind: state.op(arr_get, c); break;
 			}
 			ops.remove(i--);
 			if (i < 0) return;
@@ -516,37 +484,37 @@ public class Compiler {
 		switch(c.type) {
 		case op_sub:
 			c = evalPre(code.next(), state);
-			state.op(Operator.neg, null);
+			state.op(neg, null);
 			return c;
 		case op_div:
 			c = evalPre(code.next(), state);
-			state.op(Operator.inv, null);
+			state.op(inv, null);
 			return c;
 		case op_num:
 			c = evalPre(code.next(), state);
-			state.op(Operator.arr_l, null);
+			state.op(arr_l, null);
 			return c;
 		case op_text:{
 			ConstValue c1 = (ConstValue)state.next(Type.val);
-			if (!(c1.val instanceof String)) state.err("exp. string literal", c1);
+			if (!(c1.val instanceof Text)) state.err("exp. string literal", c1);
 			c = evalPre(code.next(), state);
-			state.op(Operator.form, null);
-			Function.putName(buffer, (String)c1.val, false);
+			state.op(form, null);
+			Function.putName(buffer, c1.val.toString(), false);
 			return c;
 		}
 		case id: {
 			String name = ((Identifier)c).id;
 			Comp c1 = code.next();
 			if (c1.type == Type.B_par) {
-				func(state, name, true, false);
+				func(state, name, true);
 				return code.next();
 			} else {
 				Byte p = state.varIds.get(name);
 				if (p != null) {
-					state.op(Operator.gloc, c);
+					state.op(gloc, c);
 					buffer.put(p);
 				} else {
-					state.op(Operator.gvar, c);
+					state.op(gvar, c);
 					Function.putName(buffer, name, false);
 				}
 				return c1;
@@ -555,13 +523,13 @@ public class Compiler {
 		case val: {
 			Object val = ((ConstValue)c).val;
 			if (val instanceof Double) {
-				state.op(Operator.cst_N, c);
+				state.op(cst_N, c);
 				buffer.putDouble((Double)val);
 			} else if (val instanceof String) {
-				state.op(Operator.cst_T, c);
+				state.op(cst_T, c);
 				Function.putName(buffer, (String)val, true);
 			} else {
-				state.op(val instanceof Boolean ? (Boolean)val ? Operator.cst_true : Operator.cst_false : Operator.cst_nil, c);
+				state.op(val instanceof Boolean ? (Boolean)val ? cst_true : cst_false : cst_nil, c);
 			}
 		} return code.next();
 		case B_par: {
@@ -573,15 +541,15 @@ public class Compiler {
 			state.curStack -= n;
 			Comp c1 = code.next();
 			if (c1.type == Type.op_num) {
-				state.op(Operator.vec_pack, null);
+				state.op(vec_pack, null);
 				buffer.put((byte)n);
 				return code.next();
 			} else if (c1.type == Type.op_text) {
-				state.op(Operator.text_pack, null);
+				state.op(text_pack, null);
 				buffer.put((byte)n);
 				return code.next();
 			} else {
-				state.op(Operator.arr_pack, null);
+				state.op(arr_pack, null);
 				buffer.put((byte)n);
 				return c1;
 			}
@@ -602,10 +570,10 @@ public class Compiler {
 		return n;
 	}
 
-	private void func(State state, String name, boolean ret, boolean save) throws ScriptException {
+	private void func(State state, String name, boolean ret) throws ScriptException {
 		int n = params(state, Type.E_par);
 		state.curStack -= n;
-		state.op(save ? Operator.call_save : Operator.call, null);
+		state.op(call, null);
 		Function.putName(buffer, name, false);
 		if (ret) {
 			if (++state.curStack + state.lastId > state.maxStack) state.maxStack++;
@@ -659,10 +627,10 @@ public class Compiler {
 			if (c.type != t) throw new ScriptException(String.format("exp. %s , got %s", t, c.type), name, c.line, c.col);
 			return c;
 		}
- 		void op(Operator op, Comp c) {
-			buffer.put((byte)op.ordinal());
+ 		void op(byte op, Comp c) {
+			buffer.put(op);
 			if (c != null) lines.putIfAbsent((short)(c.line - lineOfs), (short)buffer.position());
-			int i = lastId + (curStack += op.stack);
+			int i = lastId + (curStack += stack(op));
 			if (i > maxStack) maxStack = i;
 		}
 		int regVar(String name) {
@@ -693,8 +661,8 @@ public class Compiler {
 	}
 
 	private static class ConstValue extends Comp {
-		ConstValue(Object val) {super(Type.val); this.val = val;}
-		Object val;
+		ConstValue(IOperand val) {super(Type.val); this.val = val;}
+		IOperand val;
 	}
 
 	private static enum Type {
@@ -710,6 +678,24 @@ public class Compiler {
 		private final String text;
 		@Override
 		public String toString() {return text;}
+	}
+
+	private static int stack(byte op) {
+		switch(op) {
+		case gloc: case gvar: case cst_N: case cst_T: case cst_true: case cst_false: case cst_nil:
+		case arr_pack: case vec_pack: case text_pack:
+			return 1;
+		case sloc: case svar: case arr_get:
+		case goif: case goifn: case gosucc: case gofail: case iterate:
+		case add: case sub: case mul: case div: case mod:
+		case eq: case neq: case ls: case nls: case gr: case ngr:
+		case and: case or: case nand: case nor: case xor: case xnor:
+			return -1;
+		case arr_set:
+			return -3;
+		default:
+			return 0;
+		}
 	}
 
 	/**

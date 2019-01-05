@@ -9,11 +9,17 @@ import javax.vecmath.AxisAngle4d;
 import javax.vecmath.Matrix4d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
+
+import org.apache.logging.log4j.Logger;
+
 import cd4017be.lib.script.Context;
 import cd4017be.lib.script.Function;
 import cd4017be.lib.script.Module;
 import cd4017be.lib.script.Parameters;
 import cd4017be.lib.script.Script;
+import cd4017be.lib.script.obj.Error;
+import cd4017be.lib.script.obj.IOperand;
+import cd4017be.lib.script.obj.Number;
 import cd4017be.lib.script.Compiler;
 import cd4017be.lib.util.Stack;
 import net.minecraft.client.resources.IResource;
@@ -120,10 +126,15 @@ public class ModelContext extends Context {
 		}
 	}
 
-	static class Quad {
+	static class Quad implements IOperand {
 		//x, y, z, u, v, r, g, b, a
 		double[][] vertices = new double[4][9];
 		int tex, cullFace;
+
+		@Override
+		public boolean asBool() throws Error {return false;}
+		@Override
+		public Object value() {return this;}
 	}
 
 	private static final double[] defaultVertex = new double[]{0, 0, 0, 0, 0, 1, 1, 1, 1};
@@ -137,7 +148,8 @@ public class ModelContext extends Context {
 	ResourceLocation loadPath;
 
 	@SuppressWarnings("unchecked")
-	public ModelContext(ResourceLocation loadPath) {
+	public ModelContext(Logger log, ResourceLocation loadPath) {
+		super(log);
 		this.loadPath = loadPath;
 		defFunc.put("add", (p) -> {
 			State state = states.get();
@@ -310,10 +322,10 @@ public class ModelContext extends Context {
 		s = s.trim();
 		if (s.isEmpty()) return new Parameters();
 		String[] args = s.split(",");
-		Object[] arr = new Object[args.length];
+		IOperand[] arr = new IOperand[args.length];
 		for (int i = 0; i < args.length; i++)
 			try {
-				arr[i] = Double.parseDouble(args[i]);
+				arr[i] = new Number(Double.parseDouble(args[i]));
 			} catch (NumberFormatException e) {
 				arr[i] = m.read(args[i]);
 			}
