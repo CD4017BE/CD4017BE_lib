@@ -3,6 +3,8 @@ package cd4017be.lib.render.model;
 import java.util.Arrays;
 import cd4017be.lib.render.model.ModelContext.Quad;
 import cd4017be.lib.script.Module;
+import cd4017be.lib.script.obj.Array;
+import cd4017be.lib.script.obj.IOperand;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureMap;
@@ -51,8 +53,9 @@ public class IntArrayModel {
 	}
 
 	public static TextureAtlasSprite[] getTextures(Module script) {
-		Object[] names = (Object[])script.read("textures");
-		if (names == null) return null;
+		IOperand var = script.read("textures");
+		if (!(var instanceof Array)) return null;
+		Object[] names = (Object[]) var.value();
 		TextureMap map = Minecraft.getMinecraft().getTextureMapBlocks();
 		TextureAtlasSprite[] textures = new TextureAtlasSprite[names.length];
 		for (int i = 0; i < textures.length; i++)

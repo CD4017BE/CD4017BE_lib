@@ -3,6 +3,9 @@ package cd4017be.lib.render.model;
 import java.util.Optional;
 
 import cd4017be.lib.script.Parameters;
+import cd4017be.lib.script.obj.IOperand;
+import cd4017be.lib.script.obj.Text;
+import cd4017be.lib.script.obj.Number;
 import cd4017be.lib.util.Orientation;
 import net.minecraft.client.renderer.block.model.ModelRotation;
 import net.minecraftforge.common.model.IModelPart;
@@ -58,12 +61,12 @@ public class ParamertisedVariant implements IModelState {
 			if (arg.isEmpty()) params = new Parameters();
 			else {
 				String[] pars = arg.split(",");
-				Object[] arr = new Object[pars.length];
+				IOperand[] arr = new IOperand[pars.length];
 				for (int j = 0; j < pars.length; j++)
 					try {
-						arr[j] = Double.parseDouble(pars[j]);
+						arr[j] = new Number(Double.parseDouble(pars[j]));
 					} catch (NumberFormatException e) {
-						arr[j] = pars[j];
+						arr[j] = new Text(pars[j]);
 					}
 				params = new Parameters(arr);
 			}
