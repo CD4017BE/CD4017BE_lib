@@ -1,3 +1,16 @@
+v6.2.8
+Changes:
+- provided more control over side solidness in Pipe Block template
+- made config script execution more forgiving with errors
+- added a server side only version of ITickable
+- implemented literal direct mode in localisation utilites
+- created combined World/dimension + BlockPos utility object
+- fixed interdimensional teleportation for entities with passengers
+- added optional dimension parameter to "worldgen" script recipe handler
+Dependencies:
+- for MC-1.12.2
+- forge-14.23.0.2512 (or newer)
+
 v6.2.7
 Changes:
 - added comparator support for my universal block template
