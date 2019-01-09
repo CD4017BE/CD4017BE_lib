@@ -6,6 +6,7 @@ import javax.script.ScriptException;
 import cd4017be.lib.script.Context;
 import cd4017be.lib.script.Module;
 import cd4017be.lib.script.Parameters;
+import cd4017be.lib.script.obj.IOperand;
 
 
 /**
@@ -23,7 +24,7 @@ public class RecipeModule implements Module {
 	}
 
 	@Override
-	public Object invoke(String name, Parameters args) throws NoSuchMethodException, ScriptException {
+	public IOperand invoke(String name, Parameters args) throws NoSuchMethodException, ScriptException {
 		Handler h = methods.get(name);
 		if (h == null) throw new NoSuchMethodException(name);
 		try {
@@ -34,11 +35,11 @@ public class RecipeModule implements Module {
 	}
 
 	@Override
-	public void assign(String name, Object val) {
+	public void assign(String name, IOperand val) {
 	}
 
 	@Override
-	public Object read(String name) {
+	public IOperand read(String name) {
 		return null;
 	}
 
@@ -49,7 +50,7 @@ public class RecipeModule implements Module {
 
 	@FunctionalInterface
 	public interface Handler {
-		Object handle(Parameters param) throws Exception;
+		IOperand handle(Parameters param) throws Exception;
 	}
 
 }

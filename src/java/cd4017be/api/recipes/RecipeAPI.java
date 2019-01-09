@@ -15,6 +15,7 @@ import cd4017be.lib.script.Function.ArrayIterator;
 import cd4017be.lib.templates.NBTRecipe;
 import cd4017be.lib.script.Function.FilteredIterator;
 import cd4017be.lib.script.Parameters;
+import cd4017be.lib.script.obj.IOperand.OperandIterator;
 import cd4017be.lib.util.OreDictStack;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
@@ -41,7 +42,7 @@ public class RecipeAPI {
 	}
 
 	public static interface IRecipeList {
-		public Iterator list(Parameters param);
+		public OperandIterator list(Parameters param);
 	}
 
 	public static final HashMap<String, IRecipeHandler> Handlers;

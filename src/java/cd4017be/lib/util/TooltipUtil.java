@@ -19,6 +19,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import cd4017be.api.recipes.RecipeScriptContext;
 import cd4017be.lib.script.Script;
 import cd4017be.lib.script.ScriptFiles.Version;
+import cd4017be.lib.script.obj.IOperand;
 
 /**
  *
@@ -112,8 +113,8 @@ public class TooltipUtil {
 		for (Version v : RecipeScriptContext.scriptRegistry) {
 			Script m = (Script)cont.modules.get(v.name);
 			if (m != null)
-				for (Entry<String, Object> var : m.variables.entrySet())
-					addVar(var.getKey(), var.getValue());
+				for (Entry<String, IOperand> var : m.variables.entrySet())
+					addVar(var.getKey(), var.getValue().value());
 		}
 	}
 

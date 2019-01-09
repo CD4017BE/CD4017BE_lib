@@ -57,7 +57,7 @@ public class Lib {
 		(materials = new ItemMaterial("m")).setCreativeTab(creativeTab);
 		creativeTab.item = new ItemStack(materials);
 		//RecipeSorter.register(ID + ":shapedNBT", NBTRecipe.class, RecipeSorter.Category.SHAPED, "after:minecraft:shaped before:minecraft:shapeless");
-		RecipeScriptContext.instance = new RecipeScriptContext();
+		RecipeScriptContext.instance = new RecipeScriptContext(event.getModLog());
 		RecipeScriptContext.instance.setup();
 		RecipeScriptContext.instance.run(ConfigName + ".PRE_INIT");
 		ConfigConstants cfg = new ConfigConstants(RecipeScriptContext.instance.modules.get(ConfigName));

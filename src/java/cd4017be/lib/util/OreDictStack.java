@@ -1,7 +1,13 @@
 package cd4017be.lib.util;
 
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 
+import cd4017be.api.recipes.ItemOperand;
+import cd4017be.lib.script.obj.Error;
+import cd4017be.lib.script.obj.IOperand;
+import cd4017be.lib.script.obj.Number;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.oredict.OreDictionary;
 
@@ -9,7 +15,7 @@ import net.minecraftforge.oredict.OreDictionary;
  * 
  * @author CD4017BE
  */
-public class OreDictStack {
+public class OreDictStack implements IOperand {
 
 	public String id;
 	public int ID;
@@ -84,15 +90,85 @@ public class OreDictStack {
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == this) return true;
-		else if (obj instanceof OreDictStack) {
+		if (obj instanceof IOperand)
+			obj = ((IOperand)obj).value();
+		if (obj instanceof OreDictStack) {
 			OreDictStack stack = (OreDictStack)obj;
-			return stack.ID == ID && stack.stacksize == stacksize;
+			return stack.ID == ID;
 		} else if (obj instanceof ItemStack) {
 			ItemStack stack = (ItemStack)obj;
-			return isEqual(stack) && stack.getCount() == stacksize;
+			return isEqual(stack);
 		} else if (obj instanceof String) {
 			return id.equals(obj);
 		} else return false;
+	}
+
+	@Override
+	public IOperand mulR(IOperand x) {
+		return new OreDictStack(ID, x.asIndex());
+	}
+
+	@Override
+	public IOperand mulL(IOperand x) {
+		return new OreDictStack(ID, x.asIndex());
+	}
+
+	@Override
+	public IOperand len() {
+		return new Number(stacksize);
+	}
+
+	@Override
+	public OperandIterator iterator() throws Error {
+		return new ItemIterator(OreDictionary.getOres(id).iterator());
+	}
+
+	@Override
+	public boolean asBool() throws Error {
+		return true;
+	}
+
+	@Override
+	public Object value() {
+		return this;
+	}
+
+	public static class ItemIterator implements OperandIterator {
+
+		final boolean canSet;
+		final Iterator<ItemStack> items;
+
+		public ItemIterator(Iterator<ItemStack> items) {
+			this.items = items;
+			this.canSet = false;
+		}
+
+		public ItemIterator(ListIterator<ItemStack> items) {
+			this.items = items;
+			this.canSet = true;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return items.hasNext();
+		}
+
+		@Override
+		public IOperand next() {
+			return new ItemOperand(items.next());
+		}
+
+		@Override
+		public Object value() {
+			return items;
+		}
+
+		@Override
+		public void set(IOperand obj) {
+			if (canSet && obj instanceof ItemOperand)
+				((ListIterator<ItemStack>)items).set(((ItemOperand)obj).stack);
+		}
+
 	}
 
 }
