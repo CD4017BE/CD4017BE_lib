@@ -55,6 +55,40 @@ public class Array implements IOperand {
 		return new Array(arr);
 	}
 
+	@Override
+	public IOperand subR(IOperand x) {
+		IOperand[] a = array;
+		if (x instanceof Array) {
+			IOperand[] b = ((Array)x).array;
+			int l = a.length, n = 0;
+			int[] idx = new int[l];
+			for (int i = 0; i < l; i++) {
+				IOperand y = a[i];
+				boolean stay = true;
+				for (IOperand z : b)
+					if (z.equals(y)) {
+						stay = false;
+						break;
+					}
+				if (stay) idx[n++] = i;
+			}
+			if (n == l) return this;
+			IOperand[] c = new IOperand[n];
+			for (int i = 0; i < n; i++)
+				c[i] = a[idx[i]];
+			return new Array(c);
+		} else {
+			for (int l = a.length, i = 0; i < l; i++)
+				if (x.equals(a[i])) {
+					IOperand[] b = new IOperand[--l];
+					System.arraycopy(a, 0, b, 0, i);
+					System.arraycopy(a, i + 1, b, i, l - i);
+					return new Array(b);
+				}
+			return this;
+		}
+	}
+
 	//TODO set operations
 
 	@Override
@@ -142,6 +176,11 @@ public class Array implements IOperand {
 		for (int i = l - 1; i >= 0; i--)
 			arr[i] = array[i].value();
 		return arr;
+	}
+
+	@Override
+	public String toString() {
+		return Arrays.toString(array);
 	}
 
 	class Iterator implements OperandIterator {

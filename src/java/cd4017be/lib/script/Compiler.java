@@ -79,17 +79,18 @@ public class Compiler {
 					if (c == '=') code.add(new Comp(Type.op_neq));
 					else if (c == '&') code.add(new Comp(Type.op_nand));
 					else if (c == '|') code.add(new Comp(Type.op_nor));
-					else if (c == '^') code.add(new Comp(Type.op_xnor));
-					else throw new ScriptException("invalid pattern: '~" + (char)c + "'", name, code.line, code.col);
+					else if (c == '?') code.add(new Comp(Type.op_xnor));
+					else {read = false; code.add(new Comp(Type.op_not));}
 					break;
 				case '&': code.add(new Comp(Type.op_and)); break;
 				case '|': code.add(new Comp(Type.op_or)); break;
-				case '^': code.add(new Comp(Type.op_xor)); break;
+				case '?': code.add(new Comp(Type.op_xor)); break;
 				case '+': code.add(new Comp(Type.op_add)); break;
 				case '-': code.add(new Comp(Type.op_sub)); break;
 				case '*': code.add(new Comp(Type.op_mul)); break;
 				case '/': code.add(new Comp(Type.op_div)); break;
 				case '%': code.add(new Comp(Type.op_mod)); break;
+				case '^': code.add(new Comp(Type.op_pow)); break;
 				case '#': code.add(new Comp(Type.op_num)); break;
 				case ':': code.add(new Comp(Type.op_ind)); break;
 				case '$': code.add(new Comp(Type.op_text)); break;
@@ -461,6 +462,7 @@ public class Compiler {
 			case op_nand: state.op(nand, c); break;
 			case op_xor: state.op(xor, c); break;
 			case op_xnor: state.op(xnor, c); break;
+			case op_not: state.op(not, c); break;
 			case op_eq: state.op(eq, c); break;
 			case op_neq: state.op(neq, c); break;
 			case op_ls: state.op(ls, c); break;
@@ -472,6 +474,7 @@ public class Compiler {
 			case op_mul: state.op(mul, c); break;
 			case op_div: state.op(div, c); break;
 			case op_mod: state.op(mod, c); break;
+			case op_pow: state.op(pow, c); break;
 			case op_ind: state.op(arr_get, c); break;
 			}
 			ops.remove(i--);
@@ -482,6 +485,10 @@ public class Compiler {
 
 	private Comp evalPre(Comp c, State state) throws ScriptException {
 		switch(c.type) {
+		case op_not:
+			c = evalPre(code.next(), state);
+			state.op(not, null);
+			return c;
 		case op_sub:
 			c = evalPre(code.next(), state);
 			state.op(neg, null);
@@ -499,7 +506,7 @@ public class Compiler {
 			if (!(c1.val instanceof Text)) state.err("exp. string literal", c1);
 			c = evalPre(code.next(), state);
 			state.op(form, null);
-			Function.putName(buffer, c1.val.toString(), false);
+			Function.putName(buffer, ((Text)c1.val).value, false);
 			return c;
 		}
 		case id: {
@@ -521,15 +528,21 @@ public class Compiler {
 			}
 		}
 		case val: {
-			Object val = ((ConstValue)c).val;
-			if (val instanceof Double) {
-				state.op(cst_N, c);
-				buffer.putDouble((Double)val);
-			} else if (val instanceof String) {
+			IOperand val = ((ConstValue)c).val;
+			if (val instanceof Number) {
+				if (val == Number.FALSE)
+					state.op(cst_false, c);
+				else if (val == Number.TRUE)
+					state.op(cst_true, c);
+				else {
+					state.op(cst_N, c);
+					buffer.putDouble(((Number)val).value);
+				}
+			} else if (val instanceof Text) {
 				state.op(cst_T, c);
-				Function.putName(buffer, (String)val, true);
+				Function.putName(buffer, ((Text)val).value, true);
 			} else {
-				state.op(val instanceof Boolean ? (Boolean)val ? cst_true : cst_false : cst_nil, c);
+				state.op(cst_nil, c);
 			}
 		} return code.next();
 		case B_par: {
@@ -662,14 +675,14 @@ public class Compiler {
 
 	private static class ConstValue extends Comp {
 		ConstValue(IOperand val) {super(Type.val); this.val = val;}
-		IOperand val;
+		final IOperand val;
 	}
 
 	private static enum Type {
 		val("literal"), id("identifier"), op_num("#"), op_ind(7, ":"), op_text("$"), op_asn("="),
-		op_or(1, "|"), op_nor(1, "~|"), op_and(2, "&"), op_nand(2, "~&"), op_xor(3, "^"), op_xnor(3, "~^"),
+		op_or(1, "|"), op_nor(1, "~|"), op_and(2, "&"), op_nand(2, "~&"), op_xor(3, "?"), op_xnor(3, "~?"), op_not("~"),
 		op_eq(4, "=="), op_neq(4, "~="), op_ls(4, "<"), op_gr(4, ">"), op_nls(4, ">="), op_ngr(4, "<="),
-		op_add(5, "+"), op_sub(5, "-"), op_mul(6, "*"), op_div(6, "/"), op_mod(6, "%"),
+		op_add(5, "+"), op_sub(5, "-"), op_mul(6, "*"), op_div(6, "/"), op_mod(6, "%"), op_pow(7, "^"),
 		B_par("("), E_par(")"), B_list("["), E_list("]"), B_block("{"), E_block("}"), sep_par(","), sep_cmd(";"),
 		K_fail("fail"), K_if("if"), K_else("else"), K_for("for"), K_ret("return"), K_br("break"), K_cont("continue"), K_loc("Loc");
 		private Type(String text) {this(0, text);}
@@ -687,7 +700,7 @@ public class Compiler {
 			return 1;
 		case sloc: case svar: case arr_get:
 		case goif: case goifn: case gosucc: case gofail: case iterate:
-		case add: case sub: case mul: case div: case mod:
+		case add: case sub: case mul: case div: case mod: case pow:
 		case eq: case neq: case ls: case nls: case gr: case ngr:
 		case and: case or: case nand: case nor: case xor: case xnor:
 			return -1;

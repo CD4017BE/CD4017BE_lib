@@ -43,4 +43,9 @@ public class Nil implements IOperand {
 		return Number.TRUE;
 	}
 
+	@Override
+	public String toString() {
+		return "nil";
+	}
+
 }

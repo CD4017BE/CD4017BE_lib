@@ -10,13 +10,11 @@ import java.util.Random;
 public class Number implements IOperand {
 
 	/** The number representing boolean "true" */
-	public static final Number TRUE = new Number(1.0);
+	public static final Number TRUE = new Number(1.0).onCopy();
 	/** The number representing boolean "false" */
-	public static final Number FALSE = new Number(0.0);
-	/** The number representing an unknown boolean state (50% probability to be either true or false) */
-	public static final Number UNKNOWN = new Number(0.5);
+	public static final Number FALSE = new Number(0.0).onCopy();
 	/** The number representing NaN */
-	public static final Number NAN = new Number(Double.NaN);
+	public static final Number NAN = new Number(Double.NaN).onCopy();
 
 	private static final Random RANDOM = new Random();
 
@@ -30,6 +28,12 @@ public class Number implements IOperand {
 	private Number of(double value) {
 		if (copied) return new Number(value);
 		this.value = value;
+		return this;
+	}
+
+	@Override
+	public Number onCopy() {
+		copied = true;
 		return this;
 	}
 
@@ -87,6 +91,11 @@ public class Number implements IOperand {
 	@Override
 	public IOperand modR(IOperand x) {
 		return x instanceof Number ? of(value % ((Number)x).value) : x.modL(this);
+	}
+
+	@Override
+	public IOperand powR(IOperand x) {
+		return x instanceof Number ? of(Math.pow(value, ((Number)x).value)) : x.powL(this);
 	}
 
 	@Override
@@ -166,8 +175,8 @@ public class Number implements IOperand {
 	public IOperand xor(IOperand x) {
 		try {
 			double b = x instanceof Number ? ((Number)x).asNumBool() : x.asBool() ? 1.0 : 0.0;
-			double a = asNumBool(), c = a*b;
-			return of((1.0 - c) * (a + b - c));
+			double a = asNumBool();
+			return of(a + b - 2*a*b);
 		} catch(Error e) {return e.reset(value + " ^ ERROR");}
 	}
 
@@ -175,9 +184,14 @@ public class Number implements IOperand {
 	public IOperand xnor(IOperand x) {
 		try {
 			double b = x instanceof Number ? 1.0 - ((Number)x).asNumBool() : x.asBool() ? 0.0 : 1.0;
-			double a = asNumBool(), c = a*b;
-			return of((1.0 - c) * (a + b - c));
+			double a = asNumBool();
+			return of(a + b - 2*a*b);
 		} catch(Error e) {return e.reset(value + " ~^ ERROR");}
+	}
+
+	@Override
+	public IOperand not() {
+		return of(1.0 - value);
 	}
 
 	@Override
@@ -192,7 +206,7 @@ public class Number implements IOperand {
 
 	@Override
 	public IOperand len() {
-		return of(Math.abs(value));
+		return of(value <= 1 ? RANDOM.nextDouble() : RANDOM.nextInt((int) value));
 	}
 
 	@Override

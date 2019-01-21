@@ -1,5 +1,7 @@
 package cd4017be.lib.script.obj;
 
+import java.util.Arrays;
+
 /**
  * Represents a vector (array of numbers) in script
  * @author cd4017be
@@ -122,7 +124,8 @@ public class Vector implements IOperand {
 			for (int i = 0; i < l; i++)
 				c[i] = b[i] - a[i];
 			if (copied && dl > 0)
-				System.arraycopy(a, l, c, l, dl);
+				for (int i = l + dl - 1; i >= l; i--)
+					c[i] = -a[i];
 		} else if (x instanceof Number){
 			double b = ((Number)x).value;
 			for (int i = value.length - 1; i >= 0; i--)
@@ -137,14 +140,14 @@ public class Vector implements IOperand {
 		if (x instanceof Vector) {
 			double[] b = ((Vector)x).value;
 			int l = b.length, dl = a.length - l;
-			if (dl < 0)
-				return x.mulR(this);
 			Vector ret = of();
+			if (dl < 0) {
+				l += dl;
+				ret = of();
+			} else ret = ((Vector)x).of();
 			c = ret.value;
 			for (int i = 0; i < l; i++)
 				c[i] = a[i] * b[i];
-			if (copied && dl > 0)
-				System.arraycopy(a, l, c, l, dl);
 			return ret;
 		} else if (x instanceof Number) {
 			Vector ret = of();
@@ -163,7 +166,7 @@ public class Vector implements IOperand {
 			double[] a = value, c = ret.value;
 			double b = ((Number)x).value;
 			for (int i = value.length - 1; i >= 0; i--)
-				c[i] = a[i] + b;
+				c[i] = a[i] * b;
 			return ret;
 		} else return IOperand.super.mulL(x);
 	}
@@ -174,14 +177,14 @@ public class Vector implements IOperand {
 		if (x instanceof Vector) {
 			double[] b = ((Vector)x).value;
 			int l = b.length, dl = a.length - l;
-			if (dl < 0)
-				return x.divL(this);
-			Vector ret = of();
+			Vector ret;
+			if (dl < 0) {
+				l += dl;
+				ret = of();
+			} else ret = ((Vector)x).of();
 			c = ret.value;
 			for (int i = 0; i < l; i++)
 				c[i] = a[i] / b[i];
-			if (copied && dl > 0)
-				System.arraycopy(a, l, c, l, dl);
 			return ret;
 		} else if (x instanceof Number){
 			Vector ret = of();
@@ -197,14 +200,7 @@ public class Vector implements IOperand {
 	public IOperand divL(IOperand x) {
 		Vector ret = of();
 		double[] a = value, c = ret.value;
-		if (x instanceof Vector) {
-			double[] b = ((Vector)x).value;
-			int l = b.length, dl = a.length - l;
-			for (int i = 0; i < l; i++)
-				c[i] = b[i] / a[i];
-			if (copied && dl > 0)
-				System.arraycopy(a, l, c, l, dl);
-		} else if (x instanceof Number){
+		if (x instanceof Number){
 			double b = ((Number)x).value;
 			for (int i = value.length - 1; i >= 0; i--)
 				c[i] = b / a[i];
@@ -218,14 +214,14 @@ public class Vector implements IOperand {
 		if (x instanceof Vector) {
 			double[] b = ((Vector)x).value;
 			int l = b.length, dl = a.length - l;
-			if (dl < 0)
-				return x.modL(this);
-			Vector ret = of();
+			Vector ret;
+			if (dl < 0) {
+				l += dl;
+				ret = of();
+			} else ret = ((Vector)x).of();
 			c = ret.value;
 			for (int i = 0; i < l; i++)
 				c[i] = a[i] % b[i];
-			if (copied && dl > 0)
-				System.arraycopy(a, l, c, l, dl);
 			return ret;
 		} else if (x instanceof Number){
 			Vector ret = of();
@@ -241,14 +237,7 @@ public class Vector implements IOperand {
 	public IOperand modL(IOperand x) {
 		Vector ret = of();
 		double[] a = value, c = ret.value;
-		if (x instanceof Vector) {
-			double[] b = ((Vector)x).value;
-			int l = b.length, dl = a.length - l;
-			for (int i = 0; i < l; i++)
-				c[i] = b[i] % a[i];
-			if (copied && dl > 0)
-				System.arraycopy(a, l, c, l, dl);
-		} else if (x instanceof Number){
+		if (x instanceof Number){
 			double b = ((Number)x).value;
 			for (int i = value.length - 1; i >= 0; i--)
 				c[i] = b % a[i];
@@ -304,6 +293,11 @@ public class Vector implements IOperand {
 	@Override
 	public Object value() {
 		return value;
+	}
+
+	@Override
+	public String toString() {
+		return Arrays.toString(value);
 	}
 
 	class Iterator implements OperandIterator {

@@ -88,7 +88,7 @@ public class Text implements IOperand {
 
 	@Override
 	public String toString() {
-		return '"' + value + '"';
+		return value;
 	}
 
 	@Override

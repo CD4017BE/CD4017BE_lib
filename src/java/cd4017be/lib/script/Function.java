@@ -33,7 +33,8 @@ public class Function {
 		add = 20, sub = 21, mul = 22, div = 23, neg = 24, inv = 25, mod = 26,
 		eq = 27, neq = 28, ls = 29, nls = 30, gr = 31, ngr = 32,
 		and = 33, or = 34, nand = 35, nor = 36, xor = 37, xnor = 38,
-		form = 39, clear = 40, iterate = 41, end = 42, gofail = 43;
+		form = 39, clear = 40, iterate = 41, end = 42, gofail = 43,
+		pow = 44, not = 45;
 
 	private final byte[] code;
 	public final int Nparam, lineOfs, Nstack;
@@ -164,7 +165,7 @@ public class Function {
 					break;
 				case arr_set:
 					b = stack.rem(); a = stack.rem();
-					stack.rem().put(b, a);
+					stack.rem().put(a, b);
 					break;
 				case arr_l:
 					stack.add(stack.rem().len());
@@ -288,6 +289,13 @@ public class Function {
 					((OperandIterator)stack.get()).set(a);
 					code.position(code.getShort() & 0xffff);
 				}	break;
+				case pow:
+					b = stack.rem(); a = stack.rem();
+					stack.add(a.powR(b));
+					break;
+				case not:
+					stack.add(stack.rem().not());
+					break;
 				}
 			}
 			return hasReturn ? stack.rem() : null;

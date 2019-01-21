@@ -93,6 +93,17 @@ public interface IOperand {
 
 	/**
 	 * @param x right hand side operand
+	 * @return this ^ x (delegates to {@code x.powL(this)} if not defined)
+	 */
+	default IOperand powR(IOperand x) {return x.powL(this);}
+	/**
+	 * @param x left hand side operand
+	 * @return x ^ this
+	 */
+	default IOperand powL(IOperand x) {return new Error("undefined " + x + " % " + this);}
+
+	/**
+	 * @param x right hand side operand
 	 * @return this > x (delegates to {@code x.grL(this)} if not defined)
 	 */
 	default IOperand grR(IOperand x) {return x.grL(this);}
@@ -147,7 +158,7 @@ public interface IOperand {
 	}
 	/**
 	 * @param x right hand side operand
-	 * @return this ^ x
+	 * @return this ? x
 	 */
 	default IOperand xor(IOperand x) {
 		try { return asBool() ^ x.asBool() ? Number.TRUE : Number.FALSE;}
@@ -155,7 +166,7 @@ public interface IOperand {
 	}
 	/**
 	 * @param x right hand side operand
-	 * @return this ~^ x
+	 * @return this ~? x
 	 */
 	default IOperand xnor(IOperand x) {
 		try { return asBool() && x.asBool() ? Number.FALSE : Number.TRUE;}
@@ -170,6 +181,10 @@ public interface IOperand {
 	 * @return /this
 	 */
 	default IOperand inv() {return new Error("undefined /" + this);}
+	/**
+	 * @return ~this
+	 */
+	default IOperand not() {return new Error("undefined ~" + this);}
 	/**
 	 * @return #this
 	 */
