@@ -10,8 +10,6 @@ import javax.vecmath.Matrix4d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
-import org.apache.logging.log4j.Logger;
-
 import cd4017be.lib.script.Context;
 import cd4017be.lib.script.Function;
 import cd4017be.lib.script.Module;
@@ -20,6 +18,7 @@ import cd4017be.lib.script.Script;
 import cd4017be.lib.script.obj.Error;
 import cd4017be.lib.script.obj.IOperand;
 import cd4017be.lib.script.obj.Number;
+import cd4017be.lib.Lib;
 import cd4017be.lib.script.Compiler;
 import cd4017be.lib.util.Stack;
 import net.minecraft.client.resources.IResource;
@@ -148,8 +147,8 @@ public class ModelContext extends Context {
 	ResourceLocation loadPath;
 
 	@SuppressWarnings("unchecked")
-	public ModelContext(Logger log, ResourceLocation loadPath) {
-		super(log);
+	public ModelContext(ResourceLocation loadPath) {
+		super(Lib.LOG);
 		this.loadPath = loadPath;
 		defFunc.put("add", (p) -> {
 			State state = states.get();
@@ -218,9 +217,9 @@ public class ModelContext extends Context {
 			return null;
 		});
 		defFunc.put("texIdx", (p) -> {
-			double val = p.getNumber(0);
+			int val = p.getIndex(0);
 			State state = states.get();
-			state.texOfs += (int)val;
+			state.texOfs += val;
 			return null;
 		});
 		defFunc.put("quad", (p) -> {
