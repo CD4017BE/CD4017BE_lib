@@ -9,9 +9,6 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
-import javax.script.ScriptException;
-
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
 
 import net.minecraft.item.Item;
@@ -19,7 +16,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.fluids.FluidRegistry;
 import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.oredict.OreDictionary;
 import cd4017be.api.recipes.RecipeAPI.IRecipeHandler;
@@ -34,9 +30,11 @@ import cd4017be.lib.script.ScriptFiles;
 import cd4017be.lib.script.ScriptFiles.Version;
 import cd4017be.lib.script.obj.Array;
 import cd4017be.lib.script.obj.IOperand;
+import cd4017be.lib.script.obj.Nil;
 import cd4017be.lib.script.obj.Number;
 import cd4017be.lib.script.obj.ObjWrapper;
 import cd4017be.lib.script.obj.Text;
+import cd4017be.lib.script.obj.Vector;
 import cd4017be.lib.util.FileUtil;
 import cd4017be.lib.util.OreDictStack;
 
@@ -248,18 +246,19 @@ public class RecipeScriptContext extends Context {
 		public double[] getVect(String name, double[] pre) {
 			if (m == null) return pre;
 			IOperand o = m.read(name);
-			if (o instanceof double[]) {
-				double[] vec = (double[])o;
+			if (o instanceof Vector) {
+				double[] vec = ((Vector)o).value;
 				int n = Math.min(vec.length, pre.length);
-				for (int i = 0; i < n; i++) pre[i] = vec[i];
+				System.arraycopy(vec, 0, pre, 0, n);
 				if (n < pre.length) {
-					m.assign(name, vec = Arrays.copyOf(vec, pre.length));
-					for (int i = n; i < vec.length; i++) vec[i] = pre[i];
+					Vector v = new Vector(pre.length);
+					m.assign(name, v);
+					System.arraycopy(pre, 0, v.value, 0, pre.length);
 				}
 				return pre;
 			}
-			double[] vec = new double[pre.length];
-			for (int i = 0; i < vec.length; i++) vec[i] = pre[i];
+			Vector vec = new Vector(pre.length);
+			System.arraycopy(pre, 0, vec.value, 0, pre.length);
 			m.assign(name, vec);
 			return pre;
 		}
@@ -267,18 +266,22 @@ public class RecipeScriptContext extends Context {
 		public int[] getVect(String name, int[] pre) {
 			if (m == null) return pre;
 			IOperand o = m.read(name);
-			if (o instanceof double[]) {
-				double[] vec = (double[])o;
+			if (o instanceof Vector) {
+				double[] vec = ((Vector)o).value;
 				int n = Math.min(vec.length, pre.length);
 				for (int i = 0; i < n; i++) pre[i] = (int)vec[i];
 				if (n < pre.length) {
-					m.assign(name, vec = Arrays.copyOf(vec, pre.length));
-					for (int i = n; i < vec.length; i++) vec[i] = pre[i];
+					Vector v = new Vector(n = pre.length);
+					vec = v.value;
+					m.assign(name, v);
+					for (int i = 0; i < n; i++) vec[i] = pre[i];
 				}
 				return pre;
 			}
-			double[] vec = new double[pre.length];
-			for (int i = 0; i < vec.length; i++) vec[i] = pre[i];
+			Vector vec = new Vector(pre.length);
+			double[] a = vec.value;
+			for (int i = pre.length - 1; i >= 0; i--)
+				a[i] = pre[i];
 			m.assign(name, vec);
 			return pre;
 		}
@@ -286,18 +289,22 @@ public class RecipeScriptContext extends Context {
 		public float[] getVect(String name, float[] pre) {
 			if (m == null) return pre;
 			IOperand o = m.read(name);
-			if (o instanceof double[]) {
-				double[] vec = (double[])o;
+			if (o instanceof Vector) {
+				double[] vec = ((Vector)o).value;
 				int n = Math.min(vec.length, pre.length);
 				for (int i = 0; i < n; i++) pre[i] = (float)vec[i];
 				if (n < pre.length) {
-					m.assign(name, vec = Arrays.copyOf(vec, pre.length));
-					for (int i = n; i < vec.length; i++) vec[i] = pre[i];
+					Vector v = new Vector(n = pre.length);
+					vec = v.value;
+					m.assign(name, v);
+					for (int i = 0; i < n; i++) vec[i] = pre[i];
 				}
 				return pre;
 			}
-			double[] vec = new double[pre.length];
-			for (int i = 0; i < vec.length; i++) vec[i] = pre[i];
+			Vector vec = new Vector(pre.length);
+			double[] a = vec.value;
+			for (int i = pre.length - 1; i >= 0; i--)
+				a[i] = pre[i];
 			m.assign(name, vec);
 			return pre;
 		}
@@ -315,13 +322,18 @@ public class RecipeScriptContext extends Context {
 			IOperand o = m.read(name);
 			if (o instanceof Array) {
 				Object[] vec = (Object[])o.value();
-				if (vec.length < size)
-					m.assign(name, vec = Arrays.copyOf(vec, size));
+				if (vec.length < size) {
+					IOperand[] x = new IOperand[size - vec.length];
+					Arrays.fill(x, Nil.NIL);
+					m.assign(name, o.addR(new Array(x)));
+					vec = Arrays.copyOf(vec, size);
+				}
 				return vec;
 			}
-			Object[] vec = new Object[size];
-			m.assign(name, vec);
-			return vec;
+			IOperand[] x = new IOperand[size];
+			Arrays.fill(x, Nil.NIL);
+			m.assign(name, new Array(x));
+			return new Object[size];
 		}
 	}
 
