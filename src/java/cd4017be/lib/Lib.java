@@ -1,5 +1,7 @@
 package cd4017be.lib;
 
+import org.apache.logging.log4j.Logger;
+
 import cd4017be.api.Capabilities;
 import cd4017be.api.computers.ComputerAPI;
 import cd4017be.api.energy.EnergyAPI;
@@ -41,6 +43,8 @@ public class Lib {
 	@Instance
 	public static Lib instance;
 
+	public static Logger LOG;
+
 	public static ItemMaterial materials;
 
 	public static final TabMaterials creativeTab = new TabMaterials(ID);
@@ -51,13 +55,14 @@ public class Lib {
 
 	@Mod.EventHandler
 	public void preInit(FMLPreInitializationEvent event) {
+		LOG = event.getModLog();
 		FileUtil.initConfigDir(event);
 		BlockGuiHandler.register();
 		Capabilities.register();
 		(materials = new ItemMaterial("m")).setCreativeTab(creativeTab);
 		creativeTab.item = new ItemStack(materials);
 		//RecipeSorter.register(ID + ":shapedNBT", NBTRecipe.class, RecipeSorter.Category.SHAPED, "after:minecraft:shaped before:minecraft:shapeless");
-		RecipeScriptContext.instance = new RecipeScriptContext(event.getModLog());
+		RecipeScriptContext.instance = new RecipeScriptContext(LOG);
 		RecipeScriptContext.instance.setup();
 		RecipeScriptContext.instance.run(ConfigName + ".PRE_INIT");
 		ConfigConstants cfg = new ConfigConstants(RecipeScriptContext.instance.modules.get(ConfigName));

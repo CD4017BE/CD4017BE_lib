@@ -5,7 +5,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Predicate;
 
-import cd4017be.lib.script.Function.Iterator;
+import cd4017be.api.recipes.ItemOperand;
+import cd4017be.lib.script.obj.Array;
+import cd4017be.lib.script.obj.IOperand;
+import cd4017be.lib.script.obj.IOperand.OperandIterator;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.FurnaceRecipes;
 
@@ -13,7 +16,7 @@ import net.minecraft.item.crafting.FurnaceRecipes;
  * Lets config scripts iterate over all (or a filtered set of) furnace smelting recipes in order to remove or edit them.
  * @author CD4017BE
  */
-public class SmeltingIterator implements Iterator {
+public class SmeltingIterator implements OperandIterator {
 
 	private final ArrayList<ItemStack> keys;
 	private final Map<ItemStack, ItemStack> recipes;
@@ -30,14 +33,29 @@ public class SmeltingIterator implements Iterator {
 	}
 
 	@Override
-	public Object get() {
-		return new Object[] {in, out};
+	public boolean hasNext() {
+		while (++idx < keys.size()) {
+			in = keys.get(idx);
+			out = recipes.get(in);
+			if (out != null) return true;
+		}
+		return false;
 	}
 
 	@Override
-	public void set(Object o) {
-		if (o instanceof Object[]) {
-			Object[] arr = (Object[])o;
+	public IOperand next() {
+		return new Array(new ItemOperand(in), new ItemOperand(out));
+	}
+
+	@Override
+	public Object value() {
+		return recipes;
+	}
+
+	@Override
+	public void set(IOperand obj) {
+		if (obj instanceof Array) {
+			Object[] arr = (Object[])obj.value();
 			if (arr[0] instanceof ItemStack && arr[1] instanceof ItemStack) {
 				ItemStack a = (ItemStack)arr[0], b = (ItemStack)arr[1];
 				if (a != in || b != out) {
@@ -48,16 +66,6 @@ public class SmeltingIterator implements Iterator {
 			}
 		}
 		recipes.remove(in);
-	}
-
-	@Override
-	public boolean next() {
-		while (++idx < keys.size()) {
-			in = keys.get(idx);
-			out = recipes.get(in);
-			if (out != null) return true;
-		}
-		return false;
 	}
 
 	@Override

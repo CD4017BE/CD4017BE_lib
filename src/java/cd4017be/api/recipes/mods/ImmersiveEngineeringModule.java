@@ -2,12 +2,12 @@ package cd4017be.api.recipes.mods;
 
 import java.lang.reflect.Method;
 
-import org.apache.logging.log4j.Level;
-
 import cd4017be.api.recipes.RecipeModule;
+import cd4017be.api.recipes.RecipeScriptContext;
 import cd4017be.lib.script.Parameters;
+import cd4017be.lib.script.obj.IOperand;
+import cd4017be.lib.script.obj.Nil;
 import net.minecraft.item.ItemStack;
-import net.minecraftforge.fml.common.FMLLog;
 
 
 /**
@@ -29,7 +29,7 @@ public class ImmersiveEngineeringModule extends RecipeModule {
 		mkRcp("MixerRecipe", "Mix");
 		mkRcp("RefineryRecipe", "Refine");
 		mkRcp("SqueezerRecipe", "Squeeze");
-		FMLLog.log("CD4017BE_lib|RecipeAPI", Level.INFO, "added ImmersiveEngineering wrapper module");
+		RecipeScriptContext.instance.LOG.info(RecipeScriptContext.SCRIPT, "added ImmersiveEngineering wrapper module");
 	}
 
 	private void mkRcp(String name, String id) {
@@ -39,9 +39,12 @@ public class ImmersiveEngineeringModule extends RecipeModule {
 				if (m.getName().equals("addRecipe"))
 					methods.put("add" + id, new AddRecipe(m));
 			Method rem = c.getMethod("removeRecipes", ItemStack.class);
-			methods.put("rem" + id, (p)-> rem.invoke(null, p.get(0, ItemStack.class)));
+			methods.put("rem" + id, (p)-> {
+				rem.invoke(null, p.get(0, ItemStack.class));
+				return Nil.NIL;
+			});
 		} catch (ClassNotFoundException | NoSuchMethodException e) {
-			FMLLog.log("CD4017BE_lib|RecipeAPI", Level.WARN, "Problem occoured adding ImmersiveEngineering handler %s: %s", name, e.toString());
+			RecipeScriptContext.instance.LOG.warn(RecipeScriptContext.SCRIPT, "Problem occoured adding ImmersiveEngineering handler {}: {}", name, e.toString());
 		}
 	}
 
@@ -54,17 +57,20 @@ public class ImmersiveEngineeringModule extends RecipeModule {
 		}
 
 		@Override
-		public Object handle(Parameters param) throws Exception {
+		public IOperand handle(Parameters param) throws Exception {
 			Class<?>[] types = m.getParameterTypes();
 			Object[] p = new Object[types.length];
 			for (int i = 0; i < p.length; i++) {
 				Class<?> t = types[i];
-				if (t == int.class) p[i] = (int)param.getNumber(i);
-				else if (t == Object[].class && i == p.length - 1) p[i] = param.param.length > i ? param.getArray(i) : null;
-				else if (t == ItemStack.class && i < param.param.length && param.param[i] == null) p[i] = ItemStack.EMPTY;
+				if (t == int.class) p[i] = param.getIndex(i);
+				else if (t == float.class) p[i] = (float)param.getNumber(i);
+				else if (t == double.class) p[i] = param.getNumber(i);
+				else if (t == Object[].class && i == p.length - 1) p[i] = param.getArrayOrAll(i);
+				else if (t == ItemStack.class && param.has(i) && param.param[i] == Nil.NIL) p[i] = ItemStack.EMPTY;
 				else p[i] = param.get(i, t);
 			}
-			return m.invoke(null, p);
+			m.invoke(null, p);
+			return Nil.NIL;
 		}
 
 	}

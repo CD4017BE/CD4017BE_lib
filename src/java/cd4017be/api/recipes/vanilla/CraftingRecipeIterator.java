@@ -2,9 +2,13 @@ package cd4017be.api.recipes.vanilla;
 
 import java.util.function.Predicate;
 
-import org.apache.logging.log4j.Level;
+import com.google.common.base.Predicates;
 
-import cd4017be.lib.script.Function.Iterator;
+import cd4017be.api.recipes.ItemOperand;
+import cd4017be.api.recipes.RecipeScriptContext;
+import cd4017be.lib.script.obj.Array;
+import cd4017be.lib.script.obj.IOperand;
+import cd4017be.lib.script.obj.IOperand.OperandIterator;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.CraftingManager;
 import net.minecraft.item.crafting.IRecipe;
@@ -13,7 +17,6 @@ import net.minecraft.item.crafting.ShapelessRecipes;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.crafting.CraftingHelper.ShapedPrimer;
 import net.minecraftforge.common.crafting.IShapedRecipe;
-import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.oredict.ShapedOreRecipe;
 import net.minecraftforge.oredict.ShapelessOreRecipe;
 
@@ -21,31 +24,49 @@ import net.minecraftforge.oredict.ShapelessOreRecipe;
  * Lets config scripts iterate over all (or a filtered set of) crafting recipes in order to remove or edit them.
  * @author CD4017BE
  */
-public class CraftingRecipeIterator implements Iterator {
+public class CraftingRecipeIterator implements OperandIterator {
 
 	private java.util.Iterator<IRecipe> list;
 	private final Predicate<Object> key;
-	private final boolean in;
-	private Object[] curElement;
+	private final ItemStack item;
+	private Array curElement;
 	private IRecipe curRecipe;
 
-	public CraftingRecipeIterator(Predicate<Object> key, boolean res) {
-		this.key = key;
+	/**
+	 * Iterates over all crafting recipes with given ingredient
+	 * @param key the ItemStack as ingredient filter
+	 */
+	public CraftingRecipeIterator(ItemStack key) {
 		this.list = CraftingManager.REGISTRY.iterator();
-		this.in = !res;
+		this.key = Predicates.alwaysTrue();
+		this.item = key;
+	}
+
+	/**
+	 * Iterates over all crafting recipes with given result
+	 * @param key the result filter
+	 */
+	public CraftingRecipeIterator(Predicate<Object> key) {
+		this.key = key;
+		this.item = null;
+		this.list = CraftingManager.REGISTRY.iterator();
 	}
 
 	@Override
-	public Object get() {
+	public IOperand next() {
 		return curElement;
 	}
 
 	@Override
-	public void set(Object o) {
-		if (o == null) list.remove();//TODO potential fail
-		else if (o == curElement && curElement[0] != curRecipe.getRecipeOutput()) {
-			if (!(curElement[0] instanceof ItemStack)) throw new IllegalArgumentException("ItemStack expected");
-			ItemStack item = (ItemStack)curElement[0];
+	public void set(IOperand obj) {
+		if (obj != curElement) {
+			list.remove();
+			return;
+		}
+		Object out = curElement.array[0].value();
+		if (!(out instanceof ItemStack)) throw new IllegalArgumentException("ItemStack expected");
+		if (out != curRecipe.getRecipeOutput()) {
+			ItemStack item = (ItemStack)out;
 			if (curRecipe instanceof ShapedRecipes) {
 				ShapedRecipes sr = (ShapedRecipes)curRecipe;
 				curRecipe = new ShapedRecipes(sr.getGroup(), sr.recipeWidth, sr.recipeHeight, sr.recipeItems, item);
@@ -63,7 +84,7 @@ public class CraftingRecipeIterator implements Iterator {
 				ShapelessOreRecipe sr = (ShapelessOreRecipe)curRecipe;
 				curRecipe = new ShapelessOreRecipe(new ResourceLocation(sr.getGroup()), sr.getIngredients(), item);
 			} else {
-				FMLLog.log("RECIPE_SCRIPT", Level.WARN, "could not replicate unknown recipe type: %s!", curRecipe.getClass());
+				RecipeScriptContext.instance.LOG.warn(RecipeScriptContext.SCRIPT,"could not replicate unknown recipe type: {}!", curRecipe.getClass());
 				return;
 			}
 			CraftingManager.REGISTRY.putObject(curRecipe.getRegistryName(), curRecipe);
@@ -71,13 +92,17 @@ public class CraftingRecipeIterator implements Iterator {
 	}
 
 	@Override
-	public boolean next() {
+	public boolean hasNext() {
 		while (list.hasNext()) {
 			curRecipe = list.next();
-			ItemStack result = curRecipe.getRecipeOutput();
-			if (!(in || key.test(result))) continue;
-			Iterator ingred = new IngredientIterator(curRecipe.getIngredients(), key, curRecipe instanceof IShapedRecipe);
-			curElement = new Object[]{result, ingred};
+			ItemOperand result = new ItemOperand(curRecipe.getRecipeOutput());
+			if (!key.test(result)) continue;
+			OperandIterator ingred = new IngredientIterator(curRecipe.getIngredients(), item, curRecipe instanceof IShapedRecipe);
+			if (item != null) {
+				if (!ingred.hasNext()) continue;
+				ingred.reset();
+			}
+			curElement = new Array(result, ingred);
 			return true;
 		}
 		return false;
@@ -86,6 +111,11 @@ public class CraftingRecipeIterator implements Iterator {
 	@Override
 	public void reset() {
 		list = CraftingManager.REGISTRY.iterator();
+	}
+
+	@Override
+	public Object value() {
+		return this;
 	}
 
 }

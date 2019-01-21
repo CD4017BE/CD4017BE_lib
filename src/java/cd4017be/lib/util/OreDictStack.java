@@ -12,7 +12,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.oredict.OreDictionary;
 
 /**
- * 
+ * Represents an OreDictionary entry with stacksize.
  * @author CD4017BE
  */
 public class OreDictStack implements IOperand {
@@ -83,24 +83,25 @@ public class OreDictStack implements IOperand {
 		return new OreDictStack(ID, stacksize);
 	}
 
-	/**
-	 * Symmetric and transitive conditions only matched if given obj is a OreDictStack!<br>
-	 * Otherwise also checks match against ItemStack and String objects
-	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == this) return true;
 		if (obj instanceof IOperand)
-			obj = ((IOperand)obj).value();
+			return this.equals((IOperand)obj);
 		if (obj instanceof OreDictStack) {
 			OreDictStack stack = (OreDictStack)obj;
 			return stack.ID == ID;
-		} else if (obj instanceof ItemStack) {
-			ItemStack stack = (ItemStack)obj;
-			return isEqual(stack);
-		} else if (obj instanceof String) {
-			return id.equals(obj);
 		} else return false;
+	}
+
+	@Override
+	public int hashCode() {
+		return ID;
+	}
+
+	@Override
+	public String toString() {
+		return "ore:" + id + (stacksize != 1 ? "*" + stacksize : "");
 	}
 
 	@Override
@@ -119,6 +120,46 @@ public class OreDictStack implements IOperand {
 	}
 
 	@Override
+	public IOperand grR(IOperand x) {
+		if (x instanceof ItemOperand) {
+			ItemStack stack = ((ItemOperand)x).stack;
+			if (!stack.isEmpty()) {
+				int id = ID;
+				for (int o : OreDictionary.getOreIDs(stack))
+					if (o == id)
+						return Number.TRUE;
+			}
+		} else if (!(x instanceof OreDictStack))
+			return x.grR(this);
+		return Number.FALSE;
+	}
+
+	@Override
+	public IOperand grL(IOperand x) {
+		if (x instanceof ItemOperand) {
+			ItemStack stack = ((ItemOperand)x).stack;
+			if (!stack.isEmpty()) {
+				int id = ID;
+				for (int o : OreDictionary.getOreIDs(stack))
+					if (o == id)
+						return Number.TRUE;
+			}
+		} else if (!(x instanceof OreDictStack))
+			return IOperand.super.grL(x);
+		return Number.FALSE;
+	}
+
+	@Override
+	public IOperand nlsR(IOperand x) {
+		return x instanceof OreDictStack ? ((OreDictStack)x).id.equals(id) ? Number.TRUE : Number.FALSE : grR(x);
+	}
+
+	@Override
+	public IOperand nlsL(IOperand x) {
+		return x instanceof OreDictStack ? ((OreDictStack)x).id.equals(id) ? Number.TRUE : Number.FALSE : grR(x);
+	}
+
+	@Override
 	public OperandIterator iterator() throws Error {
 		return new ItemIterator(OreDictionary.getOres(id).iterator());
 	}
@@ -130,7 +171,7 @@ public class OreDictStack implements IOperand {
 
 	@Override
 	public Object value() {
-		return this;
+		return id;
 	}
 
 	public static class ItemIterator implements OperandIterator {

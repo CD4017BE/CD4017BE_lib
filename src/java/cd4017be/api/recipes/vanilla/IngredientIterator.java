@@ -1,9 +1,10 @@
 package cd4017be.api.recipes.vanilla;
 
-import java.util.List;
-import java.util.function.Predicate;
-
-import cd4017be.lib.script.Function.ListIterator;
+import cd4017be.api.recipes.ItemOperand;
+import cd4017be.lib.script.obj.IOperand;
+import cd4017be.lib.script.obj.IOperand.OperandIterator;
+import cd4017be.lib.script.obj.Nil;
+import cd4017be.lib.script.obj.PredicateWrap;
 import cd4017be.lib.util.OreDictStack;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.Ingredient;
@@ -15,53 +16,56 @@ import net.minecraftforge.oredict.OreIngredient;
  * Lets config scripts parse though ingredients of crafting recipes and edit them.
  * @author CD4017BE
  */
-public class IngredientIterator extends ListIterator<Ingredient> {
+public class IngredientIterator implements OperandIterator {
 
-	private final Predicate<Object> key;
+	private final NonNullList<Ingredient> ingreds;
+	private final ItemStack key;
 	private final boolean shaped;
-	private Object curElement;
+	private int idx = -1;
+	private PredicateWrap<ItemStack> curElement;
 
-	public IngredientIterator(NonNullList<Ingredient> rcp, Predicate<Object> key, boolean shaped) {
-		super(rcp);
+	public IngredientIterator(NonNullList<Ingredient> rcp, ItemStack key, boolean shaped) {
+		this.ingreds = rcp;
 		this.key = key;
 		this.shaped = shaped;
 	}
 
 	@Override
-	public Object get() {
+	public IOperand next() {
 		return curElement;
 	}
 
 	@Override
-	public void set(Object o) {
-		if (o == curElement) return;
-		if (o instanceof ItemStack) arr.set(idx, Ingredient.fromStacks((ItemStack)o));
-		else if (o instanceof OreDictStack) arr.set(idx, new OreIngredient(((OreDictStack)o).id));
-		else if (o == null) {
-			if (shaped) arr.set(idx, Ingredient.EMPTY);
-			else arr.remove(idx--);
+	public void set(IOperand obj) {
+		if (obj == curElement) return;
+		if (obj instanceof ItemOperand) ingreds.set(idx, Ingredient.fromStacks(((ItemOperand)obj).stack));
+		else if (obj instanceof OreDictStack) ingreds.set(idx, new OreIngredient(((OreDictStack)obj).id));
+		else if (obj == Nil.NIL) {
+			if (shaped) ingreds.set(idx, Ingredient.EMPTY);
+			else ingreds.remove(idx--);
 		} else throw new IllegalArgumentException("exp. ItemStack or OreDictStack");
 	}
 
 	@Override
-	public boolean next() {
-		while (++idx < arr.size()) {
-			curElement = arr.get(idx);
-			if (curElement instanceof List) {
-				List<?> list = (List<?>)curElement;
-				if (list.isEmpty()) continue;
-				if (key == null) {
-					curElement = list.get(0);
-					return true;
-				}
-				for (Object o : list)
-					if (key.test(o)) {
-						curElement = o;
-						return true;
-					}
-			} else if (key == null || key.test(curElement)) return true;
+	public boolean hasNext() {
+		while (++idx < ingreds.size()) {
+			Ingredient ingr = ingreds.get(idx);
+			if (key == null || ingr.apply(key)) {
+				curElement = new PredicateWrap<>(ingr, ItemStack.class);
+				return true;
+			}
 		}
 		return false;
+	}
+
+	@Override
+	public void reset() {
+		idx = -1;
+	}
+
+	@Override
+	public Object value() {
+		return this;
 	}
 
 }
