@@ -1,7 +1,7 @@
 package cd4017be.lib.script.obj;
 
 /**
- * 
+ * Represents a vector (array of numbers) in script
  * @author cd4017be
  */
 public class Vector implements IOperand {
@@ -65,14 +65,26 @@ public class Vector implements IOperand {
 			if (copied && dl > 0)
 				System.arraycopy(a, l, c, l, dl);
 			return ret;
-		} else {
+		} else if (x instanceof Number){
 			Vector ret = of();
 			c = ret.value;
-			double b = x.asDouble();
+			double b = ((Number)x).value;
 			for (int i = value.length - 1; i >= 0; i--)
 				c[i] = a[i] + b;
 			return ret;
-		}
+		} else return x.addL(this);
+	}
+
+	@Override
+	public IOperand addL(IOperand x) {
+		if (x instanceof Number) {
+			Vector ret = of();
+			double[] a = value, c = ret.value;
+			double b = ((Number)x).value;
+			for (int i = value.length - 1; i >= 0; i--)
+				c[i] = a[i] + b;
+			return ret;
+		} else return IOperand.super.addL(x);
 	}
 
 	@Override
@@ -90,14 +102,14 @@ public class Vector implements IOperand {
 			if (copied && dl > 0)
 				System.arraycopy(a, l, c, l, dl);
 			return ret;
-		} else {
+		} else if (x instanceof Number){
 			Vector ret = of();
 			c = ret.value;
-			double b = x.asDouble();
+			double b = ((Number)x).value;
 			for (int i = value.length - 1; i >= 0; i--)
 				c[i] = a[i] - b;
 			return ret;
-		}
+		} else return x.subL(this);
 	}
 
 	@Override
@@ -111,11 +123,11 @@ public class Vector implements IOperand {
 				c[i] = b[i] - a[i];
 			if (copied && dl > 0)
 				System.arraycopy(a, l, c, l, dl);
-		} else {
-			double b = x.asDouble();
+		} else if (x instanceof Number){
+			double b = ((Number)x).value;
 			for (int i = value.length - 1; i >= 0; i--)
 				c[i] = b - a[i];
-		}
+		} else return IOperand.super.subL(x);
 		return ret;
 	}
 
@@ -134,14 +146,26 @@ public class Vector implements IOperand {
 			if (copied && dl > 0)
 				System.arraycopy(a, l, c, l, dl);
 			return ret;
-		} else {
+		} else if (x instanceof Number) {
 			Vector ret = of();
 			c = ret.value;
-			double b = x.asDouble();
+			double b = ((Number)x).value;
 			for (int i = value.length - 1; i >= 0; i--)
 				c[i] = a[i] * b;
 			return ret;
-		}
+		} else return x.mulL(this);
+	}
+
+	@Override
+	public IOperand mulL(IOperand x) {
+		if (x instanceof Number) {
+			Vector ret = of();
+			double[] a = value, c = ret.value;
+			double b = ((Number)x).value;
+			for (int i = value.length - 1; i >= 0; i--)
+				c[i] = a[i] + b;
+			return ret;
+		} else return IOperand.super.mulL(x);
 	}
 
 	@Override
@@ -159,14 +183,14 @@ public class Vector implements IOperand {
 			if (copied && dl > 0)
 				System.arraycopy(a, l, c, l, dl);
 			return ret;
-		} else {
+		} else if (x instanceof Number){
 			Vector ret = of();
 			c = ret.value;
-			double b = x.asDouble();
+			double b = ((Number)x).value;
 			for (int i = value.length - 1; i >= 0; i--)
 				c[i] = a[i] / b;
 			return ret;
-		}
+		} else return x.divL(this);
 	}
 
 	@Override
@@ -180,11 +204,11 @@ public class Vector implements IOperand {
 				c[i] = b[i] / a[i];
 			if (copied && dl > 0)
 				System.arraycopy(a, l, c, l, dl);
-		} else {
-			double b = x.asDouble();
+		} else if (x instanceof Number){
+			double b = ((Number)x).value;
 			for (int i = value.length - 1; i >= 0; i--)
 				c[i] = b / a[i];
-		}
+		} else return IOperand.super.divL(x);
 		return ret;
 	}
 
@@ -203,14 +227,14 @@ public class Vector implements IOperand {
 			if (copied && dl > 0)
 				System.arraycopy(a, l, c, l, dl);
 			return ret;
-		} else {
+		} else if (x instanceof Number){
 			Vector ret = of();
 			c = ret.value;
-			double b = x.asDouble();
+			double b = ((Number)x).value;
 			for (int i = value.length - 1; i >= 0; i--)
 				c[i] = a[i] % b;
 			return ret;
-		}
+		} else return x.modL(this);
 	}
 
 	@Override
@@ -224,11 +248,11 @@ public class Vector implements IOperand {
 				c[i] = b[i] % a[i];
 			if (copied && dl > 0)
 				System.arraycopy(a, l, c, l, dl);
-		} else {
-			double b = x.asDouble();
+		} else if (x instanceof Number){
+			double b = ((Number)x).value;
 			for (int i = value.length - 1; i >= 0; i--)
 				c[i] = b % a[i];
-		}
+		} else return IOperand.super.modL(x);
 		return ret;
 	}
 

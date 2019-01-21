@@ -49,6 +49,11 @@ public class Number implements IOperand {
 		return value;
 	}
 
+	private double asNumBool() {
+		double v = value;
+		return v >= 1.0 ? 1.0 : v <= 0.0 ? 0.0 : v;
+	}
+
 	@Override
 	public boolean isError() {
 		return Double.isNaN(value);
@@ -61,7 +66,7 @@ public class Number implements IOperand {
 
 	@Override
 	public IOperand addR(IOperand x) {
-		return x instanceof Number ? of(value + ((Number)x).value) : x.addR(this);
+		return x instanceof Number ? of(value + ((Number)x).value) : x.addL(this);
 	}
 
 	@Override
@@ -71,7 +76,7 @@ public class Number implements IOperand {
 
 	@Override
 	public IOperand mulR(IOperand x) {
-		return x instanceof Number ? of(value * ((Number)x).value) : x.mulR(this);
+		return x instanceof Number ? of(value * ((Number)x).value) : x.mulL(this);
 	}
 
 	@Override
@@ -90,42 +95,42 @@ public class Number implements IOperand {
 	}
 
 	@Override
-	public IOperand ls(IOperand x) {
+	public IOperand grR(IOperand x) {
 		if (x instanceof Number) {
 			double v = ((Number)x).value;
-			return value < v ? TRUE : value >= v ? FALSE : UNKNOWN;
-		} else return UNKNOWN;
+			return value > v ? TRUE : FALSE;
+		} else return x.grL(this);
 	}
 
 	@Override
-	public IOperand nls(IOperand x) {
+	public IOperand grL(IOperand x) {
 		if (x instanceof Number) {
 			double v = ((Number)x).value;
-			return value >= v ? TRUE : value < v ? FALSE : UNKNOWN;
-		} else return UNKNOWN;
+			return value < v ? TRUE : FALSE;
+		} else return IOperand.super.grL(x);
 	}
 
 	@Override
-	public IOperand gr(IOperand x) {
+	public IOperand nlsR(IOperand x) {
 		if (x instanceof Number) {
 			double v = ((Number)x).value;
-			return value > v ? TRUE : value <= v ? FALSE : UNKNOWN;
-		} else return UNKNOWN;
+			return value >= v ? TRUE : FALSE;
+		} else return x.nlsL(this);
 	}
 
 	@Override
-	public IOperand ngr(IOperand x) {
+	public IOperand nlsL(IOperand x) {
 		if (x instanceof Number) {
 			double v = ((Number)x).value;
-			return value <= v ? TRUE : value > v ? FALSE : UNKNOWN;
-		} else return UNKNOWN;
+			return value <= v ? TRUE : FALSE;
+		} else return IOperand.super.nlsL(x);
 	}
 
 	@Override
 	public IOperand and(IOperand x) {
 		try {
-			double b = x instanceof Number ? ((Number)x).value : x.asBool() ? 1.0 : 0.0;
-			double a = value;
+			double b = x instanceof Number ? ((Number)x).asNumBool() : x.asBool() ? 1.0 : 0.0;
+			double a = asNumBool();
 			return of(a*b);
 		} catch(Error e) {return e.reset(value + " & ERROR");}
 	}
@@ -133,8 +138,8 @@ public class Number implements IOperand {
 	@Override
 	public IOperand or(IOperand x) {
 		try {
-			double b = x instanceof Number ? ((Number)x).value : x.asBool() ? 1.0 : 0.0;
-			double a = value;
+			double b = x instanceof Number ? ((Number)x).asNumBool() : x.asBool() ? 1.0 : 0.0;
+			double a = asNumBool();
 			return of(a + b - a*b);
 		} catch(Error e) {return e.reset(value + " | ERROR");}
 	}
@@ -142,8 +147,8 @@ public class Number implements IOperand {
 	@Override
 	public IOperand nand(IOperand x) {
 		try {
-			double b = x instanceof Number ? ((Number)x).value : x.asBool() ? 1.0 : 0.0;
-			double a = value;
+			double b = x instanceof Number ? ((Number)x).asNumBool() : x.asBool() ? 1.0 : 0.0;
+			double a = asNumBool();
 			return of(1.0 - a*b);
 		} catch(Error e) {return e.reset(value + " ~& ERROR");}
 	}
@@ -151,8 +156,8 @@ public class Number implements IOperand {
 	@Override
 	public IOperand nor(IOperand x) {
 		try {
-			double b = x instanceof Number ? ((Number)x).value : x.asBool() ? 1.0 : 0.0;
-			double a = value;
+			double b = x instanceof Number ? ((Number)x).asNumBool() : x.asBool() ? 1.0 : 0.0;
+			double a = asNumBool();
 			return of((1.0-a) * (1.0-b));
 		} catch(Error e) {return e.reset(value + " ~| ERROR");}
 	}
@@ -160,8 +165,8 @@ public class Number implements IOperand {
 	@Override
 	public IOperand xor(IOperand x) {
 		try {
-			double b = x instanceof Number ? ((Number)x).value : x.asBool() ? 1.0 : 0.0;
-			double a = value, c = a*b;
+			double b = x instanceof Number ? ((Number)x).asNumBool() : x.asBool() ? 1.0 : 0.0;
+			double a = asNumBool(), c = a*b;
 			return of((1.0 - c) * (a + b - c));
 		} catch(Error e) {return e.reset(value + " ^ ERROR");}
 	}
@@ -169,8 +174,8 @@ public class Number implements IOperand {
 	@Override
 	public IOperand xnor(IOperand x) {
 		try {
-			double b = x instanceof Number ? 1.0 - ((Number)x).value : x.asBool() ? 0.0 : 1.0;
-			double a = value, c = a*b;
+			double b = x instanceof Number ? 1.0 - ((Number)x).asNumBool() : x.asBool() ? 0.0 : 1.0;
+			double a = asNumBool(), c = a*b;
 			return of((1.0 - c) * (a + b - c));
 		} catch(Error e) {return e.reset(value + " ~^ ERROR");}
 	}

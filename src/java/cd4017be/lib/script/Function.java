@@ -19,7 +19,7 @@ import cd4017be.lib.script.obj.Error;
 import cd4017be.lib.util.Stack;
 
 /**
- * 
+ * The script function interpreter.
  * @author CD4017BE
  */
 public class Function {
@@ -223,19 +223,19 @@ public class Function {
 					break;
 				case ls:
 					b = stack.rem(); a = stack.rem();
-					stack.add(a.ls(b));
+					stack.add(b.grR(a));
 					break;
 				case nls:
 					b = stack.rem(); a = stack.rem();
-					stack.add(a.nls(b));
+					stack.add(a.nlsR(b));
 					break;
 				case gr:
 					b = stack.rem(); a = stack.rem();
-					stack.add(a.gr(b));
+					stack.add(a.grR(b));
 					break;
 				case ngr:
 					b = stack.rem(); a = stack.rem();
-					stack.add(a.ngr(b));
+					stack.add(b.nlsR(a));
 					break;
 				case and:
 					b = stack.rem(); a = stack.rem();

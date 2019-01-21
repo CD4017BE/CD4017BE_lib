@@ -14,8 +14,15 @@ public class Array implements IOperand {
 		this.array = new IOperand[cap];
 	}
 
-	public Array(IOperand[] arr) {
+	public Array(IOperand... arr) {
 		this.array = arr;
+	}
+
+	public Array(Object[] objects) {
+		int n = objects.length;
+		this.array = new IOperand[n];
+		for (int i = 0; i < n; i++)
+			array[i] = new ObjWrapper(objects[i]);
 	}
 
 	@Override
@@ -49,6 +56,59 @@ public class Array implements IOperand {
 	}
 
 	//TODO set operations
+
+	@Override
+	public IOperand grR(IOperand x) {
+		IOperand[] a = array;
+		int l = a.length;
+		for (int i = 0; i < l; i++)
+			if (x.equals(a[i]))
+				return new Number(i + 1);
+		return Number.FALSE;
+	}
+
+	@Override
+	public IOperand grL(IOperand x) {
+		try {
+			for (IOperand op : array)
+				if (!x.grR(op).asBool())
+					return Number.FALSE;
+			return Number.TRUE;
+		} catch (Error e) {
+			return IOperand.super.grL(x);
+		}
+	}
+
+	@Override
+	public IOperand nlsR(IOperand x) {
+		if (x instanceof Array) {
+			IOperand[] a = array, b = ((Array)x).array;
+			for (IOperand opB : b) {
+				boolean found = false;
+				for (IOperand opA : a)
+					if (opB.equals(opA)) {
+						found = true;
+						break;
+					}
+				if (!found) return Number.FALSE;
+			}
+			return Number.TRUE;
+		} else try {
+			IOperand[] a = array;
+			int l = a.length;
+			for (int i = 0; i < l; i++)
+				if (x.nlsR(a[i]).asBool())
+					return new Number(i + 1);
+			return Number.FALSE;
+		} catch (Error e) {
+			return x.nlsL(this);
+		}
+	}
+
+	@Override
+	public IOperand nlsL(IOperand x) {
+		return grL(x);
+	}
 
 	@Override
 	public IOperand len() {

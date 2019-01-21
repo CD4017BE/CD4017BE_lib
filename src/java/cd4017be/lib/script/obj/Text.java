@@ -1,7 +1,7 @@
 package cd4017be.lib.script.obj;
 
 /**
- * 
+ * Represents Strings in script
  * @author cd4017be
  */
 public class Text implements IOperand {
@@ -69,6 +69,21 @@ public class Text implements IOperand {
 		if (i0 < 0) i0 = 0;
 		if (i1 > l) i1 = l;
 		value = value.substring(0, i0).concat(val.toString()).concat(value.substring(i1));
+	}
+
+	@Override
+	public IOperand grR(IOperand x) {
+		if (x instanceof Text) {
+			String s = ((Text)x).value;
+			return value.length() > s.length() ? new Number(value.indexOf(s) + 1) : Number.FALSE;
+		} else return x.grL(x);
+	}
+
+	@Override
+	public IOperand nlsR(IOperand x) {
+		if (x instanceof Text)
+			return new Number(value.indexOf(((Text)x).value) + 1);
+		else return x.nlsL(x);
 	}
 
 	@Override

@@ -3,7 +3,8 @@ package cd4017be.lib.script.obj;
 import javax.annotation.Nonnull;
 
 /**
- * 
+ * Used to represents execution errors in the script.<br>
+ * Usually rather returned as operation result than thrown.
  * @author cd4017be
  */
 @SuppressWarnings("serial")
@@ -33,6 +34,11 @@ public class Error extends Exception implements IOperand {
 		this.message = message == null ? "" : message;
 	}
 
+	/**
+	 * change the error message
+	 * @param message new error message
+	 * @return this
+	 */
 	public Error reset(String message) {
 		this.message = message;
 		return this;
@@ -114,22 +120,22 @@ public class Error extends Exception implements IOperand {
 	}
 
 	@Override
-	public IOperand ls(IOperand x) {
-		return new Error(this, "ERROR < (" + x + ")");
-	}
-
-	@Override
-	public IOperand nls(IOperand x) {
-		return new Error(this, "ERROR >= (" + x + ")");
-	}
-
-	@Override
-	public IOperand gr(IOperand x) {
+	public IOperand grR(IOperand x) {
 		return new Error(this, "ERROR > (" + x + ")");
 	}
 
 	@Override
-	public IOperand ngr(IOperand x) {
+	public IOperand grL(IOperand x) {
+		return new Error(this, "ERROR < (" + x + ")");
+	}
+
+	@Override
+	public IOperand nlsR(IOperand x) {
+		return new Error(this, "ERROR >= (" + x + ")");
+	}
+
+	@Override
+	public IOperand nlsL(IOperand x) {
 		return new Error(this, "ERROR <= (" + x + ")");
 	}
 
