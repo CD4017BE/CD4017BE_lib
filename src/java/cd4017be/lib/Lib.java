@@ -7,6 +7,7 @@ import cd4017be.api.computers.ComputerAPI;
 import cd4017be.api.energy.EnergyAPI;
 import cd4017be.api.recipes.RecipeScriptContext;
 import cd4017be.api.recipes.RecipeScriptContext.ConfigConstants;
+import cd4017be.lib.item.BaseItem;
 import cd4017be.lib.item.ItemMaterial;
 import cd4017be.lib.render.ItemMaterialMeshDefinition;
 import cd4017be.lib.render.SpecialModelLoader;
@@ -46,6 +47,7 @@ public class Lib {
 	public static Logger LOG;
 
 	public static ItemMaterial materials;
+	public static BaseItem rrwi;
 
 	public static final TabMaterials creativeTab = new TabMaterials(ID);
 
@@ -59,6 +61,7 @@ public class Lib {
 		FileUtil.initConfigDir(event);
 		BlockGuiHandler.register();
 		Capabilities.register();
+		rrwi = new BaseItem("rrwi");
 		(materials = new ItemMaterial("m")).setCreativeTab(creativeTab);
 		creativeTab.item = new ItemStack(materials);
 		//RecipeSorter.register(ID + ":shapedNBT", NBTRecipe.class, RecipeSorter.Category.SHAPED, "after:minecraft:shaped before:minecraft:shapeless");
@@ -98,13 +101,14 @@ public class Lib {
 
 	@SubscribeEvent
 	public void registerItems(RegistryEvent.Register<Item> ev) {
-		ev.getRegistry().register(materials);
+		ev.getRegistry().registerAll(rrwi, materials);
 	}
 
 	@SideOnly(Side.CLIENT)
 	@SubscribeEvent
 	public void registerMaterialModels(ModelRegistryEvent ev) {
 		SpecialModelLoader.setMod(ID);
+		BlockItemRegistry.registerRender(rrwi);
 		BlockItemRegistry.registerRender(materials);
 		BlockItemRegistry.registerRender(materials, new ItemMaterialMeshDefinition(materials));
 	}

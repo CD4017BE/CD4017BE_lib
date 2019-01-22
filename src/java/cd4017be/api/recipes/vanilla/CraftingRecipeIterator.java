@@ -1,17 +1,29 @@
 package cd4017be.api.recipes.vanilla;
 
+import java.util.List;
 import java.util.function.Predicate;
 
 import com.google.common.base.Predicates;
 
 import cd4017be.api.recipes.ItemOperand;
+import cd4017be.api.recipes.RecipeAPI;
+import cd4017be.api.recipes.RecipeScriptContext;
+import cd4017be.lib.Lib;
 import cd4017be.lib.script.obj.Array;
 import cd4017be.lib.script.obj.IOperand;
 import cd4017be.lib.script.obj.IOperand.OperandIterator;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.CraftingManager;
 import net.minecraft.item.crafting.IRecipe;
+import net.minecraft.item.crafting.Ingredient;
+import net.minecraft.item.crafting.ShapedRecipes;
+import net.minecraft.item.crafting.ShapelessRecipes;
+import net.minecraft.util.NonNullList;
+import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.common.crafting.CraftingHelper.ShapedPrimer;
 import net.minecraftforge.common.crafting.IShapedRecipe;
+import net.minecraftforge.oredict.ShapedOreRecipe;
+import net.minecraftforge.oredict.ShapelessOreRecipe;
 
 /**
  * Lets config scripts iterate over all (or a filtered set of) crafting recipes in order to remove or edit them.
@@ -52,10 +64,8 @@ public class CraftingRecipeIterator implements OperandIterator {
 
 	@Override
 	public void set(IOperand obj) {
-		//recipe post-manipulation not supported by Minecraft 1.12
-		/*
 		if (obj != curElement) {
-			list.remove();
+			disableRecipe();
 			return;
 		}
 		Object out = curElement.array[0].value();
@@ -64,27 +74,36 @@ public class CraftingRecipeIterator implements OperandIterator {
 			ItemStack item = (ItemStack)out;
 			if (curRecipe instanceof ShapedRecipes) {
 				ShapedRecipes sr = (ShapedRecipes)curRecipe;
-				curRecipe = new ShapedRecipes(sr.getGroup(), sr.recipeWidth, sr.recipeHeight, sr.recipeItems, item);
+				RecipeAPI.addRecipe(new ShapedRecipes(sr.getGroup(), sr.recipeWidth, sr.recipeHeight, copy(sr.recipeItems), item));
 			} else if (curRecipe instanceof ShapelessRecipes) {
 				ShapelessRecipes sr = (ShapelessRecipes)curRecipe;
-				curRecipe = new ShapelessRecipes(sr.getGroup(), item, sr.recipeItems);
+				RecipeAPI.addRecipe(new ShapelessRecipes(sr.getGroup(), item, copy(sr.recipeItems)));
 			} else if (curRecipe instanceof ShapedOreRecipe) {
 				ShapedOreRecipe sr = (ShapedOreRecipe)curRecipe;
 				ShapedPrimer p = new ShapedPrimer();
 				p.width = sr.getRecipeWidth();
 				p.height = sr.getRecipeHeight();
-				p.input = sr.getIngredients();
-				curRecipe = new ShapedOreRecipe(new ResourceLocation(sr.getGroup()), item, p);
+				p.input = copy(sr.getIngredients());
+				RecipeAPI.addRecipe(new ShapedOreRecipe(new ResourceLocation(sr.getGroup()), item, p));
 			} else if (curRecipe instanceof ShapelessOreRecipe) {
 				ShapelessOreRecipe sr = (ShapelessOreRecipe)curRecipe;
-				curRecipe = new ShapelessOreRecipe(new ResourceLocation(sr.getGroup()), sr.getIngredients(), item);
-			} else {
+				RecipeAPI.addRecipe(new ShapelessOreRecipe(new ResourceLocation(sr.getGroup()), copy(sr.getIngredients()), item));
+			} else
 				RecipeScriptContext.instance.LOG.warn(RecipeScriptContext.SCRIPT,"could not replicate unknown recipe type: {}!", curRecipe.getClass());
-				return;
-			}
-			CraftingManager.REGISTRY.putObject(curRecipe.getRegistryName(), curRecipe);
+			disableRecipe();
 		}
-		*/
+	}
+
+	private static NonNullList<Ingredient> copy(NonNullList<Ingredient> list) {
+		NonNullList<Ingredient> nlist = NonNullList.create();
+		nlist.addAll(list);
+		return nlist;
+	}
+
+	private void disableRecipe() {
+		List<Ingredient> ingr = curRecipe.getIngredients();
+		for (int i = 0, l = ingr.size(); i < l; i++)
+			ingr.set(i, LOCK_INGRED);
 	}
 
 	@Override
@@ -114,4 +133,8 @@ public class CraftingRecipeIterator implements OperandIterator {
 		return this;
 	}
 
+	public static final Ingredient LOCK_INGRED = new Ingredient(new ItemStack[] {new ItemStack(Lib.rrwi)}) {
+		@Override
+		public boolean apply(ItemStack stack) {return false;}
+	};
 }

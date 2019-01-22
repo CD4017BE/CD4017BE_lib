@@ -117,7 +117,7 @@ public class RecipeAPI {
 		return s;
 	}
 
-	private static <T extends Impl<IRecipe> & IRecipe> void addRecipe(T rcp) {
+	public static <T extends Impl<IRecipe> & IRecipe> void addRecipe(T rcp) {
 		ForgeRegistries.RECIPES.register(rcp.setRegistryName(genericName(rcp)));
 	}
 
