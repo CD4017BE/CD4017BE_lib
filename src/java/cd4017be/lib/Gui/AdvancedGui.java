@@ -3,7 +3,6 @@ package cd4017be.lib.Gui;
 import cd4017be.lib.BlockGuiHandler;
 import cd4017be.lib.Gui.DataContainer.IGuiData;
 import cd4017be.lib.Gui.TileContainer.TankSlot;
-import cd4017be.lib.tileentity.AutomatedTile;
 import cd4017be.lib.util.TooltipUtil;
 import cd4017be.lib.util.Vec3;
 
@@ -40,8 +39,6 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidUtil;
 import net.minecraftforge.items.ItemHandlerHelper;
-import net.minecraftforge.items.SlotItemHandler;
-
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
@@ -75,13 +72,6 @@ public abstract class AdvancedGui extends GuiContainer {
 			TileContainer cont = (TileContainer)inventorySlots;
 			for (TankSlot slot : cont.tankSlots)
 				guiComps.add(new FluidTank(guiComps.size(), slot));
-			if (cont.data instanceof AutomatedTile) {
-				AutomatedTile tile = (AutomatedTile)cont.data;
-				int xPos = tabsX;
-				if (tile.tanks != null && tile.tanks.tanks.length > 0) guiComps.add(new FluidSideCfg(guiComps.size(), xPos -= tile.tanks.tanks.length * 9 + 9, tabsY, tile));
-				if (tile.inventory != null && tile.inventory.groups.length > 0) guiComps.add(new ItemSideCfg(guiComps.size(), xPos -= tile.inventory.groups.length * 9 + 9, tabsY, tile));
-				if (tile.energy != null) guiComps.add(new EnergySideCfg(guiComps.size(), xPos - 18, tabsY, tile));
-			}
 		}
 	}
 
@@ -863,156 +853,6 @@ public abstract class AdvancedGui extends GuiContainer {
 			} else if (d == 3) page += b;
 			else return false;
 			page = Math.floorMod(page, headers.length);
-			return true;
-		}
-
-	}
-
-	public class EnergySideCfg extends GuiComp<Object> {
-		final AutomatedTile tile;
-
-		public EnergySideCfg(int id, int px, int py, AutomatedTile tile) {
-			super(id, px, py, 18, 63, null, null, null);
-			this.tile = tile;
-		}
-
-		@Override
-		public void drawOverlay(int mx, int my) {
-			int s = (my - py) / 9 - 1;
-			if (s >= 0)
-				drawSideCube(guiLeft + tabsX - 64, py + 63, s, (tile.energy.sideCfg >> s & 1) != 0 ? (byte)3 : 0);
-		}
-
-		@Override
-		public void draw() {
-			mc.renderEngine.bindTexture(LIB_TEX);
-			drawTexturedModalRect(px, py, 0, 0, 18, 63);
-			drawTexturedModalRect(px, py, 0, 99, 9, 9);
-			drawTexturedModalRect(px + 9, py, 36, 90, 9, 9);
-			for (int i = 0; i < 6; i++)
-				drawTexturedModalRect(px + 9, py + 9 + i * 9, (tile.energy.sideCfg >> i & 1) != 0 ? 36 : 9, 81, 9, 9);
-		}
-
-		@Override
-		public boolean mouseIn(int x, int y, int b, int d) {
-			if (x >= px + 9 && (y -= py + 9) >= 0) {
-				PacketBuffer dos = BlockGuiHandler.getPacketTargetData(tile.getPos());
-				dos.writeByte(3);
-				dos.writeByte(tile.energy.sideCfg ^= 1 << (y / 9));
-				BlockGuiHandler.sendPacketToServer(dos);
-			}
-			return true;
-		}
-
-	}
-
-	public class FluidSideCfg extends GuiComp<Object> {
-		final AutomatedTile tile;
-
-		public FluidSideCfg(int id, int px, int py, AutomatedTile tile) {
-			super(id, px, py, 9 * tile.tanks.tanks.length + 9, 81, null, null, null);
-			this.tile = tile;
-		}
-
-		@Override
-		public void drawOverlay(int mx, int my) {
-			int s = (my - py) / 9 - 1;
-			int i = (mx - px) / 9 - 1;
-			byte dir = s < 6 ? tile.tanks.getConfig(s, i) : s != 6 ? (byte)4 : tile.tanks.isLocked(i) ? (byte)5 : (byte)6; 
-			if (i >= 0) {
-				mc.renderEngine.bindTexture(LIB_TEX);
-				for (TankSlot slot : ((TileContainer)inventorySlots).tankSlots)
-					if (slot.tankNumber == i)
-						drawTexturedModalRect(guiLeft + slot.xPos + (slot.size >> 4 & 0xf) * 9 - 9, guiTop + slot.yPos + (slot.size & 0xf) * 18 - (s<6?10:18), 144 + dir * 16, 16, 16, s<6?8:16);
-			}
-			if(s >= 0 && s < 6) drawSideCube(guiLeft + tabsX - 64, py + 63, s, dir);
-		}
-
-		@Override
-		public void draw() {
-			int s = tile.tanks.tanks.length;
-			mc.renderEngine.bindTexture(LIB_TEX);
-			drawTexturedModalRect(px, py, 0, 0, 9 + s * 9, 81);
-			drawTexturedModalRect(px, py, 0, 81, 9, 9);
-			for (int j = 0; j < s; j++) {
-				drawTexturedModalRect(px + 9 + j * 9, py, 18 + tile.tanks.tanks[j].dir * 9, 90, 9, 9);
-				for (int i = 0; i < 6; i++)
-					drawTexturedModalRect(px + 9 + j * 9, py + 9 + i * 9, 9 + (int)(tile.tanks.sideCfg >> (8 * i + 2 * j) & 3) * 9, 81, 9, 9);
-				if ((tile.tanks.sideCfg >> (48 + j) & 1) != 0)
-					drawTexturedModalRect(px + 9 + j * 9, py + 63, 9, 81, 9, 9);
-			}
-		}
-
-		@Override
-		public boolean mouseIn(int x, int y, int b, int d) {
-			boolean dir = b == 0 || (d == 3 && b > 0);
-			x = (x - px) / 9 - 1;
-			y = (y - py) / 9 - 1;
-			if (x >= 0 && y >= 0) {
-				PacketBuffer dos = BlockGuiHandler.getPacketTargetData(tile.getPos());
-				if (y == 7) dos.writeByte(2).writeByte(x);
-				else if (y == 6) dos.writeByte(1).writeLong(tile.tanks.sideCfg ^= 1L << (48 + x));
-				else {
-					int p = y * 8 + x * 2;
-					long sp = 3L << p;
-					dos.writeByte(1).writeLong(tile.tanks.sideCfg = (tile.tanks.sideCfg & ~sp) | (tile.tanks.sideCfg + (dir ? 1L << p : sp) & sp));
-				}
-				BlockGuiHandler.sendPacketToServer(dos);
-			}
-			return true;
-		}
-
-	}
-
-	public class ItemSideCfg extends GuiComp<Object> {
-		final AutomatedTile tile;
-
-		public ItemSideCfg(int id, int px, int py, AutomatedTile tile) {
-			super(id, px, py, 9 * tile.inventory.groups.length + 9, 63, null, null, null);
-			this.tile = tile;
-		}
-
-		@Override
-		public void drawOverlay(int mx, int my) {
-			int s = (my - py) / 9 - 1;
-			int i = (mx - px) / 9 - 1;
-			byte dir = tile.inventory.getConfig(s, i);
-			if (i >= 0) {
-				mc.renderEngine.bindTexture(LIB_TEX);
-				int i0 = tile.inventory.groups[i].s, i1 = tile.inventory.groups[i].e;
-				for (Slot slot : inventorySlots.inventorySlots)
-					if (slot instanceof SlotItemHandler && slot.getSlotIndex() >= i0 && slot.getSlotIndex() < i1)
-						drawTexturedModalRect(guiLeft + slot.xPos, guiTop + slot.yPos, 144 + dir * 16, 0, 16, 16);
-			}
-			if (s >= 0) drawSideCube(guiLeft + tabsX - 64, py + 63, s, dir);
-		}
-
-		@Override
-		public void draw() {
-			int s = tile.inventory.groups.length;
-			mc.renderEngine.bindTexture(LIB_TEX);
-			drawTexturedModalRect(px, py, 0, 0, 9 + s * 9, 63);
-			drawTexturedModalRect(px, py, 0, 90, 9, 9);
-			for (int j = 0; j < s; j++) {
-				drawTexturedModalRect(px + 9 + j * 9, py, 18 + tile.inventory.groups[j].dir * 9, 90, 9, 9);
-				for (int i = 0; i < 6; i++)
-					drawTexturedModalRect(px + 9 + j * 9, py + 9 + i * 9, 9 + (int)(tile.inventory.sideCfg >> (10 * i + 2 * j) & 3) * 9, 81, 9, 9);
-			}
-		}
-
-		@Override
-		public boolean mouseIn(int x, int y, int b, int d) {
-			boolean dir = b == 0 || (d == 3 && b > 0);
-			x = (x - px) / 9 - 1;
-			y = (y - py) / 9 - 1;
-			if (x >= 0 && y >= 0) {
-				int p = y * 10 + x * 2;
-				long sp = 3L << p;
-				PacketBuffer dos = BlockGuiHandler.getPacketTargetData(tile.getPos());
-				dos.writeByte(0);
-				dos.writeLong(tile.inventory.sideCfg = (tile.inventory.sideCfg & ~sp) | (tile.inventory.sideCfg + (dir ? 1L << p : sp) & sp));
-				BlockGuiHandler.sendPacketToServer(dos);
-			}
 			return true;
 		}
 

@@ -70,10 +70,6 @@ public class EnergyAPI {
 	}
 
 	public static void init(ConfigConstants cfg) {
-		if (Loader.isModLoaded("Automation")) {
-			handlers.add(new EnergyAutomation());
-			FMLLog.log("CD4017BE_lib", Level.INFO, "added Inductive Automation Energy-API");
-		}
 		if (Loader.isModLoaded("opencomputers")) {
 			OC_value = (float) cfg.getNumber("energy_value_OC", 1000);
 			if (!Float.isNaN(OC_value)) {
