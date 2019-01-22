@@ -44,7 +44,7 @@ import net.minecraft.world.World;
 public class BlockGuiHandler implements IGuiHandler {
 
 	public static final Marker NETWORK = MarkerManager.getMarker("Network");
-	private static final String guiChannel = "CD4017BE_gui";
+	private static final String guiChannel = "4017";
 	private static HashMap<Block, GuiEntry> gui_registry = new HashMap<Block, GuiEntry>();
 
 	public static BlockGuiHandler instance = new BlockGuiHandler();
