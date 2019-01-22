@@ -7,11 +7,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.logging.log4j.Level;
+import cd4017be.lib.Lib;
 
 /**
  * 
@@ -35,7 +34,7 @@ public class FileUtil {
 	}
 
 	public static void copyData(String resourcePath, File target) throws IOException {
-		FMLLog.log(Level.INFO, "File copy: %s -> %s", resourcePath, target);
+		Lib.LOG.info("File copy: {} -> {}", resourcePath, target);
 		InputStream in = FileUtil.class.getResourceAsStream(resourcePath);
 		target.getParentFile().mkdirs();
 		if (!target.createNewFile()) {

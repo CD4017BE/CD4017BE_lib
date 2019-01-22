@@ -5,10 +5,10 @@ import java.util.ArrayList;
 import org.apache.logging.log4j.Level;
 
 import cd4017be.api.recipes.RecipeScriptContext.ConfigConstants;
+import cd4017be.lib.Lib;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
-import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.Loader;
 
 /**
@@ -74,31 +74,31 @@ public class EnergyAPI {
 			OC_value = (float) cfg.getNumber("energy_value_OC", 1000);
 			if (!Float.isNaN(OC_value)) {
 				handlers.add(new EnergyOpenComputers());
-				FMLLog.log("CD4017BE_lib", Level.INFO, "added Open Computers Energy-API with %s J / OC-unit", OC_value);
-			} else FMLLog.log("CD4017BE_lib", Level.INFO, "NOT added Open Computers Energy-API (disabled by config)");
+				Lib.LOG.info("added Open Computers Energy-API with {} J / OC-unit", OC_value);
+			} else Lib.LOG.info("NOT added Open Computers Energy-API (disabled by config)");
 		}
 		if (true) {
 			RF_value = (float) cfg.getNumber("energy_value_RF", 100);
 			if (!Float.isNaN(RF_value)) {
 				handlers.add(new EnergyForge());
-				FMLLog.log("CD4017BE_lib", Level.INFO, "added Forge Energy-API with %s J / Flux", RF_value);
-			} else FMLLog.log("CD4017BE_lib", Level.INFO, "NOT added Forge Energy-API (disabled by config)");
+				Lib.LOG.info("added Forge Energy-API with {} J / Flux", RF_value);
+			} else Lib.LOG.info("NOT added Forge Energy-API (disabled by config)");
 		}
 		if (Loader.isModLoaded("ic2")) {
 			EU_value = (float) cfg.getNumber("energy_value_EU", 400);
 			if (!Float.isNaN(EU_value)) {
 				handlers.add(new EnergyIndustrialCraft());
-				FMLLog.log("CD4017BE_lib", Level.INFO, "added IC2 Energy-API with %s J / EU", EU_value);
-			} else FMLLog.log("CD4017BE_lib", Level.INFO, "NOT added IC2 Energy-API (disabled by config)");
+				Lib.LOG.info("added IC2 Energy-API with {} J / EU", EU_value);
+			} else Lib.LOG.info("CD4017BE_lib", Level.INFO, "NOT added IC2 Energy-API (disabled by config)");
 		}
 		if (Loader.isModLoaded("voidcraft")) try {
 			VC_value = (float) cfg.getNumber("energy_value_VC", 1000);
 			if (!Float.isNaN(VC_value)) {
 				handlers.add(new EnergyVoidcraft());
-				FMLLog.log("CD4017BE_lib", Level.INFO, "added VoidCraft Energy-API with %s J / VC-unit", VC_value);
-			} else FMLLog.log("CD4017BE_lib", Level.INFO, "NOT added VoidCraft Energy-API (disabled by config)");
+				Lib.LOG.info("added VoidCraft Energy-API with {} J / VC-unit", VC_value);
+			} else Lib.LOG.info("NOT added VoidCraft Energy-API (disabled by config)");
 		} catch(Exception e) {
-			FMLLog.log("CD4017BE_lib", Level.ERROR, e, "failed to add VoidCraft Energy-API!");
+			Lib.LOG.error("failed to add VoidCraft Energy-API!", e);
 		}
 	}
 

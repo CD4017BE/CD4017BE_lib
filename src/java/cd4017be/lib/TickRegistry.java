@@ -3,7 +3,8 @@ package cd4017be.lib;
 import java.util.ArrayList;
 import java.util.Map.Entry;
 
-import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.Marker;
+import org.apache.logging.log4j.MarkerManager;
 
 import java.util.Arrays;
 
@@ -16,7 +17,6 @@ import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.world.ChunkEvent;
-import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
@@ -28,6 +28,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
  */
 public class TickRegistry {
 
+	public static final Marker TICKS = MarkerManager.getMarker("Ticks");
 	public static boolean DEBUG = false;
 	public static final TickRegistry instance = new TickRegistry();
 
@@ -79,7 +80,7 @@ public class TickRegistry {
 			if (added > 0) msg += String.format("+%d ", added);
 			if (!msg.isEmpty()) {
 				msg += String.format("%d contTicks", tickers);
-				FMLLog.log("cd4017be_lib", Level.INFO, msg);
+				Lib.LOG.info(TICKS, msg);
 			}
 		}
 		added = 0;
@@ -89,7 +90,7 @@ public class TickRegistry {
 	 * clear the list of continuous tick receivers to prevent memory leaks
 	 */
 	public void clear() {
-		if (DEBUG) FMLLog.log("cd4017be_lib", Level.INFO, "-%d contTicks due to server shutdown", tickers);
+		if (DEBUG) Lib.LOG.info(TICKS, "-{} contTicks due to server shutdown", tickers);
 		Arrays.fill(tickList, 0, tickers, null);
 		tickers = 0;
 		updates.clear();

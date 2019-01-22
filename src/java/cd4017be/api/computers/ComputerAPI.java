@@ -10,11 +10,7 @@ import li.cil.oc.api.network.Environment;
 import li.cil.oc.api.network.Node;
 import li.cil.oc.api.network.Visibility;
 
-import org.apache.logging.log4j.Level;
-
-import cd4017be.api.energy.EnergyAPI;
-import cd4017be.api.energy.EnergyOpenComputers;
-import net.minecraftforge.fml.common.FMLLog;
+import cd4017be.lib.Lib;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Optional;
 import net.minecraft.nbt.NBTTagCompound;
@@ -39,15 +35,15 @@ public class ComputerAPI {
 		try {
 			OCcomp = Class.forName("li.cil.oc.api.machine.Context");
 			OCapi = Class.forName("li.cil.oc.api.API");
-			FMLLog.log("CD4017BE_lib", Level.INFO, "OpenComputers API found");
+			Lib.LOG.info("OpenComputers API found");
 		} catch (ClassNotFoundException e) {
-			FMLLog.log("CD4017BE_lib", Level.INFO, "OpenComputers API not available!");
+			Lib.LOG.info("OpenComputers API not available!");
 		}
 		if (OCcomp != null)
 			try {
 				OCevent = OCcomp.getMethod("signal", String.class, Object[].class);
 			} catch (Exception e) {
-				FMLLog.log("CD4017BE_lib", Level.ERROR, e, "can't get API methods:");
+				Lib.LOG.error("can't get API methods:", e);
 			}
 	}
 
@@ -60,7 +56,7 @@ public class ComputerAPI {
 		try {
 			if (OCcomp.isInstance(obj)) OCevent.invoke(obj, name, args);
 		} catch (Exception e) {
-			FMLLog.log(Level.ERROR, e, "can't send event to computer!");
+			Lib.LOG.error("can't send event to computer!", e);
 		}
 	}
 
