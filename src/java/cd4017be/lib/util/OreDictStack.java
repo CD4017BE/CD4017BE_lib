@@ -8,6 +8,7 @@ import cd4017be.api.recipes.ItemOperand;
 import cd4017be.lib.script.obj.Error;
 import cd4017be.lib.script.obj.IOperand;
 import cd4017be.lib.script.obj.Number;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.oredict.OreDictionary;
 
@@ -129,24 +130,35 @@ public class OreDictStack implements IOperand {
 					if (o == id)
 						return Number.TRUE;
 			}
-		} else if (!(x instanceof OreDictStack))
-			return x.grR(this);
-		return Number.FALSE;
+			return Number.FALSE;
+		} else if (x instanceof OreDictStack) {
+			String ore = ((OreDictStack)x).id;
+			if (id.equals(ore)) return Number.FALSE;
+			List<ItemStack>
+					itemsT = OreDictionary.getOres(id, false),
+					itemsO = OreDictionary.getOres(ore, false);
+			for (ItemStack stack : itemsT) {
+				if (stack.isEmpty()) continue;
+				int meta = stack.getMetadata();
+				Item item = stack.getItem();
+				boolean wildcard = meta == OreDictionary.WILDCARD_VALUE;
+				boolean miss = true;
+				for (ItemStack stackO : itemsO)
+					if (stackO.getItem() == item && (wildcard || stackO.getMetadata() == meta)) {
+						miss = false;
+						break;
+					}
+				if (miss) return Number.FALSE;
+			}
+			return Number.TRUE;
+		} else return x.grR(this);
 	}
 
 	@Override
 	public IOperand grL(IOperand x) {
-		if (x instanceof ItemOperand) {
-			ItemStack stack = ((ItemOperand)x).stack;
-			if (!stack.isEmpty()) {
-				int id = ID;
-				for (int o : OreDictionary.getOreIDs(stack))
-					if (o == id)
-						return Number.TRUE;
-			}
-		} else if (!(x instanceof OreDictStack))
-			return IOperand.super.grL(x);
-		return Number.FALSE;
+		if (x instanceof ItemOperand)
+			return Number.FALSE;
+		return IOperand.super.grL(x);
 	}
 
 	@Override

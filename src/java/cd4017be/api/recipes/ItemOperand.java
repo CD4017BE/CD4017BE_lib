@@ -76,7 +76,7 @@ public class ItemOperand implements IOperand {
 
 	@Override
 	public String toString() {
-		return stack.toString();
+		return stack.getCount() + "*" + stack.getItem().getRegistryName() + "@" + stack.getMetadata();
 	}
 
 }

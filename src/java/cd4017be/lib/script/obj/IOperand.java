@@ -111,7 +111,7 @@ public interface IOperand {
 	 * @param x left hand side operand
 	 * @return x > this
 	 */
-	default IOperand grL(IOperand x) {return new Error("undefined " + x + " < " + this);}
+	default IOperand grL(IOperand x) {return Number.FALSE;}
 
 	/**
 	 * @param x right hand side operand
@@ -122,7 +122,7 @@ public interface IOperand {
 	 * @param x left hand side operand
 	 * @return x >= this
 	 */
-	default IOperand nlsL(IOperand x) {return new Error("undefined " + x + " <= " + this);}
+	default IOperand nlsL(IOperand x) {return equals(x) ? Number.TRUE : Number.FALSE;}
 
 	/**
 	 * @param x right hand side operand

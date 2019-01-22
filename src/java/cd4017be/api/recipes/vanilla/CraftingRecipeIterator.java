@@ -5,20 +5,13 @@ import java.util.function.Predicate;
 import com.google.common.base.Predicates;
 
 import cd4017be.api.recipes.ItemOperand;
-import cd4017be.api.recipes.RecipeScriptContext;
 import cd4017be.lib.script.obj.Array;
 import cd4017be.lib.script.obj.IOperand;
 import cd4017be.lib.script.obj.IOperand.OperandIterator;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.CraftingManager;
 import net.minecraft.item.crafting.IRecipe;
-import net.minecraft.item.crafting.ShapedRecipes;
-import net.minecraft.item.crafting.ShapelessRecipes;
-import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.common.crafting.CraftingHelper.ShapedPrimer;
 import net.minecraftforge.common.crafting.IShapedRecipe;
-import net.minecraftforge.oredict.ShapedOreRecipe;
-import net.minecraftforge.oredict.ShapelessOreRecipe;
 
 /**
  * Lets config scripts iterate over all (or a filtered set of) crafting recipes in order to remove or edit them.
@@ -59,6 +52,8 @@ public class CraftingRecipeIterator implements OperandIterator {
 
 	@Override
 	public void set(IOperand obj) {
+		//recipe post-manipulation not supported by Minecraft 1.12
+		/*
 		if (obj != curElement) {
 			list.remove();
 			return;
@@ -89,6 +84,7 @@ public class CraftingRecipeIterator implements OperandIterator {
 			}
 			CraftingManager.REGISTRY.putObject(curRecipe.getRegistryName(), curRecipe);
 		}
+		*/
 	}
 
 	@Override

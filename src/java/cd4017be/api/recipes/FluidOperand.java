@@ -56,14 +56,31 @@ public class FluidOperand implements IOperand {
 	public boolean equals(IOperand obj) {
 		if (obj instanceof FluidOperand)
 			return stack.isFluidEqual(((FluidOperand)obj).stack);
-		else if (obj instanceof ItemOperand)
-			return stack.isFluidEqual(((ItemOperand)obj).stack);
 		return false;
 	}
 
 	@Override
+	public IOperand grR(IOperand x) {
+		if (x instanceof ItemOperand)
+			return stack.isFluidEqual(((ItemOperand)x).stack) ?
+				Number.TRUE : Number.FALSE;
+		return x.grL(this);
+	}
+
+	@Override
+	public IOperand nlsR(IOperand x) {
+		if (x instanceof FluidOperand)
+			return stack.isFluidEqual(((FluidOperand)x).stack) ?
+				Number.TRUE : Number.FALSE;
+		if (x instanceof ItemOperand)
+			return stack.isFluidEqual(((ItemOperand)x).stack) ?
+				Number.TRUE : Number.FALSE;
+		return x.nlsL(this);
+	}
+
+	@Override
 	public String toString() {
-		return stack.amount + "*" + stack.getUnlocalizedName();
+		return stack.amount + "*" + stack.getFluid().getName();
 	}
 
 }
