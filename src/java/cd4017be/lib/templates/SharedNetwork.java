@@ -83,35 +83,6 @@ public abstract class SharedNetwork<C extends NetworkNode<C, N, ?>, N extends Sh
 		if (comp.getNeighbor(side) != null && !comp.tile.isClient()) markDirty();
 	}
 
-	/**
-	 * called to check if there are new neighboring blocks to connect with
-	 * @param comp
-	 * @deprecated use {@link NetworkNode#updateCons()} instead
-	 */
-	@Deprecated
-	public void updateCompCon(C comp) {
-		C obj;
-		for (byte i : sides())
-			if (comp.canConnect(i) && (obj = comp.getNeighbor(i)) != null)
-				comp.network.add(obj);
-		comp.updateCon = false;
-	}
-
-	/**
-	 * @deprecated not needed anymore: network will update itself now
-	 */
-	@Deprecated
-	public void updateTick(C comp) {
-		if (comp.updateCon) updateCompCon(comp);
-		if (core == null) core = comp;
-		else if (comp != core) return;
-		updatePhysics();
-		if (update) {
-			this.reassembleNetwork();
-			update = false;
-		}
-	}
-
 	@Override
 	public void process() {
 		if (update) {
@@ -128,12 +99,6 @@ public abstract class SharedNetwork<C extends NetworkNode<C, N, ?>, N extends Sh
 			TickRegistry.instance.updates.add(this);
 		}
 	}
-
-	/**
-	 * @deprecated use your own tick handling or modify {@link #process()}
-	 */
-	@Deprecated
-	protected void updatePhysics() {}
 
 	protected byte[] sides() {return defaultSides;}
 
