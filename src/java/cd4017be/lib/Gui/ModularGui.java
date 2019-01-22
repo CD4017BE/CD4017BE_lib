@@ -46,7 +46,8 @@ import org.lwjgl.opengl.GL11;
 import static cd4017be.lib.Gui.comp.IGuiComp.*;
 
 /**
- *
+ * GuiContainer based component manager template.
+ * @see GuiCompGroup
  * @author CD4017BE
  */
 public abstract class ModularGui extends GuiContainer {

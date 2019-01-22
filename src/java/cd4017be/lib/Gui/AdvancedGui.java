@@ -48,7 +48,9 @@ import com.mojang.realmsclient.gui.ChatFormatting;
 /**
  *
  * @author CD4017BE
+ * @deprecated Use new GUI system instead: {@link ModularGui}
  */
+@Deprecated
 public abstract class AdvancedGui extends GuiContainer {
 
 	public static final ResourceLocation LIB_TEX = new ResourceLocation("cd4017be_lib", "textures/icons.png");
