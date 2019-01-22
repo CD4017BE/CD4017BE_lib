@@ -42,21 +42,13 @@ public class Util {
 			buff = BufferUtils.createFloatBuffer(16);
 			buff.put(new float[] {
 				(float)x1.x, (float)x1.y, (float)x1.z, 0,
-/*TODO verify generated code*/				(float)y1.x, (float)y1.y, (float)y1.z, 0,
-/*TODO verify generated code*/				(float)z1.x, (float)z1.y, (float)z1.z, 0,
+				(float)y1.x, (float)y1.y, (float)y1.z, 0,
+				(float)z1.x, (float)z1.y, (float)z1.z, 0,
 				0, 0, 0, 1
 			});
 			buff.flip();
 			matrices[o.ordinal()] = buff;
 		}
-	}
-
-	@Deprecated
-	public static void moveAndOrientToBlock(double x, double y, double z, int dir) {
-		GL11.glTranslated(x + 0.5D, y + 0.5D, z + 0.5D);
-		FloatBuffer mat = matrices[dir];
-		mat.rewind();
-		GL11.glMultMatrix(mat);
 	}
 
 	public static void moveAndOrientToBlock(double x, double y, double z, Orientation o) {

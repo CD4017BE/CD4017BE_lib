@@ -51,7 +51,7 @@ public class InWorldUIRenderer extends TileEntitySpecialRenderer<InWorldUITile> 
 		if (target != null) {
 			String s = r.getTooltip(tile, target.subHit);
 			if (s != null) {
-/*TODO verify generated code*/				Util.moveAndOrientToBlock(target.hitVec.x - 1, target.hitVec.y - 1, target.hitVec.z - 1, Orientation.fromFacing(target.sideHit));
+				Util.moveAndOrientToBlock(target.hitVec.x - 1, target.hitVec.y - 1, target.hitVec.z - 1, Orientation.fromFacing(target.sideHit));
 				GlStateManager.scale(-TOOLTIP_SCALE, -TOOLTIP_SCALE, -TOOLTIP_SCALE);
 				renderToolTip(0, -10, 0xffc0c0c0, 0x80100020, s.split("\n"));
 			}
