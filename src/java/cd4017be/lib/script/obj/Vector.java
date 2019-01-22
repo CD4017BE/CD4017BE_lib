@@ -263,7 +263,35 @@ public class Vector implements IOperand {
 		return ret;
 	}
 
-	//TODO scalar & cross product
+	@Override
+	public IOperand and(IOperand x) {
+		if (x instanceof Vector) {
+			double[] a = value, b = ((Vector)x).value;
+			if (a.length == 3 && b.length == 3) {
+				Vector ret = of();
+				double[] c = ret.value;
+				double ax = a[0], ay = a[1], az = a[2],
+						bx = b[0], by = b[1], bz = b[2];
+				c[0] = ay * bz - az * by;
+				c[1] = az * bx - ax * bz;
+				c[2] = ax * by - ay * bx;
+				return ret;
+			}
+		}
+		return IOperand.super.and(x);
+	}
+
+	@Override
+	public IOperand or(IOperand x) {
+		if (x instanceof Vector) {
+			double[] a = value, b = ((Vector)x).value;
+			double y = 0;
+			for(int i = Math.min(a.length, b.length) - 1; i >= 0; i--)
+				y += a[i] * b[i];
+			return new Number(y);
+		}
+		return IOperand.super.or(x);
+	}
 
 	@Override
 	public IOperand len() {
