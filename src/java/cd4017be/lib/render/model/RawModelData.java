@@ -68,7 +68,7 @@ public class RawModelData implements IModel {
 	public RawModelData(Module script, ModelContext context) {
 		diffuseLight = read(script.read("ambientOcclusion"), true);
 		gui3D = read(script.read("isGui3D"), true);
-		textures = readTextures(script.read("textures"));
+		textures = readTextures(script.read("textures").value());
 		transform = readTransf(script);
 		for (int i = 0; i < this.quads.length; i++) {
 			List<Quad> list = context.quads[i];

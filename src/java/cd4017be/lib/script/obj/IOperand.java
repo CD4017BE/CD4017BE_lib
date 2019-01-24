@@ -184,7 +184,10 @@ public interface IOperand {
 	/**
 	 * @return ~this
 	 */
-	default IOperand not() {return new Error("undefined ~" + this);}
+	default IOperand not() {
+		try {return asBool() ? Number.FALSE : Number.TRUE;}
+		catch (Error e) {return new Error("undefined ~" + this);}
+	}
 	/**
 	 * @return #this
 	 */

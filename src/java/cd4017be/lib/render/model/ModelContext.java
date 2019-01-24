@@ -15,6 +15,7 @@ import cd4017be.lib.script.Function;
 import cd4017be.lib.script.Module;
 import cd4017be.lib.script.Parameters;
 import cd4017be.lib.script.Script;
+import cd4017be.lib.script.obj.Array;
 import cd4017be.lib.script.obj.Error;
 import cd4017be.lib.script.obj.IOperand;
 import cd4017be.lib.script.obj.Number;
@@ -291,9 +292,9 @@ public class ModelContext extends Context {
 		if (m != null) return m;
 		IResource res = manager.getResource(new ResourceLocation(loadPath.toString() + name.replace('.', '/') + ".rcp"));
 		Script script = Compiler.compile(this, name, new InputStreamReader(res.getInputStream()));
-		Object var = script.variables.remove("dependencies");
-		if (var instanceof Object[]) try {
-			for (Object o : (Object[])var)
+		IOperand var = script.variables.remove("dependencies");
+		if (var instanceof Array) try {
+			for (Object o : (Object[])var.value())
 				if (o instanceof String) 
 					getOrLoad((String)o, manager);
 		} catch (Exception e) {

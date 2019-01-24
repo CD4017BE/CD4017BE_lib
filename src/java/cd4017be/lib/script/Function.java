@@ -153,8 +153,9 @@ public class Function {
 						a = m.invoke(name, new Parameters(param1));
 						if (doRet) stack.add(a);
 					} catch (Exception e) {
-						if (doRet) stack.add(Error.of(err(e, code)));
-						else c.LOG.error(Context.ERROR, "failed operation " + name + " in script " + script.fileName, err(e, code));
+						ScriptException se = err(e, code);
+						c.LOG.error(Context.ERROR, "failed operation '" + name + "' in script " + script.fileName, se);
+						if (doRet) stack.add(new Error("failed operation '" + name + "' @ line " + se.getLineNumber() + " in " + se.getFileName()));
 					} finally {
 						c.recursion--;
 					}

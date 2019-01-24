@@ -52,19 +52,19 @@ public class ItemOperand implements IOperand {
 	}
 
 	@Override
-	public IOperand subR(IOperand x) {
-		if (copied) {
-			ItemStack stack = this.stack.copy();
-			stack.setItemDamage(x.asIndex());
-			return new ItemOperand(stack);
-		}
-		stack.setItemDamage(x.asIndex());
-		return this;
+	public IOperand len() {
+		return new Number(stack.getCount());
 	}
 
 	@Override
-	public IOperand len() {
-		return new Number(stack.getCount());
+	public IOperand get(IOperand idx) {
+		if (copied) {
+			ItemStack stack = this.stack.copy();
+			stack.setItemDamage(idx.asIndex());
+			return new ItemOperand(stack);
+		}
+		stack.setItemDamage(idx.asIndex());
+		return this;
 	}
 
 	@Override

@@ -178,7 +178,7 @@ public class OreDictStack implements IOperand {
 
 	@Override
 	public boolean asBool() throws Error {
-		return true;
+		return !OreDictionary.getOres(id, false).isEmpty();
 	}
 
 	@Override

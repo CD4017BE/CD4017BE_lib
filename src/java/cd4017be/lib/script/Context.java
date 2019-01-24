@@ -63,7 +63,7 @@ public class Context implements Module {
 			Module m = modules.get(s[0]);
 			if (m != null) return m.invoke(s[1], args);
 		}
-		throw new NoSuchMethodException();
+		throw new NoSuchMethodException(name);
 	}
 
 	@Override
