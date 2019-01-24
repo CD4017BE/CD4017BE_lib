@@ -1,3 +1,23 @@
+v6.3.0
+Changes:
+- rework of the scripting system: the effects of operators are now defined by the operands instead of being hard coded
+- fixed Recipe removal feature
+- fixed potential ItemStack comparison issues by using metadata instead of damage value
+- fixed incorrect quad roatation in NBT-Models
+- fixed various other model & redering bugs
+- fixed interdimensional Entity teleportation
+- fixed argument parsing of unit scale number format feature
+- fixed logging to use the propper mod log instead of deprecated FMLLog
+- created a new modular GUI framework
+- added a server side only version of ITickable for TileEntities
+- added various other utilities
+- removed some ancient InductiveAutomation utilities & APIs
+- removed deprecated multiblock network features
+- moved several utilities and APIs from InductiveLogistics into this core mod
+Dependencies:
+- for MC-1.12.2
+- forge-14.23.0.2512 (or newer)
+
 v6.2.8
 Changes:
 - provided more control over side solidness in Pipe Block template
