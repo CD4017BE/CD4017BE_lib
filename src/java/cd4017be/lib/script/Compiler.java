@@ -218,8 +218,8 @@ public class Compiler {
 			}
 		}
 		Script script = new Script(fileName, functions, globals);
-		Object v = globals.remove("VERSION");
-		if (v != null && v instanceof Double) script.version = ((Double)v).intValue();
+		IOperand v = globals.remove("VERSION");
+		if (v != null) script.version = v.asIndex();
 		return script;
 	}
 
