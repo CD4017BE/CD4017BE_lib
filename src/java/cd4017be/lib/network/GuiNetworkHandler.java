@@ -19,15 +19,18 @@ import net.minecraftforge.fml.common.network.IGuiHandler;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
 
 /**
+ * Provides GUIs and handles their network communication.<dl>
+ * To open GUIs with this, simply let your Blocks, Entities and Items implement the corresponding {@link IGuiHandlerBlock}, {@link IGuiHandlerEntity} or {@link IGuiHandlerItem}.
+ * And for network communication let your Containers implement {@link IServerPacketReceiver} and {@link IPlayerPacketReceiver}.
  * @author CD4017BE
- *
  */
 public class GuiNetworkHandler extends NetworkHandler implements IGuiHandler {
 
 	public static final int BLOCK_GUI_ID = 0, ENTITY_GUI_ID = -1, ITEM_GUI_ID = -256;
+	/**the instance */
 	public static GuiNetworkHandler instance;
 
-	static void register() {
+	public static void register() {
 		if (instance == null) instance = new GuiNetworkHandler("4017g");
 	}
 

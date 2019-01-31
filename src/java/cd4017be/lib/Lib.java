@@ -9,6 +9,8 @@ import cd4017be.api.recipes.RecipeScriptContext;
 import cd4017be.api.recipes.RecipeScriptContext.ConfigConstants;
 import cd4017be.lib.item.BaseItem;
 import cd4017be.lib.item.ItemMaterial;
+import cd4017be.lib.network.GuiNetworkHandler;
+import cd4017be.lib.network.SyncNetworkHandler;
 import cd4017be.lib.render.ItemMaterialMeshDefinition;
 import cd4017be.lib.render.SpecialModelLoader;
 import cd4017be.lib.templates.TabMaterials;
@@ -69,6 +71,8 @@ public class Lib {
 		RecipeScriptContext.instance.setup();
 		RecipeScriptContext.instance.run(ConfigName + ".PRE_INIT");
 		ConfigConstants cfg = new ConfigConstants(RecipeScriptContext.instance.modules.get(ConfigName));
+		GuiNetworkHandler.register();
+		SyncNetworkHandler.register(cfg);
 		EnergyAPI.init(cfg);
 	}
 
