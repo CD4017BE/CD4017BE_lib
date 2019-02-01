@@ -141,7 +141,7 @@ public class SyncNetworkHandler extends NetworkHandler {
 		}
 	}
 
-	private static PacketBuffer preparePacket(BlockPos pos) {
+	public static PacketBuffer preparePacket(BlockPos pos) {
 		PacketBuffer pkt = new PacketBuffer(Unpooled.buffer());
 		pkt.writeByte(0);
 		pkt.writeBlockPos(pos);

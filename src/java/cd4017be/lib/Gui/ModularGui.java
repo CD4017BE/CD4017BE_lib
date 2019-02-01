@@ -1,9 +1,9 @@
 package cd4017be.lib.Gui;
 
-import cd4017be.lib.BlockGuiHandler;
 import cd4017be.lib.Gui.TileContainer.TankSlot;
 import cd4017be.lib.Gui.comp.GuiCompGroup;
 import cd4017be.lib.Gui.comp.TankInterface;
+import cd4017be.lib.network.GuiNetworkHandler;
 import cd4017be.lib.util.TooltipUtil;
 import cd4017be.lib.util.Vec3;
 
@@ -291,9 +291,9 @@ public class ModularGui extends GuiContainer {
 	 * @param c value to send
 	 */
 	public void sendCommand(int c) {
-		PacketBuffer buff = BlockGuiHandler.getPacketTargetData(((DataContainer)inventorySlots).data.pos());
+		PacketBuffer buff = GuiNetworkHandler.preparePacket(container);
 		buff.writeByte(c);
-		BlockGuiHandler.sendPacketToServer(buff);
+		GuiNetworkHandler.instance.sendToServer(buff);
 	}
 
 	/**
@@ -302,7 +302,7 @@ public class ModularGui extends GuiContainer {
 	 * @param args data to send (supports: byte, short, int, long, float, double, String)
 	 */
 	public void sendPkt(Object... args) {
-		PacketBuffer buff = BlockGuiHandler.getPacketTargetData(((DataContainer)inventorySlots).data.pos());
+		PacketBuffer buff = GuiNetworkHandler.preparePacket(container);
 		for (Object arg : args) {
 			if (arg instanceof Byte) buff.writeByte((Byte)arg);
 			else if (arg instanceof Short) buff.writeShort((Short)arg);
@@ -313,7 +313,7 @@ public class ModularGui extends GuiContainer {
 			else if (arg instanceof String) buff.writeString((String)arg);
 			else throw new IllegalArgumentException();
 		}
-		BlockGuiHandler.sendPacketToServer(buff);
+		GuiNetworkHandler.instance.sendToServer(buff);
 	}
 
 }

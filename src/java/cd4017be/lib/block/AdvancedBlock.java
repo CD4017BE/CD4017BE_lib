@@ -5,16 +5,24 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
-import cd4017be.lib.BlockGuiHandler;
+import cd4017be.lib.Lib;
+import cd4017be.lib.Gui.DataContainer;
 import cd4017be.lib.Gui.DataContainer.IGuiData;
+import cd4017be.lib.network.GuiNetworkHandler;
+import cd4017be.lib.network.IGuiHandlerBlock;
+import cd4017be.lib.network.IGuiHandlerTile;
 import net.minecraft.block.Block;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.inventory.Container;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
@@ -28,12 +36,14 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.common.registry.GameRegistry;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 /**
  * 
  * @author CD4017BE
  */
-public class AdvancedBlock extends BaseBlock {
+public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 
 	public final Class<? extends TileEntity> tileEntity;
 	protected EnumBlockRenderType renderType;
@@ -154,7 +164,7 @@ public class AdvancedBlock extends BaseBlock {
 			if (te instanceof IInteractiveTile && ((IInteractiveTile)te).onActivated(player, hand, player.getHeldItem(hand), s, X, Y, Z)) return true;
 		}
 		if ((flags & 64) != 0) {
-			BlockGuiHandler.openBlockGui(player, world, pos);
+			GuiNetworkHandler.openBlockGui(player, pos, 0);
 			return true;
 		}
 		return false;
@@ -400,6 +410,63 @@ public class AdvancedBlock extends BaseBlock {
 	@Override
 	public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess source, BlockPos pos) {
 		return boundingBox.length == 1 ? boundingBox[0] : boundingBox[getMetaFromState(state)];
+	}
+
+	public Class<? extends Container> container;
+	@SideOnly(Side.CLIENT)
+	public Class<? extends GuiScreen> guiScreen;
+
+	@Override
+	public Container getContainer(IBlockState state, World world, BlockPos pos, EntityPlayer player, int id) {
+		Container c;
+		TileEntity te = world.getTileEntity(pos);
+		if (te instanceof IGuiHandlerTile)
+			return ((IGuiHandlerTile)te).getContainer(player, id);
+		//Legacy stuff
+		if (container != null && te instanceof IGuiData) {
+			try {
+				c = container.getConstructor(IGuiData.class, EntityPlayer.class).newInstance((IGuiData)te, player);
+			} catch (NoSuchMethodException ex) {
+				Lib.LOG.warn("TileContainer {} is missing the Constructor ({} ,{})", container.getName(), IGuiData.class.getName(), EntityPlayer.class.getName());
+				return null;
+			} catch (InstantiationException | IllegalAccessException | InvocationTargetException ex) {
+				ex.printStackTrace();
+				return null;
+			}
+		} else return null;
+		if (c instanceof DataContainer) ((DataContainer)c).data.initContainer((DataContainer)c);
+		return c;
+	}
+
+	@Override
+	@SideOnly(Side.CLIENT)
+	public GuiScreen getGuiScreen(IBlockState state, World world, BlockPos pos, EntityPlayer player, int id) {
+		TileEntity te = world.getTileEntity(pos);
+		if (te instanceof IGuiHandlerTile)
+			return ((IGuiHandlerTile)te).getGuiScreen(player, id);
+		//Legacy stuff
+		if (guiScreen != null && te instanceof IGuiData) {
+			if(player.openContainer != null && player.openContainer instanceof DataContainer && ((DataContainer)player.openContainer).data == te)
+				return Minecraft.getMinecraft().currentScreen;
+			try {
+				GuiScreen g = guiScreen.getConstructor(IGuiData.class, EntityPlayer.class).newInstance((IGuiData)te, player);
+				if (g instanceof GuiContainer && ((GuiContainer)g).inventorySlots instanceof DataContainer) {
+					DataContainer c = (DataContainer)((GuiContainer)g).inventorySlots;
+					c.data.initContainer(c);
+					c.refInts = c.data.getSyncVariables();
+					if(c.refInts != null && c.data instanceof TileEntity) 
+						for (int i = 0; i < c.refInts.length; i++)
+							c.data.setSyncVariable(i, 0);
+				}
+				return g;
+			} catch (NoSuchMethodException ex) {
+				Lib.LOG.warn("GuiContainer {} is missing the Constructor ({} ,{})", guiScreen.getName(), IGuiData.class.getName(), EntityPlayer.class.getName());
+				return null;
+			} catch (InstantiationException | IllegalAccessException | InvocationTargetException ex) {
+				ex.printStackTrace();
+				return null;
+			}
+		} else return null;
 	}
 
 }

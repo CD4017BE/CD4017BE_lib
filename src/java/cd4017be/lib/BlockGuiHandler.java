@@ -1,13 +1,17 @@
 package cd4017be.lib;
 
 import cd4017be.lib.Gui.DataContainer;
-import cd4017be.lib.Gui.IGuiItem;
-import cd4017be.lib.Gui.DataContainer.IGuiData;
+import cd4017be.lib.block.AdvancedBlock;
+import cd4017be.lib.network.GuiNetworkHandler;
+import cd4017be.lib.network.IGuiHandlerBlock;
+import cd4017be.lib.network.IGuiHandlerTile;
+import cd4017be.lib.network.IPlayerPacketReceiver;
+import cd4017be.lib.network.IServerPacketReceiver;
+import cd4017be.lib.network.NetworkHandler;
 import cd4017be.lib.util.Utils;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.network.FMLEventChannel;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
-import net.minecraftforge.fml.common.network.IGuiHandler;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.network.NetworkRegistry.TargetPoint;
 import net.minecraftforge.fml.common.network.internal.FMLProxyPacket;
@@ -16,13 +20,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import io.netty.buffer.Unpooled;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
-import java.util.HashMap;
-
-import org.apache.logging.log4j.Marker;
-import org.apache.logging.log4j.MarkerManager;
-
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.inventory.GuiContainer;
@@ -40,12 +38,12 @@ import net.minecraft.world.World;
 /**
  * 
  * @author CD4017BE
+ * @deprecated used {@link GuiNetworkHandler} instead
  */
-public class BlockGuiHandler implements IGuiHandler {
+@Deprecated
+public class BlockGuiHandler {
 
-	public static final Marker NETWORK = MarkerManager.getMarker("Network");
 	private static final String guiChannel = "4017";
-	private static HashMap<Block, GuiEntry> gui_registry = new HashMap<Block, GuiEntry>();
 
 	public static BlockGuiHandler instance = new BlockGuiHandler();
 	public static FMLEventChannel eventChannel;
@@ -53,7 +51,6 @@ public class BlockGuiHandler implements IGuiHandler {
 	static void register() {
 		eventChannel = NetworkRegistry.INSTANCE.newEventDrivenChannel(guiChannel);
 		eventChannel.register(instance);
-		NetworkRegistry.INSTANCE.registerGuiHandler(Lib.instance, instance);
 	}
 
 	/**
@@ -61,25 +58,25 @@ public class BlockGuiHandler implements IGuiHandler {
 	 * {@code registerContainer(id, ...);} must be called before.
 	 * @param id
 	 * @param gui
+	 * @deprecated use {@link IGuiHandlerBlock} or {@link IGuiHandlerTile}
 	 */
 	@SideOnly(Side.CLIENT)
+	@Deprecated
 	public static void registerGui(Block id, Class<? extends GuiContainer> gui) {
-		GuiEntry entry = gui_registry.get(id);
-		if (entry != null) {
-			if (entry.gui != null) Lib.LOG.warn("GuiContainer {} overrrides already registered GuiContainer {} for Block-ID {} !", gui.getName(), entry.gui.getName(), id);
-			entry.gui = gui;
-		} else Lib.LOG.warn("Failed to register GuiContainer {} because Block-ID {} is not registered!", gui.getName(), id);
+		if (id instanceof AdvancedBlock)
+			((AdvancedBlock)id).guiScreen = gui;
 	}
 
 	/**
 	 * register a container to a block
 	 * @param id
 	 * @param container
+	 * @deprecated use {@link IGuiHandlerBlock} or {@link IGuiHandlerTile}
 	 */
+	@Deprecated
 	public static void registerContainer(Block id, Class<? extends Container> container) {
-		GuiEntry entry = new GuiEntry();
-		entry.container = container;
-		gui_registry.put(id, entry);
+		if (id instanceof AdvancedBlock)
+			((AdvancedBlock)id).container = container;
 	}
 
 	/**
@@ -88,19 +85,23 @@ public class BlockGuiHandler implements IGuiHandler {
 	 * @param world World
 	 * @param pos optional position of a block associated with it
 	 * @param guiType < 0: Block-gui variants, guiType >= 0: IGuiItem in inventory slot guiType
+	 * @deprecated use {@link GuiNetworkHandler#openItemGui(EntityPlayer, int, int, int, int)} instead
 	 */
+	@Deprecated
 	public static void openGui(EntityPlayer player, World world, BlockPos pos, int guiType) {
-		if (Lib.instance != null) player.openGui(Lib.instance, guiType, world, pos.getX(), pos.getY(), pos.getZ());
-		else Lib.LOG.warn("BlockGuiHandler failed to open Gui! No Mod registered!");
+		if (guiType < 0) GuiNetworkHandler.openBlockGui(player, pos, -guiType);
+		else GuiNetworkHandler.openItemGui(player, guiType, pos.getX(), pos.getY(), pos.getZ());
 	}
 
 	/**
 	 * Opens a Gui for an IGuiItem held by player
 	 * @param player the player using it
 	 * @param hand position of Item
+	 * @deprecated use {@link GuiNetworkHandler#openHeldItemGui(EntityPlayer, EnumHand, int, int, int)} instead
 	 */
+	@Deprecated
 	public static void openItemGui(EntityPlayer player, EnumHand hand) {
-		openGui(player, player.world, Utils.NOWHERE, hand == EnumHand.MAIN_HAND ? player.inventory.currentItem : 40);
+		GuiNetworkHandler.openHeldItemGui(player, hand, 0, -1, 0);
 	}
 
 	/**
@@ -108,9 +109,11 @@ public class BlockGuiHandler implements IGuiHandler {
 	 * @param player the player using it
 	 * @param world World
 	 * @param pos position of the block
+	 * @deprecated use {@link GuiNetworkHandler#openBlockGui(EntityPlayer, BlockPos, int)} instead
 	 */
+	@Deprecated
 	public static void openBlockGui(EntityPlayer player, World world, BlockPos pos) {
-		openGui(player, world, pos, -1);
+		GuiNetworkHandler.openBlockGui(player, pos, 0);
 	}
 
 	/**
@@ -189,7 +192,7 @@ public class BlockGuiHandler implements IGuiHandler {
 				if (te instanceof ServerPacketReceiver) ((ServerPacketReceiver)te).onPacketFromServer(data);
 			}
 		} catch (Exception e) {
-			Lib.LOG.error(NETWORK, printPacketData(data).insert(0, "reading server -> client packet for " + target + ": "), e);
+			Lib.LOG.error(NetworkHandler.NETWORK, printPacketData(data).insert(0, "reading server -> client packet for " + target + ": "), e);
 		}
 	}
 
@@ -213,7 +216,7 @@ public class BlockGuiHandler implements IGuiHandler {
 					((ClientPacketReceiver)te).onPacketFromClient(data, player);
 			}
 		} catch (Exception e) {
-			Lib.LOG.error(NETWORK, printPacketData(data).insert(0, "reading client -> server packet for " + target + ": "), e);
+			Lib.LOG.error(NetworkHandler.NETWORK, printPacketData(data).insert(0, "reading client -> server packet for " + target + ": "), e);
 		}
 	}
 
@@ -227,86 +230,12 @@ public class BlockGuiHandler implements IGuiHandler {
 		return sb;
 	}
 
-	@Override
-	public Object getServerGuiElement(int ID, EntityPlayer player, World world, int x, int y, int z) {
-		BlockPos pos = new BlockPos(x, y, z);
-		Container c;
-		if (ID < 0) {
-			GuiEntry entry = gui_registry.get(world.getBlockState(pos).getBlock());
-			TileEntity te = world.getTileEntity(pos);
-			if (entry != null && entry.container != null && te instanceof IGuiData) {
-				try {
-					c = entry.container.getConstructor(IGuiData.class, EntityPlayer.class).newInstance((IGuiData)te, player);
-				} catch (NoSuchMethodException ex) {
-					Lib.LOG.warn("TileContainer {} is missing the Constructor ({} ,{})", entry.container.getName(), IGuiData.class.getName(), EntityPlayer.class.getName());
-					return null;
-				} catch (InstantiationException ex) {
-					ex.printStackTrace();
-					return null;
-				} catch (IllegalAccessException ex) {
-					ex.printStackTrace();
-					return null;
-				} catch (InvocationTargetException ex) {
-					ex.printStackTrace();
-					return null;
-				}
-			} else return null;
-		} else {
-			ItemStack item = player.inventory.getStackInSlot(ID);
-			if (item.getItem() instanceof IGuiItem) c = ((IGuiItem)item.getItem()).getContainer(item, player, world, pos, ID);
-			else return null;
-		}
-		if (c instanceof DataContainer) ((DataContainer)c).data.initContainer((DataContainer)c);
-		return c;
-	}
-
-	@Override
-	public Object getClientGuiElement(int ID, EntityPlayer player, World world, int x, int y, int z) {
-		BlockPos pos = new BlockPos(x, y, z);
-		GuiContainer g;
-		if (ID < 0) { //Block gui
-			GuiEntry entry = gui_registry.get(world.getBlockState(pos).getBlock());
-			TileEntity te = world.getTileEntity(pos);
-			if (entry != null && entry.gui != null && te instanceof IGuiData) {
-				if(player.openContainer != null && player.openContainer instanceof DataContainer && ((DataContainer)player.openContainer).data == te) {
-					return Minecraft.getMinecraft().currentScreen;
-				}
-				try {
-					g = entry.gui.getConstructor(IGuiData.class, EntityPlayer.class).newInstance((IGuiData)te, player);
-				} catch (NoSuchMethodException ex) {
-					Lib.LOG.warn("GuiContainer {} is missing the Constructor ({} ,{})", entry.gui.getName(), IGuiData.class.getName(), EntityPlayer.class.getName());
-					return null;
-				} catch (InstantiationException ex) {
-					ex.printStackTrace();
-					return null;
-				} catch (IllegalAccessException ex) {
-					ex.printStackTrace();
-					return null;
-				} catch (InvocationTargetException ex) {
-					ex.printStackTrace();
-					return null;
-				}
-			} else return null;
-		} else { //Item gui
-			ItemStack item = player.inventory.getStackInSlot(ID);
-			if (item.getItem() instanceof IGuiItem) g = ((IGuiItem)item.getItem()).getGui(item, player, world, pos, ID);
-			else return null;
-		}
-		if (g.inventorySlots instanceof DataContainer) {
-			DataContainer c = (DataContainer)g.inventorySlots;
-			c.data.initContainer(c);
-			c.refInts = c.data.getSyncVariables();
-			if(c.refInts != null && c.data instanceof TileEntity) 
-				for (int i = 0; i < c.refInts.length; i++)
-					c.data.setSyncVariable(i, 0);
-		}
-		return g;
-	}
-
 	/**
 	 * implemented by TileEntities to receive data packets send via {@code sendPacketToPlayer} from server
 	 * @author CD4017BE
+	 * @deprecated use {@link IServerPacketReceiver} instead
 	 */
+	@Deprecated
 	public interface ServerPacketReceiver {
 		/**
 		 * Handle a data packet from server
@@ -320,7 +249,9 @@ public class BlockGuiHandler implements IGuiHandler {
 	/**
 	 * implemented by TileEntities to receive data packets send via {@code sendPacketToServer} from client
 	 * @author CD4017BE
+	 * @deprecated use {@link IPlayerPacketReceiver} instead
 	 */
+	@Deprecated
 	public interface ClientPacketReceiver {
 		/**
 		 * Handle a data packet from given player
@@ -334,7 +265,9 @@ public class BlockGuiHandler implements IGuiHandler {
 	/**
 	 * implemented by Items to receive data packets send via {@code sendPacketToServer} from client
 	 * @author CD4017BE
+	 * @deprecated use {@link IPlayerPacketReceiver.ItemPPR} instead
 	 */
+	@Deprecated
 	public interface ClientItemPacketReceiver {
 		/**
 		 * Handle a data packet from given player
@@ -345,12 +278,6 @@ public class BlockGuiHandler implements IGuiHandler {
 		 * @throws IOException
 		 */
 		public void onPacketFromClient(PacketBuffer data, EntityPlayer sender, ItemStack item, int slot) throws IOException;
-	}
-
-	private static class GuiEntry {
-		Class<? extends Container> container;
-		@SideOnly(Side.CLIENT)
-		Class<? extends GuiContainer> gui;
 	}
 
 }
