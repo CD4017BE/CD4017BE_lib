@@ -12,6 +12,7 @@ import net.minecraft.inventory.Container;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -64,6 +65,9 @@ public class GuiNetworkHandler extends NetworkHandler implements IGuiHandler {
 			Block block = state.getBlock();
 			if (block instanceof IGuiHandlerBlock)
 				return ((IGuiHandlerBlock)block).getContainer(state, world, pos, player, ID);
+			TileEntity te = world.getTileEntity(pos);
+			if (te instanceof IGuiHandlerTile)
+				return ((IGuiHandlerTile)te).getContainer(player, ID);
 		} else if (ID == ENTITY_GUI_ID) {
 			Entity entity = world.getEntityByID(z);
 			if (entity instanceof IGuiHandlerEntity)
@@ -88,6 +92,9 @@ public class GuiNetworkHandler extends NetworkHandler implements IGuiHandler {
 			Block block = state.getBlock();
 			if (block instanceof IGuiHandlerBlock)
 				return ((IGuiHandlerBlock)block).getGuiScreen(state, world, pos, player, ID);
+			TileEntity te = world.getTileEntity(pos);
+			if (te instanceof IGuiHandlerTile)
+				return ((IGuiHandlerTile)te).getGuiScreen(player, ID);
 		} else if (ID == ENTITY_GUI_ID) {
 			Entity entity = world.getEntityByID(z);
 			if (entity instanceof IGuiHandlerEntity)
