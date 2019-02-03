@@ -1,19 +1,12 @@
 package cd4017be.lib.Gui;
 
-import cd4017be.lib.Gui.TileContainer.TankSlot;
 import cd4017be.lib.Gui.comp.GuiCompGroup;
-import cd4017be.lib.Gui.comp.TankInterface;
 import cd4017be.lib.network.GuiNetworkHandler;
 import cd4017be.lib.util.TooltipUtil;
 import cd4017be.lib.util.Vec3;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.function.IntConsumer;
-import java.util.function.ObjIntConsumer;
-
-import javax.annotation.Nullable;
-
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
@@ -36,9 +29,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.IBlockAccess;
-import net.minecraftforge.fluids.Fluid;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.FluidUtil;
 import net.minecraftforge.items.ItemHandlerHelper;
 
 import org.lwjgl.input.Keyboard;
@@ -60,31 +50,17 @@ public class ModularGui extends GuiContainer {
 	protected boolean drawInvTitle;
 	private Slot lastClickSlot;
 	public GuiCompGroup compGroup;
-	public final DataContainer container;
+	public final AdvancedContainer container;
 
 	/**
 	 * Creates a new ModularGui instance<br>
 	 * Note: the GuiFrame {@link #compGroup} is still null, it must be initialized before {@link #initGui()} is called!
 	 * @param container container providing the state from server
 	 */
-	public ModularGui(DataContainer container) {
+	public ModularGui(AdvancedContainer container) {
 		super(container);
 		this.container = container;
-		this.drawInvTitle = container instanceof TileContainer;
-	}
-
-	/**
-	 * add gui-components for all fluid tanks registered with this gui
-	 * @param handler optional function to handle fluid container drops
-	 */
-	protected void addTanks(@Nullable ObjIntConsumer<Fluid> handler) {
-		IntConsumer handle = handler == null ? null :
-			(s)-> {
-				FluidStack fluid = FluidUtil.getFluidContained(container.player.inventory.getItemStack());
-				handler.accept(fluid == null ? null : fluid.getFluid(), s);
-			};
-		for (TankSlot slot : ((TileContainer)container).tankSlots)
-			new TankInterface(compGroup, slot, handle);
+		this.drawInvTitle = container.hasPlayerInv();
 	}
 
 	@Override
@@ -125,11 +101,8 @@ public class ModularGui extends GuiContainer {
 	protected void drawGuiContainerBackgroundLayer(float partialTicks, int mouseX, int mouseY) {
 		compGroup.drawBackground(mouseX, mouseY, partialTicks);
 		if (drawInvTitle) {
-			TileContainer cont = (TileContainer)inventorySlots;
-			if (cont.invPlayerS != cont.invPlayerE) {
-				Slot pos = cont.inventorySlots.get(cont.invPlayerS);
-				this.drawStringCentered(TooltipUtil.translate("container.inventory"), this.guiLeft + pos.xPos + 80, this.guiTop + pos.yPos - 12, 0x404040);
-			}
+			Slot pos = container.inventorySlots.get(container.playerInvStart());
+			this.drawStringCentered(TooltipUtil.translate("container.inventory"), this.guiLeft + pos.xPos + 80, this.guiTop + pos.yPos - 12, 0x404040);
 		}
 	}
 
@@ -214,7 +187,7 @@ public class ModularGui extends GuiContainer {
 		GlStateManager.translate(-0.5F, -0.5F, -0.5F);
 		
 		GlStateManager.pushMatrix();
-		BlockPos pos = container.data.pos();
+		BlockPos pos = container.handler.pos();
 		GlStateManager.translate(-pos.getX(), -pos.getY(), -pos.getZ());
 		BufferBuilder t = Tessellator.getInstance().getBuffer();
 		t.begin(GL11.GL_QUADS, DefaultVertexFormats.BLOCK);

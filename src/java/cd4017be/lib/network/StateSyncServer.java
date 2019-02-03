@@ -24,7 +24,7 @@ public class StateSyncServer extends StateSynchronizer {
 	private final byte[][] lastVar;
 	/**helper buffer instance */
 	public final PacketBuffer buffer;
-	private final int varCount;
+	private final int varCount, fixCount;
 	private int elIdx = -1;
 	private boolean sendAll = true;
 
@@ -32,7 +32,8 @@ public class StateSyncServer extends StateSynchronizer {
 		super(count, sizes);
 		int l = 0;
 		for (int n : sizes) l += n;
-		this.varCount = count - sizes.length;
+		this.fixCount = sizes.length;
+		this.varCount = count - fixCount;
 		this.lastFix = new byte[l];
 		this.lastVar = new byte[varCount][];
 		this.buffer = new PacketBuffer(Unpooled.buffer());
@@ -86,7 +87,7 @@ public class StateSyncServer extends StateSynchronizer {
 		}
 		if (l > 0) throw new IllegalStateException("buffer still has unread data left!");
 		buffer.clear();
-		elIdx = 0;
+		elIdx = sizes.length;
 		return this;
 	}
 
@@ -146,21 +147,7 @@ public class StateSyncServer extends StateSynchronizer {
 	 * @return this
 	 */
 	public void put() {
-		int i = elIdx;
-		if (i < 0) throw new IllegalStateException("element must be submitted as variabled sized!");
-		byte[] arr0 = buffer.array(), arr1 = lastVar[i];
-		int i0 = buffer.arrayOffset(), l = buffer.readableBytes();
-		if (sendAll || l != arr1.length) {
-			changes.set(i+1);
-			lastVar[i] = Arrays.copyOfRange(arr0, i0, i0 + l);
-		} else {
-			for (int i1 = 0; i1 < l; i0++, i1++)
-				if (arr0[i0] != arr1[i1]) {
-					changes.set(i+1);
-					System.arraycopy(arr0, i0, arr1, i1, l - i1);
-				}
-		}
-		elIdx = i + 1;
+		set(elIdx++);
 	}
 
 	/**
@@ -168,7 +155,52 @@ public class StateSyncServer extends StateSynchronizer {
 	 * @param data byte array element
 	 */
 	public void put(byte[] data) {
-		int i = elIdx++;
+		set(elIdx++, data);
+	}
+
+	/**
+	 * update variable i with the data that was just written to {@link #buffer}.
+	 * @return this
+	 */
+	public void set(int i) {
+		if (i < 0) throw new IllegalStateException("element must be submitted as variabled sized!");
+		if (i < fixCount) {
+			byte[] arr0 = buffer.array(), arr1 = lastFix;
+			int i0 = buffer.arrayOffset() + buffer.readerIndex(), l0 = buffer.readableBytes();
+			int i1 = indices[i], l1 = sizes[i];
+			if (sendAll) {
+				changes.set(i+1);
+				System.arraycopy(arr0, i0, arr1, i1, l1);
+			} else for (int l = i1 + l1; i1 < l; i0++, i1++)
+				if (arr0[i0] != arr1[i1]) {
+					changes.set(i+1);
+					System.arraycopy(arr0, i0, arr1, i1, l - i1);
+				}
+			if (l0 > l1) {
+				buffer.skipBytes(l1);
+				set(i + 1);
+			}
+		} else {
+			byte[] arr0 = buffer.array(), arr1 = lastVar[i - fixCount];
+			int i0 = buffer.arrayOffset() + buffer.readerIndex(), l = buffer.readableBytes();
+			if (sendAll || l != arr1.length) {
+				changes.set(i+1);
+				lastVar[i - fixCount] = Arrays.copyOfRange(arr0, i0, i0 + l);
+			} else for (int i1 = 0; i1 < l; i0++, i1++)
+				if (arr0[i0] != arr1[i1]) {
+					changes.set(i+1);
+					System.arraycopy(arr0, i0, arr1, i1, l - i1);
+				}
+		}
+		buffer.clear();
+	}
+
+	/**
+	 * update variable i with given byte array.
+	 * @param data byte array element
+	 */
+	public void set(int i, byte[] data) {
+		i -= fixCount;
 		if (sendAll || !Arrays.equals(data, lastVar[i])) {
 			lastVar[i] = data;
 			changes.set(i+1);
@@ -187,15 +219,13 @@ public class StateSyncServer extends StateSynchronizer {
 	}
 
 	private int curSize() {
-		int j = buffer.readableBytes();
-		for (int n : sizes)
-			if ((j -= n) < 0) return n;
-		return 0;
+		int i = Arrays.binarySearch(indices, buffer.readableBytes());
+		return i >= 0 ? sizes[i] : 0;
 	}
 
-	private StateSyncServer check(int l) {
-		if (elIdx >= 0) throw new IllegalStateException("element must be submitted as fixed sized!");
-		if (curSize() != l) throw new IllegalStateException("wrong element size!");
+	private StateSyncServer check(int i, int l) {
+		if (i >= fixCount) throw new IllegalStateException("element must be submitted as fixed sized!");
+		if ((i < 0 ? curSize() : sizes[i]) != l) throw new IllegalStateException("wrong element size!");
 		return this;
 	}
 
@@ -215,62 +245,70 @@ public class StateSyncServer extends StateSynchronizer {
 		return this;
 	}
 
+	public StateSyncServer set(int i, Object v) {
+		if (v instanceof Number) {
+			Number n = (Number)v;
+			if (n instanceof Float)
+				check(i, 4).buffer.writeFloat(n.floatValue());
+			else if (n instanceof Double)
+				check(i, 8).buffer.writeDouble(n.doubleValue());
+			else if (n instanceof Long)
+				check(i, 8).buffer.writeLong(n.longValue());
+			else writeInt(n.intValue());
+		} else if (v instanceof byte[]) {
+			if (i < fixCount) buffer.writeBytes((byte[])v);
+			else buffer.writeByteArray((byte[])v);
+		} else if (v instanceof int[])
+			if (i < fixCount) writeIntArray((int[])v);
+			else buffer.writeVarIntArray((int[])v);
+		else if (v instanceof BlockPos)
+			check(i, 8).buffer.writeBlockPos((BlockPos)v);
+		else if (v instanceof Enum)
+			writeInt(((Enum<?>)v).ordinal());
+		else if (v == null)
+			if (i < fixCount) writeInt(-1);
+			else buffer.writeString("");
+		else if (v instanceof String)
+			buffer.writeString((String)v);
+		else if (v instanceof UUID)
+			check(i, 16).buffer.writeUniqueId((UUID)v);
+		else if (v instanceof NBTTagCompound)
+			buffer.writeCompoundTag((NBTTagCompound)v);
+		else if (v instanceof ItemStack) {
+			ItemStack stack = (ItemStack)v;
+			if (stack.isEmpty()) buffer.writeShort(-1);
+			else {
+				Item item = stack.getItem();
+				buffer.writeShort(Item.getIdFromItem(item));
+				buffer.writeInt(stack.getCount());
+				buffer.writeShort(stack.getMetadata());
+				NBTTagCompound nbt = null;
+				if (item.isDamageable() || item.getShareTag())
+					nbt = item.getNBTShareTag(stack);
+				buffer.writeCompoundTag(nbt);
+			}
+		} else if (v instanceof FluidStack) {
+			FluidStack stack = (FluidStack)v;
+			buffer.writeString(FluidRegistry.getFluidName(stack));
+			buffer.writeInt(stack.amount);
+			buffer.writeCompoundTag(stack.tag);
+		} else throw new IllegalArgumentException("invalid element type!");
+		if (i >= 0) set(i);
+		return this;
+	}
+
 	/**
 	 * submit elements for synchronization
 	 * @param values the element values in proper order
 	 * @return this
 	 */
 	public StateSyncServer putAll(Object... values) {
-		for (Object v : values)
-			if (v instanceof Number) {
-				Number n = (Number)v;
-				if (n instanceof Float)
-					check(4).buffer.writeFloat(n.floatValue());
-				else if (n instanceof Double)
-					check(8).buffer.writeDouble(n.doubleValue());
-				else if (n instanceof Long)
-					check(8).buffer.writeLong(n.longValue());
-				else writeInt(n.intValue());
-			} else if (v instanceof byte[]) {
-				if (elIdx < 0) buffer.writeBytes((byte[])v);
-				else {buffer.writeByteArray((byte[])v); put();}
-			} else if (v instanceof int[])
-				if (elIdx < 0) writeIntArray((int[])v);
-				else {buffer.writeVarIntArray((int[])v); put();}
-			else if (v instanceof BlockPos)
-				check(8).buffer.writeBlockPos((BlockPos)v);
-			else if (v instanceof Enum)
-				writeInt(((Enum<?>)v).ordinal());
-			else if (v == null)
-				if (elIdx < 0) writeInt(-1);
-				else {buffer.writeString(""); put();}
-			else if (v instanceof String)
-				{buffer.writeString((String)v); put();}
-			else if (v instanceof UUID)
-				check(16).buffer.writeUniqueId((UUID)v);
-			else if (v instanceof NBTTagCompound)
-				{buffer.writeCompoundTag((NBTTagCompound)v); put();}
-			else if (v instanceof ItemStack) {
-				ItemStack stack = (ItemStack)v;
-				if (stack.isEmpty()) buffer.writeShort(-1);
-				else {
-					Item item = stack.getItem();
-					buffer.writeShort(Item.getIdFromItem(item));
-					buffer.writeInt(stack.getCount());
-					buffer.writeShort(stack.getMetadata());
-					NBTTagCompound nbt = null;
-					if (item.isDamageable() || item.getShareTag())
-						nbt = item.getNBTShareTag(stack);
-					buffer.writeCompoundTag(nbt);
-				}
-				put();
-			} else if (v instanceof FluidStack) {
-				FluidStack stack = (FluidStack)v;
-				buffer.writeString(FluidRegistry.getFluidName(stack));
-				buffer.writeInt(stack.amount);
-				buffer.writeCompoundTag(stack.tag);
-				put();
-			} else throw new IllegalArgumentException("invalid element type!");
+		int i = elIdx;
+		if (i < 0) for (Object v : values) set(-1, v);
+		else {
+			for (Object v : values) set(i++, v);
+			elIdx = i;
+		}
 		return this;
 	}
 

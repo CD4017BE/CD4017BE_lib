@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.function.IntConsumer;
 import javax.annotation.Nullable;
 
+import cd4017be.lib.Gui.ITankContainer;
 import cd4017be.lib.Gui.ModularGui;
 import cd4017be.lib.Gui.TileContainer.TankSlot;
 import cd4017be.lib.util.TooltipUtil;
@@ -23,7 +24,8 @@ import net.minecraftforge.fml.client.config.GuiUtils;
  */
 public class TankInterface extends GuiCompBase<GuiCompGroup> {
 
-	private final TankSlot slot;
+	private final ITankContainer inv;
+	private final int slot;
 	private final IntConsumer handler;
 
 	/**
@@ -32,17 +34,32 @@ public class TankInterface extends GuiCompBase<GuiCompGroup> {
 	 * @param handler optional handler when a fluid container is dropped into this component (contained fluid, tank id).
 	 */
 	public TankInterface(GuiCompGroup parent, TankSlot slot, @Nullable IntConsumer handler) {
-		super(parent, slot.xPos, slot.yPos, (slot.size >> 4 & 0xf) * 18 - 2, (slot.size & 0xf) * 18 - 2);
+		this(parent, (slot.size >> 4 & 0xf) * 18 - 2, (slot.size & 0xf) * 18 - 2, slot.xPos, slot.yPos, slot.inventory, slot.tankNumber, handler);
+	}
+
+	/**
+	 * @param parent parent the gui-component container this will register to
+	 * @param w width in pixels
+	 * @param h height in pixels
+	 * @param x initial X-coord
+	 * @param y initial Y-coord
+	 * @param inv the fluid inventory
+	 * @param slot the slot number of the tank to show
+	 * @param handler optional handler when a fluid container is dropped into this component (contained fluid, tank slot).
+	 */
+	public TankInterface(GuiCompGroup parent, int w, int h, int x, int y, ITankContainer inv, int slot, @Nullable IntConsumer handler) {
+		super(parent, w, h, x, y);
+		this.inv = inv;
 		this.slot = slot;
 		this.handler = handler;
 	}
 
 	@Override
 	public void drawOverlay(int mx, int my) {
-		FluidStack stack = slot.getStack();
+		FluidStack stack = inv.getTank(slot);
 		ArrayList<String> info = new ArrayList<String>();
 		info.add(stack != null ? stack.getLocalizedName() : TooltipUtil.translate("cd4017be.tankEmpty"));
-		info.add(TooltipUtil.format("cd4017be.tankAmount", stack != null ? (double)stack.amount / 1000D : 0D, (double)slot.inventory.getCapacity(slot.tankNumber) / 1000D));
+		info.add(TooltipUtil.format("cd4017be.tankAmount", stack != null ? (double)stack.amount / 1000D : 0D, (double)inv.getCapacity(slot) / 1000D));
 		parent.drawTooltip(info, mx, my);
 	}
 
@@ -50,9 +67,9 @@ public class TankInterface extends GuiCompBase<GuiCompGroup> {
 	public void drawBackground(int mx, int my, float t) {
 		GlStateManager.disableAlpha();
 		ResourceLocation res;
-		FluidStack stack = slot.getStack();
+		FluidStack stack = inv.getTank(slot);
 		if (stack != null && ((res = stack.getFluid().getStill(stack)) != null || (res = stack.getFluid().getFlowing(stack)) != null)) {
-			int c = slot.inventory.getCapacity(slot.tankNumber);
+			int c = inv.getCapacity(slot);
 			int n = c == 0 || stack.amount >= c ? h : (int)((long)h * (long)stack.amount / (long)c);
 			ModularGui.color(stack.getFluid().getColor(stack));
 			Minecraft mc = Minecraft.getMinecraft();
@@ -71,7 +88,7 @@ public class TankInterface extends GuiCompBase<GuiCompGroup> {
 	@Override
 	public boolean mouseIn(int x, int y, int b, byte d) {
 		if (d == A_DOWN && handler != null)
-			handler.accept(slot.tankNumber);
+			handler.accept(slot);
 		return false;
 	}
 }

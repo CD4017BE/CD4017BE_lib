@@ -10,7 +10,7 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
  */
 public abstract class StateSynchronizer {
 
-	protected final int[] sizes;
+	protected final int[] sizes, indices;
 	public final int count;
 	protected final int modSetBytes, idxBits, idxCountBits, maxIdxCount;
 	public BitSet changes;
@@ -19,6 +19,13 @@ public abstract class StateSynchronizer {
 		if (sizes.length > count) throw new IllegalArgumentException("can't have more fixed sized elements than total elements!");
 		this.count = count;
 		this.sizes = sizes;
+		int l = sizes.length;
+		int[] indices = new int[l];
+		for (int i = 0, j = 0; i < l; i++) {
+			indices[i] = j;
+			j += sizes[i];
+		}
+		this.indices = indices;
 		this.changes = new BitSet(count);
 		if (count <= 8) {
 			this.modSetBytes = 1;
