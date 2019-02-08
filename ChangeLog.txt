@@ -1,3 +1,15 @@
+v6.3.1
+Changes:
+- fixed config version being ignored which caused it to be permanently overriden by the internal preset
+- fixed rendering bugs in Modular Gui system
+- fixed tootip handling in Modular Gui system
+- added sub window features for Modular Gui system
+- added runtime class generation utilities
+
+Dependencies:
+- for MC-1.12.2
+- forge-14.23.0.2512 (or newer)
+
 v6.3.0
 Changes:
 - rework of the scripting system: the effects of operators are now defined by the operands instead of being hard coded
