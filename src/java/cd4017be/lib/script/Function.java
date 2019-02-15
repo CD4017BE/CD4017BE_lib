@@ -89,7 +89,8 @@ public class Function {
 				IOperand a, b;
 				switch(code.get()) {
 				case gloc:
-					stack.add(stack.get(code.get()).onCopy());
+					a = stack.get(code.get());
+					stack.add(a == null ? Nil.NIL : a.onCopy());
 					break;
 				case gvar: {
 					String name = getName(code, false);

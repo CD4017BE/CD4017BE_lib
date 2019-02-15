@@ -300,7 +300,13 @@ public class Compiler {
 					c2 = eval(state, null);
 					state.curStack--;
 					state.regVar(name);
-				} else state.regVar(name);
+				} else {
+					state.regVar(name);
+					int p = buffer.position();
+					if (buffer.get(p - 2) == clear) buffer.position(p - 1);
+					else state.op(clear, null);
+					buffer.put((byte)(state.lastId - 1));
+				}
 				if (c2.type == Type.sep_cmd) break;
 				check(c2, Type.sep_par);
 			} break;
