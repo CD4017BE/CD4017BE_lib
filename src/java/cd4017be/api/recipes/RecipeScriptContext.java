@@ -313,7 +313,14 @@ public class RecipeScriptContext extends Context {
 			if (m == null) return fallback;
 			Object o = m.read(name).value();
 			if (type.isInstance(o)) return type.cast(o);
-			m.assign(name, new ObjWrapper(fallback));
+			IOperand op;
+			if (fallback instanceof IOperand) op = (IOperand)fallback;
+			else if (fallback instanceof String) op = new Text((String)fallback);
+			else if (fallback instanceof ItemStack) op = new ItemOperand((ItemStack)fallback);
+			else if (fallback instanceof FluidStack) op = new FluidOperand((FluidStack)fallback);
+			else if (fallback == null) op = Nil.NIL;
+			else op = new ObjWrapper(fallback);
+			m.assign(name, op);
 			return fallback;
 		}
 
