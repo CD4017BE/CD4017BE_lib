@@ -160,11 +160,6 @@ public class DimPos extends BlockPos {
 	}
 
 	@Override
-	public int hashCode() {
-		return super.hashCode() * 31 + dimId;
-	}
-
-	@Override
 	public int compareTo(Vec3i o) {
 		if (o instanceof DimPos) {
 			int dim = ((DimPos)o).dimId;
