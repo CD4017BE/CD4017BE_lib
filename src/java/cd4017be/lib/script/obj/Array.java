@@ -1,6 +1,7 @@
 package cd4017be.lib.script.obj;
 
 import java.util.Arrays;
+import java.util.function.Function;
 
 /**
  * 
@@ -18,11 +19,11 @@ public class Array implements IOperand {
 		this.array = arr;
 	}
 
-	public Array(Object[] objects) {
+	public <T> Array(T[] objects, Function<T, IOperand> wrapper) {
 		int n = objects.length;
 		this.array = new IOperand[n];
 		for (int i = 0; i < n; i++)
-			array[i] = new ObjWrapper(objects[i]);
+			array[i] = wrapper.apply(objects[i]);
 	}
 
 	@Override

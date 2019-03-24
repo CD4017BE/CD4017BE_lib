@@ -13,6 +13,9 @@ import org.apache.logging.log4j.Level;
 import cd4017be.api.recipes.RecipeScriptContext;
 import cd4017be.lib.Lib;
 import cd4017be.lib.script.Module;
+import cd4017be.lib.script.obj.IOperand;
+import cd4017be.lib.script.obj.Text;
+
 import static org.lwjgl.input.Keyboard.*;
 
 import net.minecraft.client.Minecraft;
@@ -49,9 +52,9 @@ public class TooltipEditor {
 		if (TooltipUtil.editor != null) return;
 		Module m = RecipeScriptContext.instance.modules.get(Lib.ConfigName);
 		if (m != null) {
-			Object path = m.read("tooltip_editor_file");
-			if (path instanceof String) {
-				File file = new File(Minecraft.getMinecraft().mcDataDir, (String)path);
+			IOperand path = m.read("tooltip_editor_file");
+			if (path instanceof Text) {
+				File file = new File(Minecraft.getMinecraft().mcDataDir, ((Text)path).value);
 				if (file.exists()) {
 					TooltipUtil.editor = new TooltipEditor(file);
 					FMLLog.log("tooltipEditor", Level.INFO, "ingame tooltip editor is enabled");
