@@ -204,6 +204,9 @@ public class TooltipUtil {
 				s1 += s.substring(0, m.start()) + formatNumber(val, n, exp);
 				m.reset(s = s.substring(m.end()));
 			}
+			for (int i = 0; i < args.length; i++)
+				if (args[i] instanceof Boolean)
+					args[i] = translate((Boolean)args[i] ? "gui.yes" : "gui.no");
 			return String.format(s1 + s, args);
 		} catch (IllegalFormatException e) {
 			return s + "\n" + e.toString();
