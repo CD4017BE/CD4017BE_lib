@@ -1,3 +1,13 @@
+v6.3.4
+Changes:
+- added yes/no text formatting for boolean arguments
+- added support to specify particle textures in script models
+- fixed some bugs that were introduced during script update
+
+Dependencies:
+- for MC-1.12.2
+- forge-14.23.0.2512 (or newer)
+
 v6.3.3
 Changes:
 - fixed a script that fallback values assigned to config variables weren't boxed in to operand types properly
