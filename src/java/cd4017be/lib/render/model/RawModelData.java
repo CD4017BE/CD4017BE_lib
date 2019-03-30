@@ -58,6 +58,7 @@ public class RawModelData implements IModel {
 	private final int[][] quads = new int[7][];
 	private final boolean diffuseLight, gui3D;
 	private final ResourceLocation[] textures;
+	private final int particleTex;
 	private final ImmutableMap<TransformType, TRSRTransformation> transform;
 
 	/**
@@ -69,6 +70,7 @@ public class RawModelData implements IModel {
 		diffuseLight = read(script.read("ambientOcclusion"), true);
 		gui3D = read(script.read("isGui3D"), true);
 		textures = readTextures(script.read("textures").value());
+		particleTex = Math.max(0, Math.min(textures.length - 1, script.read("particle").asIndex()));
 		transform = readTransf(script);
 		for (int i = 0; i < this.quads.length; i++) {
 			List<Quad> list = context.quads[i];
@@ -161,7 +163,7 @@ public class RawModelData implements IModel {
 		TextureAtlasSprite[] textures = n > 0 ? 
 				Utils.init(new TextureAtlasSprite[n], (i)-> bakedTextureGetter.apply(this.textures[i])) :
 				new TextureAtlasSprite[] {bakedTextureGetter.apply(TextureMap.LOCATION_MISSING_TEXTURE)};
-		Baked bm = new Baked(textures[0]);
+		Baked bm = new Baked(textures[particleTex]);
 		for (int i = 0; i < 7; i++) {
 			int[] src = quads[i];
 			BakedQuad[] dst = new BakedQuad[src.length / 28];
