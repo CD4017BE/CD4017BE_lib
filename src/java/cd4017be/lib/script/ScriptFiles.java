@@ -183,14 +183,19 @@ public class ScriptFiles {
 			if (version >= 0 || fallback == null) return;
 			InputStream in = Version.class.getResourceAsStream(fallback);
 			if (in == null) return;
+			version = getFileVersion(in);
+		}
+
+		public int getFileVersion(InputStream in) {
 			try (BufferedReader r = new BufferedReader(new InputStreamReader(in))) {
 				String l = r.readLine();
 				int p = l.indexOf('='), q = l.indexOf(';');
 				if (p > 0 && l.substring(0, p).trim().equals("VERSION")) {
 					if (q < 0) q = l.length();
-					try {version = (int)Double.parseDouble(l.substring(p + 1, q).trim());} catch (NumberFormatException e) {}
+					try {return (int)Double.parseDouble(l.substring(p + 1, q).trim());} catch (NumberFormatException e) {}
 				}
 			} catch (IOException e) {e.printStackTrace();}
+			return -1;
 		}
 	}
 

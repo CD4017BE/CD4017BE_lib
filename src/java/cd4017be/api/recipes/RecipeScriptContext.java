@@ -1,6 +1,8 @@
 package cd4017be.api.recipes;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -161,16 +163,23 @@ public class RecipeScriptContext extends Context {
 				versions.put(v.name, v);
 			}
 		Script[] scripts;
-		boolean reload = true;
+		boolean reload = true, existingCheck = false;
 		try {
 			scripts = ScriptFiles.loadPackage(comp, versions, true);
+		} catch (FileNotFoundException e) {
+			scripts = null; reload = false;
+			existingCheck = true;
+			LOG.info("No compiled config scripts found! This is probably the first startup.");
 		} catch (IOException e) {
 			scripts = null; reload = false;
 			LOG.error("loading compiled config scripts failed!", e);
 		}
 		for (Version v : versions.values())
 			try {
-				FileUtil.copyData(v.fallback, new File(dir, v.name + ".rcp"));
+				File dst = new File(dir, v.name + ".rcp");
+				if (existingCheck && dst.exists() && v.getFileVersion(new FileInputStream(dst)) >= v.version)
+					continue;
+				FileUtil.copyData(v.fallback, dst);
 			} catch (IOException e) {
 				LOG.error("copying script preset failed!", e);
 			}
