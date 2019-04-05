@@ -189,10 +189,10 @@ public class TooltipUtil {
 				double val = 0;
 				int exp = 0, n = 3;
 				String g = m.group(1);
-				if (g != null) val = (Double)args[Integer.parseInt(g)];
+				if (g != null) val = ((Number)args[Integer.parseInt(g)]).doubleValue();
 				else for (int i = 0; i < args.length; i++)
-					if (args[i] instanceof Double) {
-						val = (Double)args[i];
+					if (args[i] instanceof Number) {
+						val = ((Number)args[i]).doubleValue();
 						Object[] nargs = new Object[args.length - 1];
 						if (i > 0) System.arraycopy(args, 0, nargs, 0, i);
 						if (i < nargs.length) System.arraycopy(args, i + 1, nargs, i, nargs.length - i);
@@ -240,7 +240,7 @@ public class TooltipUtil {
 		if (x == 0 || Double.isNaN(x) || Double.isInfinite(x)) return "" + x;
 		int o = (int)Math.floor(Math.log10(x * s)) + 3 * ofsDecScale;
 		int p = (o + c) / 3;
-		int n = w - o + p * 3 - 1;
+		int n = Math.max(0, w - o + p * 3 - 1);
 		if (p < 0) return "0";
 		else if (p > DecScale.length) return "" + (s == -1 ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY);
 		x *= Math.pow(0.001, p - ofsDecScale);
