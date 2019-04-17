@@ -1,17 +1,25 @@
 package cd4017be.lib.render;
 
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 
 import cd4017be.lib.util.Orientation;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.block.model.ModelRotation;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
@@ -211,6 +219,89 @@ public class Util {
 			Float.floatToIntBits(x + w), Float.floatToIntBits(y + h), Float.floatToIntBits(z), Float.floatToIntBits(tx + tw), Float.floatToIntBits(ty + th),
 			Float.floatToIntBits(x), Float.floatToIntBits(y + h), Float.floatToIntBits(z), Float.floatToIntBits(tx), Float.floatToIntBits(ty + th)
 		};
+	}
+
+	/**
+	 * @param b vertex buffer
+	 * @param p origin position
+	 * @param w width vector
+	 * @param h height vector
+	 * @param t0 origin uv
+	 * @param t1 second uv
+	 */
+	public static void drawQuad(BufferBuilder b, Vec3d p, Vec3d w, Vec3d h, Vec2f t0, Vec2f t1) {
+		b.pos(p.x            , p.y            , p.z            ).color(1F, 1, 1, 1).tex(t0.x, t0.y).lightmap(240, 240).endVertex();
+		b.pos(p.x + w.x      , p.y + w.y      , p.z + w.z      ).color(1F, 1, 1, 1).tex(t1.x, t0.y).lightmap(240, 240).endVertex();
+		b.pos(p.x + w.x + h.x, p.y + w.y + h.y, p.z + w.z + h.z).color(1F, 1, 1, 1).tex(t1.x, t1.y).lightmap(240, 240).endVertex();
+		b.pos(p.x       + h.x, p.y       + h.y, p.z       + h.z).color(1F, 1, 1, 1).tex(t0.x, t1.y).lightmap(240, 240).endVertex();
+	}
+
+	/**
+	 * @param tex texture
+	 * @param u
+	 * @param v
+	 * @return interpolated uv
+	 */
+	public static Vec2f getUV(TextureAtlasSprite tex, float u, float v) {
+		return new Vec2f(tex.getInterpolatedU(u), tex.getInterpolatedV(v));
+	}
+
+	/**
+	 * @param b vertex buffer
+	 * @param from starting vertex index
+	 * @param to end vertex index
+	 * @return the vertex data
+	 */
+	public static int[] extractData(BufferBuilder b, int from, int to) {
+		int l = b.getVertexFormat().getIntegerSize();
+		from *= l; to *= l;
+		int[] arr = new int [to - from];
+		IntBuffer ib = b.getByteBuffer().asIntBuffer();
+		ib.position(from);
+		ib.get(arr);
+		return arr;
+	}
+
+	/**
+	 * render a tool-tip frame that is visible through blocks
+	 * @param fr the FontRenderer to use
+	 * @param x right offset (in text pixels)
+	 * @param y down offset (in text pixels)
+	 * @param tc text color
+	 * @param bc background color
+	 * @param lines text lines to draw
+	 */
+	public static void renderToolTip(FontRenderer fr, int x, int y, int tc, int bc, String... lines) {
+		GlStateManager.disableLighting();
+		int width = 0, height = lines.length * fr.FONT_HEIGHT;
+		int[] w = new int[lines.length];
+		for (int i = 0; i < w.length; i++) {
+			int l = fr.getStringWidth(lines[i]);
+			w[i] = l;
+			if (l > width) width = l;
+		}
+		int x0 = Float.floatToIntBits(x - width / 2 - 5), x1 = Float.floatToIntBits(x - width / 2), x2 = Float.floatToIntBits(x + width / 2), x3 = Float.floatToIntBits(x + width / 2 + 5);
+		int y0 = Float.floatToIntBits(y - height - 5), y1 = Float.floatToIntBits(y - height), y2 = Float.floatToIntBits(y), y3 = Float.floatToIntBits(y + 5);
+		int z0 = 0;
+		int c1 = (bc & 0xff00ff00) | (bc >> 16 & 0xff) | (bc & 0xff) << 16, c0 = c1;// & 0xffffff;
+		GlStateManager.enableBlend();
+		GlStateManager.disableAlpha();
+		GlStateManager.disableTexture2D();
+		GlStateManager.depthFunc(GL11.GL_ALWAYS);
+		BufferBuilder buff = Tessellator.getInstance().getBuffer();
+		buff.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
+		buff.addVertexData(new int[]{ //background frame
+				  x1, y2, z0, c1,  x2, y2, z0, c1,  x2, y1, z0, c1,  x1, y1, z0, c1, //center
+				  x1, y1, z0, c1,  x2, y1, z0, c1,  x3, y0, z0, c0,  x0, y0, z0, c0, //up fade out
+				  x2, y1, z0, c1,  x2, y2, z0, c1,  x3, y3, z0, c0,  x3, y0, z0, c0, //right fade out
+				  x2, y2, z0, c1,  x1, y2, z0, c1,  x0, y3, z0, c0,  x3, y3, z0, c0, //down fade out
+				  x1, y2, z0, c1,  x1, y1, z0, c1,  x0, y0, z0, c0,  x0, y3, z0, c0, //left fade out
+			});
+		Tessellator.getInstance().draw();
+		GlStateManager.enableTexture2D();
+		for (int i = 0; i < w.length; i++)
+			fr.drawString(lines[i], x - w[i] / 2, y - height + i * fr.FONT_HEIGHT, tc);
+		GlStateManager.depthFunc(GL11.GL_LEQUAL);
 	}
 
 }

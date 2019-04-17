@@ -1,11 +1,15 @@
 package cd4017be.lib.render.model;
 
 import java.util.Arrays;
+
+import cd4017be.lib.render.Util;
 import cd4017be.lib.render.model.ModelContext.Quad;
 import cd4017be.lib.script.Module;
 import cd4017be.lib.script.obj.Array;
 import cd4017be.lib.script.obj.IOperand;
+import cd4017be.lib.util.Orientation;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.block.model.ModelRotation;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
@@ -83,6 +87,13 @@ public class IntArrayModel {
 		}
 	}
 
+	public IntArrayModel origin(float x, float y, float z) {
+		ofsX = x;
+		ofsY = y;
+		ofsZ = z;
+		return this;
+	}
+
 	public void setBrightness(int l) {
 		if (l == brightness) return;
 		for (int i = 6; i < vertexData.length; i += 7)
@@ -94,7 +105,7 @@ public class IntArrayModel {
 		dx -= ofsX;
 		dy -= ofsY;
 		dz -= ofsZ;
-		if (dx*dx + dy*dy + dz*dz < EPSILON) return;
+		if (dx*dx + dy*dy + dz*dz < EPSILON * EPSILON) return;
 		for (int i = 0; i < vertexData.length; i += 5) {
 			vertexData[i] = Float.floatToIntBits(dx + Float.intBitsToFloat(vertexData[i]));	//X
 			vertexData[++i] = Float.floatToIntBits(dy + Float.intBitsToFloat(vertexData[i]));//Y
@@ -145,6 +156,24 @@ public class IntArrayModel {
 			data[i] = Float.floatToIntBits(tex.getInterpolatedU(Float.intBitsToFloat(data[i])));//U
 			data[++i] = Float.floatToIntBits(tex.getInterpolatedV(Float.intBitsToFloat(data[i])));//V
 		}
+		return new IntArrayModel(data, color, brightness);
+	}
+
+	public IntArrayModel translated(float x, float y, float z) {
+		int[] data = Arrays.copyOf(vertexData, vertexData.length);
+		for (int i = 0; i < data.length; i += 5) {
+			data[i] = Float.floatToIntBits(x + Float.intBitsToFloat(data[i]));	//X
+			data[++i] = Float.floatToIntBits(y + Float.intBitsToFloat(data[i]));//Y
+			data[++i] = Float.floatToIntBits(z + Float.intBitsToFloat(data[i]));//Z
+		}
+		return new IntArrayModel(data, color, brightness);
+	}
+
+	public IntArrayModel rotated(Orientation o) {
+		ModelRotation r = o.getModelRotation();
+		int[] data = Arrays.copyOf(vertexData, vertexData.length);
+		for (int i = 0; i < data.length; i += 7)
+			Util.rotate(data, i, r);
 		return new IntArrayModel(data, color, brightness);
 	}
 
