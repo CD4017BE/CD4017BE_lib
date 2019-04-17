@@ -206,7 +206,7 @@ public class Number implements IOperand {
 
 	@Override
 	public IOperand len() {
-		return of(value <= 1 ? RANDOM.nextDouble() : RANDOM.nextInt((int) value));
+		return of(Math.floor(value));
 	}
 
 	@Override
