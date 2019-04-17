@@ -79,7 +79,7 @@ public abstract class MultipartBlock extends AdvancedBlock {
 				AxisAlignedBB box1 = boundingBox[i];
 				if (box1 != NULL_AABB && tile.isModulePresent(i - 1)) {
 					if (box1 == FULL_BLOCK_AABB) return box1;
-					box = box.union(box1);
+					box = box == NULL_AABB ? box1 : box.union(box1);
 				}
 			}
 		}
@@ -109,9 +109,12 @@ public abstract class MultipartBlock extends AdvancedBlock {
 		start = start.subtract(pos.getX(), pos.getY(), pos.getZ());
 		end = end.subtract(pos.getX(), pos.getY(), pos.getZ());
 		int p = 0;
+		RayTraceResult collision = null;
 		AxisAlignedBB box = boundingBox[p];
-		RayTraceResult collision = box.calculateIntercept(start, end);
-		if (collision != null) end = collision.hitVec;
+		if (box != NULL_AABB) {
+			collision = box.calculateIntercept(start, end);
+			if (collision != null) end = collision.hitVec;
+		}
 		if (box != FULL_BLOCK_AABB) {
 			TileEntity te = world.getTileEntity(pos);
 			if (te instanceof IModularTile) {
