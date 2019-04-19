@@ -50,7 +50,7 @@ import static cd4017be.lib.Gui.comp.IGuiComp.*;
  * @see GuiCompGroup
  * @author CD4017BE
  */
-public abstract class ModularGui extends GuiContainer {
+public class ModularGui extends GuiContainer {
 	
 	public static final ResourceLocation LIB_TEX = new ResourceLocation("cd4017be_lib", "textures/icons.png");
 

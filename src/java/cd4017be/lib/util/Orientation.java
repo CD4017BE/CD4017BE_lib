@@ -24,10 +24,11 @@ public enum Orientation implements IStringSerializable {
 	Rn(SOUTH),	Re(WEST),	Rs(NORTH),	Rw(EAST),
 	Tn(UP),		Te(UP),		Ts(UP),		Tw(UP);
 
-	public final EnumFacing front;
+	public final EnumFacing front, back;
 
 	private Orientation(EnumFacing front) {
 		this.front = front;
+		this.back = front.getOpposite();
 	}
 
 	@Override

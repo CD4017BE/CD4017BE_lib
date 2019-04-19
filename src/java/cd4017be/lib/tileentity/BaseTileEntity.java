@@ -50,6 +50,11 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 		return blockState;
 	}
 
+	public Chunk getChunk() {
+		if (chunk == null) chunk = world.getChunkFromBlockCoords(this.pos);
+		return chunk;
+	}
+
 	public Orientation getOrientation() {
 		getBlockState();
 		if (blockType instanceof OrientedBlock)

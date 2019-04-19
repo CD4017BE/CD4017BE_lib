@@ -10,7 +10,7 @@ public class PropertyBlockMimic extends PropertyWrapObj<IBlockState> {
 
 	public static final PropertyBlockMimic instance = new PropertyBlockMimic("minic");
 
-	private PropertyBlockMimic(String name) {
+	public PropertyBlockMimic(String name) {
 		super(name, IBlockState.class);
 	}
 
