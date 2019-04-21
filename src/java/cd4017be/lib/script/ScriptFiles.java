@@ -189,6 +189,7 @@ public class ScriptFiles {
 		public int getFileVersion(InputStream in) {
 			try (BufferedReader r = new BufferedReader(new InputStreamReader(in))) {
 				String l = r.readLine();
+				if (l == null) return -1;
 				int p = l.indexOf('='), q = l.indexOf(';');
 				if (p > 0 && l.substring(0, p).trim().equals("VERSION")) {
 					if (q < 0) q = l.length();
