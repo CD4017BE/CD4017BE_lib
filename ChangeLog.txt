@@ -1,3 +1,16 @@
+v6.3.6
+Changes:
+- changed the script '#' operator for numbers to be floor rounding instead of RNG
+- added some more render utility functions
+- fixed handling of null Boundingboxes in MultipartBlock
+- added a Hybrid implementation between normal and fast TESR
+- some other useful tweaks
+- fixed config version check crashing if file is empty
+
+Dependencies:
+- for MC-1.12.2
+- forge-14.23.0.2512 (or newer)
+
 v6.3.5
 Changes:
 - added support for any numeric type with %u (SI-scale) formatting
