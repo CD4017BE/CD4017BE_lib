@@ -71,6 +71,7 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 	 * Fire render(client) / data(server) update
 	 */
 	public void markUpdate() {
+		if (unloaded) return;
 		getBlockState();
 		world.notifyBlockUpdate(pos, blockState, blockState, 3);
 	}
@@ -78,7 +79,7 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 	@Override //cache chunk reference to speed this up
 	public void markDirty() {
 		if (chunk == null) {
-			if (tileEntityInvalid || world == null) return;
+			if (unloaded) return;
 			chunk = world.getChunkFromBlockCoords(pos);
 		}
 		chunk.markDirty();
@@ -92,10 +93,10 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 
 	@Override
 	public void onLoad() {
-		unloaded = false;
 		if (world.isRemote && this instanceof ITickableServerOnly)
 			world.tickableTileEntities.remove(this);
 		setupData();
+		unloaded = false;
 	}
 
 	@Override
@@ -107,8 +108,8 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 
 	@Override
 	public void validate() {
-		tileEntityInvalid = unloaded = false;
 		setupData();
+		tileEntityInvalid = unloaded = false;
 	}
 
 	@Override
