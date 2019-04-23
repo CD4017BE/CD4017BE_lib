@@ -47,7 +47,7 @@ public class Cover {
 	public boolean interact(BaseTileEntity tile, EntityPlayer player, EnumHand hand, ItemStack item, EnumFacing s, float X, float Y, float Z) {
 		if (stack != null) {
 			if (player.isCreative() && item.isEmpty() && player.isSneaking()) return hit(tile, player);
-			return true;
+			return false;
 		}
 		item = player.getHeldItem(hand = EnumHand.OFF_HAND);
 		if (player.isSneaking() || item.isEmpty() || !(item.getItem() instanceof ItemBlock)) return false;
@@ -91,7 +91,7 @@ public class Cover {
 		return true;
 	}
 
-	protected boolean isBlockValid(@Nullable TileEntity tile, IBlockState state) {
+	public static boolean isBlockValid(@Nullable TileEntity tile, IBlockState state) {
 		if (state.getBlock().hasTileEntity(state)) return false;
 		if (state.isBlockNormalCube()) return true;
 		return state.getMaterial().blocksMovement() &&
