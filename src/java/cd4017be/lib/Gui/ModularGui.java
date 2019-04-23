@@ -40,6 +40,8 @@ import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidUtil;
 import net.minecraftforge.items.ItemHandlerHelper;
+
+import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
@@ -92,6 +94,13 @@ public class ModularGui extends GuiContainer {
 		super.initGui();
 		compGroup.init(width, height, zLevel, fontRenderer);
 		compGroup.position(guiLeft, guiTop);
+		Keyboard.enableRepeatEvents(true);
+	}
+
+	@Override
+	public void onGuiClosed() {
+		super.onGuiClosed();
+		Keyboard.enableRepeatEvents(false);
 	}
 
 	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
