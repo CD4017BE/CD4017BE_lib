@@ -7,8 +7,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-import scala.collection.immutable.List;
-
 /**
  * Used to check class data from non trustworthy sources (like item NBT-data) to prevent people from using exploits to run malicious code on the server's JVM.
  * @author CD4017BE
@@ -41,41 +39,6 @@ public class SecurityChecker {
 	}
 
 	/**
-	 * verifies the given constant pool table
-	 * @param cpt constant pool table
-	 * @throws IllegalArgumentException if it has structural flaws
-	 * @throws SecurityException if it accesses non white-listed classes
-	 *//*
-	public void verify(ConstantPool cpt) throws IllegalArgumentException, SecurityException {
-		ArrayList<String> violations = new ArrayList<>();
-		int l = cpt.getCount();
-		if (l < ConstantPool.PREINIT_LEN || cpt.get(0).length != 0)
-			throw new IllegalArgumentException("Malformed constant pool table");
-		for (int i = 1; i < l; i++) {
-			byte[] e = cpt.get(i);
-			checkLength(e);//detect potential overflow trickery
-			byte tag = e[0];
-			if (tag == 9 || tag == 10 || tag == 11) {//field, method or interface access
-				int idx = e[1] << 8 & 0xff00 | e[2] & 0xff; //class
-				if (idx == ConstantPool.THIS_CLASS || idx == ConstantPool.SUPER_CLASS) continue; //this and super are obviously allowed
-				e = cpt.get(idx);
-				idx = e[1] << 8 & 0xff00 | e[2] & 0xff;//name
-				e = cpt.get(idx);
-				int len = e[1] << 8 & 0xff00 | e[2] & 0xff;
-				String s = new String(e, 3, len, ClassUtils.UTF8);
-				if (!whitelist.contains(s)) violations.add(s); //ensure only white-listed classes are accessed
-			}
-		}
-		if (!violations.isEmpty()) {
-			StringBuilder sb = new StringBuilder("Runtime assembled code may potentially access the following illegal classes: ");
-			for (String s : violations)
-				sb.append(s).append(" ,");
-			sb.delete(sb.length() - 2, sb.length());
-			throw new SecurityException(sb.toString());
-		}
-	}*/
-
-	/**
 	 * verifies the given class file
 	 * @param c class file data
 	 * @throws SecurityException if it accesses non white-listed classes and members
@@ -106,14 +69,14 @@ public class SecurityChecker {
 				}
 			}
 			b.position(b.position() + 2);
-			short tc = b.getShort(), sc = b.getShort();
+			short tc = b.getShort();
 			for (int i = 0; i < n; i++) {
 				byte tag = tags[i];
 				int e = ref[i];
 				String s;
 				switch(tag) {
 				case 7:
-					if (i+1 == tc || i+1 == sc) continue;
+					if (i+1 == tc) continue; //access to own class is always allowed
 					s = utf8s[e - 1];
 					if (!whitelist.containsKey(s))
 						violations.add(s);
@@ -122,7 +85,7 @@ public class SecurityChecker {
 				case 10:
 				case 11:
 					int e1 = e >>> 16;
-					if (e1 == tc || e1 == sc) continue;
+					if (e1 == tc) continue; //access to own class is always allowed
 					s = utf8s[ref[e1 - 1] - 1];
 					Set<String> set = whitelist.get(s);
 					if (set != null && set != ANY) {
@@ -173,26 +136,6 @@ public class SecurityChecker {
 		default:
 			throw new IllegalArgumentException();
 		}
-	}
-
-	private void checkLength(byte[] entry) {
-		int l;
-		switch(entry[0]) {
-		case 7: //Class
-		case 8: l = 3; break; //String
-		case 3: //Int
-		case 4: //Float
-		case 9: //Field
-		case 10: //Method
-		case 11: //Interface
-		case 12: l = 5; break; //Name&Type
-		case 5: //Long
-		case 6: l = 9; break; //Double
-		case 1: l = 3 + (entry[1] << 8 & 0xff00 | entry[2] & 0xff); break; //Utf8
-		default: l = 0;
-		}
-		if (l != entry.length)
-			throw new IllegalArgumentException("Constant Pool entry has wrong length");
 	}
 
 }
