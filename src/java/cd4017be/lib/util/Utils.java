@@ -1,5 +1,6 @@
 package cd4017be.lib.util;
 
+import java.nio.charset.Charset;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.IntFunction;
@@ -38,6 +39,7 @@ public class Utils {
 
 	public static final BlockPos NOWHERE = new BlockPos(0, -1, 0);
 	public static final byte IN = -1, OUT = 1, ACC = 0;
+	public static final Charset UTF8 = Charset.forName("UTF-8");
 
 	/**
 	 * performs the given operation for all blocks in a square ring.

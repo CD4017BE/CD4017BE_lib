@@ -108,6 +108,10 @@ public class TickRegistry {
 		added++;
 	}
 
+	public static void schedule(IUpdatable updatable) {
+		instance.updates.add(updatable);
+	}
+
 	public interface IUpdatable {
 		public void process();
 	}
