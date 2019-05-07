@@ -51,15 +51,15 @@ public class TileContainer extends DataContainer {
 		invPlayerE = invPlayerS + (armor ? 41 : 36);
 		for (int i = 0; i < 3; i++) 
 			for (int j = 0; j < 9; j++)
-				this.addSlotToContainer(new Slot(player.inventory, i * 9 + j + 9, x + j * 18, y + i * 18));
+				this.addSlotToContainer(new HidableSlot(player.inventory, i * 9 + j + 9, x + j * 18, y + i * 18));
 		for (int i = 0; i < 9; i++)
 			if (lockSel && i == player.inventory.currentItem)
 				this.addSlotToContainer(new LockedSlot(player.inventory, i, x + i * 18, y + 58));
-			else this.addSlotToContainer(new Slot(player.inventory, i, x + i * 18, y + 58));
+			else this.addSlotToContainer(new HidableSlot(player.inventory, i, x + i * 18, y + 58));
 		if (armor) {
-			this.addSlotToContainer(new Slot(player.inventory, 40, x - 18, y + 58));
+			this.addSlotToContainer(new HidableSlot(player.inventory, 40, x - 18, y + 58));
 			for (int i = 0; i < 4; i++)
-				this.addSlotToContainer(new Slot(player.inventory, i + 36, x - 18, y - i * 18 + 36));
+				this.addSlotToContainer(new HidableSlot(player.inventory, i + 36, x - 18, y - i * 18 + 36));
 		}
 	}
 
