@@ -12,6 +12,8 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.NetworkManager;
+import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ITickable;
@@ -33,6 +35,7 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 	private Chunk chunk;
 	/** whether this TileEntity is currently not part of the loaded world and therefore shouldn't perform any actions */
 	protected boolean unloaded = true;
+	protected boolean redraw;
 
 	public BaseTileEntity() {}
 
@@ -62,11 +65,6 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 		else return Orientation.N;
 	}
 
-	@Override
-	public NBTTagCompound getUpdateTag() {
-		return this.writeToNBT(new NBTTagCompound());
-	}
-
 	/**
 	 * Fire render(client) / data(server) update
 	 */
@@ -85,10 +83,91 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 		chunk.markDirty();
 	}
 
-	@Override //just skip all the ugly hard-coding in superclass
-	@SideOnly(Side.CLIENT)
-	public AxisAlignedBB getRenderBoundingBox() {
-		return new AxisAlignedBB(pos.getX(), pos.getY(), pos.getZ(), pos.getX() + 1, pos.getY() + 1, pos.getZ() + 1);
+	/**chunk save data: contains the full TileEntity state */
+	public static final int SAVE = 0;
+	/**client chunk data: contains the full TileEntity state relevant for the client */
+	public static final int CLIENT = 1;
+	/**client sync data: contains only the TileEntity state that likely changed since last synchronization */
+	public static final int SYNC = 2;
+	/**{@link #SYNC} with a hint for the client to re-render the block */
+	public static final int REDRAW = 3;
+
+	/**
+	 * marks that the state of this TileEntity changed
+	 * @param mode type of data changed: {@link #REDRAW} => {@link #SYNC} => {@link #SAVE}
+	 */
+	public void markDirty(int mode) {
+		if (unloaded) return;
+		switch(mode) {
+		case REDRAW:
+			redraw = true;
+		case SYNC:
+			IBlockState state = getBlockState();
+			world.notifyBlockUpdate(pos, state, state, 2);
+		case SAVE:
+			getChunk().markDirty();
+		}
+	}
+
+	/**
+	 * make this TileEntity save it's state to given data.
+	 * @param nbt serialized nbt data
+	 * @param mode the type of data to store: {@link #SAVE} => {@link #CLIENT} => {@link #SYNC}
+	 */
+	protected void storeState(NBTTagCompound nbt, int mode) {
+	}
+
+	/**
+	 * make this TileEntity load it's state from given data.
+	 * @param nbt serialized nbt data
+	 * @param mode the type of data to load: {@link #SAVE} => {@link #CLIENT} => {@link #SYNC}
+	 */
+	protected void loadState(NBTTagCompound nbt, int mode) {
+	}
+
+	@Override
+	public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
+		storeState(nbt, SAVE);
+		return super.writeToNBT(nbt);
+	}
+
+	@Override
+	public void readFromNBT(NBTTagCompound nbt) {
+		super.readFromNBT(nbt);
+		loadState(nbt, SAVE);
+	}
+
+	@Override
+	public NBTTagCompound getUpdateTag() {
+		NBTTagCompound nbt = new NBTTagCompound();
+		storeState(nbt, CLIENT);
+		return this.writeToNBT(nbt);
+	}
+
+	@Override
+	public void handleUpdateTag(NBTTagCompound nbt) {
+		this.readFromNBT(nbt);
+		loadState(nbt, CLIENT);
+	}
+
+	@Override
+	public SPacketUpdateTileEntity getUpdatePacket() {
+		NBTTagCompound nbt = new NBTTagCompound();
+		storeState(nbt, SYNC);
+		if (nbt.hasNoTags()) return null;
+		if (redraw) {
+			nbt.setBoolean("", true);
+			redraw = false;
+		}
+		return new SPacketUpdateTileEntity(pos, -1, nbt);
+	}
+
+	@Override
+	public void onDataPacket(NetworkManager net, SPacketUpdateTileEntity pkt) {
+		NBTTagCompound nbt = pkt.getNbtCompound();
+		loadState(nbt, SYNC);
+		if (redraw = nbt.getBoolean(""))
+			world.markBlockRangeForRenderUpdate(pos, pos);
 	}
 
 	@Override
@@ -119,9 +198,15 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 		clearData();
 	}
 
+	/**
+	 * called for both {@link #validate()} and {@link #onLoad()} just before the {@link #unloaded} flag is unset.
+	 */
 	protected void setupData() {
 	}
 
+	/**
+	 * called for both {@link #invalidate()} and {@link #onChunkUnload()} just after the {@link #unloaded} flag has been set.
+	 */
 	protected void clearData() {
 	}
 
@@ -139,6 +224,12 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 		return pos;
 	}
 
+	@Override //just skip all the ugly hard-coding in superclass
+	@SideOnly(Side.CLIENT)
+	public AxisAlignedBB getRenderBoundingBox() {
+		return new AxisAlignedBB(pos.getX(), pos.getY(), pos.getZ(), pos.getX() + 1, pos.getY() + 1, pos.getZ() + 1);
+	}
+
 	protected List<ItemStack> makeDefaultDrops(NBTTagCompound tag) {
 		getBlockState();
 		ItemStack item = new ItemStack(blockType, 1, blockType.damageDropped(blockState));
@@ -149,7 +240,7 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 	}
 
 	public boolean canPlayerAccessUI(EntityPlayer player) {
-		return !player.isDead && !tileEntityInvalid && getDistanceSq(player.posX, player.posY, player.posZ) < 64;
+		return !player.isDead && !unloaded && getDistanceSq(player.posX, player.posY, player.posZ) < 64;
 	}
 
 	public String getName() {
