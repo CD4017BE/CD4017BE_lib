@@ -81,4 +81,29 @@ public class RectangularSprite extends TextureAtlasSprite {
 	public boolean uvTransposed() {
 		return imgTransposed;
 	}
+
+	/**
+	 * @param u left [0-1]
+	 * @param v top [0-1]
+	 * @param w width [0-1]
+	 * @param h height [0-1]
+	 * @return the interpolated (u, v) coordinates of the four rectangle corners in anti-clockwise order, starting at top left
+	 */
+	public static float[] getInterpolatedUV(float[] a, TextureAtlasSprite tex, float u, float v, float w, float h) {
+		if (a == null) a = new float[8];
+		int t; float o, d;
+		if (tex instanceof RectangularSprite && ((RectangularSprite)tex).imgTransposed) {
+			t = 4;
+			o = u; u = v; v = o;
+			o = w; w = h; h = o;
+		} else t = 0;
+		o = tex.getMinU(); d = tex.getMaxU() - o;
+		a[0] = u = u * d + o;  a[4] = w * d + o + u;
+		o = tex.getMinV(); d = tex.getMaxV() - o;
+		a[1] = v = v * d + o;  a[5] = h * d + o + v;
+		a[2] = a[0^t];     a[6] = a[4^t];
+		a[3] = a[5^t];     a[7] = a[1^t];
+		return a;
+	}
+
 }
