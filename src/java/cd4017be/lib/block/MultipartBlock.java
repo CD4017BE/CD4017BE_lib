@@ -21,14 +21,12 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.property.ExtendedBlockState;
 import net.minecraftforge.common.property.IExtendedBlockState;
 import net.minecraftforge.common.property.IUnlistedProperty;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
 /**
  * 
  * @author CD4017BE
  */
-public abstract class MultipartBlock extends AdvancedBlock {
+public abstract class MultipartBlock extends AdvancedBlock implements IMultipartBlock {
 
 	public PropertyInteger baseState;
 	public static final IUnlistedProperty<IModularTile> moduleRef = new PropertyWrapObj<IModularTile>("tile", IModularTile.class);
@@ -44,13 +42,22 @@ public abstract class MultipartBlock extends AdvancedBlock {
 		this.numModules = mods;
 	}
 
+	@Override
+	public IProperty<?> getBaseState() {
+		return baseState;
+	}
+
+	@Override
+	public int moduleCount() {
+		return numModules;
+	}
+
+	@Override
+	public boolean renderMultilayer() {
+		return renderMultilayer;
+	}
+
 	protected abstract PropertyInteger createBaseState();
-
-	@SideOnly(Side.CLIENT)
-	public abstract String moduleVariant(int i);
-
-	@SideOnly(Side.CLIENT)
-	public abstract Class<?> moduleType(int i);
 
 	@Override
 	protected BlockStateContainer createBlockState() {
