@@ -150,11 +150,8 @@ public class MultipartModel implements IModel, IHardCodedModel {
 				IExtendedBlockState exState = (IExtendedBlockState) state;
 				IModularTile tile = exState.getValue(MultipartBlock.moduleRef);
 				if (render = tile != null && !(side == null && tile.isOpaque()))
-					for (int i = 0; i < n; i++) {
-						Object val = tile.getModuleState(i);
-						IBakedModel model = modelProvider[i].getModelFor(state, val, layer);
-						if (model != null) list.addAll(model.getQuads(state, side, rand));
-					}
+					for (int i = 0; i < n; i++)
+						modelProvider[i].getQuads(list, tile.getModuleState(i), layer, exState, side, rand);
 			}
 			if (render && (layer == null || layer == BlockRenderLayer.CUTOUT)) {
 				IProperty<?> p = block.getBaseState();
@@ -202,15 +199,18 @@ public class MultipartModel implements IModel, IHardCodedModel {
 	}
 
 	public interface IModelProvider {
-		public IBakedModel getModelFor(Object val);
-		public default IBakedModel getModelFor(Object val, @Nonnull BlockRenderLayer layer) {
+		@Deprecated
+		default IBakedModel getModelFor(Object val) {return null;}
+		@Deprecated
+		default IBakedModel getModelFor(Object val, @Nonnull BlockRenderLayer layer) {
 			return layer == null || layer == BlockRenderLayer.CUTOUT ? getModelFor(val) : null;
 		}
-		public default IBakedModel getModelFor(IBlockState state, Object val, @Nonnull BlockRenderLayer layer) {
-			return getModelFor(val, layer);
+		default void getQuads(List<BakedQuad> quads, Object val, @Nonnull BlockRenderLayer layer, IBlockState state, EnumFacing side, long rand) {
+			IBakedModel model = getModelFor(val, layer);
+			if (model != null) quads.addAll(model.getQuads(state, side, rand));
 		}
-		public Collection<ResourceLocation> getDependencies();
-		public void bake(IModelState state, VertexFormat format, Function<ResourceLocation, TextureAtlasSprite> textureGetter);
+		Collection<ResourceLocation> getDependencies();
+		void bake(IModelState state, VertexFormat format, Function<ResourceLocation, TextureAtlasSprite> textureGetter);
 	}
 
 	public class ProviderList implements IModelProvider {
@@ -222,15 +222,17 @@ public class MultipartModel implements IModel, IHardCodedModel {
 			this.models = models;
 			this.baked = new IBakedModel[models.length];
 		}
-		
+
 		@Override
-		public IBakedModel getModelFor(Object val) {
+		public void getQuads(List<BakedQuad> quads, Object val, BlockRenderLayer layer, IBlockState state, EnumFacing side, long rand) {
+			if (layer != null && layer != BlockRenderLayer.CUTOUT) return;
 			int i;
 			if (val instanceof Number) i = ((Number)val).intValue();
 			else if (val instanceof Enum) i = ((Enum<?>)val).ordinal();
-			else if (val instanceof Boolean && !(Boolean)val) return null;
+			else if (val instanceof Boolean && !(Boolean)val) return;
 			else i = 0;
-			return i >= 0 && i < baked.length ? baked[i] : null;
+			if (i < 0 || i >= baked.length) return;
+			quads.addAll(baked[i].getQuads(state, side, rand));
 		}
 
 		@Override
