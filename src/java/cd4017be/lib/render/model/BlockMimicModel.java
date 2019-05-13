@@ -147,7 +147,7 @@ public class BlockMimicModel implements IModel, IBakedModel, IHardCodedModel {
 		}
 
 		@Override
-		public void bake(IModelState state, VertexFormat format, Function<ResourceLocation, TextureAtlasSprite> textureGetter) {
+		public void bake(VertexFormat format, Function<ResourceLocation, TextureAtlasSprite> textureGetter) {
 		}
 
 	}

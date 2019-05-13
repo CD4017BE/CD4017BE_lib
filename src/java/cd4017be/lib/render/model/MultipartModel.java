@@ -12,7 +12,6 @@ import javax.annotation.Nonnull;
 
 import java.util.function.Function;
 
-import cd4017be.lib.block.IMultipartBlock;
 import cd4017be.lib.block.MultipartBlock;
 import cd4017be.lib.block.MultipartBlock.IModularTile;
 import cd4017be.lib.render.IHardCodedModel;
@@ -43,16 +42,28 @@ import net.minecraftforge.common.property.IExtendedBlockState;
 public class MultipartModel implements IModel, IHardCodedModel {
 
 	public final IModelProvider[] modelProvider;
-	public final IMultipartBlock block;
+	public final IProperty<?> baseProp;
+	public final Block block;
+	public final boolean multiLayer;
 	private final ResourceLocation[] baseModels;
 	public ItemOverrideList itemHandler = ItemOverrideList.NONE;
 
-	public MultipartModel(IMultipartBlock block) {
+	public MultipartModel(MultipartBlock block) {
+		this(block, block.getBaseState(), block.renderMultilayer(), new IModelProvider[block.numModules]);
+		for (int i = 0; i < block.numModules; i++) {
+			Class<?> type = block.moduleType(i);
+			if (type == Boolean.class)
+				modelProvider[i] = new ProviderList(new ModelResourceLocation(block.getRegistryName(), block.moduleVariant(i)));
+			else if (type == IBlockState.class)
+				modelProvider[i] = BlockMimicModel.provider;
+		}
+	}
+
+	public MultipartModel(Block block, IProperty<?> base, boolean multiLayer, IModelProvider... providers) {
 		this.block = block;
-		ResourceLocation loc = ((Block)block).getRegistryName();
-		IProperty<?> base = block.getBaseState();
-		
-		
+		this.baseProp = base;
+		this.multiLayer = multiLayer;
+		ResourceLocation loc = block.getRegistryName();
 		if (base == null || base.getValueClass() == Boolean.class) {
 			this.baseModels = new ResourceLocation[] {new ModelResourceLocation(loc, "base")};
 		} else {
@@ -62,24 +73,22 @@ public class MultipartModel implements IModel, IHardCodedModel {
 			for (Object o : states)
 				baseModels[i++] = new ModelResourceLocation(loc, "base" + o);
 		}
-		int n = block.moduleCount();
-		this.modelProvider = new IModelProvider[n];
-		for (int i = 0; i < n; i++) {
-			Class<?> type = block.moduleType(i);
-			if (type == Boolean.class)
-				modelProvider[i] = new ProviderList(new ModelResourceLocation(loc, block.moduleVariant(i)));
-			else if (type == IBlockState.class)
-				modelProvider[i] = BlockMimicModel.provider;
-		}
+		this.modelProvider = providers;
+	}
+
+	public MultipartModel setProvider(int i, IModelProvider p) {
+		this.modelProvider[i] = p;
+		return this;
 	}
 
 	public MultipartModel setPipeVariants(int n) {
+		MultipartBlock block = (MultipartBlock)this.block;
 		for (int i = 0; i < block.moduleCount(); i++) {
 			Class<?> type = block.moduleType(i);
 			if (type == Byte.class && modelProvider[i] == null) {
 				ResourceLocation[] locs = new ResourceLocation[n];
 				for (int j = 0; j < n; j++)
-					locs[j] = new ModelResourceLocation(((Block)block).getRegistryName(), block.moduleVariant(i) + j);
+					locs[j] = new ModelResourceLocation(block.getRegistryName(), block.moduleVariant(i) + j);
 				modelProvider[i] = new ProviderList(locs);
 			}
 		}
@@ -105,16 +114,15 @@ public class MultipartModel implements IModel, IHardCodedModel {
 	@Override
 	public IBakedModel bake(IModelState state, VertexFormat format, Function<ResourceLocation, TextureAtlasSprite> textureGetter) {
 		for (IModelProvider provider : modelProvider)
-			provider.bake(state, format, textureGetter);
-		IProperty<?> base = block.getBaseState();
+			provider.bake(format, textureGetter);
 		Map<Object, IBakedModel> baked;
-		if (base == null) {
+		if (baseProp == null) {
 			IModel model = ModelLoaderRegistry.getModelOrLogError(baseModels[0], "missing");
 			baked = Collections.singletonMap(null, model.bake(model.getDefaultState(), format, textureGetter));
 		} else {
 			baked = new HashMap<>();
 			int i = 0;
-			for (Object val : block.getBaseState().getAllowedValues()) {
+			for (Object val : baseProp.getAllowedValues()) {
 				IModel model = ModelLoaderRegistry.getModelOrLogError(baseModels[i++], "missing");
 				baked.put(val, model.bake(model.getDefaultState(), format, textureGetter));
 			}
@@ -137,25 +145,23 @@ public class MultipartModel implements IModel, IHardCodedModel {
 
 		private BakedMultipart(Map<Object, IBakedModel> base) {
 			this.base = base;
-			this.main = base.get(block.getBaseState() == null ? null : ((Block)block).getDefaultState().getValue(block.getBaseState()));
+			this.main = base.get(baseProp == null ? null : ((Block)block).getDefaultState().getValue(baseProp));
 		}
 
 		@Override
 		public List<BakedQuad> getQuads(IBlockState state, EnumFacing side, long rand) {
 			ArrayList<BakedQuad> list = new ArrayList<BakedQuad>();
-			BlockRenderLayer layer = block.renderMultilayer() ? MinecraftForgeClient.getRenderLayer() : null;
+			BlockRenderLayer layer = multiLayer ? MinecraftForgeClient.getRenderLayer() : null;
 			boolean render = true;
-			int n = block.moduleCount();
 			if (state instanceof IExtendedBlockState) {
 				IExtendedBlockState exState = (IExtendedBlockState) state;
 				IModularTile tile = exState.getValue(MultipartBlock.moduleRef);
 				if (render = tile != null && !(side == null && tile.isOpaque()))
-					for (int i = 0; i < n; i++)
+					for (int i = 0; i < modelProvider.length; i++)
 						modelProvider[i].getQuads(list, tile.getModuleState(i), layer, exState, side, rand);
 			}
 			if (render && (layer == null || layer == BlockRenderLayer.CUTOUT)) {
-				IProperty<?> p = block.getBaseState();
-				IBakedModel model = p == null ? main : base.get(state.getValue(p));
+				IBakedModel model = baseProp == null ? main : base.get(state.getValue(baseProp));
 				if (model != null)
 					list.addAll(model.getQuads(state, side, rand));
 			}
@@ -192,10 +198,6 @@ public class MultipartModel implements IModel, IHardCodedModel {
 			return itemHandler;
 		}
 
-		public IMultipartBlock getOwner() {
-			return block;
-		}
-
 	}
 
 	public interface IModelProvider {
@@ -210,10 +212,10 @@ public class MultipartModel implements IModel, IHardCodedModel {
 			if (model != null) quads.addAll(model.getQuads(state, side, rand));
 		}
 		Collection<ResourceLocation> getDependencies();
-		void bake(IModelState state, VertexFormat format, Function<ResourceLocation, TextureAtlasSprite> textureGetter);
+		void bake(VertexFormat format, Function<ResourceLocation, TextureAtlasSprite> textureGetter);
 	}
 
-	public class ProviderList implements IModelProvider {
+	public static class ProviderList implements IModelProvider {
 
 		private final ResourceLocation[] models;
 		private final IBakedModel[] baked;
@@ -241,7 +243,7 @@ public class MultipartModel implements IModel, IHardCodedModel {
 		}
 
 		@Override
-		public void bake(IModelState state, VertexFormat format, Function<ResourceLocation, TextureAtlasSprite> textureGetter) {
+		public void bake(VertexFormat format, Function<ResourceLocation, TextureAtlasSprite> textureGetter) {
 			for (int i = 0; i < models.length; i++) {
 				IModel model = ModelLoaderRegistry.getModelOrLogError(models[i], "missing");
 				baked[i] = model.bake(model.getDefaultState(), format, textureGetter);
