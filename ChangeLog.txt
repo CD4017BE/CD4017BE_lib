@@ -1,3 +1,16 @@
+v6.4.0
+Changes:
+- added some utility features
+- added hideable inventory slots
+- added TextureAtlasSprite impl. that supports non square aspect ratios
+- added convenient load/store state methods in BaseTileEntity
+- generalized MultipartModel so it can be applied to arbitrary blocks
+- enhanced state mapping and model providers for the MultipartModel
+
+Dependencies:
+- for MC-1.12.2
+- forge-14.23.0.2512 (or newer)
+
 v6.3.7
 Changes:
 - enabled Key repreat events in ModularGUI (more convenient typing in text fields)
