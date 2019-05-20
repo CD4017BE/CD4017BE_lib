@@ -67,6 +67,16 @@ public class SpecialModelLoader implements ICustomModelLoader {
 		ModelLoader.setCustomStateMapper(fluid.getBlock(), stateMapper);
 	}
 
+	/**
+	 * makes all block states of the given block rendered by the given model, completely by-passing blockstates.json
+	 * @param block
+	 * @param model
+	 */
+	public static void overrideBlockModel(Block block, IModel model) {
+		instance.models.put(new ModelResourceLocation(block.getRegistryName(), "normal"), model);
+		ModelLoader.setCustomStateMapper(block, stateMapper);
+	}
+
 	public static void registerBlockModel(Block block, IModel model) {
 		String[] name = block.getRegistryName().toString().split(":");
 		instance.models.put(new ResourceLocation(name[0], "models/block/" + name[1]), model);

@@ -5,8 +5,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.annotation.Nonnull;
 
@@ -42,14 +44,13 @@ import net.minecraftforge.common.property.IExtendedBlockState;
 public class MultipartModel implements IModel, IHardCodedModel {
 
 	public final IModelProvider[] modelProvider;
-	public final IProperty<?> baseProp;
+	public final Map<IBlockState, ? extends ResourceLocation> baseMap;
 	public final Block block;
 	public final boolean multiLayer;
-	private final ResourceLocation[] baseModels;
 	public ItemOverrideList itemHandler = ItemOverrideList.NONE;
 
 	public MultipartModel(MultipartBlock block) {
-		this(block, block.getBaseState(), block.renderMultilayer(), new IModelProvider[block.numModules]);
+		this(block, stateMap(block, block.getBaseState()), block.renderMultilayer(), new IModelProvider[block.numModules]);
 		for (int i = 0; i < block.numModules; i++) {
 			Class<?> type = block.moduleType(i);
 			if (type == Boolean.class)
@@ -59,20 +60,22 @@ public class MultipartModel implements IModel, IHardCodedModel {
 		}
 	}
 
-	public MultipartModel(Block block, IProperty<?> base, boolean multiLayer, IModelProvider... providers) {
-		this.block = block;
-		this.baseProp = base;
-		this.multiLayer = multiLayer;
+	public static Map<IBlockState, ResourceLocation> stateMap(Block block, IProperty<?> prop) {
 		ResourceLocation loc = block.getRegistryName();
-		if (base == null || base.getValueClass() == Boolean.class) {
-			this.baseModels = new ResourceLocation[] {new ModelResourceLocation(loc, "base")};
-		} else {
-			Collection<?> states = base.getAllowedValues();
-			this.baseModels = new ResourceLocation[states.size()];
-			int i = 0;
-			for (Object o : states)
-				baseModels[i++] = new ModelResourceLocation(loc, "base" + o);
-		}
+		HashMap<IBlockState, ResourceLocation> map = new HashMap<>();
+		if (prop == null) {
+			ModelResourceLocation mloc = new ModelResourceLocation(loc, "base");
+			for (IBlockState state : block.getBlockState().getValidStates())
+				map.put(state, mloc);
+		} else for (IBlockState state : block.getBlockState().getValidStates())
+			map.put(state, new ModelResourceLocation(loc, "base" + state.getValue(prop)));
+		return map;
+	}
+
+	public MultipartModel(Block block, Map<IBlockState, ? extends ResourceLocation> baseMap, boolean multiLayer, IModelProvider... providers) {
+		this.block = block;
+		this.baseMap = baseMap;
+		this.multiLayer = multiLayer;
 		this.modelProvider = providers;
 	}
 
@@ -97,13 +100,13 @@ public class MultipartModel implements IModel, IHardCodedModel {
 
 	@Override
 	public Collection<ResourceLocation> getDependencies() {
-		ArrayList<ResourceLocation> list = new ArrayList<ResourceLocation>();
-		for (ResourceLocation res : baseModels) list.add(res);
+		HashSet<ResourceLocation> set = new HashSet<>();
+		set.addAll(baseMap.values());
 		for (IModelProvider provider : modelProvider) {
 			Collection<ResourceLocation> c = provider.getDependencies();
-			if (c != null) list.addAll(c);
+			if (c != null) set.addAll(c);
 		}
-		return list;
+		return set;
 	}
 
 	@Override
@@ -115,17 +118,10 @@ public class MultipartModel implements IModel, IHardCodedModel {
 	public IBakedModel bake(IModelState state, VertexFormat format, Function<ResourceLocation, TextureAtlasSprite> textureGetter) {
 		for (IModelProvider provider : modelProvider)
 			provider.bake(format, textureGetter);
-		Map<Object, IBakedModel> baked;
-		if (baseProp == null) {
-			IModel model = ModelLoaderRegistry.getModelOrLogError(baseModels[0], "missing");
-			baked = Collections.singletonMap(null, model.bake(model.getDefaultState(), format, textureGetter));
-		} else {
-			baked = new HashMap<>();
-			int i = 0;
-			for (Object val : baseProp.getAllowedValues()) {
-				IModel model = ModelLoaderRegistry.getModelOrLogError(baseModels[i++], "missing");
-				baked.put(val, model.bake(model.getDefaultState(), format, textureGetter));
-			}
+		Map<IBlockState, IBakedModel> baked = new HashMap<>();
+		for (Entry<IBlockState, ? extends ResourceLocation> e : baseMap.entrySet()) {
+			IModel model = ModelLoaderRegistry.getModelOrLogError(e.getValue(), "missing");
+			baked.put(e.getKey(), model.bake(model.getDefaultState(), format, textureGetter));
 		}
 		return new BakedMultipart(baked);
 	}
@@ -140,30 +136,33 @@ public class MultipartModel implements IModel, IHardCodedModel {
 
 	public class BakedMultipart implements IBakedModel {
 
-		public final Map<Object, IBakedModel> base;
+		public final Map<IBlockState, IBakedModel> base;
 		public final IBakedModel main;
 
-		private BakedMultipart(Map<Object, IBakedModel> base) {
+		private BakedMultipart(Map<IBlockState, IBakedModel> base) {
 			this.base = base;
-			this.main = base.get(baseProp == null ? null : ((Block)block).getDefaultState().getValue(baseProp));
+			this.main = base.get(((Block)block).getDefaultState());
 		}
 
 		@Override
 		public List<BakedQuad> getQuads(IBlockState state, EnumFacing side, long rand) {
 			ArrayList<BakedQuad> list = new ArrayList<BakedQuad>();
-			BlockRenderLayer layer = multiLayer ? MinecraftForgeClient.getRenderLayer() : null;
-			boolean render = true;
-			if (state instanceof IExtendedBlockState) {
-				IExtendedBlockState exState = (IExtendedBlockState) state;
-				IModularTile tile = exState.getValue(MultipartBlock.moduleRef);
-				if (render = tile != null && !(side == null && tile.isOpaque()))
+			render: {
+				BlockRenderLayer layer = multiLayer ? MinecraftForgeClient.getRenderLayer() : null;
+				if (state instanceof IExtendedBlockState) {
+					IModularTile tile = ((IExtendedBlockState)state).getValue(MultipartBlock.moduleRef);
+					if (tile == null || side == null && tile.isOpaque())
+						break render;
 					for (int i = 0; i < modelProvider.length; i++)
-						modelProvider[i].getQuads(list, tile.getModuleState(i), layer, exState, side, rand);
-			}
-			if (render && (layer == null || layer == BlockRenderLayer.CUTOUT)) {
-				IBakedModel model = baseProp == null ? main : base.get(state.getValue(baseProp));
-				if (model != null)
-					list.addAll(model.getQuads(state, side, rand));
+						modelProvider[i].getQuads(list, tile.getModuleState(i), layer, state, side, rand);
+					state = ((IExtendedBlockState)state).getClean();
+				}
+				if (layer != null && layer != BlockRenderLayer.CUTOUT)
+					break render;
+				IBakedModel model = base.get(state);
+				if (model == null)
+					break render;
+				list.addAll(model.getQuads(state, side, rand));
 			}
 			return list;
 		}
