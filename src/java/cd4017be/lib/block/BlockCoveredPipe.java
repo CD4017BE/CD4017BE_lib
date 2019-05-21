@@ -101,6 +101,7 @@ public abstract class BlockCoveredPipe extends BlockPipe {
 	}
 
 	protected IBlockState getCover(IBlockAccess world, BlockPos pos) {
+		if (world.getBlockState(pos).getBlock() != this) return null;
 		TileEntity te = world.getTileEntity(pos);
 		if (te instanceof IModularTile) return ((IModularTile)te).getModuleState(6);
 		else return null;
