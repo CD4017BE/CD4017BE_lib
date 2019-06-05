@@ -113,6 +113,13 @@ public class GuiCompGroup extends IndexedSet<IGuiComp> implements IGuiComp {
 	}
 
 	@Override
+	public boolean add(IGuiComp e) {
+		if (!super.add(e)) return false;
+		if (x != 0 || y != 0) e.move(x, y);
+		return true;
+	}
+
+	@Override
 	public boolean isInside(int mx, int my) {
 		return mx >= x && mx < x + w && my >= y && my < y + h;
 	}

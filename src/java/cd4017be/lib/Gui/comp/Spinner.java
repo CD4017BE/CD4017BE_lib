@@ -31,6 +31,7 @@ public class Spinner extends GuiCompGroup {
 	 */
 	public Spinner(GuiCompGroup parent, int w, int h, int x, int y, boolean hor, String format, DoubleSupplier get, DoubleConsumer set, double min, double max, double... steps) {
 		super(parent, w, h, 2 * steps.length + 2);
+		move(x, y);
 		this.get = get;
 		this.set = set;
 		this.min = min;
@@ -51,8 +52,6 @@ public class Spinner extends GuiCompGroup {
 			}
 			new FormatText(this, w, h - 10, 0, 5, format, this::formatInfo);
 		}
-		position(x, y);
-		parent.add(this);
 	}
 
 	/**
@@ -61,7 +60,7 @@ public class Spinner extends GuiCompGroup {
 	 * @return this
 	 */
 	public Spinner tooltip(String tooltip) {
-		new Tooltip(this, w, h, x, y, tooltip, this::formatInfo);
+		new Tooltip(this, w, h, 0, 0, tooltip, this::formatInfo);
 		return this;
 	}
 

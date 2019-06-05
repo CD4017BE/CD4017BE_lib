@@ -71,18 +71,14 @@ public class GuiFrame extends GuiCompGroup {
 
 	@Override
 	public void drawBackground(int mx, int my, float t) {
-		if (parent != null) {
-			parent.drawNow();
-			parent.bound = false;
-		}
+		if (parent != null) parent.drawNow();
 		if (bgTexture != null) {
+			bound = false;
 			bindTexture(bgTexture);
 			GuiUtils.drawTexturedModalRect(x, y, bgX, bgY, w, h, zLevel);
 		}
-		if (title != null) {
-			bound = false;
+		if (title != null)
 			fontRenderer.drawString(title, x + (int)(titleX * (float)(w - fontRenderer.getStringWidth(title))), y + titleY, 0x404040);
-		}
 		super.drawBackground(mx, my, t);
 	}
 
