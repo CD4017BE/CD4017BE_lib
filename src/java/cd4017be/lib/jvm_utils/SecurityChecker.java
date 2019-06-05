@@ -77,8 +77,8 @@ public class SecurityChecker {
 				switch(tag) {
 				case 7:
 					if (i+1 == tc) continue; //access to own class is always allowed
-					s = utf8s[e - 1];
-					if (!whitelist.containsKey(s))
+					s = elementType(utf8s[e - 1]);
+					if (s != null && !whitelist.containsKey(s))
 						violations.add(s);
 					break;
 				case 9:
@@ -86,7 +86,7 @@ public class SecurityChecker {
 				case 11:
 					int e1 = e >>> 16;
 					if (e1 == tc) continue; //access to own class is always allowed
-					s = utf8s[ref[e1 - 1] - 1];
+					s = elementType(utf8s[ref[e1 - 1] - 1]);
 					Set<String> set = whitelist.get(s);
 					if (set != null && set != ANY) {
 						e = ref[(e & 0xffff) - 1];
@@ -107,6 +107,17 @@ public class SecurityChecker {
 			sb.delete(sb.length() - 2, sb.length());
 			throw new SecurityException(sb.toString());
 		}
+	}
+
+	private String elementType(String s) {
+		char c = s.charAt(0);
+		if (c != '[') return s;
+		do {
+			s = s.substring(1);
+			c = s.charAt(0);
+		} while(c == '[');
+		if (c == 'L') return s.substring(1, s.length() - 1);
+		return null; //all primitive array types allowed
 	}
 
 	private int getLength(byte tag) {
