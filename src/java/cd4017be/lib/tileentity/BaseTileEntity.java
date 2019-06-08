@@ -91,6 +91,8 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 	public static final int SYNC = 2;
 	/**{@link #SYNC} with a hint for the client to re-render the block */
 	public static final int REDRAW = 3;
+	/**itemstack data: contains the break/place persistent state of the TileEntity */
+	public static final int ITEM = 4;
 
 	/**
 	 * marks that the state of this TileEntity changed
@@ -112,7 +114,7 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 	/**
 	 * make this TileEntity save it's state to given data.
 	 * @param nbt serialized nbt data
-	 * @param mode the type of data to store: {@link #SAVE} => {@link #CLIENT} => {@link #SYNC}
+	 * @param mode the type of data to store: {@link #ITEM} <= {@link #SAVE} => {@link #CLIENT} => {@link #SYNC}
 	 */
 	protected void storeState(NBTTagCompound nbt, int mode) {
 	}
@@ -120,7 +122,7 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 	/**
 	 * make this TileEntity load it's state from given data.
 	 * @param nbt serialized nbt data
-	 * @param mode the type of data to load: {@link #SAVE} => {@link #CLIENT} => {@link #SYNC}
+	 * @param mode the type of data to load: {@link #ITEM} <= {@link #SAVE} => {@link #CLIENT} => {@link #SYNC}
 	 */
 	protected void loadState(NBTTagCompound nbt, int mode) {
 	}
@@ -228,6 +230,12 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 	@SideOnly(Side.CLIENT)
 	public AxisAlignedBB getRenderBoundingBox() {
 		return new AxisAlignedBB(pos.getX(), pos.getY(), pos.getZ(), pos.getX() + 1, pos.getY() + 1, pos.getZ() + 1);
+	}
+
+	protected List<ItemStack> makeDefaultDrops() {
+		NBTTagCompound nbt = new NBTTagCompound();
+		storeState(nbt, ITEM);
+		return makeDefaultDrops(nbt);
 	}
 
 	protected List<ItemStack> makeDefaultDrops(NBTTagCompound tag) {
