@@ -2,6 +2,7 @@ package cd4017be.lib.render;
 
 import java.io.IOException;
 
+import cd4017be.lib.event.ModTextureStitchEvent;
 import net.minecraft.client.renderer.texture.PngSizeInfo;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraftforge.client.event.TextureStitchEvent;
@@ -24,6 +25,14 @@ public class RectangularSprite extends TextureAtlasSprite {
 		}
 		@SubscribeEvent
 		void postStitch(TextureStitchEvent.Post event) {
+			STITCHING = false;
+		}
+		@SubscribeEvent
+		void preStitch(ModTextureStitchEvent.Pre event) {
+			STITCHING = true;
+		}
+		@SubscribeEvent
+		void postStitch(ModTextureStitchEvent.Post event) {
 			STITCHING = false;
 		}
 	}
