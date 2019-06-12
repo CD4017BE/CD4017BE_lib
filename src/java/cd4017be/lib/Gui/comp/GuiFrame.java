@@ -19,6 +19,7 @@ public class GuiFrame extends GuiCompGroup {
 	public int bgX, bgY, titleY = 4;
 	public float titleX = 0.5F;
 	public String title = null;
+	protected GuiCompGroup extension;
 
 	/**
 	 * @param parent parent container to register with
@@ -67,6 +68,17 @@ public class GuiFrame extends GuiCompGroup {
 		this.bgY = ty;
 		texture(tex, 256, 256);
 		return this;
+	}
+
+	public void extendBy(GuiCompGroup comp) {
+		this.extension = comp;
+		if (comp.parent == this)
+			comp.inheritRender();
+	}
+
+	@Override
+	public boolean isInside(int mx, int my) {
+		return super.isInside(mx, my) || extension != null && extension.isInside(mx, my);
 	}
 
 	@Override

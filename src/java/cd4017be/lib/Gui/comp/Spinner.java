@@ -31,6 +31,7 @@ public class Spinner extends GuiCompGroup {
 	 */
 	public Spinner(GuiCompGroup parent, int w, int h, int x, int y, boolean hor, String format, DoubleSupplier get, DoubleConsumer set, double min, double max, double... steps) {
 		super(parent, w, h, 2 * steps.length + 2);
+		inheritRender();
 		move(x, y);
 		this.get = get;
 		this.set = set;

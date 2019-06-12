@@ -60,7 +60,7 @@ public class FormatText extends GuiCompBase<GuiCompGroup> {
 	public void drawBackground(int mx, int my, float t) {
 		Object[] obj = params == null ? new Object[0] : params.get();
 		String lines = TooltipUtil.format(text, obj);
-		parent.bound = false;
+		parent.bindTexture(null);
 		FontRenderer fr = parent.fontRenderer;
 		int y = this.y;
 		for (String s : lines.split("\n")) {

@@ -26,7 +26,7 @@ public class GuiCompGroup extends IndexedSet<IGuiComp> implements IGuiComp {
 	public final GuiCompGroup parent;
 	public final int w, h;
 	protected int x = 0, y = 0, focus = -1;
-	protected boolean enabled = true;
+	protected boolean enabled = true, inheritRender = false;
 	private int idx = -1;
 	
 	public int screenWidth, screenHeight, texW, texH;
@@ -48,6 +48,16 @@ public class GuiCompGroup extends IndexedSet<IGuiComp> implements IGuiComp {
 		this.w = w;
 		this.h = h;
 		if (parent != null) parent.add(this);
+	}
+
+	/**
+	 * specifies that this component group should use the same texture and tessellator as it's parent group.
+	 * @return this
+	 */
+	public GuiCompGroup inheritRender() {
+		this.inheritRender = true;
+		this.texture(parent.mainTex, parent.texW, parent.texH);
+		return this;
 	}
 
 	/**
@@ -134,8 +144,10 @@ public class GuiCompGroup extends IndexedSet<IGuiComp> implements IGuiComp {
 
 	@Override
 	public void drawBackground(int mx, int my, float t) {
-		if (parent != null) parent.bound = false;
-		bound = false;
+		if (!inheritRender) {
+			if (parent != null) parent.bound = false;
+			bound = false;
+		}
 		IGuiComp c;
 		for(int i = 0; i < count; i++)
 			if ((c = array[i]).enabled())
@@ -219,6 +231,7 @@ public class GuiCompGroup extends IndexedSet<IGuiComp> implements IGuiComp {
 	 * @param tex texture to bind
 	 */
 	public void bindTexture(ResourceLocation tex) {
+		if (inheritRender) parent.bindTexture(tex);
 		if (tex != mainTex) bound = false;
 		else if (bound) return;
 		else bound = true;
@@ -229,6 +242,11 @@ public class GuiCompGroup extends IndexedSet<IGuiComp> implements IGuiComp {
 	 * @return a local render buffer instance for drawing rectangular shapes with this component group's default texture image (at the end of current background draw)
 	 */
 	public BufferBuilder getDraw() {
+		if (inheritRender) {
+			BufferBuilder b = parent.getDraw();
+			tessellator = parent.tessellator;
+			return b;
+		}
 		if (tessellator == null) tessellator = new Tessellator(256 * 5);
 		BufferBuilder b = tessellator.getBuffer();
 		if (!drawing) {
@@ -242,7 +260,8 @@ public class GuiCompGroup extends IndexedSet<IGuiComp> implements IGuiComp {
 	 * draws queued vertices immediately instead of waiting till the end of current background draw cycle.
 	 */
 	public void drawNow() {
-		if (drawing) {
+		if (inheritRender) parent.drawNow();
+		else if (drawing) {
 			GlStateManager.color(1F, 1F, 1F, 1F);
 			bindTexture(mainTex);
 			tessellator.draw();
