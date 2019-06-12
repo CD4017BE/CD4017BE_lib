@@ -9,13 +9,24 @@ import javax.annotation.Nullable;
 
 import cd4017be.api.circuits.IQuickRedstoneHandler;
 import cd4017be.lib.block.AdvancedBlock.IRedstoneTile;
+import io.netty.buffer.ByteBuf;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTBase;
+import net.minecraft.nbt.NBTTagByte;
+import net.minecraft.nbt.NBTTagByteArray;
+import net.minecraft.nbt.NBTTagDouble;
+import net.minecraft.nbt.NBTTagFloat;
+import net.minecraft.nbt.NBTTagInt;
+import net.minecraft.nbt.NBTTagIntArray;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.nbt.NBTTagLong;
+import net.minecraft.nbt.NBTTagLongArray;
+import net.minecraft.nbt.NBTTagShort;
 import net.minecraft.nbt.NBTTagString;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
@@ -26,6 +37,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
+import net.minecraftforge.common.util.Constants.NBT;
 import net.minecraftforge.fluids.FluidRegistry;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.IFluidBlock;
@@ -434,6 +446,99 @@ public class Utils {
 		for (int i = 0; i < l; i++)
 			arr[i] = list.getStringTagAt(i);
 		return arr;
+	}
+
+	public static NBTBase readTag(ByteBuf data, byte tagId) {
+		switch(tagId) {
+		case NBT.TAG_BYTE: return new NBTTagByte(data.readByte());
+		case NBT.TAG_SHORT: return new NBTTagShort(data.readShort());
+		case NBT.TAG_INT: return new NBTTagInt(data.readInt());
+		case NBT.TAG_LONG: return new NBTTagLong(data.readLong());
+		case NBT.TAG_FLOAT: return new NBTTagFloat(data.readFloat());
+		case NBT.TAG_DOUBLE: return new NBTTagDouble(data.readDouble());
+		case NBT.TAG_BYTE_ARRAY: {
+			int l = data.readInt();
+			if (l > data.readableBytes())
+				throw new IndexOutOfBoundsException(l + " > " + data.readableBytes());
+			byte[] arr = new byte[l];
+			data.readBytes(arr);
+			return new NBTTagByteArray(arr);
+		}
+		case NBT.TAG_INT_ARRAY: {
+			int l = data.readInt();
+			if (l * 4 > data.readableBytes())
+				throw new IndexOutOfBoundsException((l*4) + " > " + data.readableBytes());
+			int[] arr = new int[l];
+			for (int i = 0; i < l; i++)
+				arr[i] = data.readInt();
+			return new NBTTagIntArray(arr);
+		}
+		case NBT.TAG_LONG_ARRAY: {
+			int l = data.readInt();
+			if (l * 8 > data.readableBytes())
+				throw new IndexOutOfBoundsException((l*8) + " > " + data.readableBytes());
+			long[] arr = new long[l];
+			for (int i = 0; i < l; i++)
+				arr[i] = data.readLong();
+			return new NBTTagLongArray(arr);
+		}
+		case NBT.TAG_STRING: {
+			int l = data.readUnsignedShort();
+			if (l * 2 > data.readableBytes())
+				throw new IndexOutOfBoundsException((l*2) + " > " + data.readableBytes());
+			byte[] arr = new byte[l];
+			data.readBytes(arr);
+			return new NBTTagString(new String(arr, UTF8));
+		}
+		case NBT.TAG_LIST: {
+			NBTTagList list = new NBTTagList();
+			tagId = data.readByte();
+			for (int l = data.readInt(); l > 0; l--)
+				list.appendTag(readTag(data, tagId));
+			return list;
+		}
+		default: return null;
+		}
+	}
+
+	public static void writeTag(ByteBuf data, NBTBase tag) {
+		switch(tag.getId()) {
+		case NBT.TAG_BYTE: data.writeByte(((NBTTagByte)tag).getByte()); return;
+		case NBT.TAG_SHORT: data.writeShort(((NBTTagShort)tag).getShort()); return;
+		case NBT.TAG_INT: data.writeInt(((NBTTagInt)tag).getInt()); return;
+		case NBT.TAG_LONG: data.writeLong(((NBTTagLong)tag).getLong()); return;
+		case NBT.TAG_FLOAT: data.writeFloat(((NBTTagFloat)tag).getFloat()); return;
+		case NBT.TAG_DOUBLE: data.writeDouble(((NBTTagDouble)tag).getDouble()); return;
+		case NBT.TAG_BYTE_ARRAY: {
+			byte[] arr = ((NBTTagByteArray)tag).getByteArray();
+			data.writeInt(arr.length);
+			data.writeBytes(arr);
+		}	return;
+		case NBT.TAG_INT_ARRAY: {
+			int[] arr = ((NBTTagIntArray)tag).getIntArray();
+			data.writeInt(arr.length);
+			for (int v : arr)
+				data.writeInt(v);
+		}	return;
+		/*case NBT.TAG_LONG_ARRAY: {
+			long[] arr = ((NBTTagLongArray)tag).getLongArray();
+			data.writeInt(arr.length);
+			for (long v : arr)
+				data.writeLong(v);
+		}	return;*/
+		case NBT.TAG_STRING: {
+			byte[] arr = ((NBTTagString)tag).getString().getBytes(UTF8);
+			data.writeShort(arr.length);
+			data.writeBytes(arr);
+		}	return;
+		case NBT.TAG_LIST: {
+			NBTTagList list = (NBTTagList)tag;
+			data.writeByte(list.getTagType());
+			data.writeInt(list.tagCount());
+			for (NBTBase stag : list)
+				writeTag(data, stag);
+		}	return;
+		}
 	}
 
 }
