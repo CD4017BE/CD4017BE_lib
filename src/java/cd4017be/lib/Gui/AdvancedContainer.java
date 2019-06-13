@@ -64,7 +64,7 @@ public class AdvancedContainer extends Container implements IServerPacketReceive
 		writeItems(sss);
 		PacketBuffer pkt = sss.encodePacket();
 		if (pkt != null)
-			GuiNetworkHandler.instance.sendToPlayer(pkt, (EntityPlayerMP)player);
+			GuiNetworkHandler.GNH_INSTANCE.sendToPlayer(pkt, (EntityPlayerMP)player);
 	}
 
 	private void writeItems(StateSyncServer sss) {
@@ -116,15 +116,15 @@ public class AdvancedContainer extends Container implements IServerPacketReceive
 		InventoryPlayer inv = player.inventory;
 		for (int i = 0; i < 3; i++) 
 			for (int j = 0; j < 9; j++)
-				this.addSlotToContainer(new Slot(inv, i * 9 + j + 9, x + j * 18, y + i * 18));
+				this.addSlotToContainer(new HidableSlot(inv, i * 9 + j + 9, x + j * 18, y + i * 18));
 		for (int i = 0; i < 9; i++)
 			if (lockSel && i == inv.currentItem)
 				this.addSlotToContainer(new LockedSlot(inv, i, x + i * 18, y + 58));
-			else this.addSlotToContainer(new Slot(inv, i, x + i * 18, y + 58));
+			else this.addSlotToContainer(new HidableSlot(inv, i, x + i * 18, y + 58));
 		if (armor) {
-			this.addSlotToContainer(new Slot(inv, 40, x - 18, y + 58));
+			this.addSlotToContainer(new HidableSlot(inv, 40, x - 18, y + 58));
 			for (int i = 0; i < 4; i++)
-				this.addSlotToContainer(new Slot(inv, i + 36, x - 18, y - i * 18 + 36));
+				this.addSlotToContainer(new HidableSlot(inv, i + 36, x - 18, y - i * 18 + 36));
 		}
 	}
 

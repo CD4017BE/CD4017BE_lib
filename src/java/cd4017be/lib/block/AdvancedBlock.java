@@ -71,7 +71,7 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 			if (ITilePlaceHarvest.class.isAssignableFrom(tile)) this.flags |= 8;
 			if (IRedstoneTile.class.isAssignableFrom(tile)) this.flags |= 16;
 			if (ITileCollision.class.isAssignableFrom(tile)) this.flags |= 32;
-			if ((flags & 4) == 0 && IGuiData.class.isAssignableFrom(tile)) this.flags |= 64;
+			if ((flags & 4) == 0 && (IGuiData.class.isAssignableFrom(tile) || IGuiHandlerTile.class.isAssignableFrom(tile))) this.flags |= 64;
 			if (IComparatorSource.class.isAssignableFrom(tile)) this.flags |= 128;
 			GameRegistry.registerTileEntity(tileEntity, getRegistryName().toString());
 		}

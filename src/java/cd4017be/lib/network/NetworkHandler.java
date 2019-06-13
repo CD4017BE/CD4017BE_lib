@@ -7,6 +7,7 @@ import org.apache.logging.log4j.MarkerManager;
 
 import cd4017be.lib.Lib;
 import cd4017be.lib.util.DimPos;
+import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.NetHandlerPlayServer;
 import net.minecraft.network.PacketBuffer;
@@ -59,9 +60,10 @@ public abstract class NetworkHandler implements IServerPacketReceiver, IPlayerPa
 	@SubscribeEvent
 	public void onPacketFromClient(ServerCustomPacketEvent event) {
 		FMLProxyPacket packet = event.getPacket();
-		if (!packet.channel().equals(channel) || !NetHandlerPlayServer.class.isAssignableFrom(event.getType())) return;
+		if (!packet.channel().equals(channel) || !(event.getHandler() instanceof NetHandlerPlayServer)) return;
 		EntityPlayerMP player = ((NetHandlerPlayServer)event.getHandler()).player;
-		PacketBuffer buf = new PacketBuffer(packet.payload());
+		ByteBuf b = packet.payload();
+		PacketBuffer buf = b instanceof PacketBuffer ? (PacketBuffer)b : new PacketBuffer(b);
 		try {
 			handlePlayerPacket(buf, player);
 		} catch (Exception e) {
@@ -69,7 +71,7 @@ public abstract class NetworkHandler implements IServerPacketReceiver, IPlayerPa
 		}
 	}
 
-	private void logError(PacketBuffer buf, String source, Exception e) {
+	protected void logError(PacketBuffer buf, String source, Exception e) {
 		long t = System.currentTimeMillis();
 		if (t - lastErr < LOG_INTERVAL) errCount++;
 		else {

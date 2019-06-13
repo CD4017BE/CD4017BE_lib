@@ -266,7 +266,7 @@ public class ModularGui extends GuiContainer {
 	public void sendCommand(int c) {
 		PacketBuffer buff = GuiNetworkHandler.preparePacket(container);
 		buff.writeByte(c);
-		GuiNetworkHandler.instance.sendToServer(buff);
+		GuiNetworkHandler.GNH_INSTANCE.sendToServer(buff);
 	}
 
 	/**
@@ -286,7 +286,7 @@ public class ModularGui extends GuiContainer {
 			else if (arg instanceof String) buff.writeString((String)arg);
 			else throw new IllegalArgumentException();
 		}
-		GuiNetworkHandler.instance.sendToServer(buff);
+		GuiNetworkHandler.GNH_INSTANCE.sendToServer(buff);
 	}
 
 }
