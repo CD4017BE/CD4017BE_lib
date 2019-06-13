@@ -3,6 +3,7 @@ package cd4017be.lib.Gui.comp;
 import javax.annotation.Nonnull;
 import cd4017be.lib.Gui.ModularGui;
 import cd4017be.lib.util.TooltipUtil;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.client.config.GuiUtils;
 
@@ -87,6 +88,7 @@ public class GuiFrame extends GuiCompGroup {
 		if (bgTexture != null) {
 			bound = false;
 			bindTexture(bgTexture);
+			GlStateManager.color(1F, 1F, 1F, 1F);
 			GuiUtils.drawTexturedModalRect(x, y, bgX, bgY, w, h, zLevel);
 		}
 		if (title != null)

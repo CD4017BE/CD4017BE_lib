@@ -137,9 +137,11 @@ public class GuiCompGroup extends IndexedSet<IGuiComp> implements IGuiComp {
 	@Override
 	public void drawOverlay(int mx, int my) {
 		IGuiComp c;
-		for(int i = 0; i < count; i++)
-			if ((c = array[i]).enabled() && c.isInside(mx, my))
+		for(int i = count - 1; i >= 0; i--)
+			if ((c = array[i]).enabled() && c.isInside(mx, my)) {
 				c.drawOverlay(mx, my);
+				if (c instanceof GuiCompGroup) return;
+			}
 	}
 
 	@Override
