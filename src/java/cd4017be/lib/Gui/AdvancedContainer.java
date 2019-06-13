@@ -60,7 +60,7 @@ public class AdvancedContainer extends Container implements IServerPacketReceive
 		StateSyncServer sss = (StateSyncServer)sync;
 		sss.buffer.clear().writeInt(windowId);
 		sss.setHeader();
-		handler.writeState(sss);
+		handler.writeState(sss.begin(), this);
 		writeItems(sss);
 		PacketBuffer pkt = sss.encodePacket();
 		if (pkt != null)
@@ -150,14 +150,14 @@ public class AdvancedContainer extends Container implements IServerPacketReceive
 
 	@Override
 	public void handlePlayerPacket(PacketBuffer pkt, EntityPlayerMP sender) throws Exception {
-		handler.handleAction(pkt.readByte(), pkt, sender);
+		handler.handleAction(pkt, sender);
 	}
 
 	@Override
 	@SideOnly(Side.CLIENT)
 	public void handleServerPacket(PacketBuffer pkt) throws Exception {
 		StateSyncClient ssc = ((StateSyncClient)sync).decodePacket(pkt);
-		handler.readState(ssc);
+		handler.readState(ssc, this);
 		for (int i : slotsToSync) {
 			Slot slot = inventorySlots.get(i);
 			ItemStack stack0, stack = ssc.get(stack0 = slot.getStack());
@@ -288,23 +288,24 @@ public class AdvancedContainer extends Container implements IServerPacketReceive
 		/**
 		 * write current state to synchronizer
 		 * @param state synchronizer
+		 * @param cont the open container
 		 */
-		default void writeState(StateSyncServer state) {}
+		void writeState(StateSyncServer state, AdvancedContainer cont);
 
 		/**
 		 * update state from synchronizer
 		 * @param state synchronizer
+		 * @param cont the open container
 		 */
-		void readState(StateSyncClient state);
+		void readState(StateSyncClient state, AdvancedContainer cont);
 
 		/**
 		 * when a GUI action packet is received at server side
-		 * @param cmd action id (first payload byte)
 		 * @param pkt packet data
 		 * @param sender the player performing the action
 		 * @throws Exception potential decoding error
 		 */
-		default void handleAction(byte cmd, PacketBuffer pkt, EntityPlayerMP sender) throws Exception {}
+		default void handleAction(PacketBuffer pkt, EntityPlayerMP sender) throws Exception {}
 
 		/**
 		 * @param player

@@ -14,7 +14,14 @@ import net.minecraftforge.fluids.FluidRegistry;
 import net.minecraftforge.fluids.FluidStack;
 
 /**
- * Utility class for encoding multi-element synchronization packets.
+ * Utility class for encoding multi-element synchronization packets.<dl>
+ * <b>Usage:</b><br>
+ * To change the custom packet header, write its contents to {@link #buffer} and call {@link #setHeader()}.<br>
+ * To encode a packet, first write all fixed sized objects to {@link #buffer} in proper order and call {@link #endFixed()} afterwards.
+ * Then write the variable sized objects either to {@link #buffer} one by one in proper order calling {@link #put()} after each object or use the {@link #putAll(Object...)} method to automatically encode certain types of objects.
+ * Finally call {@link #encodePacket()} to get the packet.<br>
+ * An alternative approach is to encode only some objects through the various {@code set(...)} methods by their index which can be in any order then. Again create the packet with {@link #encodePacket()} afterwards.
+ * 
  * @author CD4017BE
  */
 public class StateSyncServer extends StateSynchronizer {
@@ -56,6 +63,15 @@ public class StateSyncServer extends StateSynchronizer {
 		if (header == null || header.length != l)
 			header = new byte[l];
 		buffer.readBytes(header);
+	}
+
+	/**
+	 * start writing objects to synchronize
+	 * @return this
+	 */
+	public StateSyncServer begin() {
+		buffer.clear();
+		return this;
 	}
 
 	/**
@@ -102,7 +118,7 @@ public class StateSyncServer extends StateSynchronizer {
 		if (cc == 0) return null;
 		PacketBuffer buf = buffer;
 		buf.clear();
-		if (header != null) buf.writeByteArray(header);
+		if (header != null) buf.writeBytes(header);
 		boolean all = sendAll || cc >= count;
 		if (cc > maxIdxCount) {
 			int p = buf.writerIndex() + modSetBytes;
@@ -113,7 +129,7 @@ public class StateSyncServer extends StateSynchronizer {
 			int j = 1 + idxCountBits;
 			int v = 1 | cc << 1;
 			for (int i = chng.nextSetBit(1); i >= 0; i = chng.nextSetBit(i + 1)) {
-				v |= i << j;
+				v |= (i - 1) << j;
 				if ((j += b) >= 16) {
 					buf.writeShortLE(v);
 					v >>>= 16; j -= 16;
@@ -128,18 +144,18 @@ public class StateSyncServer extends StateSynchronizer {
 				buf.writeBytes(arr);
 		} else {
 			int[] sizes = this.sizes;
-			for (int i = 0, j = 0, l = varCount; i < l; i++) {
+			for (int i = 0, j = 0; i < fixCount;) {
 				int n = sizes[i];
-				if (chng.get(i))
-					buf.writeBytes(lastFix, j, j + n);
+				if (chng.get(++i))
+					buf.writeBytes(lastFix, j, n);
 				j += n;
 			}
-			for (int p = chng.nextSetBit(sizes.length + 1); p >= 0; p = chng.nextSetBit(p + 1))
-				buf.writeByteArray(lastVar[p]);
+			for (int p = chng.nextSetBit(fixCount + 1); p >= 0; p = chng.nextSetBit(p + 1))
+				buf.writeBytes(lastVar[p - fixCount - 1]);
 		}
 		elIdx = -1;
 		sendAll = false;
-		return buf;
+		return new PacketBuffer(buf.copy());
 	}
 
 	/**
@@ -160,6 +176,7 @@ public class StateSyncServer extends StateSynchronizer {
 
 	/**
 	 * update variable i with the data that was just written to {@link #buffer}.
+	 * @param i variable index
 	 * @return this
 	 */
 	public void set(int i) {
@@ -219,7 +236,7 @@ public class StateSyncServer extends StateSynchronizer {
 	}
 
 	private int curSize() {
-		int i = Arrays.binarySearch(indices, buffer.readableBytes());
+		int i = Arrays.binarySearch(indices, buffer.writerIndex());
 		return i >= 0 ? sizes[i] : 0;
 	}
 
@@ -230,7 +247,7 @@ public class StateSyncServer extends StateSynchronizer {
 	}
 
 	/**
-	 * write an int value to buffer with bit resolution according to element size
+	 * write an int value to {@link #buffer} with bit resolution according to its registered fixed element size
 	 * @param v value
 	 * @return this
 	 */
@@ -245,6 +262,14 @@ public class StateSyncServer extends StateSynchronizer {
 		return this;
 	}
 
+	/**
+	 * update variable i with the given value
+	 * @param i variable index
+	 * @param v value<br>
+	 * Supported fixed sized types are: byte, short, int, long, float, double, byte[], int[], BlockPos, UUID, any Enum (+null)<br>
+	 * Supported variable sized types are: byte[], int[], String (+null), NBTTagCompound, ItemStack, FluidStack
+	 * @return this
+	 */
 	public StateSyncServer set(int i, Object v) {
 		if (v instanceof Number) {
 			Number n = (Number)v;
@@ -299,8 +324,10 @@ public class StateSyncServer extends StateSynchronizer {
 
 	/**
 	 * submit elements for synchronization
-	 * @param values the element values in proper order
+	 * @param values the element values in proper order<br>
+	 * Note: the given values must be either all fixed sized or all variable sized
 	 * @return this
+	 * @see #set(int, Object)
 	 */
 	public StateSyncServer putAll(Object... values) {
 		int i = elIdx;

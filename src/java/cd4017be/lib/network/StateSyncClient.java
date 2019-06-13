@@ -52,7 +52,7 @@ public class StateSyncClient extends StateSynchronizer {
 			chng.clear();
 			v >>= j; j = 16 - j & 7;
 			for (int i = 0; i < cc; i++) {
-				if (i < b)
+				if (j < b)
 					if(j < b - 8) {
 						v |= buf.readUnsignedShortLE() << j;
 						j += 16;
@@ -60,7 +60,7 @@ public class StateSyncClient extends StateSynchronizer {
 						v |= buf.readUnsignedByte() << j;
 						j += 8;
 					}
-				chng.set(v & mask);
+				chng.set((v & mask) + 1);
 				v >>= b;
 			}
 		}
@@ -74,7 +74,7 @@ public class StateSyncClient extends StateSynchronizer {
 	 * @return whether the next element has changed
 	 */
 	public boolean next() {
-		return changes.get(elIdx++);
+		return changes.get(++elIdx);
 	}
 
 	/**
@@ -83,9 +83,9 @@ public class StateSyncClient extends StateSynchronizer {
 	 * @return new value
 	 */
 	public int get(int old) {
-		int i = elIdx++;
+		int i = ++elIdx;
 		if (changes.get(i))
-			switch(sizes[i]) {
+			switch(sizes[i - 1]) {
 			case 4: return buffer.readInt();
 			case 3: return buffer.readMedium();
 			case 2: return buffer.readShort();
@@ -101,7 +101,7 @@ public class StateSyncClient extends StateSynchronizer {
 	 * @return new value
 	 */
 	public long get(long old) {
-		return changes.get(elIdx++) ? buffer.readLong() : old;
+		return changes.get(++elIdx) ? buffer.readLong() : old;
 	}
 
 	/**
@@ -110,7 +110,7 @@ public class StateSyncClient extends StateSynchronizer {
 	 * @return new value
 	 */
 	public float get(float old) {
-		return changes.get(elIdx++) ? buffer.readFloat() : old;
+		return changes.get(++elIdx) ? buffer.readFloat() : old;
 	}
 
 	/**
@@ -119,7 +119,7 @@ public class StateSyncClient extends StateSynchronizer {
 	 * @return new value
 	 */
 	public double get(double old) {
-		return changes.get(elIdx++) ? buffer.readDouble() : old;
+		return changes.get(++elIdx) ? buffer.readDouble() : old;
 	}
 
 	/**
@@ -135,15 +135,13 @@ public class StateSyncClient extends StateSynchronizer {
 			PacketBuffer buf = buffer;
 			for (int l = old.length, j = 0; j < l; i++) {
 				int n = sizes[i];
-				if (chng.get(i))
+				if (chng.get(i + 1))
 					buf.readBytes(old, j, n);
 				j += n;
 			}
 			elIdx = i;
-		} else {
-			elIdx = i + 1;
-			if (changes.get(i)) return buffer.readByteArray();
-		}
+		} else if (changes.get(elIdx = i + 1))
+			return buffer.readByteArray();
 		return old;
 	}
 
@@ -160,16 +158,15 @@ public class StateSyncClient extends StateSynchronizer {
 			PacketBuffer buf = buffer;
 			for (int l = old.length, j = 0; j < l; i++) {
 				int n = sizes[i];
-				if (chng.get(i)) {
-					for (; n > 0; n--, j++)
+				if ((n & 3) != 0) throw new IllegalStateException("int array element size is " + n + " but must be multiple of 4!");
+				if (chng.get(i + 1)) {
+					for (n >>= 2; n > 0; n--, j++)
 						old[j] = buf.readInt();
-				} else j += n;
+				} else j += n >> 2;
 			}
 			elIdx = i;
-		} else {
-			elIdx = i + 1;
-			if (changes.get(i)) return buffer.readVarIntArray();
-		}
+		} else if (changes.get(elIdx = i + 1))
+			return buffer.readVarIntArray();
 		return old;
 	}
 
@@ -179,7 +176,7 @@ public class StateSyncClient extends StateSynchronizer {
 	 * @return new value
 	 */
 	public String get(String old) {
-		return changes.get(elIdx++) ? buffer.readString(32767) : old;
+		return changes.get(++elIdx) ? buffer.readString(32767) : old;
 	}
 
 	/**
@@ -201,7 +198,7 @@ public class StateSyncClient extends StateSynchronizer {
 	 * @return new value
 	 */
 	public BlockPos get(BlockPos old) {
-		return changes.get(elIdx++) ? buffer.readBlockPos() : old;
+		return changes.get(++elIdx) ? buffer.readBlockPos() : old;
 	}
 
 	/**
@@ -210,7 +207,7 @@ public class StateSyncClient extends StateSynchronizer {
 	 * @return new value
 	 */
 	public UUID get(UUID old) {
-		return changes.get(elIdx++) ? buffer.readUniqueId() : old;
+		return changes.get(++elIdx) ? buffer.readUniqueId() : old;
 	}
 
 	/**
@@ -219,7 +216,7 @@ public class StateSyncClient extends StateSynchronizer {
 	 * @return new value
 	 */
 	public ItemStack get(ItemStack old) throws IOException {
-		if (changes.get(elIdx++)) {
+		if (changes.get(++elIdx)) {
 			PacketBuffer buf = buffer;
 			int id = buf.readShort();
 			if (id < 0) return ItemStack.EMPTY;
@@ -237,7 +234,7 @@ public class StateSyncClient extends StateSynchronizer {
 	 * @return new value
 	 */
 	public FluidStack get(FluidStack old) throws IOException {
-		if (changes.get(elIdx++)) {
+		if (changes.get(++elIdx)) {
 			PacketBuffer buf = buffer;
 			String s = buf.readString(32767);
 			if (s.isEmpty()) return null;
