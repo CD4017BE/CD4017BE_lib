@@ -8,6 +8,7 @@ import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.item.ItemStack;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
@@ -41,12 +42,23 @@ public interface IGuiItem extends IGuiHandlerItem {
 
 	@Override
 	default Container getContainer(ItemStack stack, EntityPlayer player, int slot, int x, int y, int z) {
-		return getContainer(stack, player, player.world, new BlockPos(x, y, z), slot);
+		Container c = getContainer(stack, player, player.world, new BlockPos(x, y, z), slot);
+		if (c instanceof DataContainer) ((DataContainer)c).data.initContainer((DataContainer)c);
+		return c;
 	}
 
 	@Override
 	default GuiScreen getGuiScreen(ItemStack stack, EntityPlayer player, int slot, int x, int y, int z) {
-		return getGui(stack, player, player.world, new BlockPos(x, y, z), slot);
+		GuiContainer g = getGui(stack, player, player.world, new BlockPos(x, y, z), slot);
+		if (g.inventorySlots instanceof DataContainer) {
+			DataContainer c = (DataContainer)g.inventorySlots;
+			c.data.initContainer(c);
+			c.refInts = c.data.getSyncVariables();
+			if(c.refInts != null && c.data instanceof TileEntity) 
+				for (int i = 0; i < c.refInts.length; i++)
+					c.data.setSyncVariable(i, 0);
+		}
+		return g;
 	}
 
 }

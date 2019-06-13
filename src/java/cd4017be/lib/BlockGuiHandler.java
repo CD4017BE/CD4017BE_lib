@@ -48,6 +48,8 @@ public class BlockGuiHandler {
 	public static BlockGuiHandler instance = new BlockGuiHandler();
 	public static FMLEventChannel eventChannel;
 
+	public static boolean OPEN_CLIENT;
+
 	static void register() {
 		eventChannel = NetworkRegistry.INSTANCE.newEventDrivenChannel(guiChannel);
 		eventChannel.register(instance);
@@ -89,8 +91,10 @@ public class BlockGuiHandler {
 	 */
 	@Deprecated
 	public static void openGui(EntityPlayer player, World world, BlockPos pos, int guiType) {
+		OPEN_CLIENT = true;
 		if (guiType < 0) GuiNetworkHandler.openBlockGui(player, pos, -guiType);
 		else GuiNetworkHandler.openItemGui(player, guiType, pos.getX(), pos.getY(), pos.getZ());
+		OPEN_CLIENT = false;
 	}
 
 	/**
@@ -101,7 +105,9 @@ public class BlockGuiHandler {
 	 */
 	@Deprecated
 	public static void openItemGui(EntityPlayer player, EnumHand hand) {
+		OPEN_CLIENT = true;
 		GuiNetworkHandler.openHeldItemGui(player, hand, 0, -1, 0);
+		OPEN_CLIENT = false;
 	}
 
 	/**
@@ -113,7 +119,9 @@ public class BlockGuiHandler {
 	 */
 	@Deprecated
 	public static void openBlockGui(EntityPlayer player, World world, BlockPos pos) {
+		OPEN_CLIENT = true;
 		GuiNetworkHandler.openBlockGui(player, pos, 0);
+		OPEN_CLIENT = false;
 	}
 
 	/**

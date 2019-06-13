@@ -5,6 +5,7 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
+import cd4017be.lib.BlockGuiHandler;
 import cd4017be.lib.Lib;
 import cd4017be.lib.Gui.DataContainer;
 import cd4017be.lib.Gui.DataContainer.IGuiData;
@@ -164,7 +165,9 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 			if (te instanceof IInteractiveTile && ((IInteractiveTile)te).onActivated(player, hand, player.getHeldItem(hand), s, X, Y, Z)) return true;
 		}
 		if ((flags & 64) != 0) {
+			BlockGuiHandler.OPEN_CLIENT = guiScreen != null;
 			GuiNetworkHandler.openBlockGui(player, pos, 0);
+			BlockGuiHandler.OPEN_CLIENT = false;
 			return true;
 		}
 		return false;

@@ -2,6 +2,7 @@ package cd4017be.lib.network;
 
 import java.util.ArrayDeque;
 
+import cd4017be.lib.BlockGuiHandler;
 import cd4017be.lib.Lib;
 import io.netty.buffer.Unpooled;
 import net.minecraft.block.Block;
@@ -33,6 +34,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
  * And for network communication let your Containers implement {@link IServerPacketReceiver} and {@link IPlayerPacketReceiver}.
  * @author CD4017BE
  */
+@SuppressWarnings("deprecation")
 public class GuiNetworkHandler extends NetworkHandler implements IGuiHandler {
 
 	public static final int BLOCK_GUI_ID = 0, ENTITY_GUI_ID = -1, ITEM_GUI_ID = -256;
@@ -163,7 +165,7 @@ public class GuiNetworkHandler extends NetworkHandler implements IGuiHandler {
 	 */
 	public static void openBlockGui(EntityPlayer player, BlockPos pos, int id) {
 		if (id < 0) throw new IllegalArgumentException("id must not be negative!");
-		if (player.world.isRemote) return;
+		if (player.world.isRemote && !BlockGuiHandler.OPEN_CLIENT) return;
 		player.openGui(Lib.instance, BLOCK_GUI_ID + id, player.world, pos.getX(), pos.getY(), pos.getZ());
 	}
 
@@ -176,7 +178,7 @@ public class GuiNetworkHandler extends NetworkHandler implements IGuiHandler {
 	 * @see IGuiHandlerEntity#getContainer(EntityPlayer, int, int)
 	 */
 	public static void openEntityGui(EntityPlayer player, Entity entity, int x, int y) {
-		if (player.world.isRemote) return;
+		if (player.world.isRemote && !BlockGuiHandler.OPEN_CLIENT) return;
 		player.openGui(Lib.instance, ENTITY_GUI_ID, player.world, x, y, entity.getEntityId());
 	}
 
@@ -192,7 +194,7 @@ public class GuiNetworkHandler extends NetworkHandler implements IGuiHandler {
 	public static void openItemGui(EntityPlayer player, int slot, int x, int y, int z) {
 		if (slot < 0 || slot >= player.inventory.getSizeInventory())
 			throw new IndexOutOfBoundsException("slot index out of range: " + slot);
-		if (player.world.isRemote) return;
+		if (player.world.isRemote && !BlockGuiHandler.OPEN_CLIENT) return;
 		player.openGui(Lib.instance, ITEM_GUI_ID + slot, player.world, x, y, z);
 	}
 
