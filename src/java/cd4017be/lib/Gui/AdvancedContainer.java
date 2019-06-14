@@ -57,6 +57,10 @@ public class AdvancedContainer extends Container implements IServerPacketReceive
 
 	@Override
 	public void detectAndSendChanges() {
+		if (player.world.isRemote) {
+			super.detectAndSendChanges();
+			return;
+		}
 		StateSyncServer sss = (StateSyncServer)sync;
 		sss.buffer.clear().writeInt(windowId);
 		sss.setHeader();
@@ -140,12 +144,20 @@ public class AdvancedContainer extends Container implements IServerPacketReceive
 	}
 
 	@Override
+	public void putStackInSlot(int slotID, ItemStack stack) {
+		if (slotsToSync.contains(slotID)) return;
+		Slot slot = inventorySlots.get(slotID);
+		if (slot instanceof ISpecialSlot)
+			((ISpecialSlot)slot).setStack(stack);
+		else slot.putStack(stack);
+	}
+
+	@Override
 	@SideOnly(Side.CLIENT)
 	public void setAll(List<ItemStack> items) {
 		int m = Math.min(items.size(), inventorySlots.size());
 		for (int i = 0; i < m; ++i)
-			if (!slotsToSync.contains(i))
-				inventorySlots.get(i).putStack(items.get(i));
+			putStackInSlot(i, items.get(i));
 	}
 
 	@Override
