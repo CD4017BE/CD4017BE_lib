@@ -29,8 +29,10 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 public class TickRegistry {
 
 	public static final Marker TICKS = MarkerManager.getMarker("Ticks");
-	public static boolean DEBUG = false;
+	private static final boolean DEBUG = false;
 	public static final TickRegistry instance = new TickRegistry();
+	/**value switches between 2 and 3 every tick, used to distinguish which tick we are currently in */
+	public static byte TICK = 2;
 
 	public static void register() {
 		//already got registered when class loaded
@@ -55,6 +57,7 @@ public class TickRegistry {
 			ArrayList<IUpdatable> list = updates;
 			updates = swapList;
 			swapList = list;
+			TICK ^= 1;
 			//process updates
 			if (DEBUG) msg += String.format("%d singleTicks ", list.size());
 			for (IUpdatable update : list)
