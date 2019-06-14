@@ -1,3 +1,16 @@
+v6.4.3
+Changes:
+- fixed the TextureStitchEvent issue: this library now comes with its own type of TextureMap and matching TextureStitchEvent for modded use
+- several fixes and improvements for ModularGui and its components
+- added utilities for state synchronization via network packets
+- added a new better network packet handling system
+- added a new Gui & Container handling system
+- the old network/gui system became deprecated but should still be fully backwards compatible
+
+Dependencies:
+- for MC-1.12.2
+- forge-14.23.5.2768 (or newer)
+
 v6.4.2
 Changes:
 - fixed gui component positioning
