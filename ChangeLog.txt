@@ -1,3 +1,13 @@
+v6.4.4
+Changes:
+- added timer in TickRegistry to simplify response synchronization
+- expanded in-game tool-tip editor documentation
+- Turkish localization added by Emirhangg
+
+Dependencies:
+- for MC-1.12.2
+- forge-14.23.5.2768 (or newer)
+
 v6.4.3
 Changes:
 - fixed the TextureStitchEvent issue: this library now comes with its own type of TextureMap and matching TextureStitchEvent for modded use
