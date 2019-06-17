@@ -48,6 +48,7 @@ public interface IGuiItem extends IGuiHandlerItem {
 	}
 
 	@Override
+	@SideOnly(Side.CLIENT)
 	default GuiScreen getGuiScreen(ItemStack stack, EntityPlayer player, int slot, int x, int y, int z) {
 		GuiContainer g = getGui(stack, player, player.world, new BlockPos(x, y, z), slot);
 		if (g.inventorySlots instanceof DataContainer) {

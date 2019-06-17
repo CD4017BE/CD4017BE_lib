@@ -16,6 +16,7 @@ import net.minecraft.util.text.translation.I18n;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.registries.IForgeRegistryEntry;
 import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import cd4017be.api.recipes.RecipeScriptContext;
 import cd4017be.lib.script.Script;
 import cd4017be.lib.script.ScriptFiles.Version;
@@ -50,6 +51,7 @@ public class TooltipUtil {
 		return ShiftHint;
 	}
 
+	@SideOnly(Side.CLIENT)
 	public static boolean showShiftHint() {
 		return overrideModifiers ? shiftOverride : GuiScreen.isShiftKeyDown();
 	}
@@ -62,6 +64,7 @@ public class TooltipUtil {
 		return AltHint;
 	}
 
+	@SideOnly(Side.CLIENT)
 	public static boolean showAltHint() {
 		return overrideModifiers ? altOverride : GuiScreen.isAltKeyDown();
 	}
