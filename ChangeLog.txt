@@ -1,3 +1,11 @@
+v6.4.5
+Changes:
+- fix server crash due to invalid access of client only code
+
+Dependencies:
+- for MC-1.12.2
+- forge-14.23.5.2768 (or newer)
+
 v6.4.4
 Changes:
 - added timer in TickRegistry to simplify response synchronization
