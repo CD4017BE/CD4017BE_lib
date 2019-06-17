@@ -165,7 +165,7 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 			if (te instanceof IInteractiveTile && ((IInteractiveTile)te).onActivated(player, hand, player.getHeldItem(hand), s, X, Y, Z)) return true;
 		}
 		if ((flags & 64) != 0) {
-			BlockGuiHandler.OPEN_CLIENT = guiScreen != null;
+			BlockGuiHandler.OPEN_CLIENT = container != null;
 			GuiNetworkHandler.openBlockGui(player, pos, 0);
 			BlockGuiHandler.OPEN_CLIENT = false;
 			return true;
