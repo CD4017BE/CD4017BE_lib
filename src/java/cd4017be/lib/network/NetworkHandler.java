@@ -89,8 +89,8 @@ public abstract class NetworkHandler implements IServerPacketReceiver, IPlayerPa
 	public static void printPacketData(StringBuilder sb, PacketBuffer p) {
 		int r = p.readerIndex(), l = p.writerIndex();
 		sb.append("read ").append(r).append(" of ").append(l).append(" bytes [");
-		byte[] d = p.array();
-		for (int i = p.arrayOffset(); l > 0; l--, i++) sb.append(String.format("%02X ", d[i] & 0xff));
+		for (int i = 0; i < l; i++)
+			sb.append(String.format("%02X ", p.getUnsignedByte(i)));
 		sb.setCharAt(sb.length() - 1, ']');
 	}
 
