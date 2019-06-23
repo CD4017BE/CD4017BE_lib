@@ -32,6 +32,7 @@ import cd4017be.lib.script.ScriptFiles;
 import cd4017be.lib.script.ScriptFiles.Version;
 import cd4017be.lib.script.obj.Array;
 import cd4017be.lib.script.obj.IOperand;
+import cd4017be.lib.script.obj.NBTWrapper;
 import cd4017be.lib.script.obj.Nil;
 import cd4017be.lib.script.obj.Number;
 import cd4017be.lib.script.obj.ObjWrapper;
@@ -130,6 +131,14 @@ public class RecipeScriptContext extends Context {
 			IRecipeList l = RecipeAPI.Lists.get(p.getString(0));
 			if (l == null) throw new IllegalArgumentException(String.format("recipe List \"%s\" does'nt exist!", p.param[0]));
 			return l.list(p);
+		}, NBT = (p) -> {
+			if (!p.has(0)) return new NBTWrapper();
+			Object o = p.get(0);
+			if (o instanceof ItemStack && ((ItemStack)o).hasTagCompound())
+				return new NBTWrapper(((ItemStack)o).getTagCompound());
+			else if (o instanceof FluidStack && ((FluidStack)o).tag != null)
+				return new NBTWrapper(((FluidStack)o).tag);
+			else return Nil.NIL;
 		};
 
 	public static final List<Version> scriptRegistry = new ArrayList<Version>();
@@ -149,6 +158,7 @@ public class RecipeScriptContext extends Context {
 		defFunc.put("add", ADD);
 		defFunc.put("listore", LISTORE);
 		defFunc.put("list", LIST);
+		defFunc.put("nbt", NBT);
 	}
 
 	public void setup() {

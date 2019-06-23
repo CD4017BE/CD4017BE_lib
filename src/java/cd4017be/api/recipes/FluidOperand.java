@@ -2,6 +2,8 @@ package cd4017be.api.recipes;
 
 import cd4017be.lib.script.obj.Error;
 import cd4017be.lib.script.obj.IOperand;
+import cd4017be.lib.script.obj.NBTWrapper;
+import cd4017be.lib.script.obj.Nil;
 import cd4017be.lib.script.obj.Number;
 import net.minecraftforge.fluids.FluidStack;
 
@@ -32,6 +34,18 @@ public class FluidOperand implements IOperand {
 	@Override
 	public Object value() {
 		return stack;
+	}
+
+	@Override
+	public IOperand addR(IOperand x) {
+		FluidStack stack = this.stack;
+		if (copied) stack = stack.copy();
+		if (x instanceof NBTWrapper)
+			stack.tag = ((NBTWrapper)x).nbt;
+		else if (x == Nil.NIL)
+			stack.tag = null;
+		else return IOperand.super.addR(x);
+		return copied ? new FluidOperand(stack) : this;
 	}
 
 	@Override
