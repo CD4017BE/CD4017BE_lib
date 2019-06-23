@@ -123,7 +123,7 @@ public class StateSyncServer extends StateSynchronizer {
 		if (cc > maxIdxCount) {
 			int p = buf.writerIndex() + modSetBytes;
 			buf.writeBytes(chng.toByteArray());
-			buf.writerIndex(p);
+			while(buf.writerIndex() < p) buf.writeByte(0);
 		} else {
 			int b = idxBits;
 			int j = 1 + idxCountBits;
