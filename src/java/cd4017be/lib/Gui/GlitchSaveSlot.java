@@ -16,6 +16,7 @@ public class GlitchSaveSlot extends SlotItemHandler implements ISpecialSlot {
 
 	public final int index;
 	public final boolean clientInteract;
+	private int[] transferTarget;
 
 	public GlitchSaveSlot(IItemHandler itemHandler, int index, int xPosition, int yPosition) {
 		this(itemHandler, index, xPosition, yPosition, true);
@@ -25,6 +26,18 @@ public class GlitchSaveSlot extends SlotItemHandler implements ISpecialSlot {
 		super(itemHandler, index, xPosition, yPosition);
 		this.index = index;
 		this.clientInteract = client;
+	}
+
+	/**
+	 * define where to put items taken out of this slot
+	 * @param target an array of {start slot id, end slot id} pairs
+	 * @return this
+	 */
+	public GlitchSaveSlot setTarget(int... target) {
+		if ((target.length & 1) != 0)
+			throw new IllegalArgumentException("array of slot id pairs expected!");
+		this.transferTarget = target;
+		return this;
 	}
 
 	// prevent vanilla from synchronizing with low stack size resolution and other unwanted things like other mods's inventory sorting mechanisms messing up everything. //
@@ -98,7 +111,14 @@ public class GlitchSaveSlot extends SlotItemHandler implements ISpecialSlot {
 		} else if (item.getCount() > 0) {
 			int n = boost ? (b == 0 ? item.getMaxStackSize() : 65536) : (b == 0 ? 1 : 8);
 			if ((item = extractItem(n, true)).getCount() == 0) return ItemStack.EMPTY;
-			int rem = ISpecialSlot.putInPlayerInv(item.copy(), player.inventory);
+			ItemStack item1 = item.copy();
+			if (transferTarget != null)
+				for (int i = 0; i < transferTarget.length; i+=2) {
+					int ss = transferTarget[i], se = transferTarget[i|1];
+					if (container.mergeItemStack(item1, Math.min(ss, se), Math.max(ss, se), ss > se))
+						break;
+				}
+			int rem = item1.getCount() <= 0 ? 0 : ISpecialSlot.putInPlayerInv(item1, player.inventory);
 			extractItem(item.getCount() - rem, false);
 		}
 		return ItemStack.EMPTY;
