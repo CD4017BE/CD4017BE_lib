@@ -37,8 +37,10 @@ public class Progressbar extends Tooltip {
 		this.get = get;
 		this.f0 = min;
 		switch (type) {
-		case H_FILL: case H_SLIDE: this.scale = (double)w / (max - min); break;
-		case V_FILL: case V_SLIDE: this.scale = (double)h / (max - min); break;
+		case H_FILL: case H_SLIDE: case H_FILL_R:
+			this.scale = (double)w / (max - min); break;
+		case V_FILL: case V_SLIDE: case V_FILL_R:
+			this.scale = (double)h / (max - min); break;
 		default: this.scale = (double)(w * h) / (max - min);
 		}
 	}
@@ -58,10 +60,20 @@ public class Progressbar extends Tooltip {
 		int n = (int)f;
 		boolean rev = scale < 0;
 		switch (type) {
-		case H_FILL:
+		case H_FILL_R:
+			if (n >= w) break;
+			if (rev) parent.drawRect(x + w - n, y, tx, ty, n, h);
+			else parent.drawRect(x, y, tx + w - n, ty, n, h);
+			return;
+		case H_FILL: 
 			if (n >= w) break;
 			if (rev) parent.drawRect(x + w - n, y, tx + w - n, ty, n, h);
 			else parent.drawRect(x, y, tx, ty, n, h);
+			return;
+		case V_FILL_R:
+			if (n >= h) break;
+			if (rev) parent.drawRect(x, y, tx, ty + h - n, w, n);
+			else parent.drawRect(x, y + h - n, tx, ty, w, n);
 			return;
 		case V_FILL:
 			if (n >= h) break;
@@ -86,6 +98,6 @@ public class Progressbar extends Tooltip {
 	}
 
 	/** design variant codes */
-	public static final byte H_FILL = 0, V_FILL = 1, H_SLIDE = 2, V_SLIDE = 3, PIXELS = 4;
+	public static final byte H_FILL_R = -2, V_FILL_R = -1, H_FILL = 0, V_FILL = 1, H_SLIDE = 2, V_SLIDE = 3, PIXELS = 4;
 
 }
