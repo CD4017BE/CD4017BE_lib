@@ -1,3 +1,16 @@
+v6.4.6
+Changes:
+- fixed invalid data packets causing crash on server side due to bug in logging code
+- fixed sending invalid synchronization packet data due to remaining trash bytes in buffer
+- added functions to assign NBT data to Items and Fluids in recipe script
+- added optional stack click transfer target to GlitchSaveSlot
+- added ProgressBar fill mode with reverse anchored texture
+- imported RedstoneControl API
+
+Dependencies:
+- for MC-1.12.2
+- forge-14.23.5.2768 (or newer)
+
 v6.4.5
 Changes:
 - fix server crash due to invalid access of client only code

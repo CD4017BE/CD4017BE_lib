@@ -7,7 +7,6 @@ import net.minecraft.nbt.NBTTagByte;
 import net.minecraft.nbt.NBTTagByteArray;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagDouble;
-import net.minecraft.nbt.NBTTagEnd;
 import net.minecraft.nbt.NBTTagFloat;
 import net.minecraft.nbt.NBTTagInt;
 import net.minecraft.nbt.NBTTagIntArray;
@@ -113,8 +112,9 @@ public class NBTWrapper implements IOperand {
 		if (key.isEmpty()) return;
 		char c = key.charAt(0);
 		key = key.substring(1);
-		if (val == Nil.NIL) nbt.removeTag(key);
-		else nbt.setTag(key, parse(c, val));
+		NBTBase tag = val == Nil.NIL ? null : parse(c, val);
+		if (tag == null) nbt.removeTag(key);
+		else nbt.setTag(key, tag);
 	}
 
 	private NBTBase parse(char type, IOperand val) {
@@ -122,8 +122,10 @@ public class NBTWrapper implements IOperand {
 			return ((NBTWrapper)val).nbt;
 		else if (val instanceof Array) {
 			NBTTagList list = new NBTTagList();
+			NBTBase tag;
 			for (IOperand op : ((Array)val).array)
-				list.appendTag(parse(type, op));
+				if ((tag = parse(type, op)) != null)
+					list.appendTag(tag);
 			return list;
 		} else if (val instanceof Text)
 			return new NBTTagString(val.toString());
@@ -142,7 +144,7 @@ public class NBTWrapper implements IOperand {
 					arr[i] = (int)v[i];
 				return new NBTTagIntArray(arr);
 			}
-			default: return new NBTTagEnd();
+			default: return null;
 			}
 		} else {
 			double v = val.asDouble();
@@ -153,7 +155,7 @@ public class NBTWrapper implements IOperand {
 			case 'L': return new NBTTagLong((long)v);
 			case 'F': return new NBTTagFloat((float)v);
 			case 'D': return new NBTTagDouble(v);
-			default: return new NBTTagEnd();
+			default: return null;
 			}
 		}
 	}
