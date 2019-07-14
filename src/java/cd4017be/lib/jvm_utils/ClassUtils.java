@@ -1,5 +1,7 @@
 package cd4017be.lib.jvm_utils;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.HashMap;
@@ -7,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
-
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
@@ -99,6 +100,33 @@ public class ClassUtils {
 			return null;
 		} catch (ClassCastException e) {
 			e.printStackTrace();
+			return null;
+		}
+	}
+
+	public static Class<?> getClassOrNull(String name) {
+		try {
+			return Class.forName(name);
+		} catch (ClassNotFoundException e) {
+			return null;
+		}
+	}
+
+	public static Method getMethodOrNull(Class<?> owner, String name, Class<?>... args) {
+		try {
+			return owner == null ? null : owner.getMethod(name, args);
+		} catch (NoSuchMethodException e) {
+			return null;
+		}
+	}
+
+	public static Field getFieldOrNull(Class<?> owner, String name) {
+		if (owner == null) return null;
+		try {
+			Field f = owner.getDeclaredField(name);
+			f.setAccessible(true);
+			return f; 
+		} catch (NoSuchFieldException e) {
 			return null;
 		}
 	}
