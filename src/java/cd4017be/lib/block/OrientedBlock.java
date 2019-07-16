@@ -33,7 +33,7 @@ public abstract class OrientedBlock extends AdvancedBlock {
 	 * @param id resource location
 	 * @param m material
 	 * @param sound sound type
-	 * @param flags 2 = nonOpaque, 1 = noFullBlock, 4 = don't open GUI, 8 = no special sneak placement
+	 * @param flags 2 = nonOpaque, 1 = noFullBlock, 4 = don't open GUI, 8 = no special sneak placement, 16 = inverse placement
 	 * @param tile associated TileEntity
 	 * @param prop orientation type
 	 * @return
@@ -62,6 +62,10 @@ public abstract class OrientedBlock extends AdvancedBlock {
 	public IBlockState getStateForPlacement(World world, BlockPos pos, EnumFacing s, float X, float Y, float Z, int m, EntityLivingBase placer, EnumHand hand) {
 		int p = placer.rotationPitch > 45 ? 1 : placer.rotationPitch < -35 ? -1 : 0;
 		int y = MathHelper.floor((double)(placer.rotationYaw * 4.0F / 360.0F) + 0.5D) & 3;
+		if ((flags & 0x80000) != 0) {
+			p = -p;
+			y ^= 2;
+		}
 		return blockState.getBaseState().withProperty(orientProp, orientProp.getPlacementState(placer.isSneaking() && (flags & 0x40000) == 0, y, p, s, X, Y, Z));
 	}
 
