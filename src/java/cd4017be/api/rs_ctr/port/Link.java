@@ -92,9 +92,9 @@ public class Link {
 		this.source = source;
 		this.sink = sink;
 		links.put(this.id = source.linkID = sink.linkID = newLinkID(), this);
+		source.owner.setPortCallback(source.pin, sink.owner.getPortCallback(sink.pin));
 		source.owner.onPortModified(source, IPortProvider.E_CONNECT);
 		sink.owner.onPortModified(sink, IPortProvider.E_CONNECT);
-		source.owner.setPortCallback(source.pin, sink.owner.getPortCallback(sink.pin));
 	}
 
 	public void load(Port port) {
