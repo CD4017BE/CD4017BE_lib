@@ -287,11 +287,18 @@ public class TooltipEditor {
 
 	public void save() {
 		if (edited.isEmpty()) return;
-		Path file = new File(langFile, lastLanguage + ".lang").toPath();
+		File f = new File(langFile, lastLanguage + ".lang");
+		if (!f.exists()) {
+			int p = lastLanguage.indexOf('_') + 1;
+			if (p > 0)
+				f = new File(langFile, lastLanguage.substring(0, p) + lastLanguage.substring(p).toUpperCase() + ".lang");
+		}
+		Path file = f.toPath();
 		@SuppressWarnings("unchecked")
 		HashMap<String, String> changes = (HashMap<String, String>)edited.clone();
 		int n = changes.size();
 		ArrayList<String> entries = new ArrayList<String>();
+		String lineSep = System.setProperty("line.separator", "\r\n");
 		try {
 			for (String l : Files.readAllLines(file)) {
 				if (!l.isEmpty() && l.charAt(0) != '#') {
@@ -316,6 +323,10 @@ public class TooltipEditor {
 		} catch (IOException e) {
 			FMLLog.log("tooltipEditor", Level.ERROR, e, "failed saving changes to lang file: %s", langFile);
 			return;
+		} finally {
+			if (lineSep == null)
+				System.clearProperty("line.separator");
+			else System.setProperty("line.separator", lineSep);
 		}
 	}
 
