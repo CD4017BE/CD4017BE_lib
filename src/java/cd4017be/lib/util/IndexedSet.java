@@ -1,21 +1,24 @@
 package cd4017be.lib.util;
 
+import java.util.AbstractList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collection;
+import java.util.RandomAccess;
 import java.util.Set;
+import java.util.Spliterator;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /**
- * Set implementation designed for objects that belong to only one certain Set of similar objects.<br><br>
+ * Implementation of both List and Set at the same time, designed for objects that belong to only one certain Set of similar objects.<dl>
  * This uses a backing array for its underlying implementation and lets the elements keep track of the index they are stored in.
- * This allows adding and removing elements with a constant time performance much faster than that of HashSets.<br>
+ * This allows all non bulk operations in this Set to run with a constant time performance much faster than that of HashSets.<br>
  * However the drawback is that all elements of this Set must implement the {@link IndexedElement} interface and they can only be part of one such Set at a time.
  * 
  * @author CD4017BE
  */
-public class IndexedSet<E extends IndexedSet.IndexedElement> implements Set<E> {
+public class IndexedSet<E extends IndexedSet.IndexedElement> extends AbstractList<E> implements Set<E>, RandomAccess {
 
 	protected E[] array;
 	protected int count;
@@ -37,9 +40,7 @@ public class IndexedSet<E extends IndexedSet.IndexedElement> implements Set<E> {
 	public boolean addAll(Collection<? extends E> c) {
 		int n = count + c.size();
 		if (n > array.length) array = Arrays.copyOf(array, Math.max(n, array.length << 1));
-		boolean modified = false;
-		for (E e : c) modified |= add(e);
-		return modified;
+		return super.addAll(c);
 	}
 
 	@Override
@@ -60,21 +61,8 @@ public class IndexedSet<E extends IndexedSet.IndexedElement> implements Set<E> {
 	}
 
 	@Override
-	public boolean containsAll(Collection<?> c) {
-		for (Object e : c)
-			if (!contains(e))
-				return false;
-		return true;
-	}
-
-	@Override
 	public boolean isEmpty() {
 		return count == 0;
-	}
-
-	@Override
-	public Iterator iterator() {
-		return new Iterator();
 	}
 
 	@Override
@@ -111,27 +99,26 @@ public class IndexedSet<E extends IndexedSet.IndexedElement> implements Set<E> {
 					register.set(i);
 			}
 		boolean modified = false;
-		for (int i = 0; i < count; i++)
-			if (!register.get(i)) {
-				modified = true;
-				E e = array[i];
-				e.setIdx(-1);
-				e = null;
-				for (int j = count - 1; j > i; j--) {
-					if (register.get(j)) {
-						e = array[j];
-						e.setIdx(i);
-						array[j] = null;
-						count = j;
-						break;
-					} else {
-						array[j].setIdx(-1);
-						array[j] = null;
-					}
+		for (int i = register.nextClearBit(0); i < count; i = register.nextClearBit(i + 1)) {
+			modified = true;
+			E e = array[i];
+			e.setIdx(-1);
+			e = null;
+			for (int j = count - 1; j > i; j--) {
+				if (register.get(j)) {
+					e = array[j];
+					e.setIdx(i);
+					array[j] = null;
+					count = j;
+					break;
+				} else {
+					array[j].setIdx(-1);
+					array[j] = null;
 				}
-				array[i] = e;
-				if (e == null) count = i;
 			}
+			array[i] = e;
+			if (e == null) count = i;
+		}
 		return modified;
 	}
 
@@ -177,9 +164,84 @@ public class IndexedSet<E extends IndexedSet.IndexedElement> implements Set<E> {
 		return modified;
 	}
 
+	@Override
+	public E get(int index) {
+		return array[index];
+	}
+
 	/**
-	 * Must be implemented by elements of an {@link IndexedSet} as follows:<br>
-	 * {@link #getIdx()} should always return the number given to the last call of {@link #setIdx(int)} or -1 if that method hasn't been called yet.
+	 * Replaces the element at the specified position in this list with the specified element.<br>
+	 * Note: the specified element must <b>not</b> already be member of this or any other IndexedSet!
+	 */
+	@Override
+	public E set(int i, E e) {
+		if (e.getIdx() >= 0) throw new IllegalArgumentException("Element must not be contained in an IndexedSet already!");
+		E e_ = array[i];
+		e_.setIdx(-1);
+		array[i] = e;
+		e.setIdx(i);
+		return e_;
+	}
+
+	/**
+	 * Inserts the specified element at the specified position in this list if it's not already contained in this set.
+	 * Moves the element currently at that position (if any) to the end of this list.<br>
+	 * Otherwise if the specified element is already contained in this set it will swap places with the element currently at the specified position.
+	 */
+	@Override
+	public void add(int i, E e) {
+		int j = indexOf(e);
+		if (j >= 0) {
+			E e_ = array[i];
+			e_.setIdx(j);
+			array[j] = e_;
+			e.setIdx(i);
+			array[i] = e;
+		}
+		if (i == count) add(e);
+		else add(set(i, e));
+	}
+
+	/**
+	 * Removes the element at the specified position in this list.
+	 * Moves the last element to the specified position.
+	 * Returns the element that was removed from the list.
+	 */
+	@Override
+	public E remove(int i) {
+		E e = array[i];
+		e.setIdx(-1);
+		E e_ = array[--count];
+		array[count] = null;
+		if (i < count) {
+			array[i] = e_;
+			e_.setIdx(i);
+		}
+		return e;
+	}
+
+	@Override
+	public int indexOf(Object o) {
+		if (o instanceof IndexedElement) {
+			int idx = ((IndexedElement)o).getIdx();
+			if (idx >= 0 && idx < count && array[idx] == o)
+				return idx;
+		}
+		return -1;
+	}
+
+	@Override
+	public int lastIndexOf(Object o) {
+		return indexOf(o);
+	}
+
+	@Override
+	public Spliterator<E> spliterator() {
+		return super.spliterator();
+	}
+
+	/**
+	 * Must be implemented by elements of an {@link IndexedSet} exactly as it is implemented in {@link Element}.
 	 * @author CD4017BE
 	 */
 	public interface IndexedElement {
@@ -191,35 +253,27 @@ public class IndexedSet<E extends IndexedSet.IndexedElement> implements Set<E> {
 		@Deprecated
 		void setIdx(int idx);
 		/**
-		 * @return the current index of this element of -1 if not part of an {@link IndexedSet}
+		 * @return the current index of this element or -1 if not part of an {@link IndexedSet}
 		 */
 		int getIdx();
 	}
 
-	class Iterator implements java.util.Iterator<E> {
+	/**
+	 * Basic implementation of {@link IndexedElement}.
+	 * @author cd4017be
+	 */
+	public static class Element implements IndexedElement {
 
-		int i = 0;
+		private int idx = -1;
 
 		@Override
-		public boolean hasNext() {
-			return i < count;
+		public void setIdx(int idx) {
+			this.idx = idx;
 		}
 
 		@Override
-		public E next() {
-			return array[i++];
-		}
-
-		@Override
-		public void remove() {
-			E e = array[--i];
-			e.setIdx(-1);
-			e = array[--count];
-			array[count] = null;
-			if (i < count) {
-				array[i] = e;
-				e.setIdx(i);
-			}
+		public int getIdx() {
+			return idx;
 		}
 
 	}

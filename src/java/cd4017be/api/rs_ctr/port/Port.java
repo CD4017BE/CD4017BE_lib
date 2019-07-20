@@ -15,7 +15,7 @@ import net.minecraftforge.common.util.INBTSerializable;
  * And when multiple Entities are cramped into the same BlockPos they should use unique pin IDs for their Ports if possible so that additionally each port could be identified by a BlockPos and a pin ID.
  * @author CD4017BE
  */
-public abstract class Port implements INBTSerializable<NBTTagCompound> {
+public abstract class Port implements INBTSerializable<NBTTagCompound>, Comparable<Port> {
 
 	/**the block, entity or whatever that is providing the port */
 	public final IPortProvider owner;
@@ -106,6 +106,11 @@ public abstract class Port implements INBTSerializable<NBTTagCompound> {
 		return owner instanceof TileEntity ? ((TileEntity)owner).getWorld() :
 			owner instanceof Entity ? ((Entity)owner).world :
 					null;
+	}
+
+	@Override
+	public int compareTo(Port o) {
+		return pin - o.pin;
 	}
 
 }

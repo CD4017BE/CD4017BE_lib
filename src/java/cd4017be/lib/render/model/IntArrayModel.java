@@ -160,6 +160,7 @@ public class IntArrayModel {
 	}
 
 	public IntArrayModel translated(float x, float y, float z) {
+		x -= ofsX; y -= ofsY; z -= ofsZ;
 		int[] data = Arrays.copyOf(vertexData, vertexData.length);
 		for (int i = 0; i < data.length; i += 5) {
 			data[i] = Float.floatToIntBits(x + Float.intBitsToFloat(data[i]));	//X

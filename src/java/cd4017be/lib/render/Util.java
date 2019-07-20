@@ -2,6 +2,7 @@ package cd4017be.lib.render;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import static java.lang.Float.floatToIntBits;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
@@ -214,10 +215,19 @@ public class Util {
 
 	public static int[] texturedRect(float x, float y, float z, float w, float h, float tx, float ty, float tw, float th) {
 		return new int[] {
-			Float.floatToIntBits(x), Float.floatToIntBits(y), Float.floatToIntBits(z), Float.floatToIntBits(tx), Float.floatToIntBits(ty),
-			Float.floatToIntBits(x + w), Float.floatToIntBits(y), Float.floatToIntBits(z), Float.floatToIntBits(tx + tw), Float.floatToIntBits(ty),
-			Float.floatToIntBits(x + w), Float.floatToIntBits(y + h), Float.floatToIntBits(z), Float.floatToIntBits(tx + tw), Float.floatToIntBits(ty + th),
-			Float.floatToIntBits(x), Float.floatToIntBits(y + h), Float.floatToIntBits(z), Float.floatToIntBits(tx), Float.floatToIntBits(ty + th)
+			floatToIntBits(x), floatToIntBits(y), floatToIntBits(z), floatToIntBits(tx), floatToIntBits(ty),
+			floatToIntBits(x + w), floatToIntBits(y), floatToIntBits(z), floatToIntBits(tx + tw), floatToIntBits(ty),
+			floatToIntBits(x + w), floatToIntBits(y + h), floatToIntBits(z), floatToIntBits(tx + tw), floatToIntBits(ty + th),
+			floatToIntBits(x), floatToIntBits(y + h), floatToIntBits(z), floatToIntBits(tx), floatToIntBits(ty + th)
+		};
+	}
+
+	public static int[] texturedRect(Vec3d p, Vec3d w, Vec3d h, Vec2f t0, Vec2f t1, int color, int light) {
+		return new int[] {
+			floatToIntBits((float)(p.x            )), floatToIntBits((float)(p.y            )), floatToIntBits((float)(p.z            )), color, floatToIntBits(t0.x), floatToIntBits(t0.y), light,
+			floatToIntBits((float)(p.x + w.x      )), floatToIntBits((float)(p.y + w.y      )), floatToIntBits((float)(p.z + w.z      )), color, floatToIntBits(t1.x), floatToIntBits(t0.y), light,
+			floatToIntBits((float)(p.x + w.x + h.x)), floatToIntBits((float)(p.y + w.y + h.y)), floatToIntBits((float)(p.z + w.z + h.z)), color, floatToIntBits(t1.x), floatToIntBits(t1.y), light,
+			floatToIntBits((float)(p.x       + h.x)), floatToIntBits((float)(p.y       + h.y)), floatToIntBits((float)(p.z       + h.z)), color, floatToIntBits(t0.x), floatToIntBits(t1.y), light,
 		};
 	}
 
@@ -230,10 +240,7 @@ public class Util {
 	 * @param t1 second uv
 	 */
 	public static void drawQuad(BufferBuilder b, Vec3d p, Vec3d w, Vec3d h, Vec2f t0, Vec2f t1) {
-		b.pos(p.x            , p.y            , p.z            ).color(1F, 1, 1, 1).tex(t0.x, t0.y).lightmap(240, 240).endVertex();
-		b.pos(p.x + w.x      , p.y + w.y      , p.z + w.z      ).color(1F, 1, 1, 1).tex(t1.x, t0.y).lightmap(240, 240).endVertex();
-		b.pos(p.x + w.x + h.x, p.y + w.y + h.y, p.z + w.z + h.z).color(1F, 1, 1, 1).tex(t1.x, t1.y).lightmap(240, 240).endVertex();
-		b.pos(p.x       + h.x, p.y       + h.y, p.z       + h.z).color(1F, 1, 1, 1).tex(t0.x, t1.y).lightmap(240, 240).endVertex();
+		b.addVertexData(texturedRect(p, w, h, t0, t1, -1, 0x00f000f0));
 	}
 
 	/**
@@ -280,8 +287,8 @@ public class Util {
 			w[i] = l;
 			if (l > width) width = l;
 		}
-		int x0 = Float.floatToIntBits(x - width / 2 - 5), x1 = Float.floatToIntBits(x - width / 2), x2 = Float.floatToIntBits(x + width / 2), x3 = Float.floatToIntBits(x + width / 2 + 5);
-		int y0 = Float.floatToIntBits(y - height - 5), y1 = Float.floatToIntBits(y - height), y2 = Float.floatToIntBits(y), y3 = Float.floatToIntBits(y + 5);
+		int x0 = floatToIntBits(x - width / 2 - 5), x1 = floatToIntBits(x - width / 2), x2 = floatToIntBits(x + width / 2), x3 = floatToIntBits(x + width / 2 + 5);
+		int y0 = floatToIntBits(y - height - 5), y1 = floatToIntBits(y - height), y2 = floatToIntBits(y), y3 = floatToIntBits(y + 5);
 		int z0 = 0;
 		int c1 = (bc & 0xff00ff00) | (bc >> 16 & 0xff) | (bc & 0xff) << 16, c0 = c1;// & 0xffffff;
 		GlStateManager.enableBlend();

@@ -25,10 +25,14 @@ public enum Orientation implements IStringSerializable {
 	Tn(UP),		Te(UP),		Ts(UP),		Tw(UP);
 
 	public final EnumFacing front, back;
+	public final Vec3d X, Y, Z;
 
 	private Orientation(EnumFacing front) {
 		this.front = front;
 		this.back = front.getOpposite();
+		this.X = rotate(new Vec3d(1, 0, 0));
+		this.Y = rotate(new Vec3d(0, 1, 0));
+		this.Z = rotate(new Vec3d(0, 0, 1));
 	}
 
 	@Override
@@ -54,7 +58,7 @@ public enum Orientation implements IStringSerializable {
 	}
 
 	public EnumFacing rotate(EnumFacing dir) {
-		if (dir == EnumFacing.NORTH) return front;
+		if (dir == NORTH) return front;
 		if (dir.getAxis() != Axis.X) {
 			if ((ordinal() & 4) != 0) dir = dir.rotateAround(Axis.X);
 			if ((ordinal() & 8) != 0) dir = dir.getOpposite();
@@ -62,6 +66,19 @@ public enum Orientation implements IStringSerializable {
 		if (dir.getAxis() != Axis.Y) {
 			if ((ordinal() & 1) != 0) dir = dir.rotateY();
 			if ((ordinal() & 2) != 0) dir = dir.getOpposite();
+		}
+		return dir;
+	}
+
+	public EnumFacing invRotate(EnumFacing dir) {
+		if (dir == front) return NORTH;
+		if (dir.getAxis() != Axis.Y) {
+			if ((ordinal() & 2) != 0) dir = dir.getOpposite();
+			if ((ordinal() & 1) != 0) dir = dir.rotateYCCW();
+		}
+		if (dir.getAxis() != Axis.X) {
+			if ((ordinal() & 8) != 0) dir = dir.getOpposite();
+			if ((ordinal() & 4) != 0) dir = dir.getOpposite().rotateAround(Axis.X);
 		}
 		return dir;
 	}
