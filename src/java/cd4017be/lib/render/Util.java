@@ -1,5 +1,6 @@
 package cd4017be.lib.render;
 
+import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import static java.lang.Float.floatToIntBits;
@@ -263,9 +264,12 @@ public class Util {
 		int l = b.getVertexFormat().getIntegerSize();
 		from *= l; to *= l;
 		int[] arr = new int [to - from];
-		IntBuffer ib = b.getByteBuffer().asIntBuffer();
-		ib.position(from);
+		ByteBuffer bb = b.getByteBuffer();
+		int p = bb.position();
+		bb.position(from * 4);
+		IntBuffer ib = bb.asIntBuffer();
 		ib.get(arr);
+		bb.position(p);
 		return arr;
 	}
 

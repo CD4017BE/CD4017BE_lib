@@ -35,7 +35,7 @@ public class IntArrayModel {
 		this.brightness = brightness;
 	}
 
-	public IntArrayModel(int[] data) {this(data, 0xffffffff, 0x00f000f0);}
+	public IntArrayModel(int[] data) {this(data, 0xffffffff, 0);}
 	public IntArrayModel(int n) {this(new int[n * 28]);}
 
 	public IntArrayModel(ModelContext context) {
