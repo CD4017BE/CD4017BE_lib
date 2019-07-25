@@ -54,12 +54,14 @@ public class PassiveNetworkTile<C extends NetworkNode<C, N, T>, N extends Shared
 	}
 
 	@Override
-	protected void setupData() {
+	public void onLoad() {
+		super.onLoad();
 		comp.setUID(SharedNetwork.ExtPosUID(pos, world.provider.getDimension()));
 	}
 
 	@Override
-	protected void clearData() {
+	protected void onUnload() {
+		super.onUnload();
 		if (comp.network != null) comp.network.remove(comp);
 		comp.updateCon = false;
 	}

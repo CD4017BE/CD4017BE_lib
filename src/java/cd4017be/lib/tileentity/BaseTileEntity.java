@@ -21,7 +21,6 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
-import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -46,7 +45,6 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 
 	public IBlockState getBlockState() {
 		if (blockState == null) {
-			if (chunk == null) chunk = world.getChunkFromBlockCoords(pos);
 			blockState = chunk.getBlockState(pos);
 			blockType = blockState.getBlock();
 		}	
@@ -54,33 +52,27 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 	}
 
 	public Chunk getChunk() {
-		if (chunk == null) chunk = world.getChunkFromBlockCoords(this.pos);
 		return chunk;
 	}
 
 	public Orientation getOrientation() {
-		getBlockState();
+		IBlockState state = getBlockState();
 		if (blockType instanceof OrientedBlock)
-			return blockState.getValue(((OrientedBlock)blockType).orientProp);
+			return state.getValue(((OrientedBlock)blockType).orientProp);
 		else return Orientation.N;
 	}
 
-	/**
-	 * Fire render(client) / data(server) update
-	 */
+	/**@Deprecated use {@link #markDirty(int)} with {@link #SYNC} instead */
+	@Deprecated
 	public void markUpdate() {
 		if (unloaded) return;
-		getBlockState();
-		world.notifyBlockUpdate(pos, blockState, blockState, 3);
+		IBlockState state = getBlockState();
+		world.notifyBlockUpdate(pos, state, state, 3);
 	}
 
-	@Override //cache chunk reference to speed this up
+	@Override //a "little" shortcut for better performance
 	public void markDirty() {
-		if (chunk == null) {
-			if (unloaded) return;
-			chunk = world.getChunkFromBlockCoords(pos);
-		}
-		chunk.markDirty();
+		if (chunk != null) chunk.markDirty();
 	}
 
 	/**chunk save data: contains the full TileEntity state */
@@ -107,7 +99,7 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 			IBlockState state = getBlockState();
 			world.notifyBlockUpdate(pos, state, state, 2);
 		case SAVE:
-			getChunk().markDirty();
+			chunk.markDirty();
 		}
 	}
 
@@ -128,31 +120,36 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 	}
 
 	@Override
+	@Deprecated
 	public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
 		storeState(nbt, SAVE);
 		return super.writeToNBT(nbt);
 	}
 
 	@Override
+	@Deprecated
 	public void readFromNBT(NBTTagCompound nbt) {
 		super.readFromNBT(nbt);
 		loadState(nbt, SAVE);
 	}
 
 	@Override
+	@Deprecated
 	public NBTTagCompound getUpdateTag() {
 		NBTTagCompound nbt = new NBTTagCompound();
 		storeState(nbt, CLIENT);
-		return this.writeToNBT(nbt);
+		return this.writeToNBT(nbt); //TODO change to super.getUpdateTag();
 	}
 
 	@Override
+	@Deprecated
 	public void handleUpdateTag(NBTTagCompound nbt) {
-		this.readFromNBT(nbt);
+		this.readFromNBT(nbt); //TODO change to super.handleUpdateTag(nbt);
 		loadState(nbt, CLIENT);
 	}
 
 	@Override
+	@Deprecated
 	public SPacketUpdateTileEntity getUpdatePacket() {
 		NBTTagCompound nbt = new NBTTagCompound();
 		storeState(nbt, SYNC);
@@ -165,50 +162,51 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 	}
 
 	@Override
+	@Deprecated
 	public void onDataPacket(NetworkManager net, SPacketUpdateTileEntity pkt) {
 		NBTTagCompound nbt = pkt.getNbtCompound();
+		redraw = nbt.getBoolean("");
 		loadState(nbt, SYNC);
-		if (redraw = nbt.getBoolean(""))
+		if (redraw)
 			world.markBlockRangeForRenderUpdate(pos, pos);
 	}
 
 	@Override
 	public void onLoad() {
-		if (world.isRemote && this instanceof ITickableServerOnly)
+		if (world.isRemote ? this instanceof ITickableServerOnly : this instanceof ITickableClientOnly)
 			world.tickableTileEntities.remove(this);
+		chunk = world.getChunkFromBlockCoords(pos);
 		setupData();
 		unloaded = false;
 	}
 
-	@Override
-	public void onChunkUnload() {
+	/**
+	 * Called when this TileEntity is removed from the world be it by breaking, replacement or chunk unloading.
+	 */
+	protected void onUnload() {
 		unloaded = true;
 		chunk = null;
 		clearData();
 	}
 
 	@Override
-	public void validate() {
-		setupData();
-		tileEntityInvalid = unloaded = false;
+	public void onChunkUnload() {
+		onUnload();
 	}
 
 	@Override
 	public void invalidate() {
-		tileEntityInvalid = unloaded = true;
-		chunk = null;
-		clearData();
+		tileEntityInvalid = true;
+		onUnload();
 	}
 
-	/**
-	 * called for both {@link #validate()} and {@link #onLoad()} just before the {@link #unloaded} flag is unset.
-	 */
+	/**@Deprecated override {@link #onLoad()} instead */
+	@Deprecated
 	protected void setupData() {
 	}
 
-	/**
-	 * called for both {@link #invalidate()} and {@link #onChunkUnload()} just after the {@link #unloaded} flag has been set.
-	 */
+	/**@Deprecated override {@link #onUnLoad()} instead*/
+	@Deprecated
 	protected void clearData() {
 	}
 
@@ -218,7 +216,7 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 	}
 
 	@Override
-	public ICapabilityProvider getTileOnSide(EnumFacing s) {
+	public TileEntity getTileOnSide(EnumFacing s) {
 		return Utils.neighborTile(this, s);
 	}
 
@@ -275,6 +273,12 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 	 * Indicates that the implementing TileEntity should only receive server side update ticks.
 	 * @author CD4017BE
 	 */
-	public static interface ITickableServerOnly extends ITickable {}
+	public interface ITickableServerOnly extends ITickable {}
+
+	/**
+	 * Indicates that the implementing TileEntity should only receive client side update ticks.
+	 * @author CD4017BE
+	 */
+	public interface ITickableClientOnly extends ITickable {}
 
 }

@@ -108,6 +108,7 @@ public class Link {
 		}
 		if (link)
 			source.owner.setPortCallback(source.pin, sink.owner.getPortCallback(sink.pin));
+		else LOG.warn("duplicate {} port loaded on ID {}", port.isMaster ? "master" : "slave", id);
 	}
 
 	public void unload(Port port) {
