@@ -26,9 +26,8 @@ public interface IBlockSensor {
 	/**
 	 * called when the BlockReference supplied to the comparator changes
 	 * @param block the new block
-	 * @return the actual block reference the sensor wants to interact with (usually the same as the given one).
 	 */
-	default BlockReference onRefChange(@Nullable BlockReference block, IHost host) { return block; }
+	default void onRefChange(@Nullable BlockReference block, IHost host) { }
 
 	/**
 	 * @return text displayed when aimed at
