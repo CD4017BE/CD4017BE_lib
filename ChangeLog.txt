@@ -1,3 +1,17 @@
+v6.4.7
+Changes:
+- added some reflection utility
+- added inverse placement mode for OrientedBlocks
+- other added utilities
+- changes in RedstoneControl API
+- fixed line separator in lang file depending on platform
+- fixed vertex packaging in IntArrayModels
+- fixed TileEntity duplicate load event
+
+Dependencies:
+- for MC-1.12.2
+- forge-14.23.5.2768 (or newer)
+
 v6.4.6
 Changes:
 - fixed invalid data packets causing crash on server side due to bug in logging code
