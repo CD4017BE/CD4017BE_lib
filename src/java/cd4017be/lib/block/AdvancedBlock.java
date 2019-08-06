@@ -393,8 +393,13 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 
 	@Override
 	public BlockFaceShape getBlockFaceShape(IBlockAccess world, IBlockState state, BlockPos pos, EnumFacing side) {
-		AxisAlignedBB box = getBoundingBox(state, world, pos);
+		AxisAlignedBB box = getBBWithoutCover(state, world, pos);
 		if (box == FULL_BLOCK_AABB) return BlockFaceShape.SOLID;
+		IBlockState cover = getCover(world, pos);
+		if (cover != null) {
+			BlockFaceShape shape = cover.getBlockFaceShape(world, pos, side);
+			if (shape != BlockFaceShape.UNDEFINED) return shape;
+		}
 		double radA = 1.0, radB = 1.0;
 		int o = 3 - (side.ordinal() >> 1);
 		for (EnumFacing f : EnumFacing.values()) {
@@ -466,16 +471,9 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 		return boundingBox[0];
 	}
 
-	@Override
-	public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess world, BlockPos pos) {
+	protected AxisAlignedBB getBBWithoutCover(IBlockState state, IBlockAccess world, BlockPos pos) {
 		AxisAlignedBB box = getMainBB(state, world, pos);
 		if (box == FULL_BLOCK_AABB || (flags & 0x100) == 0) return box;
-		IBlockState cover = getCover(world, pos);
-		if (cover != null) {
-			AxisAlignedBB box1 = cover.getBoundingBox(world, pos);
-			if (box1 == FULL_BLOCK_AABB) return box1;
-			box = box == NULL_AABB ? box1 : box.union(box1);
-		}
 		TileEntity te = world.getTileEntity(pos);
 		if (te instanceof IModularTile) {
 			IModularTile tile = (IModularTile) te;
@@ -486,6 +484,19 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 					box = box == NULL_AABB ? box1 : box.union(box1);
 				}
 			}
+		}
+		return box;
+	}
+
+	@Override
+	public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess world, BlockPos pos) {
+		AxisAlignedBB box = getBBWithoutCover(state, world, pos);
+		if (box == FULL_BLOCK_AABB) return box;
+		IBlockState cover = getCover(world, pos);
+		if (cover != null) {
+			AxisAlignedBB box1 = cover.getBoundingBox(world, pos);
+			if (box1 == FULL_BLOCK_AABB) return box1;
+			box = box == NULL_AABB ? box1 : box.union(box1);
 		}
 		return box;
 	}
