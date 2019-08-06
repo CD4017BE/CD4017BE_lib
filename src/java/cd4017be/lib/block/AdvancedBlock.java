@@ -1,7 +1,9 @@
 package cd4017be.lib.block;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 
@@ -9,13 +11,20 @@ import cd4017be.lib.BlockGuiHandler;
 import cd4017be.lib.Lib;
 import cd4017be.lib.Gui.DataContainer;
 import cd4017be.lib.Gui.DataContainer.IGuiData;
+import cd4017be.lib.block.MultipartBlock.IModularTile;
 import cd4017be.lib.network.GuiNetworkHandler;
 import cd4017be.lib.network.IGuiHandlerBlock;
 import cd4017be.lib.network.IGuiHandlerTile;
+import cd4017be.lib.property.PropertyBlockMimic;
+import cd4017be.lib.property.PropertyWrapObj;
+import cd4017be.lib.templates.Cover;
+import cd4017be.lib.tileentity.BaseTileEntity;
 import net.minecraft.block.Block;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
+import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.state.BlockFaceShape;
+import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
@@ -34,8 +43,15 @@ import net.minecraft.util.EnumFacing.AxisDirection;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.Explosion;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import net.minecraftforge.common.IPlantable;
+import net.minecraftforge.common.property.ExtendedBlockState;
+import net.minecraftforge.common.property.IExtendedBlockState;
+import net.minecraftforge.common.property.IUnlistedProperty;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -49,8 +65,17 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 	public final Class<? extends TileEntity> tileEntity;
 	protected EnumBlockRenderType renderType;
 	protected AxisAlignedBB[] boundingBox;
-	/**1:NeighborAware, 2:BreakCleanup, 4:Interactive, 8:PlaceHarvest, 0x10:Redstone, 0x20:Collision, 0x40:hasGui, 0x80:Comparator, 0x10000:nonOpaque, 0x40000:no sneak place */
+	/**1:NeighborAware, 2:BreakCleanup, 4:Interactive, 8:PlaceHarvest, 0x10:Redstone, 0x20:Collision, 0x40:hasGui, 0x80:Comparator, 0x100:Multipart, 0x10000:nonOpaque, 0x40000:no sneak place */
 	protected int flags;
+
+	protected static final Set<IProperty<?>> L_PROPERTIES = new HashSet<>();
+	protected static final Set<IUnlistedProperty<?>> UL_PROPERTIES = new HashSet<>();
+
+	private static String initProperties(String id, Class<? extends TileEntity> tile) {
+		if (IModularTile.class.isAssignableFrom(tile)) UL_PROPERTIES.add(PropertyWrapObj.MULTIPART);
+		if (ICoverableTile.class.isAssignableFrom(tile)) UL_PROPERTIES.add(PropertyWrapObj.COVER);
+		return id;
+	}
 
 	/**
 	 * 
@@ -60,7 +85,9 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 	 * @param tile optional TileEntity to register with this block
 	 */
 	public AdvancedBlock(String id, Material m, SoundType sound, int flags, @Nullable Class<? extends TileEntity> tile) {
-		super(id, m);
+		super(initProperties(id, tile), m);
+		L_PROPERTIES.clear();
+		UL_PROPERTIES.clear();
 		this.setSoundType(sound);
 		this.fullBlock = (flags & 1) == 0;
 		this.flags = flags << 15;
@@ -74,10 +101,30 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 			if (ITileCollision.class.isAssignableFrom(tile)) this.flags |= 32;
 			if ((flags & 4) == 0 && (IGuiData.class.isAssignableFrom(tile) || IGuiHandlerTile.class.isAssignableFrom(tile))) this.flags |= 64;
 			if (IComparatorSource.class.isAssignableFrom(tile)) this.flags |= 128;
-			GameRegistry.registerTileEntity(tileEntity, getRegistryName().toString());
+			if (IModularTile.class.isAssignableFrom(tile)) this.flags |= 256;
+			GameRegistry.registerTileEntity(tileEntity, getRegistryName());
 		}
 		this.renderType = EnumBlockRenderType.MODEL;
 		this.boundingBox = new AxisAlignedBB[]{FULL_BLOCK_AABB};
+	}
+
+	@Override
+	protected BlockStateContainer createBlockState() {
+		return new ExtendedBlockState(this, L_PROPERTIES.toArray(new IProperty[L_PROPERTIES.size()]), UL_PROPERTIES.toArray(new IUnlistedProperty[UL_PROPERTIES.size()]));
+	}
+
+	@Override
+	public IBlockState getExtendedState(IBlockState state, IBlockAccess world, BlockPos pos) {
+		if ((flags & 0x100) == 0) return state;
+		TileEntity te = world.getTileEntity(pos);
+		if (!(te instanceof IModularTile)) return state;
+		IExtendedBlockState eState = ((IExtendedBlockState)state).withProperty(PropertyWrapObj.MULTIPART, (IModularTile)te);
+		if (te instanceof ICoverableTile) {
+			IBlockState cover = ((ICoverableTile)te).getCover().state;
+			if (cover != null)
+				eState = eState.withProperty(PropertyBlockMimic.instance, cover.getBlock().getExtendedState(cover.getActualState(world, pos), world, pos));
+		}
+		return eState;
 	}
 
 	@Override
@@ -405,14 +452,241 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 		return this.blockLayer;
 	}
 
+	@Override
+	public boolean canRenderInLayer(IBlockState state, BlockRenderLayer layer) {
+		return blockLayer == null || layer == blockLayer;
+	}
+
 	public AdvancedBlock setBlockBounds(AxisAlignedBB box) {
 		boundingBox[0] = box;
 		return this;
 	}
 
+	protected AxisAlignedBB getMainBB(IBlockState state, IBlockAccess world, BlockPos pos) {
+		return boundingBox[0];
+	}
+
 	@Override
-	public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess source, BlockPos pos) {
-		return boundingBox.length == 1 ? boundingBox[0] : boundingBox[getMetaFromState(state)];
+	public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess world, BlockPos pos) {
+		AxisAlignedBB box = getMainBB(state, world, pos);
+		if (box == FULL_BLOCK_AABB || (flags & 0x100) == 0) return box;
+		TileEntity te = world.getTileEntity(pos);
+		if (te instanceof IModularTile) {
+			if (te instanceof ICoverableTile) {
+				IBlockState cover = ((ICoverableTile)te).getCover().state;
+				if (cover != null) {
+					AxisAlignedBB box1 = cover.getBoundingBox(world, pos);
+					if (box1 == FULL_BLOCK_AABB) return box1;
+					box = box == NULL_AABB ? box1 : box.union(box1);
+				}
+			}
+			IModularTile tile = (IModularTile) te;
+			for (int i = 1; i < boundingBox.length; i++) {
+				AxisAlignedBB box1 = boundingBox[i];
+				if (box1 != NULL_AABB && tile.isModulePresent(i - 1)) {
+					if (box1 == FULL_BLOCK_AABB) return box1;
+					box = box == NULL_AABB ? box1 : box.union(box1);
+				}
+			}
+		}
+		return box;
+	}
+
+	@Override
+	public void addCollisionBoxToList(IBlockState state, World world, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> list, Entity entity, boolean b) {
+		if ((flags & 0x100) == 0) {
+			super.addCollisionBoxToList(state, world, pos, entityBox, list, entity, b);
+			return;
+		}
+		AxisAlignedBB box = getMainBB(state, world, pos);
+		addCollisionBoxToList(pos, entityBox, list, box);
+		if (box == FULL_BLOCK_AABB) return;
+		TileEntity te = world.getTileEntity(pos);
+		if (te instanceof IModularTile) {
+			IModularTile tile = (IModularTile) te;
+			for (int i = 1; i < boundingBox.length; i++) {
+				box = boundingBox[i];
+				if (box != NULL_AABB && tile.isModulePresent(i - 1)) {
+					addCollisionBoxToList(pos, entityBox, list, box);
+					if (box == FULL_BLOCK_AABB) return;
+				}
+			}
+			if (te instanceof ICoverableTile) {
+				IBlockState cover = ((ICoverableTile)te).getCover().state;
+				if (cover != null) cover.addCollisionBoxToList(world, pos, entityBox, list, entity, false);
+			}
+		}
+	}
+
+	@Override
+	public RayTraceResult collisionRayTrace(IBlockState state, World world, BlockPos pos, Vec3d start, Vec3d end) {
+		if ((flags & 0x100) == 0) return super.collisionRayTrace(state, world, pos, start, end);
+		Vec3d start1 = start.subtract(pos.getX(), pos.getY(), pos.getZ());
+		Vec3d end1 = end.subtract(pos.getX(), pos.getY(), pos.getZ());
+		int p = 0;
+		RayTraceResult collision = null;
+		AxisAlignedBB box = getMainBB(state, world, pos);
+		if (box != NULL_AABB) {
+			collision = box.calculateIntercept(start1, end1);
+			if (collision != null) end1 = collision.hitVec;
+		}
+		IBlockState cover = null;
+		if (box != FULL_BLOCK_AABB) {
+			TileEntity te = world.getTileEntity(pos);
+			if (te instanceof IModularTile) {
+				IModularTile tile = (IModularTile) te;
+				for (int i = 1; i < boundingBox.length; i++) {
+					box = boundingBox[i];
+					if (box != NULL_AABB && tile.isModulePresent(i - 1)) {
+						RayTraceResult collision1 = box.calculateIntercept(start1, end1);
+						if (collision1 != null) {
+							collision = collision1;
+							end1 = collision.hitVec;
+							p = i;
+						}
+						if (box == FULL_BLOCK_AABB) break;
+					}
+				}
+				if (te instanceof ICoverableTile)
+					cover = ((ICoverableTile)te).getCover().state;
+			}
+		}
+		if (collision != null) {
+			end = end1.addVector(pos.getX(), pos.getY(), pos.getZ());
+			collision = new RayTraceResult(end, collision.sideHit, pos);
+			collision.subHit = p;
+		}
+		if (cover != null) {
+			RayTraceResult rtr = cover.collisionRayTrace(world, pos, start, end);
+			if (rtr != null) {
+				rtr.subHit = -1;
+				return rtr;
+			}
+		}
+		return collision; 
+	}
+
+	public interface ICoverableTile extends IModularTile, IInteractiveTile {
+
+		/**
+		 * @return the block's cover
+		 */
+		Cover getCover();
+
+		@Override
+		default boolean onActivated(EntityPlayer player, EnumHand hand, ItemStack item, EnumFacing s, float X, float Y, float Z) {
+			return getCover().interact((BaseTileEntity)this, player, hand, item, s, X, Y, Z);
+		}
+
+		@Override
+		default void onClicked(EntityPlayer player) {
+			getCover().hit((BaseTileEntity)this, player);
+		}
+
+		@Override
+		default <T> T getModuleState(int m) {
+			return getCover().module();
+		}
+
+		@Override
+		default boolean isModulePresent(int m) {
+			return false;
+		}
+
+		@Override
+		default boolean isOpaque() {
+			return getCover().opaque;
+		}
+
+	}
+
+	protected IBlockState getCover(IBlockAccess world, BlockPos pos) {
+		if ((flags & 0x100) == 0) return null;
+		TileEntity te = world.getTileEntity(pos);
+		if (te instanceof ICoverableTile && te.getBlockType() == this)
+			return ((ICoverableTile)te).getCover().state;
+		return null;
+	}
+
+	@Override
+	public float getBlockHardness(IBlockState state, World world, BlockPos pos) {
+		IBlockState cover = getCover(world, pos);
+		if (cover == null) return blockHardness;
+		float h = cover.getBlockHardness(world, pos);
+		return h < 0 ? h : h + blockHardness;
+	}
+
+	@Override
+	public float getExplosionResistance(World world, BlockPos pos, Entity exploder, Explosion explosion) {
+		float r = blockResistance / 5.0F;
+		IBlockState cover = getCover(world, pos);
+		if (cover != null) r += cover.getBlock().getExplosionResistance(world, pos, exploder, explosion);
+		return r;
+	}
+
+	@Override
+	public boolean canEntityDestroy(IBlockState state, IBlockAccess world, BlockPos pos, Entity entity) {
+		IBlockState cover = getCover(world, pos);
+		return cover == null || cover.getBlock().canEntityDestroy(cover, world, pos, entity);
+	}
+
+	@SuppressWarnings("deprecation")
+	@Override
+	public int getLightValue(IBlockState state, IBlockAccess world, BlockPos pos) {
+		IBlockState cover = getCover(world, pos);
+		if (cover == null) return lightValue;
+		//using getLightValue(World, BlockPos) would end in infinite recursion because ... Minecraft.
+		return Math.max(lightValue, cover.getLightValue());
+	}
+
+	@Override
+	public int getLightOpacity(IBlockState state, IBlockAccess world, BlockPos pos) {
+		IBlockState cover = getCover(world, pos);
+		if (cover == null) return lightOpacity;
+		return Math.max(lightOpacity, cover.getLightOpacity(world, pos));
+	}
+
+	@Override
+	public boolean doesSideBlockRendering(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing face) {
+		if (super.doesSideBlockRendering(state, world, pos, face)) return true;
+		IBlockState cover = getCover(world, pos);
+		return cover != null && cover.doesSideBlockRendering(world, pos, face);
+	}
+
+	@Override
+	public boolean canBeConnectedTo(IBlockAccess world, BlockPos pos, EnumFacing facing) {
+		IBlockState cover = getCover(world, pos);
+		return cover != null;
+	}
+
+	@Override
+	public SoundType getSoundType(IBlockState state, World world, BlockPos pos, Entity entity) {
+		IBlockState cover = getCover(world, pos);
+		return cover == null ? blockSoundType : cover.getBlock().getSoundType(cover, world, pos, entity);
+	}
+
+	@Override
+	public boolean canSustainLeaves(IBlockState state, IBlockAccess world, BlockPos pos) {
+		IBlockState cover = getCover(world, pos);
+		return cover != null && cover.getBlock().canSustainLeaves(cover, world, pos);
+	}
+
+	@Override
+	public boolean canSustainPlant(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing direction, IPlantable plantable) {
+		IBlockState cover = getCover(world, pos);
+		return cover != null && cover.getBlock().canSustainPlant(cover, world, pos, direction, plantable);
+	}
+
+	@Override
+	public boolean isBurning(IBlockAccess world, BlockPos pos) {
+		IBlockState cover = getCover(world, pos);
+		return cover != null && cover.getBlock().isBurning(world, pos);
+	}
+
+	@Override
+	public boolean isFireSource(World world, BlockPos pos, EnumFacing side) {
+		IBlockState cover = getCover(world, pos);
+		return cover != null && cover.getBlock().isFireSource(world, pos, side);
 	}
 
 	public Class<? extends Container> container;

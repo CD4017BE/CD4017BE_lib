@@ -7,15 +7,11 @@ import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.properties.PropertyInteger;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.Entity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.Explosion;
 import net.minecraft.world.IBlockAccess;
-import net.minecraft.world.World;
-import net.minecraftforge.common.IPlantable;
 import net.minecraftforge.common.property.ExtendedBlockState;
 import net.minecraftforge.common.property.IExtendedBlockState;
 import net.minecraftforge.common.property.IUnlistedProperty;
@@ -119,87 +115,6 @@ public abstract class BlockCoveredPipe extends BlockPipe {
 			IBlockState cover = mt.getModuleState(6);
 			return cover != null && cover.isSideSolid(world, pos, side);
 		} else return false;
-	}
-
-	@Override
-	public float getBlockHardness(IBlockState state, World world, BlockPos pos) {
-		IBlockState cover = getCover(world, pos);
-		if (cover == null) return blockHardness;
-		float h = cover.getBlockHardness(world, pos);
-		return h < 0 ? h : h + blockHardness;
-	}
-
-	@Override
-	public float getExplosionResistance(World world, BlockPos pos, Entity exploder, Explosion explosion) {
-		float r = blockResistance / 5.0F;
-		IBlockState cover = getCover(world, pos);
-		if (cover != null) r += cover.getBlock().getExplosionResistance(world, pos, exploder, explosion);
-		return r;
-	}
-
-	@Override
-	public boolean canEntityDestroy(IBlockState state, IBlockAccess world, BlockPos pos, Entity entity) {
-		IBlockState cover = getCover(world, pos);
-		return cover == null || cover.getBlock().canEntityDestroy(cover, world, pos, entity);
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public int getLightValue(IBlockState state, IBlockAccess world, BlockPos pos) {
-		IBlockState cover = getCover(world, pos);
-		if (cover == null) return lightValue;
-		//using getLightValue(World, BlockPos) would end in infinite recursion because ... Minecraft.
-		return Math.max(lightValue, cover.getLightValue());
-	}
-
-	@Override
-	public int getLightOpacity(IBlockState state, IBlockAccess world, BlockPos pos) {
-		IBlockState cover = getCover(world, pos);
-		if (cover == null) return lightOpacity;
-		return Math.max(lightOpacity, cover.getLightOpacity(world, pos));
-	}
-
-	@Override
-	public boolean doesSideBlockRendering(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing face) {
-		if (super.doesSideBlockRendering(state, world, pos, face)) return true;
-		IBlockState cover = getCover(world, pos);
-		return cover != null && cover.doesSideBlockRendering(world, pos, face);
-	}
-
-	@Override
-	public boolean canBeConnectedTo(IBlockAccess world, BlockPos pos, EnumFacing facing) {
-		IBlockState cover = getCover(world, pos);
-		return cover != null;
-	}
-
-	@Override
-	public SoundType getSoundType(IBlockState state, World world, BlockPos pos, Entity entity) {
-		IBlockState cover = getCover(world, pos);
-		return cover == null ? blockSoundType : cover.getBlock().getSoundType(cover, world, pos, entity);
-	}
-
-	@Override
-	public boolean canSustainLeaves(IBlockState state, IBlockAccess world, BlockPos pos) {
-		IBlockState cover = getCover(world, pos);
-		return cover != null && cover.getBlock().canSustainLeaves(cover, world, pos);
-	}
-
-	@Override
-	public boolean canSustainPlant(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing direction, IPlantable plantable) {
-		IBlockState cover = getCover(world, pos);
-		return cover != null && cover.getBlock().canSustainPlant(cover, world, pos, direction, plantable);
-	}
-
-	@Override
-	public boolean isBurning(IBlockAccess world, BlockPos pos) {
-		IBlockState cover = getCover(world, pos);
-		return cover != null && cover.getBlock().isBurning(world, pos);
-	}
-
-	@Override
-	public boolean isFireSource(World world, BlockPos pos, EnumFacing side) {
-		IBlockState cover = getCover(world, pos);
-		return cover != null && cover.getBlock().isFireSource(world, pos, side);
 	}
 
 }

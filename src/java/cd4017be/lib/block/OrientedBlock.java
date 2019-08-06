@@ -4,6 +4,7 @@ import cd4017be.lib.property.PropertyOrientation;
 import cd4017be.lib.util.Orientation;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
+import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityLivingBase;
@@ -15,18 +16,20 @@ import net.minecraft.util.Rotation;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
 /**
  * 
  * @author CD4017BE
  */
-public abstract class OrientedBlock extends AdvancedBlock {
+public class OrientedBlock extends AdvancedBlock {
 
 	public PropertyOrientation orientProp;
 
-	protected OrientedBlock(String id, Material m, SoundType sound, int flags, Class<? extends TileEntity> tile, PropertyOrientation prop) {
-		super(id, m, sound, flags, tile);
+	private static String addProp(String id, PropertyOrientation prop) {
+		L_PROPERTIES.add(prop);
+		return id;
 	}
 
 	/**
@@ -36,16 +39,22 @@ public abstract class OrientedBlock extends AdvancedBlock {
 	 * @param flags 2 = nonOpaque, 1 = noFullBlock, 4 = don't open GUI, 8 = no special sneak placement, 16 = inverse placement
 	 * @param tile associated TileEntity
 	 * @param prop orientation type
-	 * @return
 	 */
+	protected OrientedBlock(String id, Material m, SoundType sound, int flags, Class<? extends TileEntity> tile, PropertyOrientation prop) {
+		super(addProp(id, prop), m, sound, flags, tile);
+	}
+
+	@Deprecated
 	public static OrientedBlock create(String id, Material m, SoundType sound, int flags, Class<? extends TileEntity> tile, PropertyOrientation prop) {
-		return new OrientedBlock(id, m, sound, flags, tile, prop) {
-			@Override
-			protected BlockStateContainer createBlockState() {
-				orientProp = prop;
-				return new BlockStateContainer(this, prop);
-			}
-		};
+		return new OrientedBlock(id, m, sound, flags, tile, prop);
+	}
+
+	@Override
+	protected BlockStateContainer createBlockState() {
+		for (IProperty<?> p : L_PROPERTIES)
+			if (p instanceof PropertyOrientation)
+				orientProp = (PropertyOrientation)p;
+		return super.createBlockState();
 	}
 
 	@Override
@@ -75,6 +84,11 @@ public abstract class OrientedBlock extends AdvancedBlock {
 		for (Orientation o : orientProp.getAllowedValues())
 			boundingBox[o.ordinal()] = o.rotate(box);
 		return this;
+	}
+
+	@Override
+	protected AxisAlignedBB getMainBB(IBlockState state, IBlockAccess world, BlockPos pos) {
+		return boundingBox[state.getValue(orientProp).ordinal()];
 	}
 
 	@Override

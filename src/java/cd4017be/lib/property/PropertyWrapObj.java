@@ -1,5 +1,7 @@
 package cd4017be.lib.property;
 
+import cd4017be.lib.block.MultipartBlock.IModularTile;
+import net.minecraft.block.state.IBlockState;
 import net.minecraftforge.common.property.IUnlistedProperty;
 
 /**
@@ -36,5 +38,9 @@ public class PropertyWrapObj<T> implements IUnlistedProperty<T> {
 	public String valueToString(T value) {
 		return value == null ? "null" : value.toString();
 	}
+
+	public static final PropertyWrapObj<IModularTile> MULTIPART = new PropertyWrapObj<>("tile", IModularTile.class);
+
+	public static final PropertyWrapObj<IBlockState> COVER = PropertyBlockMimic.instance;
 
 }
