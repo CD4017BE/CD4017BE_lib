@@ -88,7 +88,7 @@ public class OrientedBlock extends AdvancedBlock {
 
 	@Override
 	protected AxisAlignedBB getMainBB(IBlockState state, IBlockAccess world, BlockPos pos) {
-		return boundingBox[state.getValue(orientProp).ordinal()];
+		return boundingBox.length == 1 ? boundingBox[0] : boundingBox[state.getValue(orientProp).ordinal()];
 	}
 
 	@Override

@@ -9,7 +9,6 @@ import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.common.property.ExtendedBlockState;
@@ -77,23 +76,6 @@ public abstract class BlockCoveredPipe extends BlockPipe {
 		IBlockState cover = tile.getModuleState(CON_PROPS.length);
 		if (cover == null) return eState;
 		return eState.withProperty(PropertyBlockMimic.instance, cover.getBlock().getExtendedState(cover.getActualState(world, pos), world, pos));
-	}
-
-	@Override
-	public BlockPipe setSize(double size) {
-		size /= 2.0;
-		double min = 0.5 - size, max = 0.5 + size;
-		boundingBox = new AxisAlignedBB[] {
-			new AxisAlignedBB(min, min, min, max, max, max),
-			new AxisAlignedBB(min, 0.0, min, max, min, max),
-			new AxisAlignedBB(min, max, min, max, 1.0, max),
-			new AxisAlignedBB(min, min, 0.0, max, max, min),
-			new AxisAlignedBB(min, min, max, max, max, 1.0),
-			new AxisAlignedBB(0.0, min, min, min, max, max),
-			new AxisAlignedBB(max, min, min, 1.0, max, max),
-			FULL_BLOCK_AABB,
-		};
-		return this;
 	}
 
 	protected IBlockState getCover(IBlockAccess world, BlockPos pos) {

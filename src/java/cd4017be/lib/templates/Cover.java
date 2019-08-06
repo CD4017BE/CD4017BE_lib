@@ -93,9 +93,7 @@ public class Cover {
 
 	public static boolean isBlockValid(@Nullable TileEntity tile, IBlockState state) {
 		if (state.getBlock().hasTileEntity(state)) return false;
-		if (state.isBlockNormalCube()) return true;
-		return state.getMaterial().blocksMovement() &&
-				(tile == null || state.getCollisionBoundingBox(tile.getWorld(), tile.getPos()) == Block.FULL_BLOCK_AABB);
+		return state.getMaterial().blocksMovement();
 	}
 
 	/**

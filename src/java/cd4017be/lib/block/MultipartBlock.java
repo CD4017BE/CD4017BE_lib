@@ -8,6 +8,7 @@ import net.minecraft.block.properties.PropertyInteger;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.BlockRenderLayer;
 import net.minecraftforge.common.property.IUnlistedProperty;
 
 /**
@@ -20,6 +21,7 @@ public abstract class MultipartBlock extends AdvancedBlock implements IMultipart
 	public static final IUnlistedProperty<IModularTile> moduleRef = PropertyWrapObj.MULTIPART;
 
 	public final int numModules;
+	protected boolean renderMultilayer;
 
 	/**
 	 * @see AdvancedBlock#AdvancedBlock(String, Material, SoundType, int, Class)
@@ -42,7 +44,7 @@ public abstract class MultipartBlock extends AdvancedBlock implements IMultipart
 
 	@Override
 	public boolean renderMultilayer() {
-		return getBlockLayer() == null;
+		return renderMultilayer;
 	}
 
 	protected abstract PropertyInteger createBaseState();
@@ -65,8 +67,13 @@ public abstract class MultipartBlock extends AdvancedBlock implements IMultipart
 	}
 
 	public MultipartBlock setMultilayer() {
-		setBlockLayer(null);
+		renderMultilayer = true;
 		return this;
+	}
+
+	@Override
+	public boolean canRenderInLayer(IBlockState state, BlockRenderLayer layer) {
+		return renderMultilayer  || super.canRenderInLayer(state, layer);
 	}
 
 	public interface IModularTile {

@@ -470,16 +470,14 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 	public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess world, BlockPos pos) {
 		AxisAlignedBB box = getMainBB(state, world, pos);
 		if (box == FULL_BLOCK_AABB || (flags & 0x100) == 0) return box;
+		IBlockState cover = getCover(world, pos);
+		if (cover != null) {
+			AxisAlignedBB box1 = cover.getBoundingBox(world, pos);
+			if (box1 == FULL_BLOCK_AABB) return box1;
+			box = box == NULL_AABB ? box1 : box.union(box1);
+		}
 		TileEntity te = world.getTileEntity(pos);
 		if (te instanceof IModularTile) {
-			if (te instanceof ICoverableTile) {
-				IBlockState cover = ((ICoverableTile)te).getCover().state;
-				if (cover != null) {
-					AxisAlignedBB box1 = cover.getBoundingBox(world, pos);
-					if (box1 == FULL_BLOCK_AABB) return box1;
-					box = box == NULL_AABB ? box1 : box.union(box1);
-				}
-			}
 			IModularTile tile = (IModularTile) te;
 			for (int i = 1; i < boundingBox.length; i++) {
 				AxisAlignedBB box1 = boundingBox[i];
@@ -501,6 +499,8 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 		AxisAlignedBB box = getMainBB(state, world, pos);
 		addCollisionBoxToList(pos, entityBox, list, box);
 		if (box == FULL_BLOCK_AABB) return;
+		IBlockState cover = getCover(world, pos);
+		if (cover != null) cover.addCollisionBoxToList(world, pos, entityBox, list, entity, false);
 		TileEntity te = world.getTileEntity(pos);
 		if (te instanceof IModularTile) {
 			IModularTile tile = (IModularTile) te;
@@ -510,10 +510,6 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 					addCollisionBoxToList(pos, entityBox, list, box);
 					if (box == FULL_BLOCK_AABB) return;
 				}
-			}
-			if (te instanceof ICoverableTile) {
-				IBlockState cover = ((ICoverableTile)te).getCover().state;
-				if (cover != null) cover.addCollisionBoxToList(world, pos, entityBox, list, entity, false);
 			}
 		}
 	}
@@ -530,7 +526,7 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 			collision = box.calculateIntercept(start1, end1);
 			if (collision != null) end1 = collision.hitVec;
 		}
-		IBlockState cover = null;
+		IBlockState cover;
 		if (box != FULL_BLOCK_AABB) {
 			TileEntity te = world.getTileEntity(pos);
 			if (te instanceof IModularTile) {
@@ -547,10 +543,9 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 						if (box == FULL_BLOCK_AABB) break;
 					}
 				}
-				if (te instanceof ICoverableTile)
-					cover = ((ICoverableTile)te).getCover().state;
 			}
-		}
+			cover = getCover(world, pos);
+		} else cover = null;
 		if (collision != null) {
 			end = end1.addVector(pos.getX(), pos.getY(), pos.getZ());
 			collision = new RayTraceResult(end, collision.sideHit, pos);
@@ -656,7 +651,7 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 	@Override
 	public boolean canBeConnectedTo(IBlockAccess world, BlockPos pos, EnumFacing facing) {
 		IBlockState cover = getCover(world, pos);
-		return cover != null;
+		return cover != null && cover.getBlock().canBeConnectedTo(world, pos, facing);
 	}
 
 	@Override
