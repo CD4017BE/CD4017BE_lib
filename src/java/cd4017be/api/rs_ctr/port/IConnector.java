@@ -57,6 +57,12 @@ public interface IConnector extends INBTSerializable<NBTTagCompound> {
 	default void onUnload() {}
 
 	/**
+	 * called when the port changed its position and/or orientation (for ex. when the block rotated).
+	 * @param port the port holding this connector (with new position)
+	 */
+	default void onPortMove(MountedPort port) {}
+
+	/**
 	 * @param nbt serialized data
 	 * @return a deserialized connector instance or null if data invalid.
 	 */

@@ -15,6 +15,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.World;
 
 /**
  * @author CD4017BE
@@ -53,6 +54,11 @@ public class MountedPort extends Port implements IInteractiveComponent {
 	public MountedPort setLocation(double x, double y, double z, EnumFacing face) {
 		this.pos = new Vec3d(x, y, z);
 		this.face = face;
+		if (connector != null) {
+			World world = getWorld();
+			if (world != null && !world.isRemote)
+				connector.onPortMove(this);
+		}
 		return this;
 	}
 
@@ -67,6 +73,11 @@ public class MountedPort extends Port implements IInteractiveComponent {
 	public MountedPort setLocation(double x, double y, double z, EnumFacing face, Orientation o) {
 		this.pos = o.rotate(new Vec3d(x - 0.5F, y - 0.5F, z - 0.5F)).addVector(0.5, 0.5, 0.5);
 		this.face = o.rotate(face);
+		if (connector != null) {
+			World world = getWorld();
+			if (world != null && !world.isRemote)
+				connector.onPortMove(this);
+		}
 		return this;
 	}
 
