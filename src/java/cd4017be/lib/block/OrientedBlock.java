@@ -40,7 +40,7 @@ public class OrientedBlock extends AdvancedBlock {
 	 * @param tile associated TileEntity
 	 * @param prop orientation type
 	 */
-	protected OrientedBlock(String id, Material m, SoundType sound, int flags, Class<? extends TileEntity> tile, PropertyOrientation prop) {
+	public OrientedBlock(String id, Material m, SoundType sound, int flags, Class<? extends TileEntity> tile, PropertyOrientation prop) {
 		super(addProp(id, prop), m, sound, flags, tile);
 	}
 

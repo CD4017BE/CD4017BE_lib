@@ -51,7 +51,8 @@ public abstract class MultipartBlock extends AdvancedBlock implements IMultipart
 
 	@Override
 	protected BlockStateContainer createBlockState() {
-		L_PROPERTIES.add(baseState = createBaseState());
+		baseState = createBaseState();
+		if (baseState != null) L_PROPERTIES.add(baseState);
 		UL_PROPERTIES.add(moduleRef);
 		return super.createBlockState();
 	}

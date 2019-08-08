@@ -68,6 +68,7 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 	/**1:NeighborAware, 2:BreakCleanup, 4:Interactive, 8:PlaceHarvest, 0x10:Redstone, 0x20:Collision, 0x40:hasGui, 0x80:Comparator, 0x100:Multipart, 0x10000:nonOpaque, 0x40000:no sneak place */
 	protected int flags;
 
+	public static final AxisAlignedBB EMPTY_AABB = new AxisAlignedBB(.5, .5, .5, .5, .5, .5);
 	protected static final Set<IProperty<?>> L_PROPERTIES = new HashSet<>();
 	protected static final Set<IUnlistedProperty<?>> UL_PROPERTIES = new HashSet<>();
 
@@ -498,7 +499,7 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 			if (box1 == FULL_BLOCK_AABB) return box1;
 			box = box == NULL_AABB ? box1 : box.union(box1);
 		}
-		return box;
+		return box == NULL_AABB ? EMPTY_AABB : box;
 	}
 
 	@Override
@@ -565,7 +566,7 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 		if (cover != null) {
 			RayTraceResult rtr = cover.collisionRayTrace(world, pos, start, end);
 			if (rtr != null) {
-				rtr.subHit = -1;
+				rtr.subHit = -2;
 				return rtr;
 			}
 		}

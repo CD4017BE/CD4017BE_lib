@@ -64,9 +64,9 @@ public class Cover {
 			item.grow(-1);
 			player.setHeldItem(hand, item);
 		}
-		world.markAndNotifyBlock(pos, null, tile.getBlockState(), tile.getBlockState(), 3);
+		world.notifyNeighborsRespectDebug(pos, tile.getBlockType(), true);
 		if (state.getLightValue() > 0 || state.getLightOpacity(world, pos) > 0) world.checkLight(pos);
-		tile.markDirty();
+		tile.markDirty(BaseTileEntity.REDRAW);
 		return true;
 	}
 
@@ -85,9 +85,9 @@ public class Cover {
 		stack = null;
 		state = null;
 		opaque = false;
-		world.markAndNotifyBlock(pos, null, tile.getBlockState(), tile.getBlockState(), 3);
+		world.notifyNeighborsRespectDebug(pos, tile.getBlockType(), true);
 		if (checkLight) world.checkLight(pos);
-		tile.markDirty();
+		tile.markDirty(BaseTileEntity.REDRAW);
 		return true;
 	}
 
