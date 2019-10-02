@@ -3,7 +3,7 @@ package cd4017be.lib.util;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.function.ToIntFunction;
-
+import javax.annotation.Nonnull;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
@@ -237,6 +237,14 @@ public class ItemFluidUtil {
 			}
 		}
 		return ItemStack.EMPTY;
+	}
+
+	public static final IFluidTankProperties[] NO_TANKS = new IFluidTankProperties[0];
+
+	/** @return acc.{@link IFluidHandler#getTankProperties() getTankProperties()} or {@link #NO_TANKS} */
+	public static @Nonnull IFluidTankProperties[] listTanks(IFluidHandler acc) {
+		IFluidTankProperties[] p = acc.getTankProperties();
+		return p == null ? NO_TANKS : p;
 	}
 
 	public static class StackedFluidAccess implements IFluidHandler {
