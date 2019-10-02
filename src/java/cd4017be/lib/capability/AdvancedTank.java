@@ -134,6 +134,7 @@ public class AdvancedTank extends AbstractInventory implements IFluidHandler, IT
 			int m = Math.min(res.amount, cap);
 			if (doFill) {
 				fluid = new FluidStack(res, m);
+				if (output && m >= need) fillContainer();
 				tile.markDirty();
 			}
 			return m;
