@@ -103,7 +103,8 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 			if ((flags & 4) == 0 && (IGuiData.class.isAssignableFrom(tile) || IGuiHandlerTile.class.isAssignableFrom(tile))) this.flags |= 64;
 			if (IComparatorSource.class.isAssignableFrom(tile)) this.flags |= 128;
 			if (IModularTile.class.isAssignableFrom(tile)) this.flags |= 256;
-			GameRegistry.registerTileEntity(tileEntity, getRegistryName());
+			if (TileEntity.getKey(tile) == null)
+				GameRegistry.registerTileEntity(tileEntity, getRegistryName());
 		}
 		this.renderType = EnumBlockRenderType.MODEL;
 		this.boundingBox = new AxisAlignedBB[]{FULL_BLOCK_AABB};
