@@ -1,3 +1,13 @@
+v6.4.11
+Changes:
+- allow multiple blocks to use the same TileEntity class
+- make BlockReference (RedstoneControl API) NBTSerializable and fix potential world memory leak
+- fixed reverse inc/dec buttons in horizontal mode of Spinner gui element
+
+Dependencies:
+- for MC-1.12.2
+- forge-14.23.5.2768 (or newer)
+
 v6.4.10
 Changes:
 - fixed InductiveLogistics#38 missing fluid container update on filling from empty
@@ -356,7 +366,7 @@ v6.0.2
 Changes:
 - allow blocks to not use special sneak placement
 - gui components can be disabled
-- text fields can optionally allow the '§' symbol
+- text fields can optionally allow the 'ï¿½' symbol
 - fixed GUIs not rendering background and item tool tips
 - fixed OpenComputers API not working
 - fixed fluid tank slot rendering on colored fluids
