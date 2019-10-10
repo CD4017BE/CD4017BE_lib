@@ -41,8 +41,8 @@ public class Spinner extends GuiCompGroup {
 		if (hor) {
 			int i = 0;
 			for (double d : steps) {
-				new Button(this, 5, h, i++ * 5, 0, 0, null, (b)-> click(b, d));
-				new Button(this, 5, h, w - i * 5, 0, 0, null, (b)-> click(b, -d));
+				new Button(this, 5, h, i++ * 5, 0, 0, null, (b)-> click(b, -d));
+				new Button(this, 5, h, w - i * 5, 0, 0, null, (b)-> click(b, d));
 			}
 			new FormatText(this, w - l * 10, h, l * 5, 0, format, this::formatInfo);
 		} else {
