@@ -13,7 +13,7 @@ public class Comparator implements IBlockSensor {
 
 	@Override
 	public int readValue(BlockReference block) {
-		return block.getState().getComparatorInputOverride(block.world, block.pos);
+		return block.getState().getComparatorInputOverride(block.world(), block.pos);
 	}
 
 	@Override
