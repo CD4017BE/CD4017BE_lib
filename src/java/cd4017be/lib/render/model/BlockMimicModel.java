@@ -10,6 +10,7 @@ import java.util.function.Function;
 import cd4017be.lib.property.PropertyBlockMimic;
 import cd4017be.lib.render.IHardCodedModel;
 import cd4017be.lib.render.model.MultipartModel.IModelProvider;
+import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -135,7 +136,8 @@ public class BlockMimicModel implements IModel, IBakedModel, IHardCodedModel {
 		public IBakedModel getModelFor(Object val, BlockRenderLayer layer) {
 			if (val instanceof IBlockState) {
 				IBlockState state = (IBlockState)val;
-				if (state.getBlock().canRenderInLayer(state, layer))
+				Block block = state.getBlock();
+				if (block.canRenderInLayer(state, layer == null ? block.getBlockLayer() : layer))
 					return instance;
 			}
 			return null;
