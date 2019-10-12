@@ -123,8 +123,11 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 		IExtendedBlockState eState = ((IExtendedBlockState)state).withProperty(PropertyWrapObj.MULTIPART, (IModularTile)te);
 		if (te instanceof ICoverableTile) {
 			IBlockState cover = ((ICoverableTile)te).getCover().state;
-			if (cover != null)
+			if (cover != null) try {
 				eState = eState.withProperty(PropertyBlockMimic.instance, cover.getBlock().getExtendedState(cover.getActualState(world, pos), world, pos));
+			} catch(IllegalArgumentException e) { //block trying to get invalid properties from wrong IBlockState
+				eState = eState.withProperty(PropertyBlockMimic.instance, cover);
+			}
 		}
 		return eState;
 	}
@@ -628,14 +631,19 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 	public float getExplosionResistance(World world, BlockPos pos, Entity exploder, Explosion explosion) {
 		float r = blockResistance / 5.0F;
 		IBlockState cover = getCover(world, pos);
-		if (cover != null) r += cover.getBlock().getExplosionResistance(world, pos, exploder, explosion);
+		if (cover != null) try {
+			r += cover.getBlock().getExplosionResistance(world, pos, exploder, explosion);
+		} catch(IllegalArgumentException e) {} //block trying to get invalid properties from wrong IBlockState
 		return r;
 	}
 
 	@Override
 	public boolean canEntityDestroy(IBlockState state, IBlockAccess world, BlockPos pos, Entity entity) {
 		IBlockState cover = getCover(world, pos);
-		return cover == null || cover.getBlock().canEntityDestroy(cover, world, pos, entity);
+		if (cover != null) try {
+			return cover.getBlock().canEntityDestroy(cover, world, pos, entity);
+		} catch(IllegalArgumentException e) {} //block trying to get invalid properties from wrong IBlockState
+		return true;
 	}
 
 	@SuppressWarnings("deprecation")
@@ -664,37 +672,55 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 	@Override
 	public boolean canBeConnectedTo(IBlockAccess world, BlockPos pos, EnumFacing facing) {
 		IBlockState cover = getCover(world, pos);
-		return cover != null && cover.getBlock().canBeConnectedTo(world, pos, facing);
+		if (cover != null) try {
+			return cover.getBlock().canBeConnectedTo(world, pos, facing);
+		} catch(IllegalArgumentException e) {} //block trying to get invalid properties from wrong IBlockState
+		return false;
 	}
 
 	@Override
 	public SoundType getSoundType(IBlockState state, World world, BlockPos pos, Entity entity) {
 		IBlockState cover = getCover(world, pos);
-		return cover == null ? blockSoundType : cover.getBlock().getSoundType(cover, world, pos, entity);
+		if (cover != null) try {
+			return cover.getBlock().getSoundType(cover, world, pos, entity);
+		} catch(IllegalArgumentException e) {} //block trying to get invalid properties from wrong IBlockState
+		return blockSoundType;
 	}
 
 	@Override
 	public boolean canSustainLeaves(IBlockState state, IBlockAccess world, BlockPos pos) {
 		IBlockState cover = getCover(world, pos);
-		return cover != null && cover.getBlock().canSustainLeaves(cover, world, pos);
+		if (cover != null) try {
+			return cover.getBlock().canSustainLeaves(cover, world, pos);
+		} catch(IllegalArgumentException e) {} //block trying to get invalid properties from wrong IBlockState
+		return false;
 	}
 
 	@Override
 	public boolean canSustainPlant(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing direction, IPlantable plantable) {
 		IBlockState cover = getCover(world, pos);
-		return cover != null && cover.getBlock().canSustainPlant(cover, world, pos, direction, plantable);
+		if (cover != null) try {
+			return cover.getBlock().canSustainPlant(cover, world, pos, direction, plantable);
+		} catch(IllegalArgumentException e) {} //block trying to get invalid properties from wrong IBlockState
+		return false;
 	}
 
 	@Override
 	public boolean isBurning(IBlockAccess world, BlockPos pos) {
 		IBlockState cover = getCover(world, pos);
-		return cover != null && cover.getBlock().isBurning(world, pos);
+		if (cover != null) try {
+			return cover.getBlock().isBurning(world, pos);
+		} catch(IllegalArgumentException e) {} //block trying to get invalid properties from wrong IBlockState
+		return false;
 	}
 
 	@Override
 	public boolean isFireSource(World world, BlockPos pos, EnumFacing side) {
 		IBlockState cover = getCover(world, pos);
-		return cover != null && cover.getBlock().isFireSource(world, pos, side);
+		if (cover != null) try {
+			return cover.getBlock().isFireSource(world, pos, side);
+		} catch(IllegalArgumentException e) {} //block trying to get invalid properties from wrong IBlockState
+		return false;
 	}
 
 	public Class<? extends Container> container;
