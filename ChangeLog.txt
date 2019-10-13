@@ -1,3 +1,12 @@
+v6.4.12
+Changes:
+- fixed #18 sending null as BlockRenderLayer to canRenderInLayer()
+- made covers more robust against mods that don't like wrong BlockStates
+
+Dependencies:
+- for MC-1.12.2
+- forge-14.23.5.2768 (or newer)
+
 v6.4.11
 Changes:
 - allow multiple blocks to use the same TileEntity class
