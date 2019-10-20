@@ -71,6 +71,7 @@ public class StateSyncServer extends StateSynchronizer {
 	 */
 	public StateSyncServer begin() {
 		buffer.clear();
+		elIdx = -1;
 		return this;
 	}
 
