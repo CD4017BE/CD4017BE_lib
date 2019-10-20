@@ -17,6 +17,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.ClickType;
 import net.minecraft.inventory.Container;
+import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.inventory.IContainerListener;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
@@ -126,9 +127,9 @@ public class AdvancedContainer extends Container implements IServerPacketReceive
 				this.addSlotToContainer(new LockedSlot(inv, i, x + i * 18, y + 58));
 			else this.addSlotToContainer(new HidableSlot(inv, i, x + i * 18, y + 58));
 		if (armor) {
-			this.addSlotToContainer(new HidableSlot(inv, 40, x - 18, y + 58));
+			this.addSlotToContainer(new SlotOffhand(inv, 40, x - 18, y + 58));
 			for (int i = 0; i < 4; i++)
-				this.addSlotToContainer(new HidableSlot(inv, i + 36, x - 18, y - i * 18 + 36));
+				this.addSlotToContainer(new SlotArmor(inv, i + 36, x - 18, y - i * 18 + 36, EntityEquipmentSlot.values()[i + 2]));
 		}
 	}
 
