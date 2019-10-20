@@ -216,6 +216,13 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 	}
 
 	@Override
+	public void setWorld(World worldIn) {
+		super.setWorld(worldIn);
+		if (chunk == null && worldIn.isBlockLoaded(pos))
+			chunk = world.getChunkFromBlockCoords(pos);
+	}
+
+	@Override
 	public TileEntity getTileOnSide(EnumFacing s) {
 		return Utils.neighborTile(this, s);
 	}
