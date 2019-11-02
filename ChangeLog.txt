@@ -1,3 +1,13 @@
+v6.4.13
+Changes:
+- fix potential null-pointer crash when TileEntity added during world tick
+- fix bad state synchronizer state when not sending packets (potentially leading to crashes)
+- add utility: player armor slots
+
+Dependencies:
+- for MC-1.12.2
+- forge-14.23.5.2768 (or newer)
+
 v6.4.12
 Changes:
 - fixed #18 sending null as BlockRenderLayer to canRenderInLayer()
