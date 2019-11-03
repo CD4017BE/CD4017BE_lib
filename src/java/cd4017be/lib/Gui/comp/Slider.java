@@ -74,21 +74,25 @@ public class Slider extends Tooltip {
 	public void drawBackground(int mx, int my, float t) {
 		int n = (int)Math.round((get.getAsDouble() - min) / (max - min) * (double)l);
 		if (hor) parent.drawRect(x + n, y, tx, ty, tw, th);
-		else parent.drawRect(x, y + h - th - n, tx, ty, tw, th);
+		else parent.drawRect(x, y + n, tx, ty, tw, th);
 	}
 
 	@Override
 	public boolean mouseIn(int mx, int my, int b, byte d) {
 		if (d == A_SCROLL) {
 			double f = get.getAsDouble() + (double)b * scrollStep;
+			double min = Math.min(this.min, this.max);
+			double max = Math.max(this.min, this.max);
 			if (f < min) f = min;
 			else if (f > max) f = max;
 			set.accept(f);
 			if (update != null) update.run();
 			return true;
 		}
-		double f = min + (max - min) * 0.5 * (hor ? (double)(2 * (mx - x) - tw) / (double)l : (double)(2 * (my - y) - th) / (double)l);
-		set.accept(f < min ? min : f > max ? max : f);
+		double f = 0.5 * (hor ? (double)(2 * (mx - x) - tw) / (double)l : (double)(2 * (my - y) - th) / (double)l);
+		if (f < 0.0) f = 0.0;
+		else if (f > 1.0) f = 1.0;
+		set.accept(min + (max - min) * f);
 		if (d == A_UP) parent.setFocus(null);
 		return true;
 	}
