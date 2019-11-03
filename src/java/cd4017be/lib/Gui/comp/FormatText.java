@@ -61,6 +61,7 @@ public class FormatText extends GuiCompBase<GuiCompGroup> {
 		Object[] obj = params == null ? new Object[0] : params.get();
 		String lines = TooltipUtil.format(text, obj);
 		parent.bindTexture(null);
+		parent.drawNow();
 		FontRenderer fr = parent.fontRenderer;
 		int y = this.y;
 		for (String s : lines.split("\n")) {
