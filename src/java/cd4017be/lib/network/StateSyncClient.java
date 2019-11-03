@@ -50,7 +50,7 @@ public class StateSyncClient extends StateSynchronizer {
 			int cc = (v & 0xffff >> (16 - j)) >> 1;
 			BitSet chng = changes;
 			chng.clear();
-			v >>= j; j = 16 - j & 7;
+			v >>= j; j = -j & 7;
 			for (int i = 0; i < cc; i++) {
 				if (j < b)
 					if(j < b - 8) {
@@ -62,6 +62,7 @@ public class StateSyncClient extends StateSynchronizer {
 					}
 				chng.set((v & mask) + 1);
 				v >>= b;
+				j -= b;
 			}
 		}
 		this.buffer = buf;
