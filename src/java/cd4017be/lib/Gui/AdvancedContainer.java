@@ -87,19 +87,26 @@ public class AdvancedContainer extends Container implements IServerPacketReceive
 			IntArrays.quickSort(syncList, 0, n);
 			sorted = true;
 		}
+		boolean init = sss.sendAll;
 		for (int i = 0, l = inventorySlots.size(); i < l; i++) {
 			Slot slot = inventorySlots.get(i);
 			ItemStack itemN = slot.getStack();
 			ItemStack itemO = inventoryItemStacks.get(i);
-			if (!ItemStack.areItemStacksEqual(itemO, itemN)) {
+			send: {
+				if (ItemStack.areItemStacksEqual(itemO, itemN)) break send;
 				boolean send = !ItemStack.areItemStacksEqualUsingNBTShareTag(itemN, itemO);
 				itemO = itemN.isEmpty() ? ItemStack.EMPTY : itemN.copy();
 				inventoryItemStacks.set(i, itemO);
-				if (!send) continue;
+				if (!send) break send;
 				int p = IntArrays.binarySearch(syncList, 0, n, i);
 				if (p >= 0) sss.set(p + o, itemO);
 				else for (IContainerListener listener : this.listeners)
-						listener.sendSlotContents(this, i, itemO);
+					listener.sendSlotContents(this, i, itemO);
+				continue;
+			}
+			if (init) {
+				int p = IntArrays.binarySearch(syncList, 0, n, i);
+				if (p >= 0) sss.set(p + o, itemN);
 			}
 		}
 	}

@@ -33,7 +33,7 @@ public class StateSyncServer extends StateSynchronizer {
 	public final PacketBuffer buffer;
 	private final int varCount, fixCount;
 	private int elIdx = -1;
-	private boolean sendAll = true;
+	public boolean sendAll = true;
 
 	public StateSyncServer(int count, int... sizes) {
 		super(count, sizes);
