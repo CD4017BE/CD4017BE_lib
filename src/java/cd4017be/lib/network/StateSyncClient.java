@@ -3,14 +3,11 @@ package cd4017be.lib.network;
 import java.io.IOException;
 import java.util.BitSet;
 import java.util.UUID;
-
+import cd4017be.lib.util.ItemFluidUtil;
 import li.cil.oc.common.block.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.fluids.Fluid;
-import net.minecraftforge.fluids.FluidRegistry;
 import net.minecraftforge.fluids.FluidStack;
 
 /**
@@ -235,18 +232,8 @@ public class StateSyncClient extends StateSynchronizer {
 	 * @return new value
 	 */
 	public FluidStack get(FluidStack old) throws IOException {
-		if (changes.get(++elIdx)) {
-			PacketBuffer buf = buffer;
-			String s = buf.readString(32767);
-			if (s.isEmpty()) return null;
-			int n = buf.readInt();
-			NBTTagCompound tag = buf.readCompoundTag();
-			Fluid fluid = FluidRegistry.getFluid(s);
-			if (fluid == null) return null;
-			FluidStack stack = new FluidStack(fluid, n);
-			stack.tag = tag;
-			return stack;
-		}
+		if (changes.get(++elIdx))
+			return ItemFluidUtil.readFluidStack(buffer);
 		return old;
 	}
 

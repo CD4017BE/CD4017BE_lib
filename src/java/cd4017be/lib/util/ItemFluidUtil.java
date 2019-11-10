@@ -1,5 +1,6 @@
 package cd4017be.lib.util;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.function.ToIntFunction;
@@ -13,8 +14,11 @@ import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraftforge.fluids.Fluid;
+import net.minecraftforge.fluids.FluidRegistry;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidUtil;
 import net.minecraftforge.fluids.capability.IFluidHandler;
@@ -320,6 +324,28 @@ public class ItemFluidUtil {
 		if (stack.isEmpty()) return;
 		EntityItem ei = new EntityItem(world, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, stack);
 		world.spawnEntity(ei);
+	}
+
+	public static void writeFluidStack(PacketBuffer buf, FluidStack stack) {
+		if (stack == null) {
+			buf.writeString("");
+			return;
+		}
+		buf.writeString(FluidRegistry.getFluidName(stack));
+		buf.writeInt(stack.amount);
+		buf.writeCompoundTag(stack.tag);
+	}
+
+	public static FluidStack readFluidStack(PacketBuffer buf) throws IOException {
+		String s = buf.readString(32767);
+		if (s.isEmpty()) return null;
+		int n = buf.readInt();
+		NBTTagCompound tag = buf.readCompoundTag();
+		Fluid fluid = FluidRegistry.getFluid(s);
+		if (fluid == null) return null;
+		FluidStack stack = new FluidStack(fluid, n);
+		stack.tag = tag;
+		return stack;
 	}
 
 }

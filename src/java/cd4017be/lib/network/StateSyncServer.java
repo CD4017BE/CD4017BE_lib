@@ -3,14 +3,13 @@ package cd4017be.lib.network;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.UUID;
-
+import cd4017be.lib.util.ItemFluidUtil;
 import io.netty.buffer.Unpooled;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.fluids.FluidRegistry;
 import net.minecraftforge.fluids.FluidStack;
 
 /**
@@ -313,12 +312,9 @@ public class StateSyncServer extends StateSynchronizer {
 					nbt = item.getNBTShareTag(stack);
 				buffer.writeCompoundTag(nbt);
 			}
-		} else if (v instanceof FluidStack) {
-			FluidStack stack = (FluidStack)v;
-			buffer.writeString(FluidRegistry.getFluidName(stack));
-			buffer.writeInt(stack.amount);
-			buffer.writeCompoundTag(stack.tag);
-		} else throw new IllegalArgumentException("invalid element type!");
+		} else if (v instanceof FluidStack)
+			ItemFluidUtil.writeFluidStack(buffer, (FluidStack)v);
+		else throw new IllegalArgumentException("invalid element type!");
 		if (i >= 0) set(i);
 		return this;
 	}
