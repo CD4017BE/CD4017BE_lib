@@ -316,8 +316,9 @@ public class AdvancedContainer extends Container implements IServerPacketReceive
 		 * update state from synchronizer
 		 * @param state synchronizer
 		 * @param cont the open container
+		 * @throws Exception potential decoding error
 		 */
-		void readState(StateSyncClient state, AdvancedContainer cont);
+		void readState(StateSyncClient state, AdvancedContainer cont) throws Exception;
 
 		/**
 		 * when a GUI action packet is received at server side
