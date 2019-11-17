@@ -18,17 +18,20 @@ import net.minecraftforge.common.capabilities.Capability;
 public class BlockReference {
 
 	private static final WeakReference<World> NULL = new WeakReference<>(null);
+	public static int INIT_LIFESPAN = 16;
 
 	private WeakReference<World> world;
 	public final int dim;
 	public final BlockPos pos;
 	public final EnumFacing face;
+	public final int lifespan;
 
 	public BlockReference(NBTTagCompound nbt) {
 		this.world = NULL;
 		this.pos = new BlockPos(nbt.getInteger("x"), nbt.getInteger("y"), nbt.getInteger("z"));
 		this.face = EnumFacing.VALUES[(nbt.getByte("f") & 0xff) % 6];
 		this.dim = nbt.getInteger("d");
+		this.lifespan = nbt.getByte("t") & 0xff;
 	}
 
 	public BlockReference(World world, BlockPos pos, EnumFacing face) {
@@ -36,6 +39,15 @@ public class BlockReference {
 		this.pos = pos;
 		this.face = face;
 		this.dim = world.provider.getDimension();
+		this.lifespan = INIT_LIFESPAN;
+	}
+
+	private BlockReference(int dim, BlockPos pos, EnumFacing face, int lifespan) {
+		this.world = NULL;
+		this.pos = pos;
+		this.face = face;
+		this.dim = dim;
+		this.lifespan = lifespan;
 	}
 
 	/**
@@ -89,6 +101,7 @@ public class BlockReference {
 		nbt.setInteger("y", pos.getY());
 		nbt.setInteger("z", pos.getZ());
 		nbt.setInteger("d", dim);
+		nbt.setByte("t", (byte)lifespan);
 		return nbt;
 	}
 
@@ -100,7 +113,23 @@ public class BlockReference {
 	public static boolean equal(BlockReference a, BlockReference b) {
 		if (a == b) return true;
 		if (a == null || b == null) return false;
-		return a.pos.equals(b.pos) && a.face == b.face && a.dim == b.dim;
+		return a.pos.equals(b.pos) && a.face == b.face && a.dim == b.dim && a.lifespan == b.lifespan;
+	}
+
+	public static boolean equalDelayed(BlockReference a, BlockReference b, int ticks) {
+		if (a == null || a.lifespan - ticks <= 0) return b == null;
+		if (b == null) return false;
+		return a.pos.equals(b.pos) && a.face == b.face && a.dim == b.dim && a.lifespan - ticks == b.lifespan;
+	}
+
+	/**
+	 * @param ref
+	 * @param ticks
+	 * @return ref delayed by given number of ticks (null if becomes invalid)
+	 */
+	public static BlockReference delayed(BlockReference ref, int ticks) {
+		return ref == null || ref.lifespan <= ticks ? null
+			: new BlockReference(ref.dim, ref.pos, ref.face, ref.lifespan - ticks);
 	}
 
 	/**
