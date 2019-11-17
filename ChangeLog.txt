@@ -1,3 +1,16 @@
+v6.4.14
+Changes:
+- fixed vertical sliders
+- fixed formatted text disappearing behind background sprites
+- fixed packet decoding bugs in State Synchronizer
+- implemented Holo Slots in new container system
+- added Fluid utilities including IFluidHandler implementation for fluid block interaction
+- limited BlockReference life span to prevent loop capture exploits [Redstone Control]
+
+Dependencies:
+- for MC-1.12.2
+- forge-14.23.5.2768 (or newer)
+
 v6.4.13
 Changes:
 - fix potential null-pointer crash when TileEntity added during world tick
