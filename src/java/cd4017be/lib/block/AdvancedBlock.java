@@ -405,6 +405,7 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 			BlockFaceShape shape = cover.getBlockFaceShape(world, pos, side);
 			if (shape != BlockFaceShape.UNDEFINED) return shape;
 		}
+		if (box == NULL_AABB) return BlockFaceShape.UNDEFINED;
 		double radA = 1.0, radB = 1.0;
 		int o = 3 - (side.ordinal() >> 1);
 		for (EnumFacing f : EnumFacing.values()) {
