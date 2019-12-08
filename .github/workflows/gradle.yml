@@ -20,3 +20,8 @@ jobs:
       run: ./gradlew setupCiWorkspace
     - name: Build with Gradle
       run: ./gradlew build
+    - name: Release Package
+      run: ./gradlew publish
+      env:
+        USERNAME: CD4017BE
+        PASSWORD: ${{ secrets.GITHUB_TOKEN }}

@@ -10,6 +10,11 @@ buildscript {
         classpath "net.minecraftforge.gradle:ForgeGradle:${snapshot}-SNAPSHOT"
     }
 }
+
+plugins {
+    id("maven-publish")
+}
+
 apply plugin: 'net.minecraftforge.gradle.forge'
 
 /*
@@ -121,3 +126,22 @@ jar {
 	    attributes 'FMLAT': 'cd4017be_lib_at.cfg'
 	}
 }
+
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/cd4017be/cd4017be_lib")
+            credentials {
+                username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
+                password = project.findProperty("gpr.key") ?: System.getenv("PASSWORD")
+            }
+        }
+    }
+    publications {
+        gpr(MavenPublication) {
+            from(components.java)
+        }
+    }
+}
+
