@@ -18,8 +18,6 @@ jobs:
         java-version: 1.8
     - name: Setup Forge Gradle
       run: ./gradlew setupCiWorkspace
-    - name: Build with Gradle
-      run: ./gradlew build
     - name: Release Package
       run: ./gradlew publish
       env:

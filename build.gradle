@@ -57,6 +57,7 @@ task deobfJar(type: Jar) {
 }
 
 tasks.build.dependsOn('sourceJar', 'deobfJar')
+tasks.publish.dependsOn('build')
 
 processResources {
     from (sourceSets.main.resources.srcDirs)
@@ -140,7 +141,9 @@ publishing {
     }
     publications {
         gpr(MavenPublication) {
-            from(components.java)
+            artifact jar
+            artifact deobfJar
+            artifact sourceJar
         }
     }
 }
