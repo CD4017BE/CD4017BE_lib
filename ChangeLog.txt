@@ -1,3 +1,13 @@
+v6.4.15
+Changes:
+- fix NullPointer when computing BlockFaceShape of empty boundingBox
+- fix IndexedSet insertion to same index as before
+- added more control over zero trimming and sign in unit scale formatting
+
+Dependencies:
+- for MC-1.12.2
+- forge-14.23.5.2768 (or newer)
+
 v6.4.14
 Changes:
 - fixed vertical sliders
