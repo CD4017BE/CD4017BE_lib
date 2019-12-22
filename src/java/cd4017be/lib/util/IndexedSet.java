@@ -192,13 +192,13 @@ public class IndexedSet<E extends IndexedSet.IndexedElement> extends AbstractLis
 	public void add(int i, E e) {
 		int j = indexOf(e);
 		if (j >= 0) {
+			if (j == i) return;
 			E e_ = array[i];
 			e_.setIdx(j);
 			array[j] = e_;
 			e.setIdx(i);
 			array[i] = e;
-		}
-		if (i == count) add(e);
+		} else if (i == count) add(e);
 		else add(set(i, e));
 	}
 

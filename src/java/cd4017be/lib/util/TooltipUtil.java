@@ -1,6 +1,7 @@
 package cd4017be.lib.util;
 
 import java.text.DecimalFormatSymbols;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.IllegalFormatException;
 import java.util.Map.Entry;
@@ -228,8 +229,9 @@ public class TooltipUtil {
 		return I18n.canTranslate(s) || editor != null && editor.hasEdited(s);
 	}
 
-	private static final String[] DecScale  = {"a", "f", "p", "n", "u", "m", "", "k", "M", "G", "T", "P", "E"};
-	private static final int ofsDecScale = 6;
+	private static final String[] DecScale =   {"a"  , "f"  , "p"  , "n" , "u" , "m" , "" , "k", "M", "G", "T" , "P" , "E" };
+	public static final double[] ScaleUnits = {1e-18, 1e-15, 1e-12, 1e-9, 1e-6, 1e-3, 1e0, 1e3, 1e6, 1e9, 1e12, 1e15, 1e18, 1e21};
+	public static final double[] exp10 = {1, 10, 100, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11, 1e12, 1e13, 1e14, 1e15};
 
 	/**
 	 * @param x number
@@ -237,23 +239,55 @@ public class TooltipUtil {
 	 * @param c clip below exponent of 10
 	 * @return formatted number
 	 */
-	public static String formatNumber(double x, int w, int c)
-	{
-		double s = Math.signum(x);
-		if (x == 0 || Double.isNaN(x) || Double.isInfinite(x)) return "" + x;
-		int o = (int)Math.floor(Math.log10(x * s)) + 3 * ofsDecScale;
-		int p = (o + c) / 3;
-		int n = Math.max(0, w - o + p * 3 - 1);
-		if (p < 0) return "0";
-		else if (p > DecScale.length) return "" + (s == -1 ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY);
-		x *= Math.pow(0.001, p - ofsDecScale);
-		String tex = String.format("%." + n + "f", x);
-		String ds = "" + DecimalFormatSymbols.getInstance().getDecimalSeparator();
-		if (tex.contains(ds)) {
-			while(tex.endsWith("0")) tex = tex.substring(0, tex.length() - 1);
-			if (tex.endsWith(ds)) tex = tex.substring(0, tex.length() - 1);
+	public static String formatNumber(double x, int w, int c) {
+		return formatNumber(x, w, c < 0 ? 1.0 / exp10[-c] : exp10[c], false, true);
+	}
+
+	/**
+	 * @param x number
+	 * @param w significant digits
+	 * @param c minimum integral part
+	 * @param sign include positive sign
+	 * @param trim remove leading & trailing zeroes
+	 * @return formatted number
+	 */
+	public static String formatNumber(double x, int w, double c, boolean sign, boolean trim) {
+		if (w < 0 || w >= exp10.length) throw new IllegalArgumentException("invalid width " + w);
+		if (Double.isNaN(x)) return "NaN";
+		StringBuilder sb = new StringBuilder(w + 3);
+		//sign
+		if (x < 0) {
+			sb.append('-');
+			x = -x;
+		} else if (sign)
+			sb.append('+');
+		//scale factor
+		int i = Arrays.binarySearch(ScaleUnits, x / c);
+		if (i < 0) i = -2 - i;
+		if (i < 0) return sb.append('0').toString();
+		if (i >= DecScale.length) return sb.append("Infinity").toString();
+		x /= ScaleUnits[i];
+		//integral digits
+		int y = (int)Math.floor(x);
+		w += sb.length();
+		int p = sb.append(y).length();
+		w -= p;
+		x -= y;
+		//fractal digits
+		if (w > 0) {
+			x *= exp10[w];
+			for (y = (int)Math.round(x); w > 0; w--) {
+				int z = y / 10;
+				if (!((y -= z * 10) == 0 && trim)) {
+					sb.insert(p, (char)('0' + y));
+					trim = false;
+				}
+				y = z;
+			}
 		}
-		return tex + DecScale[p];
+		if (!trim) sb.insert(p, '.');
+		//scale unit
+		return sb.append(DecScale[i]).toString();
 	}
 
 	/**
