@@ -7,6 +7,7 @@ import java.util.function.ObjIntConsumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import cd4017be.lib.Lib;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.ResourceLocation;
 
 /** A sub Frame that lets the user choose a file.
@@ -43,6 +44,7 @@ implements ObjIntConsumer<GuiList>, Supplier<String>, Consumer<String> {
 
 	@Override
 	public void drawBackground(int mx, int my, float t) {
+		GlStateManager.disableDepth();
 		super.drawBackground(mx, my, t);
 		String path = dir.getPath() + "/";
 		if(fontRenderer.getStringWidth(path) > w - 16)
@@ -50,6 +52,7 @@ implements ObjIntConsumer<GuiList>, Supplier<String>, Consumer<String> {
 				path, w - 16 - fontRenderer.getStringWidth("..."), true
 			);
 		fontRenderer.drawString(path, x + 8, y + 16, 0xff202020);
+		GlStateManager.enableDepth();
 	}
 
 	/** close this sub Frame */
