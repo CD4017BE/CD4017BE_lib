@@ -70,6 +70,7 @@ public class StateSyncServer extends StateSynchronizer {
 	 */
 	public StateSyncServer begin() {
 		buffer.clear();
+		changes.clear();
 		elIdx = -1;
 		return this;
 	}
@@ -86,7 +87,6 @@ public class StateSyncServer extends StateSynchronizer {
 			l = buffer.readableBytes();
 			chng.set(1, count + 1);
 		} else {
-			chng.clear();
 			byte[] arr0 = buffer.array(), arr1 = lastFix;
 			int i0 = buffer.arrayOffset(), i1 = 0;
 			l = buffer.readableBytes();
@@ -112,7 +112,7 @@ public class StateSyncServer extends StateSynchronizer {
 	 * @return the synchronization packet to be send to {@link StateSyncClient#decodePacket(PacketBuffer)} or null if there are no changes to send
 	 */
 	public PacketBuffer encodePacket() {
-		if (elIdx < 0) endFixed();
+		if (elIdx < 0 && buffer.readableBytes() > 0) endFixed();
 		BitSet chng = changes;
 		int cc = chng.cardinality();
 		if (cc == 0) return null;
