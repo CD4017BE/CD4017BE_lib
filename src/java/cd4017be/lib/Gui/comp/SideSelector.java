@@ -9,6 +9,7 @@ import javax.annotation.Nullable;
 
 import cd4017be.lib.Gui.ModularGui;
 import cd4017be.lib.util.TooltipUtil;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.EnumFacing;
 
 /**
@@ -85,7 +86,10 @@ public class SideSelector extends GuiCompBase<GuiCompGroup> {
 				s = s.substring(0, s.length()-1) + (side == null ? "0" : "1");
 			parent.drawTooltip(TooltipUtil.format(s, TooltipUtil.translate("enumfacing." + side)), mx, my);
 		}
+		GlStateManager.pushMatrix();
+		GlStateManager.translate(gui.getGuiLeft(), gui.getGuiTop(), 0);
 		gui.drawSideConfig(side, type);
+		GlStateManager.popMatrix();
 	}
 
 	@Override
