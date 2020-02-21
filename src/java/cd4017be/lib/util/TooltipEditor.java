@@ -126,7 +126,7 @@ public class TooltipEditor {
 					cursor = cursor2 = editingValue.length();
 					editingKey = key;
 					ofs = 0;
-					TooltipUtil.altOverride = GuiScreen.isAltKeyDown();
+					TooltipUtil.altOverride = GuiScreen.isCtrlKeyDown();
 					TooltipUtil.shiftOverride = GuiScreen.isShiftKeyDown();
 					TooltipUtil.overrideModifiers = true;
 				}
@@ -299,6 +299,7 @@ public class TooltipEditor {
 		int n = changes.size();
 		ArrayList<String> entries = new ArrayList<String>();
 		String lineSep = System.setProperty("line.separator", "\r\n");
+		boolean hasAnot = false;
 		try {
 			for (String l : Files.readAllLines(file)) {
 				if (!l.isEmpty() && l.charAt(0) != '#') {
@@ -309,12 +310,12 @@ public class TooltipEditor {
 						String value = changes.remove(key);
 						if (value != null) l = l.substring(0, p + 1) + escape(value);
 					}
-				}
+				} else if (l.startsWith("#added by ingame editor:")) hasAnot = true;
 				entries.add(l);
 			}
 			if ((n -= changes.size()) > 0) FMLLog.log("tooltipEditor", Level.INFO, "%d lang entries were changed", n);
 			if (!changes.isEmpty()) {
-				entries.add("#added by ingame editor:");
+				if (!hasAnot) entries.add("#added by ingame editor:");
 				for (Entry<String, String> e : changes.entrySet())
 					entries.add(escape(e.getKey()) + "=" + escape(e.getValue()));
 				FMLLog.log("tooltipEditor", Level.INFO, "%d lang entries were added", changes.size());
