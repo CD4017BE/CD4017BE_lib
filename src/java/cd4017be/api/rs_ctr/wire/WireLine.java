@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.function.Consumer;
 
 import cd4017be.api.rs_ctr.port.IConnector;
+import cd4017be.api.rs_ctr.port.IIntegratedConnector;
 import cd4017be.api.rs_ctr.port.MountedPort;
 import cd4017be.api.rs_ctr.port.Port;
 
@@ -48,7 +49,10 @@ public class WireLine implements Collection<MountedPort> {
 		if (!lp.isMaster ^ port.isMaster) return null;
 		if (lp instanceof MountedPort) {
 			c = ((MountedPort)lp).getConnector();
-			if (!(c instanceof IWiredConnector && ((IWiredConnector)c).isLinked(port))) return null;
+			if (c instanceof IIntegratedConnector)
+				return ((IIntegratedConnector)c).getLinkedWith(port);
+			if (!(c instanceof IWiredConnector && ((IWiredConnector)c).isLinked(port)))
+				return null;
 		}
 		return lp;
 	}
