@@ -1,20 +1,11 @@
 package cd4017be.api.rs_ctr.port;
 
+/** implement on a Connector to support tagging with the Wire Tag.
+ * @author CD4017BE */
+public interface ITagableConnector {
 
-/**
- * @author CD4017BE
- *
- */
-public interface ITagableConnector extends IConnector {
-
-	public void setTag(MountedPort port, String tag);
+	public void setTag(String tag);
 
 	public String getTag();
-
-	@Override
-	default String displayInfo(MountedPort port, int linkID) {
-		String tag = getTag();
-		return tag != null ? "\n\u00a7e" + tag : IConnector.super.displayInfo(port, linkID);
-	}
 
 }

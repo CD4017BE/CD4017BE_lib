@@ -5,13 +5,10 @@ import java.util.function.BiFunction;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import cd4017be.api.rs_ctr.port.IConnector;
 import cd4017be.api.rs_ctr.port.IPortProvider;
-import cd4017be.api.rs_ctr.port.ITagableConnector;
 import cd4017be.api.rs_ctr.port.MountedPort;
 import cd4017be.api.rs_ctr.port.Port;
-import cd4017be.api.rs_ctr.wire.IWiredConnector.IWiredConnectorItem;
-import cd4017be.api.rs_ctr.wire.WireLine.WireLoopException;
+import cd4017be.api.rs_ctr.wire.WiredConnector.IWiredConnectorItem;
 import cd4017be.lib.util.Orientation;
 import cd4017be.lib.util.TooltipUtil;
 import net.minecraft.entity.player.EntityPlayer;
@@ -70,10 +67,8 @@ public abstract class RelayPort extends MountedPort {
 	@Override
 	public <T> void addRenderComps(List<T> list, Class<T> type) {
 		super.addRenderComps(list, type);
-		if (type.isInstance(opposite.connector)) {
+		if (type.isInstance(opposite.connector))
 			list.add(type.cast(opposite.connector));
-			opposite.connector.setPort(opposite);
-		}
 	}
 
 	@Override
@@ -94,49 +89,20 @@ public abstract class RelayPort extends MountedPort {
 
 	@Override
 	public void connect(Port to) {
-		WireLine line;
-		try {line = new WireLine(this);}
-		catch (WireLoopException e) {return;}
-		if (line.source == null || line.sink == null || !line.contains(to) || !line.checkTypes()) return;
-		
-		String label = null;
-		for (MountedPort p : line) {
-			IConnector con = p.getConnector();
-			label = con instanceof ITagableConnector ? ((ITagableConnector)con).getTag() : null;
-			if (label != null) break;
-		}
-		String label_ = label;
-		line.forEach((c)-> {
-			IConnector cn = c.getConnector();
-			if (cn instanceof ITagableConnector)
-				((ITagableConnector)cn).setTag(c, label_);
-		});
-		
-		line.source.connect(line.sink);
-		int id = line.source.getLink();
-		for (RelayPort rp : line.hooks) {
-			rp.linkID = id;
-			rp.owner.onPortModified(rp, IPortProvider.E_CONNECT);
-		}
+		linkID = to.getLink();
+		owner.onPortModified(this, IPortProvider.E_CONNECT);
 	}
 
 	@Override
 	public void disconnect() {
-		WireLine line;
-		try {line = new WireLine(this);}
-		catch (WireLoopException e) {return;}
-		if (line.source != null) line.source.disconnect();
-		else if (line.sink != null) line.sink.disconnect();
-		for (RelayPort rp : line.hooks) {
-			rp.linkID = 0;
-			rp.owner.onPortModified(rp, IPortProvider.E_DISCONNECT);
-		}
+		linkID = 0;
+		owner.onPortModified(this, IPortProvider.E_DISCONNECT);
 	}
 
 	@Override
 	public void onLoad() {
-		if (this.connector != null) this.connector.onLoad(this);
-		if (opposite.connector != null) opposite.connector.onLoad(this);
+		if (this.connector != null) this.connector.onLoad();
+		if (opposite.connector != null) opposite.connector.onLoad();
 	}
 
 	@Override

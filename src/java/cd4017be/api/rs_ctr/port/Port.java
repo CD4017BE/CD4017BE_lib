@@ -57,6 +57,12 @@ public class Port implements INBTSerializable<NBTTagCompound>, Comparable<Object
 	}
 
 	/**
+	 * this gets called on two linked ports as soon as both became loaded.
+	 * @param link the port linked to this
+	 */
+	protected void onLinkLoad(Port link) {}
+
+	/**
 	 * make the port unavailable to game interactions.
 	 * <b>Important: you must call this when the owner becomes unavailable (destroyed or chunk unload) to avoid memory leaks or stuff interacting with dead objects!</b>
 	 */

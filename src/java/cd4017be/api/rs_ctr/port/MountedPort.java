@@ -7,7 +7,7 @@ import javax.annotation.Nullable;
 import org.apache.commons.lang3.tuple.Pair;
 
 import cd4017be.api.rs_ctr.interact.IInteractiveComponent;
-import cd4017be.api.rs_ctr.port.IConnector.IConnectorItem;
+import cd4017be.api.rs_ctr.port.Connector.IConnectorItem;
 import cd4017be.lib.util.Orientation;
 import cd4017be.lib.util.TooltipUtil;
 import net.minecraft.entity.player.EntityPlayer;
@@ -33,7 +33,7 @@ public class MountedPort extends Port implements IInteractiveComponent {
 	/**the side from which wires are connected */
 	public EnumFacing face = EnumFacing.NORTH;
 	/**the connection attached to this port */
-	protected IConnector connector;
+	protected Connector connector;
 
 	/**
 	 * @param owner
@@ -57,7 +57,7 @@ public class MountedPort extends Port implements IInteractiveComponent {
 		if (connector != null) {
 			World world = getWorld();
 			if (world != null && !world.isRemote)
-				connector.onPortMove(this);
+				connector.onPortMove();
 		}
 		return this;
 	}
@@ -71,14 +71,8 @@ public class MountedPort extends Port implements IInteractiveComponent {
 	 * @return this
 	 */
 	public MountedPort setLocation(double x, double y, double z, EnumFacing face, Orientation o) {
-		this.pos = o.rotate(new Vec3d(x - 0.5F, y - 0.5F, z - 0.5F)).addVector(0.5, 0.5, 0.5);
-		this.face = o.rotate(face);
-		if (connector != null) {
-			World world = getWorld();
-			if (world != null && !world.isRemote)
-				connector.onPortMove(this);
-		}
-		return this;
+		Vec3d vec = o.rotate(new Vec3d(x - 0.5F, y - 0.5F, z - 0.5F));
+		return setLocation(vec.x + 0.5, vec.y + 0.5, vec.z + 0.5, o.rotate(face));
 	}
 
 	/**
@@ -117,7 +111,7 @@ public class MountedPort extends Port implements IInteractiveComponent {
 		return false;
 	}
 
-	public IConnector getConnector() {
+	public Connector getConnector() {
 		return connector;
 	}
 
@@ -125,27 +119,25 @@ public class MountedPort extends Port implements IInteractiveComponent {
 	 * @param c new connector
 	 * @param by player responsible for change
 	 */
-	public void setConnector(@Nullable IConnector c, @Nullable EntityPlayer by) {
+	public void setConnector(@Nullable Connector c, @Nullable EntityPlayer by) {
 		if (connector == c) return;
-		IConnector old = connector; connector = c;
+		Connector old = connector; connector = c;
 		int ev = 0;
 		if (old != null) {
 			old.onUnload();
-			old.onRemoved(this, by);
+			old.onRemoved(by);
 			ev |= IPortProvider.E_CON_REM;
 		}
 		if (c != null) {
-			c.onLoad(this);
+			c.onLoad();
 			ev |= IPortProvider.E_CON_ADD;
 		}
 		owner.onPortModified(this, ev);
 	}
 
 	public <T> void addRenderComps(List<T> list, Class<T> type) {
-		if (type.isInstance(connector)) {
+		if (type.isInstance(connector))
 			list.add(type.cast(connector));
-			connector.setPort(this);
-		}
 	}
 
 	/**
@@ -167,19 +159,24 @@ public class MountedPort extends Port implements IInteractiveComponent {
 	@Override
 	public void deserializeNBT(NBTTagCompound nbt) {
 		super.deserializeNBT(nbt);
-		connector = IConnector.load(nbt.getCompoundTag("con"));
+		connector = Connector.load(nbt.getCompoundTag("con"), this);
 	}
 
 	@Override
 	public void onLoad() {
 		super.onLoad();
-		if (connector != null) connector.onLoad(this);
+		if (connector != null) connector.onLoad();
 	}
 
 	@Override
 	public void onUnload() {
 		super.onUnload();
 		if (connector != null) connector.onUnload();
+	}
+
+	@Override
+	protected void onLinkLoad(Port link) {
+		if (connector != null) connector.onLinkLoad(link);
 	}
 
 }

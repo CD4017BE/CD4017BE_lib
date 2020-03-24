@@ -6,74 +6,58 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.function.Consumer;
 
-import cd4017be.api.rs_ctr.port.IConnector;
-import cd4017be.api.rs_ctr.port.IIntegratedConnector;
+import cd4017be.api.rs_ctr.port.Connector;
 import cd4017be.api.rs_ctr.port.MountedPort;
-import cd4017be.api.rs_ctr.port.Port;
 
 /**
  * Parses a connected signal wire line from a given starting point.
  * @author cd4017be
  */
-public class WireLine implements Collection<MountedPort> {
+public class WireLine implements Collection<WiredConnector> {
 
 	/**start/end point of the connection (may be null if not a fully closed connection) */
-	public final Port source, sink;
+	public final WiredConnector source, sink;
 	/**list of all wire hooks in order source to sink */
-	public final RelayPort[] hooks;
+	public final WiredConnector[] hooks;
 
 	/**
 	 * Parses the connection of the given port.
 	 * @param port
 	 * @throws WireLoopException if the ports are connected in a loop
 	 */
-	public WireLine(MountedPort port) throws WireLoopException {
-		ArrayDeque<RelayPort> list = new ArrayDeque<>();
-		Port p0 = scan(port, list);
-		Port p1 = port instanceof RelayPort ? scan(((RelayPort)port).opposite, list) : port;
-		if (port.isMaster) {
+	public WireLine(WiredConnector con) throws WireLoopException {
+		ArrayDeque<WiredConnector> list = new ArrayDeque<>();
+		WiredConnector p0 = scan(con, list);
+		WiredConnector p1 = con.port instanceof RelayPort ? scan((WiredConnector)((RelayPort)con.port).opposite.getConnector(), list) : con;
+		if (con.conBeacon.isMaster) {
 			this.source = p1;
 			this.sink = p0;
 		} else {
 			this.source = p0;
 			this.sink = p1;
 		}
-		this.hooks = list.toArray(new RelayPort[list.size()]);
+		this.hooks = list.toArray(new WiredConnector[list.size()]);
 	}
 
-	private static Port getLink(MountedPort port) {
-		IConnector c = port.getConnector();
-		if (!(c instanceof IWiredConnector)) return null;
-		IWiredConnector con = (IWiredConnector)c;
-		Port lp = con.getLinkPort(port);
-		if (!lp.isMaster ^ port.isMaster) return null;
-		if (lp instanceof MountedPort) {
-			c = ((MountedPort)lp).getConnector();
-			if (c instanceof IIntegratedConnector)
-				return ((IIntegratedConnector)c).getLinkedWith(port);
-			if (!(c instanceof IWiredConnector && ((IWiredConnector)c).isLinked(port)))
-				return null;
+	private static WiredConnector scan(WiredConnector con, ArrayDeque<WiredConnector> list) throws WireLoopException {
+		if (con == null) return null;
+		boolean dir = con.conBeacon.isMaster;
+		if (con.port instanceof RelayPort)
+			if (dir) list.addLast(con);
+			else list.addFirst(con);
+		WiredConnector con1;
+		while ((con1 = con.getLink()) != null && con1.port instanceof RelayPort) {
+			if (list.contains(con1)) throw new WireLoopException();
+			if (dir) list.addLast(con1);
+			else list.addFirst(con1);
+			RelayPort sr = ((RelayPort)con1.port).opposite;
+			Connector c = sr.getConnector();
+			if (!(c instanceof WiredConnector)) return null;
+			con = (WiredConnector)c;
+			if (dir) list.addLast(con);
+			else list.addFirst(con);
 		}
-		return lp;
-	}
-
-	private static Port scan(MountedPort mport, ArrayDeque<RelayPort> list) throws WireLoopException {
-		boolean dir = mport.isMaster;
-		if (mport instanceof RelayPort && mport.getConnector() != null)
-			if (dir) list.addLast((RelayPort)mport);
-			else list.addFirst((RelayPort)mport);
-		Port port;
-		while ((port = getLink(mport)) instanceof RelayPort) {
-			RelayPort sr = (RelayPort)port;
-			if (list.contains(sr)) throw new WireLoopException();
-			if (dir) list.addLast(sr);
-			else list.addFirst(sr);
-			mport = sr = sr.opposite;
-			if (sr.getConnector() == null) return null;
-			if (dir) list.addLast(sr);
-			else list.addFirst(sr);
-		}
-		return port;
+		return con1;
 	}
 
 	/**
@@ -81,14 +65,14 @@ public class WireLine implements Collection<MountedPort> {
 	 */
 	public boolean checkTypes() {
 		Class<?> type = null;
-		if (source != null) type = source.type;
+		if (source != null) type = source.getComPort().type;
 		if (sink != null) {
-			if (type == null) type = sink.type;
-			else if (sink.type != type) return false;
+			if (type == null) type = sink.getComPort().type;
+			else if (sink.getComPort().type != type) return false;
 		}
 		if (type == null) return true;
-		for (RelayPort port : hooks)
-			if (!((IWiredConnector)port.getConnector()).isCompatible(type))
+		for (WiredConnector con : hooks)
+			if (!con.isCompatible(type))
 				return false;
 		return true;
 	}
@@ -108,12 +92,12 @@ public class WireLine implements Collection<MountedPort> {
 
 	@Override
 	public boolean contains(Object port) {
-		if (port instanceof RelayPort) {
-			for (RelayPort sr : hooks)
+		if (port instanceof WiredConnector) {
+			for (WiredConnector sr : hooks)
 				if (sr == port) return true;
-			return false;
+			return port == source || port == sink;
 		}
-		return port == source || port == sink;
+		return false;
 	}
 
 	@Override
@@ -125,10 +109,10 @@ public class WireLine implements Collection<MountedPort> {
 	}
 
 	@Override
-	public Iterator<MountedPort> iterator() {
-		return new Iterator<MountedPort>() {
-			int i = source instanceof MountedPort ? -1 : 0;
-			int n = hooks.length + (sink instanceof MountedPort ? 1 : 0);
+	public Iterator<WiredConnector> iterator() {
+		return new Iterator<WiredConnector>() {
+			int i = source != null ? -1 : 0;
+			int n = hooks.length + (sink != null ? 1 : 0);
 
 			@Override
 			public boolean hasNext() {
@@ -136,21 +120,19 @@ public class WireLine implements Collection<MountedPort> {
 			}
 
 			@Override
-			public MountedPort next() {
+			public WiredConnector next() {
 				int j = i++;
-				return j < 0 ? (MountedPort)source : j < hooks.length ? hooks[j] : (MountedPort)sink;
+				return j < 0 ? source : j < hooks.length ? hooks[j] : sink;
 			}
 		};
 	}
 
 	@Override
-	public void forEach(Consumer<? super MountedPort> action) {
-		if (source instanceof MountedPort)
-			action.accept((MountedPort)source);
-		for (RelayPort port : hooks)
-			action.accept(port);
-		if (sink instanceof MountedPort)
-			action.accept((MountedPort)sink);
+	public void forEach(Consumer<? super WiredConnector> action) {
+		if (source != null) action.accept(source);
+		for (WiredConnector con : hooks)
+			action.accept(con);
+		if (sink != null) action.accept(sink);
 	}
 
 	@Override
@@ -171,7 +153,7 @@ public class WireLine implements Collection<MountedPort> {
 	}
 
 	@Override
-	public boolean add(MountedPort e) {
+	public boolean add(WiredConnector e) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -181,7 +163,7 @@ public class WireLine implements Collection<MountedPort> {
 	}
 
 	@Override
-	public boolean addAll(Collection<? extends MountedPort> c) {
+	public boolean addAll(Collection<? extends WiredConnector> c) {
 		throw new UnsupportedOperationException();
 	}
 
