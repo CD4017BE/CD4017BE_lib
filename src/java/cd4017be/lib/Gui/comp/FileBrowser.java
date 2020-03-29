@@ -73,6 +73,7 @@ implements ObjIntConsumer<GuiList>, Supplier<String>, Consumer<String> {
 
 	private void updateDir(GuiList t) {
 		File[] files = dir.listFiles();
+		if (files == null) files = new File[0];
 		String[] names = new String[files.length + 1];
 		names[0] = BACK;
 		int n = 1, j = 1;
