@@ -4,12 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cd4017be.api.IAbstractTile;
+import cd4017be.lib.Lib;
 import cd4017be.lib.block.OrientedBlock;
 import cd4017be.lib.util.Orientation;
 import cd4017be.lib.util.TooltipUtil;
 import cd4017be.lib.util.Utils;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.NetworkManager;
@@ -45,6 +47,15 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 
 	public IBlockState getBlockState() {
 		if (blockState == null) {
+			if (chunk == null) {
+				Lib.LOG.fatal("invalid TileEntity state: chunk = null, unloaded = {}, world = {}, pos = {}", unloaded, world, pos);
+				if (world != null)
+					chunk = world.getChunkProvider().getLoadedChunk(pos.getX() >> 4, pos.getZ() >> 4);
+				if (chunk == null) {
+					Lib.LOG.fatal("no world set or chunk not loaded -> can't provide BlockState, using air, may crash later on!");
+					return Blocks.AIR.getDefaultState();
+				}
+			}
 			blockState = chunk.getBlockState(pos);
 			blockType = blockState.getBlock();
 		}	
