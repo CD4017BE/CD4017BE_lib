@@ -1,8 +1,10 @@
 package cd4017be.lib.util;
 
+import java.util.ConcurrentModificationException;
 import java.util.List;
-
-import cd4017be.api.automation.IOperatingArea;
+import java.util.Map;
+import java.util.Map.Entry;
+import javax.annotation.Nullable;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
@@ -30,6 +32,8 @@ import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
  */
 public class MovedBlock {
 
+	public static final MovedBlock AIR = new MovedBlock(Blocks.AIR.getDefaultState(), null);
+
 	public final NBTTagCompound nbt;
 	public final IBlockState block;
 
@@ -38,57 +42,119 @@ public class MovedBlock {
 		this.nbt = tile;
 	}
 
-	public boolean set(World world, BlockPos pos) {
-		TileEntity tile = null;
-		//boolean multipart = false;
-		if (nbt != null) {
+	/**
+	 * Cut the given block out of the world and return its data.
+	 * TileEntities are removed as if their chunk just unloaded.
+	 * Note that the block itself is not set to air or anything else yet!
+	 * @param pos the block's position
+	 * @param addedTileEntities optional list of TileEntities already added via {@link #paste}
+	 * @return captured block data to {@link #paste} somewhere else
+	 * @throws ConcurrentModificationException if called during TileEntity update ticks!
+	 */
+	public static MovedBlock cut(DimPos pos, @Nullable Map<DimPos, NBTTagCompound> addedTileEntities) {
+		World world = pos.getWorldServer();//force load dimension
+		Chunk chunk = world.getChunkFromBlockCoords(pos);//force load chunk
+		NBTTagCompound nbt;
+		TileEntity te = chunk.getTileEntityMap().remove(pos);
+		if (te == null)
+			nbt = addedTileEntities != null ? addedTileEntities.remove(pos) : null;
+		else {
+			te.onChunkUnload();
+			world.loadedTileEntityList.remove(te);
+			world.tickableTileEntities.remove(te);
+			nbt = te.serializeNBT();
+		}
+		return new MovedBlock(chunk.getBlockState(pos), nbt);
+	}
+
+	/**
+	 * Paste a previously {@link #cut} block at the given position without any block physics updates.
+	 * TileEntities are added as if their chunk just loaded.
+	 * Any previous block at this position is overridden.
+	 * @param pos the position to paste at
+	 * @param addedTileEntities if given, TileEntities are not added to the world yet, but put here instead.
+	 * So they can be added all in one go later on.
+	 * @return whether the paste was successful (only fails for invalid coordinates or chunk data problems)
+	 */
+	public boolean paste(DimPos pos, @Nullable Map<DimPos, NBTTagCompound> addedTileEntities) {
+		World world = pos.getWorld();
+		if (world == null || !world.isValid(pos)) return false;
+		Chunk chunk = world.getChunkFromBlockCoords(pos);
+		IBlockState newState = block;
+		Block newBlock = newState.getBlock();
+		IBlockState oldState = chunk.getBlockState(pos);
+		Block oldBlock = oldState.getBlock();
+		int oldLight = oldState.getLightValue(world, pos);
+		int oldOpacity = oldState.getLightOpacity(world, pos);
+		
+		int x = pos.getX() & 15;
+		int y = pos.getY();
+		int z = pos.getZ() & 15;
+		int i = z << 4 | x;
+		
+		if (y >= chunk.precipitationHeightMap[i] - 1) chunk.precipitationHeightMap[i] = -999;
+		
+		if (oldState == newState) {
+			if (oldBlock.hasTileEntity(oldState)) world.removeTileEntity(pos);
+		} else {
+			ExtendedBlockStorage[] storageArrays = chunk.getBlockStorageArray();
+			ExtendedBlockStorage ebs = storageArrays[y >> 4];
+			int h = chunk.getHeightMap()[i];
+			boolean topPlaced = false;
+			if (ebs == Chunk.NULL_BLOCK_STORAGE) {
+				if (newBlock == Blocks.AIR) return true;
+				storageArrays[y >> 4] = ebs = new ExtendedBlockStorage(y >> 4 << 4, world.provider.hasSkyLight());
+				topPlaced = y >= h;
+			}
+			ebs.set(x, y & 15, z, newState);
+			
+			if (oldBlock.hasTileEntity(oldState)) world.removeTileEntity(pos);
+			
+			if (ebs.get(x, y & 15, z).getBlock() != newBlock) return false;
+			
+			if (topPlaced) chunk.generateSkylightMap();
+			else {
+				int opacity = newState.getLightOpacity(world, pos);
+				if (opacity > 0) {
+					if (y >= h) chunk.relightBlock(x, y + 1, z);
+				} else if (y == h - 1) chunk.relightBlock(x, y, z);
+
+				if (opacity != oldOpacity && (opacity < oldOpacity || chunk.getLightFor(EnumSkyBlock.SKY, pos) > 0 || chunk.getLightFor(EnumSkyBlock.BLOCK, pos) > 0))
+					chunk.propagateSkylightOcclusion(x, z);
+			}
+		}
+		
+		if (nbt != null)
+			if (addedTileEntities != null) addedTileEntities.put(pos, nbt);
+			else {
+				nbt.setInteger("x", pos.getX());
+				nbt.setInteger("y", pos.getY());
+				nbt.setInteger("z", pos.getZ());
+				chunk.addTileEntity(TileEntity.create(world, nbt));
+			}
+		
+		chunk.setModified(true);
+		
+		if (newState.getLightOpacity(world, pos) != oldOpacity || newState.getLightValue(world, pos) != oldLight) {
+			world.profiler.startSection("checkLight");
+			world.checkLight(pos);
+			world.profiler.endSection();
+		}
+		world.markAndNotifyBlock(pos, chunk, oldState, newState, 2);
+		return true;
+	}
+
+	public static void addTileEntities(Map<DimPos, NBTTagCompound> addedTileEntities) {
+		for (Entry<DimPos, NBTTagCompound> e : addedTileEntities.entrySet()) {
+			DimPos pos = e.getKey();
+			NBTTagCompound nbt = e.getValue();
 			nbt.setInteger("x", pos.getX());
 			nbt.setInteger("y", pos.getY());
 			nbt.setInteger("z", pos.getZ());
-			tile = TileEntity.create(world, nbt);
-			if (tile instanceof IOperatingArea) {
-				int [] area = ((IOperatingArea)tile).getOperatingArea();
-				area[0] += pos.getX(); area[3] += pos.getX();
-				area[1] += pos.getY(); area[4] += pos.getY();
-				area[2] += pos.getZ(); area[5] += pos.getZ();
-			}
-			/* multipart = nbt.getString("id").equals("savedMultipart");
-			if (multipart) {
-				try {
-					Class multipartHelper = Class.forName("codechicken.multipart.MultipartHelper");
-					Method m = multipartHelper.getMethod("createTileFromNBT", new Class[] { World.class, NBTTagCompound.class });
-					tile = (TileEntity)m.invoke(null, new Object[] { world, nbt });
-				} catch (Exception e) {e.printStackTrace();}
-			} else {
-				
-			}*/
+			World world = pos.getWorld();
+			TileEntity te = TileEntity.create(world, nbt);
+			if (te != null) world.getChunkFromBlockCoords(pos).addTileEntity(te);
 		}
-		/*if (multipart && set) {
-			try {
-				Class multipartHelper = Class.forName("codechicken.multipart.MultipartHelper");
-				multipartHelper.getMethod("sendDescPacket", new Class[] { World.class, TileEntity.class }).invoke(null, new Object[] { world, tile });
-				Class tileMultipart = Class.forName("codechicken.multipart.TileMultipart");
-				tileMultipart.getMethod("onMoved", new Class[0]).invoke(tile, new Object[0]);
-			} catch (Exception e) {e.printStackTrace();}
-		}*/
-		return setBlock(world, pos, block, tile);
-	}
-
-	public static MovedBlock get(World world, BlockPos pos) {
-		IBlockState id = world.getBlockState(pos);
-		NBTTagCompound nbt = null;
-		TileEntity te = world.getTileEntity(pos);
-		if (te != null) {
-			if (te instanceof IOperatingArea) {
-				int[] area = ((IOperatingArea)te).getOperatingArea();
-				area[0] -= pos.getX(); area[3] -= pos.getX();
-				area[1] -= pos.getY(); area[4] -= pos.getY();
-				area[2] -= pos.getZ(); area[5] -= pos.getZ();
-			}
-			nbt = new NBTTagCompound();
-			te.writeToNBT(nbt);
-		}
-		return new MovedBlock(id, nbt);
 	}
 
 	/**
@@ -101,6 +167,7 @@ public class MovedBlock {
 	 * @param tile block TileEntity
 	 * @return true if placed successfully
 	 */
+	@Deprecated
 	public static boolean setBlock(World world, BlockPos pos, IBlockState state, TileEntity tile) {
 		if (!world.isBlockLoaded(pos)) return false;
 		Chunk chunk = world.getChunkFromBlockCoords(pos);

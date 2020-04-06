@@ -107,9 +107,10 @@ public class Link {
 			sink = port;
 		}
 		if (link) {
-			source.owner.setPortCallback(source.pin, sink.owner.getPortCallback(sink.pin));
 			source.onLinkLoad(sink);
 			sink.onLinkLoad(source);
+			if (!links.containsKey(id)) return;
+			source.owner.setPortCallback(source.pin, sink.owner.getPortCallback(sink.pin));
 		} else LOG.warn("duplicate {} port loaded on ID {}", port.isMaster ? "master" : "slave", id);
 	}
 

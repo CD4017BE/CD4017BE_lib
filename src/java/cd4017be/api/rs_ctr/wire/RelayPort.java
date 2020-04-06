@@ -102,13 +102,11 @@ public abstract class RelayPort extends MountedPort {
 	@Override
 	public void onLoad() {
 		if (this.connector != null) this.connector.onLoad();
-		if (opposite.connector != null) opposite.connector.onLoad();
 	}
 
 	@Override
 	public void onUnload() {
 		if (this.connector != null) this.connector.onUnload();
-		if (opposite.connector != null) opposite.connector.onUnload();
 	}
 
 	public abstract ItemStack getDropped();
