@@ -275,6 +275,8 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 	public void updateContainingBlockInfo() {
 		super.updateContainingBlockInfo();
 		blockState = null;
+		if (world.isRemote && chunk == null)
+			chunk = world.getChunkFromBlockCoords(pos);
 	}
 
 	@Override
