@@ -140,7 +140,7 @@ public class MovedBlock {
 			world.checkLight(pos);
 			world.profiler.endSection();
 		}
-		world.markAndNotifyBlock(pos, chunk, oldState, newState, 2);
+		world.markAndNotifyBlock(pos, chunk, oldState, newState, addedTileEntities == null ? 3 : 2);
 		return true;
 	}
 
