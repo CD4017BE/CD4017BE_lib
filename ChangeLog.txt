@@ -1,3 +1,12 @@
+v6.5.0
+Changes:
+- modified Redstone Control API for teleport compatibility
+- improved block teleportation utility functions
+
+Dependencies:
+- for MC-1.12.2
+- forge-14.23.5.2768 (or newer)
+
 v6.4.18
 Changes:
 - fixed wired connection between RelayPorts and IIntegratedConnectors
