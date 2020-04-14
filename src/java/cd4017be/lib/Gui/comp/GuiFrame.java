@@ -31,6 +31,7 @@ public class GuiFrame extends GuiCompGroup {
 	public GuiFrame(@Nonnull GuiFrame parent, int w, int h, int comps) {
 		super(parent, w, h, comps);
 		this.gui = parent.gui;
+		this.fontRenderer = parent.fontRenderer;
 	}
 
 	/**
