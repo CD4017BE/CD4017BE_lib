@@ -17,7 +17,7 @@ import net.minecraft.util.ResourceLocation;
 public class FileBrowser extends GuiFrame
 implements ObjIntConsumer<GuiList>, Supplier<String>, Consumer<String> {
 
-	private static final String PRE_DIR = "§e", PRE_FILE = "§f", BACK = "§e<--";
+	private static final String PRE_DIR = "\u00a7e", PRE_FILE = "\u00a7f", BACK = "\u00a7e<--";
 	static final ResourceLocation TEX
 	= new ResourceLocation(Lib.ID, "textures/gui/file.png");
 
@@ -100,9 +100,9 @@ implements ObjIntConsumer<GuiList>, Supplier<String>, Consumer<String> {
 		} else {
 			String s = t.elements[value];
 			if(s.startsWith(PRE_DIR) && s.endsWith("/"))
-				dir = new File(dir, s.substring(2, s.length() - 1));
+				dir = new File(dir, s.substring(PRE_DIR.length(), s.length() - 1));
 			else {
-				file = s.substring(2);
+				file = s.substring(PRE_FILE.length());
 				setFocus(get(2));
 				return;
 			}
