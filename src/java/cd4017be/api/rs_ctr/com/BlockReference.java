@@ -42,7 +42,7 @@ public class BlockReference {
 		this.lifespan = INIT_LIFESPAN;
 	}
 
-	private BlockReference(int dim, BlockPos pos, EnumFacing face, int lifespan) {
+	public BlockReference(int dim, BlockPos pos, EnumFacing face, int lifespan) {
 		this.world = NULL;
 		this.pos = pos;
 		this.face = face;
