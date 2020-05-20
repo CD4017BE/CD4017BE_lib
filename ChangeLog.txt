@@ -1,5 +1,6 @@
 v6.5.0
 Changes:
+- fixed text formatting issues in File Browser
 - modified Redstone Control API for teleport compatibility
 - improved block teleportation utility functions
 
