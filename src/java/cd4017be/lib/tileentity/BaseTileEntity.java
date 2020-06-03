@@ -48,9 +48,17 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 	public IBlockState getBlockState() {
 		if (blockState == null) {
 			if (chunk == null) {
-				Lib.LOG.fatal("invalid TileEntity state: chunk = null, unloaded = {}, world = {}, pos = {}", unloaded, world, pos);
-				if (world != null)
+				Lib.LOG.fatal(
+					"invalid TileEntity state: type = {}, chunk = null, unloaded = {}, pos = {}, world = {}, callstack:",
+					getClass().getName(), unloaded, pos,
+					world == null ? "null" : "dim " + world.provider.getDimension() + (world.isRemote ? " client" : " server")
+				);
+				Thread.dumpStack();
+				if (world != null) {
 					chunk = world.getChunkProvider().getLoadedChunk(pos.getX() >> 4, pos.getZ() >> 4);
+					if (chunk != null && unloaded)
+						onLoad();
+				}
 				if (chunk == null) {
 					Lib.LOG.fatal("no world set or chunk not loaded -> can't provide BlockState, using air, may crash later on!");
 					return Blocks.AIR.getDefaultState();
@@ -188,6 +196,8 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 			world.tickableTileEntities.remove(this);
 		chunk = world.getChunkFromBlockCoords(pos);
 		setupData();
+		if (!unloaded)
+			Lib.LOG.warn("TileEntity @ {} was loaded twice, this might be problematic!", pos);
 		unloaded = false;
 	}
 
@@ -195,6 +205,8 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 	 * Called when this TileEntity is removed from the world be it by breaking, replacement or chunk unloading.
 	 */
 	protected void onUnload() {
+		if (unloaded)
+			Lib.LOG.warn("TileEntity @ {} is unloaded a second time!", pos);
 		unloaded = true;
 		chunk = null;
 		clearData();
@@ -264,6 +276,7 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 	}
 
 	public boolean canPlayerAccessUI(EntityPlayer player) {
+		getBlockState();
 		return !player.isDead && !unloaded && getDistanceSq(player.posX, player.posY, player.posZ) < 64;
 	}
 
