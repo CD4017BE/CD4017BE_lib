@@ -10,6 +10,9 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.world.WorldEvent;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 /**
  * Handles the connection between SignalPorts.
@@ -21,13 +24,37 @@ public class Link {
 	static Int2ObjectMap<Link> links = new Int2ObjectOpenHashMap<>();
 	private static int nextLinkID = 1, lastFreeID = 0;
 	private static File file;
+	private static boolean dirty;
+
+	public static class SaveHandler {
+		@SubscribeEvent
+		public void onSave(WorldEvent.Save ev) {
+			if (!dirty || file == null) return;
+			NBTTagCompound nbt = new NBTTagCompound();
+			nbt.setInteger("nextID", nextLinkID);
+			try {
+				CompressedStreamTools.write(nbt, file);
+				LOG.info("Signal Link IDs sucessfully saved");
+				dirty = false;
+			} catch (IOException e) {
+				LOG.error("failed to save Signal Link IDs: ", e);
+			}
+		}
+	}
+
+	static {
+		MinecraftForge.EVENT_BUS.register(new SaveHandler());
+	}
 
 	private static int newLinkID() {
 		if (lastFreeID != 0) {
 			int i = lastFreeID;
 			lastFreeID = 0;
 			return i;
-		} else return nextLinkID++;
+		} else {
+			dirty = true;
+			return nextLinkID++;
+		}
 	}
 
 	private static void freeID(int id) {
@@ -44,15 +71,6 @@ public class Link {
 
 	public static void saveData() {
 		links.clear();
-		if (file == null) return;
-		NBTTagCompound nbt = new NBTTagCompound();
-		nbt.setInteger("nextID", nextLinkID);
-		try {
-			CompressedStreamTools.write(nbt, file);
-			LOG.info("Signal Link IDs sucessfully saved");
-		} catch (IOException e) {
-			LOG.error("failed to save Signal Link IDs: ", e);
-		}
 	}
 
 	public static void loadData(File savedir) {
