@@ -205,8 +205,6 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 	 * Called when this TileEntity is removed from the world be it by breaking, replacement or chunk unloading.
 	 */
 	protected void onUnload() {
-		if (unloaded)
-			Lib.LOG.warn("TileEntity @ {} is unloaded a second time!", pos);
 		unloaded = true;
 		chunk = null;
 		clearData();
