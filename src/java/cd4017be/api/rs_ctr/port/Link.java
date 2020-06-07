@@ -22,7 +22,7 @@ public class Link {
 
 	public static final Logger LOG = LogManager.getLogger("rs_ctr API");
 	static Int2ObjectMap<Link> links = new Int2ObjectOpenHashMap<>();
-	private static int nextLinkID = 1, lastFreeID = 0;
+	private static int nextLinkID = 1;
 	private static File file;
 	private static boolean dirty;
 
@@ -47,35 +47,17 @@ public class Link {
 	}
 
 	private static int newLinkID() {
-		if (lastFreeID != 0) {
-			int i = lastFreeID;
-			lastFreeID = 0;
-			return i;
-		} else {
-			dirty = true;
-			return nextLinkID++;
-		}
-	}
-
-	private static void freeID(int id) {
-		if (id == 0) return;
-		//we only have 4 billion IDs for a world so better try to reuse some if possible.
-		if (id == nextLinkID - 1) {
-			if (id > 1 && lastFreeID == id - 1) {
-				nextLinkID = lastFreeID;
-				lastFreeID = 0;
-			} else nextLinkID = id;
-		} else if (((long)id & 0xffffffffL) > ((long)lastFreeID & 0xffffffffL))
-			lastFreeID = id;
+		dirty = true;
+		return nextLinkID++;
 	}
 
 	public static void saveData() {
+		LOG.info("{} active Links cleared during server unload.", links.size());
 		links.clear();
 	}
 
 	public static void loadData(File savedir) {
 		nextLinkID = 1;
-		lastFreeID = 0;
 		file = new File(savedir, "data/signalLinkIDs.dat");
 		try {
 			NBTTagCompound nbt = CompressedStreamTools.read(file);
@@ -85,7 +67,7 @@ public class Link {
 			}
 			int i = nbt.getInteger("nextID");
 			if (i != 0) nextLinkID = i;
-			LOG.info("Signal Link IDs sucessfully loaded");
+			LOG.info("Signal Link IDs sucessfully loaded: next = {}", nextLinkID);
 		} catch (IOException e) {
 			LOG.error("failed to load Signal Link IDs: ", e);
 		}
@@ -116,23 +98,32 @@ public class Link {
 	}
 
 	public void load(Port port) {
-		boolean link;
+		boolean link = false;
 		if (port.isMaster) {
-			link = source == null && sink != null;
-			source = port;
+			if (source == null) {
+				source = port;
+				link = sink != null;
+			}
 		} else {
-			link = sink == null && source != null;
-			sink = port;
+			if (sink == null) {
+				sink = port;
+				link = source != null;
+			}
 		}
 		if (link) {
 			source.onLinkLoad(sink);
 			sink.onLinkLoad(source);
 			if (!links.containsKey(id)) return;
 			source.owner.setPortCallback(source.pin, sink.owner.getPortCallback(sink.pin));
-		} else LOG.warn("duplicate {} port loaded on ID {}", port.isMaster ? "master" : "slave", id);
+		} else logLinkError("loaded duplicate", port);
 	}
 
 	public void unload(Port port) {
+		if (port != (port.isMaster ? source : sink)) {
+			logLinkError("unloaded invalid", port);
+			if (port.isMaster) port.owner.setPortCallback(port.pin, null);
+			return;
+		}
 		if (source != null)
 			source.owner.setPortCallback(source.pin, null);
 		if (port.isMaster) source = null;
@@ -152,6 +143,13 @@ public class Link {
 			sink.owner.onPortModified(sink, IPortProvider.E_DISCONNECT);
 		}
 		links.remove(id);
-		freeID(id);
+	}
+	
+	private static void logLinkError(String message, Port port) {
+		LOG.warn(
+			"{} {} port on ID {}, hosted on pin {} of {}",
+			message, port.isMaster ? "master" : "slave",
+			port.linkID, port.pin, port.owner.getClass().getName()
+		);
 	}
 }
