@@ -1,5 +1,8 @@
 v6.5.0
 Changes:
+- fixed crashes by improved Link ID collision handling
+- improved Signal Link ID persistence
+- extended invalid TileEntity load state fix and debug
 - fixed text formatting issues in File Browser
 - modified Redstone Control API for teleport compatibility
 - improved block teleportation utility functions
