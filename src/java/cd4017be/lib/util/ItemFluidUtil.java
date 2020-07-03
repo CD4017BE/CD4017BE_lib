@@ -17,6 +17,7 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraftforge.common.util.Constants.NBT;
 import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidRegistry;
 import net.minecraftforge.fluids.FluidStack;
@@ -348,4 +349,16 @@ public class ItemFluidUtil {
 		return stack;
 	}
 
+	public static NBTTagCompound createTag(ItemStack stack) {
+		NBTTagCompound nbt = stack.getTagCompound();
+		if (nbt == null) stack.setTagCompound(nbt = new NBTTagCompound());
+		return nbt;
+	}
+
+	public static NBTTagCompound createTag(NBTTagCompound nbt, String key) {
+		if (nbt.hasKey(key, NBT.TAG_COMPOUND)) return nbt.getCompoundTag(key);
+		NBTTagCompound tag = new NBTTagCompound();
+		nbt.setTag(key, tag);
+		return tag;
+	}
 }
