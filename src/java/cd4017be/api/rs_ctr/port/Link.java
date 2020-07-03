@@ -21,7 +21,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 public class Link {
 
 	public static final Logger LOG = LogManager.getLogger("rs_ctr API");
-	static Int2ObjectMap<Link> links = new Int2ObjectOpenHashMap<>();
+	private static final Int2ObjectMap<Link> links = new Int2ObjectOpenHashMap<>();
 	private static int nextLinkID = 1;
 	private static File file;
 	private static boolean dirty;
@@ -73,10 +73,20 @@ public class Link {
 		}
 	}
 
-	public final int id;
-	Port source, sink;	
+	public static Link of(int id) {
+		return links.get(id);
+	}
 
-	public Link(Port port) {
+	public static void register(Port port) {
+		Link link = links.get(port.linkID);
+		if (link != null) link.load(port);
+		else links.put(port.linkID, new Link(port));
+	}
+
+	public final int id;
+	private Port source, sink;	
+
+	private Link(Port port) {
 		this.id = port.linkID;
 		if (port.isMaster) source = port;
 		else sink = port;
@@ -144,7 +154,15 @@ public class Link {
 		}
 		links.remove(id);
 	}
-	
+
+	public Port source() {
+		return source;
+	}
+
+	public Port sink() {
+		return sink;
+	}
+
 	private static void logLinkError(String message, Port port) {
 		LOG.warn(
 			"{} {} port on ID {}, hosted on pin {} of {}",

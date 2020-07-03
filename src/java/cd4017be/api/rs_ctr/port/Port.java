@@ -51,9 +51,7 @@ public class Port implements INBTSerializable<NBTTagCompound>, Comparable<Object
 	 */
 	public void onLoad() {
 		if (linkID == 0) return;
-		Link l = Link.links.get(linkID);
-		if (l == null) Link.links.put(linkID, new Link(this));
-		else l.load(this);
+		Link.register(this);
 	}
 
 	/**
@@ -67,7 +65,7 @@ public class Port implements INBTSerializable<NBTTagCompound>, Comparable<Object
 	 * <b>Important: you must call this when the owner becomes unavailable (destroyed or chunk unload) to avoid memory leaks or stuff interacting with dead objects!</b>
 	 */
 	public void onUnload() {
-		Link l = Link.links.get(linkID);
+		Link l = Link.of(linkID);
 		if (l != null) l.unload(this);
 	}
 
@@ -86,7 +84,7 @@ public class Port implements INBTSerializable<NBTTagCompound>, Comparable<Object
 	 * remove the connection between this port and whatever it is connected with
 	 */
 	public void disconnect() {
-		Link l = Link.links.get(linkID);
+		Link l = Link.of(linkID);
 		if (l != null) l.disconnect();
 	}
 
