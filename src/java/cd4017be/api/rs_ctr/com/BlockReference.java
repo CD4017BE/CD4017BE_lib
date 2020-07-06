@@ -144,6 +144,8 @@ public class BlockReference {
 		 */
 		void updateBlock(BlockReference ref);
 
+		/**implementation that does nothing, useful to remove the need for null checks. */
+		public static final BlockHandler NOP = (ref)-> {};
 	}
 
 }
