@@ -64,6 +64,9 @@ public class SecurityChecker {
 						ref[i] = b.getShort();
 					} else if (l == 4) {
 						ref[i] = b.getInt();
+					} else if (l == 8) {
+						ref[i] = b.getInt();
+						ref[++i] = b.getInt();
 					} else b.position(b.position() + l);
 					tags[i] = tag;
 				}
@@ -145,7 +148,7 @@ public class SecurityChecker {
 			return 4;
 		*/
 		default:
-			throw new IllegalArgumentException();
+			throw new IllegalArgumentException("unsupported tag id " + tag);
 		}
 	}
 
