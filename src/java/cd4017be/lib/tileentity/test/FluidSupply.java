@@ -5,19 +5,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.function.Supplier;
 import cd4017be.lib.Lib;
-import cd4017be.lib.Gui.AdvancedContainer;
-import cd4017be.lib.Gui.ModularGui;
+import cd4017be.lib.Gui.comp.*;
+import cd4017be.lib.network.*;
+import cd4017be.lib.Gui.*;
 import cd4017be.lib.Gui.AdvancedContainer.IStateInteractionHandler;
-import cd4017be.lib.Gui.comp.Button;
-import cd4017be.lib.Gui.comp.FormatText;
-import cd4017be.lib.Gui.comp.GuiFrame;
-import cd4017be.lib.Gui.comp.Slider;
-import cd4017be.lib.network.IGuiHandlerTile;
-import cd4017be.lib.network.StateSyncClient;
-import cd4017be.lib.network.StateSyncServer;
-import cd4017be.lib.network.StateSynchronizer;
 import cd4017be.lib.tileentity.BaseTileEntity;
+import cd4017be.lib.util.IntBiConsumer;
 import cd4017be.lib.util.ItemFluidUtil;
+import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTBase;
@@ -29,6 +24,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.Constants.NBT;
 import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.FluidUtil;
 import net.minecraftforge.fluids.capability.FluidTankProperties;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidTankProperties;
@@ -37,7 +33,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 /** @author CD4017BE */
 public class FluidSupply extends BaseTileEntity
-implements IFluidHandler, IGuiHandlerTile, IStateInteractionHandler {
+implements IFluidHandler, IGuiHandlerTile, IStateInteractionHandler, ITankContainer {
 
 	public static int MAX_SLOTS = 12;
 
@@ -212,6 +208,7 @@ implements IFluidHandler, IGuiHandlerTile, IStateInteractionHandler {
 	);
 
 	@Override
+	@SideOnly(Side.CLIENT)
 	public ModularGui getGuiScreen(EntityPlayer player, int id) {
 		ModularGui gui = new ModularGui(getContainer(player, id));
 		GuiFrame frame = new GuiFrame(gui, 186, 186, 25)
@@ -223,10 +220,21 @@ implements IFluidHandler, IGuiHandlerTile, IStateInteractionHandler {
 				gui.sendPkt((byte)-1, (byte)(scroll = s));
 			}, null, 0, MAX_SLOTS - 12
 		).scroll(-3).tooltip("gui.cd4017be.scroll");
+		IntBiConsumer setFluid = (i, a) -> {
+			FluidStack fluid = getTank(i);
+			if (fluid != null && a < 0) {
+				fluid.amount += (a + 2) * (GuiScreen.isShiftKeyDown() ? 10 : 1) * (GuiScreen.isCtrlKeyDown() ? 100 : 1) * (GuiScreen.isAltKeyDown() ? 1 : 1000);
+				if (fluid.amount < 0) fluid.amount = 0;
+			} else fluid = FluidUtil.getFluidContained(gui.mc.player.inventory.getItemStack());
+			PacketBuffer buff = GuiNetworkHandler.preparePacket(gui.container);
+			buff.writeByte(32 + i);
+			ItemFluidUtil.writeFluidStack(buff, fluid);
+			GuiNetworkHandler.GNH_INSTANCE.sendToServer(buff);
+		};
 		for(int j = 0; j < 4; j++)
 			for(int i = 0; i < 3; i++) {
 				byte k = (byte)(j * 3 + i);
-				//TODO fluid view
+				new TankInterface(frame, 16, 16, 8 + i * 54, 16 + j * 18, this, k, setFluid);
 				new FormatText(
 					frame, 36, 16, 24 + i * 54, 16 + j * 18,
 					"\\§2%d\n§4%d", slots.get(k)
@@ -239,6 +247,24 @@ implements IFluidHandler, IGuiHandlerTile, IStateInteractionHandler {
 		gui.compGroup = frame;
 		return gui;
 	}
+
+	@Override
+	public int getTanks() {
+		return MAX_SLOTS;
+	}
+
+	@Override
+	public FluidStack getTank(int i) {
+		return i < slots.size() ? slots.get(i).stack : null;
+	}
+
+	@Override
+	public int getCapacity(int i) {
+		return 0;
+	}
+
+	@Override
+	public void setTank(int i, FluidStack fluid) {}
 
 
 	public static class Slot implements IFluidTankProperties, Supplier<Object[]> {
