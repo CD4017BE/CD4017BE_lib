@@ -1,0 +1,6 @@
+{
+	"variants": {
+		"inventory": { "model": "cd4017be_lib:fluid_supp" },
+		"normal": { "model": "cd4017be_lib:fluid_supp" }
+	}
+}

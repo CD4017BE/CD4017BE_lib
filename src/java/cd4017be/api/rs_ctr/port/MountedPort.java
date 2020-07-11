@@ -24,7 +24,7 @@ import net.minecraft.world.World;
 public class MountedPort extends Port implements IInteractiveComponent {
 
 	/**radius of the hit-box */
-	public static final float SIZE = 0.125F;
+	public static final float SIZE = 0.1F;
 
 	/**port name */
 	public String name = "";

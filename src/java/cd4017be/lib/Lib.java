@@ -7,16 +7,24 @@ import cd4017be.api.computers.ComputerAPI;
 import cd4017be.api.energy.EnergyAPI;
 import cd4017be.api.recipes.RecipeScriptContext;
 import cd4017be.api.recipes.RecipeScriptContext.ConfigConstants;
+import cd4017be.lib.block.AdvancedBlock;
 import cd4017be.lib.item.BaseItem;
+import cd4017be.lib.item.BaseItemBlock;
 import cd4017be.lib.item.ItemMaterial;
 import cd4017be.lib.network.GuiNetworkHandler;
 import cd4017be.lib.network.SyncNetworkHandler;
 import cd4017be.lib.render.ItemMaterialMeshDefinition;
 import cd4017be.lib.render.SpecialModelLoader;
 import cd4017be.lib.templates.TabMaterials;
+import cd4017be.lib.tileentity.test.EnergySupply;
+import cd4017be.lib.tileentity.test.FluidSupply;
+import cd4017be.lib.tileentity.test.ItemSupply;
 import cd4017be.lib.util.FileUtil;
 import cd4017be.lib.util.TooltipEditor;
 import cd4017be.lib.util.TooltipUtil;
+import net.minecraft.block.Block;
+import net.minecraft.block.SoundType;
+import net.minecraft.block.material.Material;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.client.event.ModelRegistryEvent;
@@ -32,6 +40,7 @@ import net.minecraftforge.fml.common.event.FMLServerStoppingEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import static cd4017be.lib.BlockItemRegistry.registerRender;
 
 /**
  * 
@@ -48,6 +57,8 @@ public class Lib {
 
 	public static Logger LOG;
 
+	public static Block ENERGY_SUPP, ITEM_SUPP, FLUID_SUPP;
+	public static Item energy_supp, item_supp, fluid_supp;
 	public static ItemMaterial materials;
 	public static BaseItem rrwi;
 
@@ -104,17 +115,34 @@ public class Lib {
 	}
 
 	@SubscribeEvent
+	public void registerBlocks(RegistryEvent.Register<Block> ev) {
+		ev.getRegistry().registerAll(
+			ENERGY_SUPP = new AdvancedBlock("energy_supp", Material.IRON, SoundType.ANVIL, 0, EnergySupply.class).setResistance(Float.POSITIVE_INFINITY).setBlockUnbreakable().setCreativeTab(creativeTab),
+			ITEM_SUPP = new AdvancedBlock("item_supp", Material.IRON, SoundType.ANVIL, 0, ItemSupply.class).setResistance(Float.POSITIVE_INFINITY).setBlockUnbreakable().setCreativeTab(creativeTab),
+			FLUID_SUPP = new AdvancedBlock("fluid_supp", Material.IRON, SoundType.ANVIL, 0, FluidSupply.class).setResistance(Float.POSITIVE_INFINITY).setBlockUnbreakable().setCreativeTab(creativeTab)
+		);
+	}
+
+	@SubscribeEvent
 	public void registerItems(RegistryEvent.Register<Item> ev) {
-		ev.getRegistry().registerAll(rrwi, materials);
+		ev.getRegistry().registerAll(
+			energy_supp = new BaseItemBlock(ENERGY_SUPP),
+			item_supp = new BaseItemBlock(ITEM_SUPP),
+			fluid_supp = new BaseItemBlock(FLUID_SUPP),
+			rrwi, materials
+		);
 	}
 
 	@SideOnly(Side.CLIENT)
 	@SubscribeEvent
 	public void registerMaterialModels(ModelRegistryEvent ev) {
 		SpecialModelLoader.setMod(ID);
-		BlockItemRegistry.registerRender(rrwi);
-		BlockItemRegistry.registerRender(materials);
-		BlockItemRegistry.registerRender(materials, new ItemMaterialMeshDefinition(materials));
+		registerRender(energy_supp);
+		registerRender(item_supp);
+		registerRender(fluid_supp);
+		registerRender(rrwi);
+		registerRender(materials);
+		registerRender(materials, new ItemMaterialMeshDefinition(materials));
 	}
 
 }

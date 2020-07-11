@@ -1,3 +1,16 @@
+v6.5.1
+Changes:
+- added some public access methods to Signal Link API
+- added item nbt utility functions
+- added NullEnergyStorage implementation and BlockReference NOP Handler
+- made MountedPort hit-boxes slightly smaller
+- fixed code safety verifier (for runtime loaded/generated classes) to account for long/double using 2 CPT entries
+- added useful creative resource supplies (item, fluid, energy) for testing
+
+Dependencies:
+- for MC-1.12.2
+- forge-14.23.5.2768 (or newer)
+
 v6.5.0
 Changes:
 - fixed crashes by improved Link ID collision handling
