@@ -73,6 +73,7 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 	protected static final Set<IUnlistedProperty<?>> UL_PROPERTIES = new HashSet<>();
 
 	private static String initProperties(String id, Class<? extends TileEntity> tile) {
+		if (tile == null) return id;
 		if (IModularTile.class.isAssignableFrom(tile)) UL_PROPERTIES.add(PropertyWrapObj.MULTIPART);
 		if (ICoverableTile.class.isAssignableFrom(tile)) UL_PROPERTIES.add(PropertyWrapObj.COVER);
 		return id;

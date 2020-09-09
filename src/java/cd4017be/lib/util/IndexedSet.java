@@ -36,11 +36,25 @@ public class IndexedSet<E extends IndexedSet.IndexedElement> extends AbstractLis
 		return true;
 	}
 
+	/**Adds all of the elements in the specified collection to this collection.
+	 * <br>Note: If the specified collection is also an IndexedSet, it will be cleared during the process!
+	 * @param c collection containing elements to be added to this collection
+	 * @return true if this collection changed as a result of the call */
 	@Override
 	public boolean addAll(Collection<? extends E> c) {
 		int n = count + c.size();
 		if (n > array.length) array = Arrays.copyOf(array, Math.max(n, array.length << 1));
-		return super.addAll(c);
+		if (c instanceof IndexedSet) {
+			IndexedSet<? extends E> is = (IndexedSet<? extends E>)c;
+			for (int i = 0; i < is.count; i++) {
+				E e = is.array[i];
+				is.array[i] = null;
+				array[count] = e;
+				e.setIdx(count++);
+			}
+			is.count = 0;
+			return true;
+		} else return super.addAll(c);
 	}
 
 	@Override

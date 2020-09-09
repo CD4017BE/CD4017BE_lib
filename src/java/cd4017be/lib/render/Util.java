@@ -27,6 +27,7 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -204,6 +205,8 @@ public class Util {
 
 	public static final Util instance = new Util();
 	public static int RenderFrame = 0;
+	private long lastFrame;
+	public static float FakeMotionBlur;
 
 	private Util() {
 		MinecraftForge.EVENT_BUS.register(this);
@@ -211,7 +214,11 @@ public class Util {
 
 	@SubscribeEvent
 	public void renderTick(TickEvent.RenderTickEvent event) {
+		if (event.phase != Phase.START) return;
 		RenderFrame++;
+		long t = System.currentTimeMillis();
+		FakeMotionBlur = (float)((Math.random() - 0.5) * (double)(t - lastFrame) / 50.0);
+		lastFrame = t;
 	}
 
 	public static int[] texturedRect(float x, float y, float z, float w, float h, float tx, float ty, float tw, float th) {
