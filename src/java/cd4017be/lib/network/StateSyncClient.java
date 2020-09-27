@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.BitSet;
 import java.util.UUID;
 import cd4017be.lib.util.ItemFluidUtil;
-import li.cil.oc.common.block.Item;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.BlockPos;

@@ -215,12 +215,12 @@ implements IItemHandler, IGuiHandlerTile, IStateInteractionHandler {
 		}
 	}
 
-	@SideOnly(Side.CLIENT)
 	private static final ResourceLocation TEX = new ResourceLocation(
 		Lib.ID, "textures/gui/supply.png"
 	);
 
 	@Override
+	@SideOnly(Side.CLIENT)
 	public ModularGui getGuiScreen(EntityPlayer player, int id) {
 		ModularGui gui = new ModularGui(getContainer(player, id));
 		GuiFrame frame = new GuiFrame(gui, 186, 186, 25)
@@ -237,7 +237,7 @@ implements IItemHandler, IGuiHandlerTile, IStateInteractionHandler {
 				byte k = (byte)(j * 3 + i);
 				new FormatText(
 					frame, 36, 16, 24 + i * 54, 16 + j * 18,
-					"\\§2%d\n§4%d", slots.get(k)
+					"\\\u00a72%d\n\u00a74%d", slots.get(k)
 				);
 				new Button(
 					frame, 36, 16, 24 + i * 54, 16 + j * 18,

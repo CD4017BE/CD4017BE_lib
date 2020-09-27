@@ -202,7 +202,6 @@ implements IFluidHandler, IGuiHandlerTile, IStateInteractionHandler, ITankContai
 		}
 	}
 
-	@SideOnly(Side.CLIENT)
 	private static final ResourceLocation TEX = new ResourceLocation(
 		Lib.ID, "textures/gui/supply.png"
 	);
@@ -237,7 +236,7 @@ implements IFluidHandler, IGuiHandlerTile, IStateInteractionHandler, ITankContai
 				new TankInterface(frame, 16, 16, 8 + i * 54, 16 + j * 18, this, k, setFluid);
 				new FormatText(
 					frame, 36, 16, 24 + i * 54, 16 + j * 18,
-					"\\§2%d\n§4%d", slots.get(k)
+					"\\\u00a72%d\n\u00a74%d", slots.get(k)
 				);
 				new Button(
 					frame, 36, 16, 24 + i * 54, 16 + j * 18,
