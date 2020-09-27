@@ -177,7 +177,6 @@ ITickableServerOnly {
 		markDirty(SAVE);
 	}
 
-	@SideOnly(Side.CLIENT)
 	private static final ResourceLocation TEX = new ResourceLocation(
 		Lib.ID, "textures/gui/supply.png"
 	);

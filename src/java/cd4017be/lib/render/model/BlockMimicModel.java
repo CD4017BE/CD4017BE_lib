@@ -37,6 +37,8 @@ public class BlockMimicModel implements IModel, IBakedModel, IHardCodedModel {
 	public static final BlockMimicModel instance = new BlockMimicModel();
 	public static final IModelProvider provider = new ProviderBlockMimic();
 
+	private TextureAtlasSprite particle;
+
 	private BlockMimicModel() {}
 
 	@Override
@@ -89,7 +91,7 @@ public class BlockMimicModel implements IModel, IBakedModel, IHardCodedModel {
 
 	@Override
 	public TextureAtlasSprite getParticleTexture() {
-		return null;
+		return particle;
 	}
 
 	@Override
@@ -114,6 +116,7 @@ public class BlockMimicModel implements IModel, IBakedModel, IHardCodedModel {
 
 	@Override
 	public IBakedModel bake(IModelState state, VertexFormat format, Function<ResourceLocation, TextureAtlasSprite> bakedTextureGetter) {
+		particle = bakedTextureGetter.apply(new ResourceLocation("blocks/bedrock"));
 		return this;
 	}
 

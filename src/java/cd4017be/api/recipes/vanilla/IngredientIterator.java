@@ -1,10 +1,9 @@
 package cd4017be.api.recipes.vanilla;
 
 import cd4017be.api.recipes.ItemOperand;
-import cd4017be.lib.script.obj.IOperand;
+import cd4017be.lib.script.obj.*;
 import cd4017be.lib.script.obj.IOperand.OperandIterator;
-import cd4017be.lib.script.obj.Nil;
-import cd4017be.lib.script.obj.PredicateWrap;
+import cd4017be.lib.script.obj.Number;
 import cd4017be.lib.util.OreDictStack;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.Ingredient;
@@ -66,6 +65,16 @@ public class IngredientIterator implements OperandIterator {
 	@Override
 	public Object value() {
 		return this;
+	}
+
+	@Override
+	public IOperand len() {
+		return new Number(ingreds.size());
+	}
+
+	@Override
+	public IOperand get(IOperand idx) {
+		return new Array(ingreds.get(idx.asIndex()).getMatchingStacks(), ItemOperand::new);
 	}
 
 }

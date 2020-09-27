@@ -2,6 +2,8 @@ package cd4017be.lib.item;
 
 import javax.annotation.Nullable;
 import net.minecraft.client.util.ITooltipFlag;
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.item.*;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -9,8 +11,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import net.minecraft.block.Block;
-import net.minecraft.item.ItemBlock;
-import net.minecraft.item.ItemStack;
 import cd4017be.lib.BlockItemRegistry;
 import cd4017be.lib.util.TooltipUtil;
 
@@ -57,6 +57,12 @@ public class BaseItemBlock extends ItemBlock {
 	@Override
 	public String getItemStackDisplayName(ItemStack item) {
 		return TooltipUtil.translate(this.getUnlocalizedName(item) + ".name");
+	}
+
+	@Override
+	public Item setCreativeTab(CreativeTabs tab) {
+		block.setCreativeTab(tab);
+		return super.setCreativeTab(tab);
 	}
 
 }
