@@ -1,8 +1,13 @@
 v6.5.2
 Changes:
+- add math library: complex numbers
 - add frame timer for implementing fake motion blur
+- add ingredient indexing in recipe iterator (script)
 - fix AdvancedBlock support not having TileEntity
 - let IndexedSet transfer elements on addAll
+- fix side only issue on EnergySupply
+- fix missing particle texture in BlockMimicModel
+- let setting creative tab on BaseItemBlock propagate to block
 
 Dependencies:
 - for MC-1.12.2
