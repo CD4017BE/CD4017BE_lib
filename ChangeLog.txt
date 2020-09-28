@@ -5,8 +5,9 @@ Changes:
 - add ingredient indexing in recipe iterator (script)
 - fix AdvancedBlock support not having TileEntity
 - let IndexedSet transfer elements on addAll
-- fix side only issue on EnergySupply
+- fix side only issue on Energy, Fluid & ItemSupply
 - fix missing particle texture in BlockMimicModel
+- fix wrong class import in StateSynchronizer (caused crash)
 - let setting creative tab on BaseItemBlock propagate to block
 
 Dependencies:
