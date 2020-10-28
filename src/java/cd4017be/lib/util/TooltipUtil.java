@@ -263,31 +263,27 @@ public class TooltipUtil {
 			x = -x;
 		} else if (sign)
 			sb.append('+');
+		int p0 = sb.length();
 		//scale factor
 		int i = Arrays.binarySearch(ScaleUnits, x / c);
 		if (i < 0) i = -2 - i;
 		if (i < 0) return sb.append('0').toString();
-		if (i >= DecScale.length) return sb.append("Infinity").toString();
+		if (i >= DecScale.length) return sb.append('\u221e').toString();
 		x /= ScaleUnits[i];
+		int exp = Arrays.binarySearch(exp10, x < 1.0 ? 1.0 / x : x);
+		if (exp < 0) exp = -2 - exp;
+		if (x < 1.0) exp = -exp;
 		//integral digits
-		int y = (int)Math.floor(x);
-		w += sb.length();
-		int p = sb.append(y).length();
-		w -= p;
-		x -= y;
-		//fractal digits
-		if (w > 0) {
-			x *= exp10[w];
-			for (y = (int)Math.round(x); w > 0; w--) {
-				int z = y / 10;
-				if (!((y -= z * 10) == 0 && trim)) {
-					sb.insert(p, (char)('0' + y));
-					trim = false;
-				}
-				y = z;
-			}
+		int y = (int)Math.round(x * exp10[w - exp - 1]);
+		int p = sb.append(y).length() - w + exp + 1;
+		while(p > sb.length()) sb.append('0');
+		if (trim)
+			for (int j = sb.length() - 1; j >= p && sb.charAt(j) == '0'; j--)
+				sb.deleteCharAt(j);
+		if (p < sb.length()) {
+			for (;p <= p0; p++) sb.insert(p0, '0');
+			sb.insert(p, '.');
 		}
-		if (!trim) sb.insert(p, '.');
 		//scale unit
 		return sb.append(DecScale[i]).toString();
 	}

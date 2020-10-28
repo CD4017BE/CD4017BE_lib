@@ -112,6 +112,7 @@ public class CraftingRecipeIterator implements OperandIterator {
 			curRecipe = list.next();
 			ItemOperand result = new ItemOperand(curRecipe.getRecipeOutput());
 			if (!key.test(result)) continue;
+			result.onCopy();
 			OperandIterator ingred = new IngredientIterator(curRecipe.getIngredients(), item, curRecipe instanceof IShapedRecipe);
 			if (item != null) {
 				if (!ingred.hasNext()) continue;

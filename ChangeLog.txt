@@ -3,12 +3,14 @@ Changes:
 - add math library: complex numbers
 - add frame timer for implementing fake motion blur
 - add ingredient indexing in recipe iterator (script)
+- fix item stack size changes in script write through to recipe
 - fix AdvancedBlock support not having TileEntity
 - let IndexedSet transfer elements on addAll
 - fix side only issue on Energy, Fluid & ItemSupply
 - fix missing particle texture in BlockMimicModel
 - fix wrong class import in StateSynchronizer (caused crash)
 - let setting creative tab on BaseItemBlock propagate to block
+- fix number formatting (again)
 
 Dependencies:
 - for MC-1.12.2
