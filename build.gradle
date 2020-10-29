@@ -26,7 +26,7 @@ plugins {
 
 version = "${mc_version}-${lib_version}"
 group= "com.cd4017be.lib" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
-archivesBaseName = "CD4017BE_lib"
+archivesBaseName = "cd4017be_lib"
 
 sourceCompatibility = "${java_version}"
 targetCompatibility = "${java_version}"
