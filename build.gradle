@@ -141,6 +141,7 @@ publishing {
     }
     publications {
         gpr(MavenPublication) {
+            artifactId archivesBaseName
             artifact jar
             artifact deobfJar
             artifact sourceJar
