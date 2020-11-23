@@ -80,7 +80,13 @@ implements IFluidHandler, IGuiHandlerTile, IStateInteractionHandler, ITankContai
 	@Override
 	public FluidStack drain(int maxDrain, boolean doDrain) {
 		if (slots.isEmpty()) return null;
-		Slot s = slots.get(0);
+		Slot s = null;
+		for (Slot s1 : slots)
+			if (s1.stack != null) {
+				s = s1;
+				break;
+			}
+		if (s == null) return null;
 		int n = Math.min(maxDrain, s.stack.amount);
 		if (doDrain) s.countOut += n;
 		return new FluidStack(s.stack, n);
@@ -102,6 +108,7 @@ implements IFluidHandler, IGuiHandlerTile, IStateInteractionHandler, ITankContai
 		super.storeState(nbt, mode);
 		NBTTagList list = new NBTTagList();
 		for(Slot s : slots) {
+			if (s.stack == null) continue;
 			NBTTagCompound tag = s.stack.writeToNBT(new NBTTagCompound());
 			tag.setInteger("in", s.countIn);
 			tag.setInteger("out", s.countOut);
