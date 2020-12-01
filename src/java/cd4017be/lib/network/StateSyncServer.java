@@ -1,5 +1,6 @@
 package cd4017be.lib.network;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.UUID;
@@ -26,22 +27,21 @@ import net.minecraftforge.fluids.FluidStack;
 public class StateSyncServer extends StateSynchronizer {
 
 	public byte[] header;
-	private final byte[] lastFix;
-	private final byte[][] lastVar;
 	/**helper buffer instance */
 	public final PacketBuffer buffer;
-	private final int varCount, fixCount;
+	private final int fixCount;
 	private int elIdx = -1;
 	public boolean sendAll = true;
 
 	public StateSyncServer(int count, int... sizes) {
-		super(count, sizes);
-		int l = 0;
-		for (int n : sizes) l += n;
+		super(
+			count, accumulate(sizes), sizes,
+			new byte[count - sizes.length][],
+			ByteBuffer.allocate(count(sizes))
+		);
+		if (sizes.length > count)
+			throw new IllegalArgumentException("can't have more fixed sized elements than total elements!");
 		this.fixCount = sizes.length;
-		this.varCount = count - fixCount;
-		this.lastFix = new byte[l];
-		this.lastVar = new byte[varCount][];
 		this.buffer = new PacketBuffer(Unpooled.buffer());
 	}
 
@@ -70,7 +70,7 @@ public class StateSyncServer extends StateSynchronizer {
 	 */
 	public StateSyncServer begin() {
 		buffer.clear();
-		changes.clear();
+		set.clear();
 		elIdx = -1;
 		return this;
 	}
@@ -80,18 +80,18 @@ public class StateSyncServer extends StateSynchronizer {
 	 * @return this
 	 */
 	public StateSyncServer endFixed() {
-		BitSet chng = changes;
+		BitSet chng = set;
 		int l;
 		if (sendAll) {
-			buffer.readBytes(lastFix);
+			buffer.readBytes(rawStates.array());
 			l = buffer.readableBytes();
 			chng.set(1, count + 1);
 		} else {
-			byte[] arr0 = buffer.array(), arr1 = lastFix;
+			byte[] arr0 = buffer.array(), arr1 = rawStates.array();
 			int i0 = buffer.arrayOffset(), i1 = 0;
 			l = buffer.readableBytes();
 			int j = 0;
-			for (int n : sizes) {
+			for (int n : objIdx) {
 				if ((l -= n) < 0) throw new IllegalStateException("end of buffer reached!");
 				for (; n > 0; n--, i0++, i1++)
 					if (arr0[i0] != arr1[i1]) {
@@ -103,7 +103,7 @@ public class StateSyncServer extends StateSynchronizer {
 		}
 		if (l > 0) throw new IllegalStateException("buffer still has unread data left!");
 		buffer.clear();
-		elIdx = sizes.length;
+		elIdx = objIdx.length;
 		return this;
 	}
 
@@ -113,45 +113,28 @@ public class StateSyncServer extends StateSynchronizer {
 	 */
 	public PacketBuffer encodePacket() {
 		if (elIdx < 0 && buffer.readableBytes() > 0) endFixed();
-		BitSet chng = changes;
+		BitSet chng = set;
 		int cc = chng.cardinality();
 		if (cc == 0) return null;
 		PacketBuffer buf = buffer;
 		buf.clear();
 		if (header != null) buf.writeBytes(header);
 		boolean all = sendAll || cc >= count;
-		if (cc > maxIdxCount) {
-			int p = buf.writerIndex() + modSetBytes;
-			buf.writeBytes(chng.toByteArray());
-			while(buf.writerIndex() < p) buf.writeByte(0);
-		} else {
-			int b = idxBits;
-			int j = 1 + idxCountBits;
-			int v = 1 | cc << 1;
-			for (int i = chng.nextSetBit(1); i >= 0; i = chng.nextSetBit(i + 1)) {
-				v |= (i - 1) << j;
-				if ((j += b) >= 16) {
-					buf.writeShortLE(v);
-					v >>>= 16; j -= 16;
-				}
-			}
-			if (j > 8) buf.writeShortLE(v);
-			else if (j > 0) buf.writeByte(v);
-		}
+		write(buf);
 		if (all) {
-			buf.writeBytes(lastFix);
-			for (byte[] arr : lastVar)
-				buf.writeBytes(arr);
+			buf.writeBytes(rawStates);
+			for (Object arr : objStates)
+				buf.writeBytes((byte[])arr);
 		} else {
-			int[] sizes = this.sizes;
+			int[] sizes = this.objIdx;
 			for (int i = 0, j = 0; i < fixCount;) {
 				int n = sizes[i];
 				if (chng.get(++i))
-					buf.writeBytes(lastFix, j, n);
+					buf.writeBytes(rawStates.array(), j, n);
 				j += n;
 			}
 			for (int p = chng.nextSetBit(fixCount + 1); p >= 0; p = chng.nextSetBit(p + 1))
-				buf.writeBytes(lastVar[p - fixCount - 1]);
+				buf.writeBytes((byte[])objStates[p - fixCount - 1]);
 		}
 		elIdx = -1;
 		sendAll = false;
@@ -182,15 +165,15 @@ public class StateSyncServer extends StateSynchronizer {
 	public void set(int i) {
 		if (i < 0) throw new IllegalStateException("element must be submitted as variabled sized!");
 		if (i < fixCount) {
-			byte[] arr0 = buffer.array(), arr1 = lastFix;
+			byte[] arr0 = buffer.array(), arr1 = rawStates.array();
 			int i0 = buffer.arrayOffset() + buffer.readerIndex(), l0 = buffer.readableBytes();
-			int i1 = indices[i], l1 = sizes[i];
+			int i1 = indices[i], l1 = objIdx[i];
 			if (sendAll) {
-				changes.set(i+1);
+				set.set(i+1);
 				System.arraycopy(arr0, i0, arr1, i1, l1);
 			} else for (int l = i1 + l1; i1 < l; i0++, i1++)
 				if (arr0[i0] != arr1[i1]) {
-					changes.set(i+1);
+					set.set(i+1);
 					System.arraycopy(arr0, i0, arr1, i1, l - i1);
 				}
 			if (l0 > l1) {
@@ -198,14 +181,14 @@ public class StateSyncServer extends StateSynchronizer {
 				set(i + 1);
 			}
 		} else {
-			byte[] arr0 = buffer.array(), arr1 = lastVar[i - fixCount];
+			byte[] arr0 = buffer.array(), arr1 = (byte[])objStates[i - fixCount];
 			int i0 = buffer.arrayOffset() + buffer.readerIndex(), l = buffer.readableBytes();
 			if (sendAll || l != arr1.length) {
-				changes.set(i+1);
-				lastVar[i - fixCount] = Arrays.copyOfRange(arr0, i0, i0 + l);
+				set.set(i+1);
+				objStates[i - fixCount] = Arrays.copyOfRange(arr0, i0, i0 + l);
 			} else for (int i1 = 0; i1 < l; i0++, i1++)
 				if (arr0[i0] != arr1[i1]) {
-					changes.set(i+1);
+					set.set(i+1);
 					System.arraycopy(arr0, i0, arr1, i1, l - i1);
 				}
 		}
@@ -218,9 +201,9 @@ public class StateSyncServer extends StateSynchronizer {
 	 */
 	public void set(int i, byte[] data) {
 		i -= fixCount;
-		if (sendAll || !Arrays.equals(data, lastVar[i])) {
-			lastVar[i] = data;
-			changes.set(i+1);
+		if (sendAll || !Arrays.equals(data, (byte[])objStates[i])) {
+			objStates[i] = data;
+			set.set(i+1);
 		}
 	}
 
@@ -237,12 +220,12 @@ public class StateSyncServer extends StateSynchronizer {
 
 	private int curSize() {
 		int i = Arrays.binarySearch(indices, buffer.writerIndex());
-		return i >= 0 ? sizes[i] : 0;
+		return i >= 0 ? objIdx[i] : 0;
 	}
 
 	private StateSyncServer check(int i, int l) {
 		if (i >= fixCount) throw new IllegalStateException("element must be submitted as fixed sized!");
-		if ((i < 0 ? curSize() : sizes[i]) != l) throw new IllegalStateException("wrong element size!");
+		if ((i < 0 ? curSize() : objIdx[i]) != l) throw new IllegalStateException("wrong element size!");
 		return this;
 	}
 

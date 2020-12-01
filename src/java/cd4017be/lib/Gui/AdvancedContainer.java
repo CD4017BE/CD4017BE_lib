@@ -1,14 +1,8 @@
 package cd4017be.lib.Gui;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import cd4017be.lib.network.GuiNetworkHandler;
-import cd4017be.lib.network.IPlayerPacketReceiver;
-import cd4017be.lib.network.IServerPacketReceiver;
-import cd4017be.lib.network.StateSyncClient;
-import cd4017be.lib.network.StateSyncServer;
-import cd4017be.lib.network.StateSynchronizer;
+import java.util.*;
+import cd4017be.lib.network.*;
+import cd4017be.lib.util.ItemFluidUtil;
 import cd4017be.lib.util.Utils;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrays;
@@ -38,14 +32,16 @@ public class AdvancedContainer extends Container implements IServerPacketReceive
 	public final IStateInteractionHandler handler;
 	public final StateSynchronizer sync;
 	public final EntityPlayer player;
-	private final IntArrayList slotsToSync;
+	final IntArrayList slotsToSync;
 	public final ArrayList<IQuickTransferHandler> transferHandlers;
-	private boolean sorted = true, hardInvUpdate = false;
+	private boolean sorted = true;
+	boolean hardInvUpdate = false;
 	private int playerInvS, playerInvE;
 
 	/**
 	 * @param handler the StateInteractionHandler
 	 * @param sync an instance of {@link StateSyncClient} on client side or {@link StateSyncServer} on server side
+	 * <b> or </b> {@link StateSyncAdv} for both sides.
 	 * @param player
 	 */
 	public AdvancedContainer(IStateInteractionHandler handler, StateSynchronizer sync, EntityPlayer player) {
@@ -62,17 +58,34 @@ public class AdvancedContainer extends Container implements IServerPacketReceive
 			super.detectAndSendChanges();
 			return;
 		}
-		StateSyncServer sss = (StateSyncServer)sync;
-		sss.buffer.clear().writeInt(windowId);
-		sss.setHeader();
-		handler.writeState(sss.begin(), this);
-		writeItems(sss);
-		PacketBuffer pkt = sss.encodePacket();
-		if (pkt != null)
-			GuiNetworkHandler.GNH_INSTANCE.sendToPlayer(pkt, (EntityPlayerMP)player);
+		PacketBuffer pkt;
+		if (sync instanceof StateSyncAdv) {
+			StateSyncAdv ssa = (StateSyncAdv)sync;
+			ssa.clear();
+			writeItems();
+			handler.detectChanges(ssa, this);
+			ssa.detectChanges();
+			if (ssa.isEmpty()) return;
+			pkt = GuiNetworkHandler.preparePacket(this);
+			ssa.write(pkt);
+			BitSet chng = ssa.set;
+			for (int j = chng.nextSetBit(1); j > 0 && j <= slotsToSync.size(); j = chng.nextSetBit(j + 1))
+				ItemFluidUtil.writeItemHighRes(pkt, inventoryItemStacks.get(slotsToSync.getInt(j - 1)));
+			handler.writeChanges(ssa, pkt, this);
+			ssa.writeChanges(pkt);
+		} else {
+			StateSyncServer sss = (StateSyncServer)sync;
+			sss.buffer.clear().writeInt(windowId);
+			sss.setHeader();
+			handler.writeState(sss.begin(), this);
+			writeItems();
+			pkt = sss.encodePacket();
+			if (pkt == null) return;
+		}
+		GuiNetworkHandler.GNH_INSTANCE.sendToPlayer(pkt, (EntityPlayerMP)player);
 	}
 
-	private void writeItems(StateSyncServer sss) {
+	private void writeItems() {
 		if (hardInvUpdate && player instanceof EntityPlayerMP) {
 			((EntityPlayerMP)player).isChangingQuantityOnly = false;
 			hardInvUpdate = false;
@@ -81,13 +94,20 @@ public class AdvancedContainer extends Container implements IServerPacketReceive
 			super.detectAndSendChanges();
 			return;
 		}
-		int n = slotsToSync.size(), o = sss.count - n;
+		int n = slotsToSync.size();
 		int[] syncList = slotsToSync.elements();
 		if (!sorted) {
 			IntArrays.quickSort(syncList, 0, n);
 			sorted = true;
 		}
-		boolean init = sss.sendAll;
+		StateSyncServer sss = null;
+		int o = 1;
+		boolean init = false;
+		if (sync instanceof StateSyncServer) {
+			sss = (StateSyncServer)sync;
+			o = sss.count - n;
+			init = sss.sendAll;
+		}
 		for (int i = 0, l = inventorySlots.size(); i < l; i++) {
 			Slot slot = inventorySlots.get(i);
 			ItemStack itemN = slot.getStack();
@@ -99,7 +119,9 @@ public class AdvancedContainer extends Container implements IServerPacketReceive
 				inventoryItemStacks.set(i, itemO);
 				if (!send) break send;
 				int p = IntArrays.binarySearch(syncList, 0, n, i);
-				if (p >= 0) sss.set(p + o, itemO);
+				if (p >= 0)
+					if (sss != null) sss.set(p + o, itemO);
+					else sync.set.set(p + o);
 				else for (IContainerListener listener : this.listeners)
 					listener.sendSlotContents(this, i, itemO);
 				continue;
@@ -114,7 +136,9 @@ public class AdvancedContainer extends Container implements IServerPacketReceive
 	@Override
 	public void addListener(IContainerListener listener) {
 		if (listener instanceof EntityPlayerMP)
-			((StateSyncServer)sync).setInitPkt();
+			if (sync instanceof StateSyncServer)
+				((StateSyncServer)sync).setInitPkt();
+			else sync.set.set(0);
 		super.addListener(listener);
 	}
 
@@ -176,15 +200,30 @@ public class AdvancedContainer extends Container implements IServerPacketReceive
 	@Override
 	@SideOnly(Side.CLIENT)
 	public void handleServerPacket(PacketBuffer pkt) throws Exception {
-		StateSyncClient ssc = ((StateSyncClient)sync).decodePacket(pkt);
-		handler.readState(ssc, this);
-		for (int i : slotsToSync) {
-			Slot slot = inventorySlots.get(i);
-			ItemStack stack0, stack = ssc.get(stack0 = slot.getStack());
-			if (stack == stack0) continue;
-			if (slot instanceof ISpecialSlot)
-				((ISpecialSlot)slot).setStack(stack);
-			else slot.putStack(stack);
+		if (sync instanceof StateSyncAdv) {
+			StateSyncAdv ssa = (StateSyncAdv)sync;
+			BitSet changes = ssa.read(pkt);
+			for (int j = changes.nextSetBit(1); j > 0 && j <= slotsToSync.size(); j = changes.nextSetBit(j + 1)) {
+				int i = slotsToSync.getInt(j - 1);
+				Slot slot = inventorySlots.get(i);
+				ItemStack stack = ItemFluidUtil.readItemHighRes(pkt);
+				if (slot instanceof ISpecialSlot)
+					((ISpecialSlot)slot).setStack(stack);
+				else slot.putStack(stack);
+			}
+			handler.readChanges(ssa, pkt, this);
+			ssa.readChanges(pkt);
+		} else {
+			StateSyncClient ssc = ((StateSyncClient)sync).decodePacket(pkt);
+			handler.readState(ssc, this);
+			for (int i : slotsToSync) {
+				Slot slot = inventorySlots.get(i);
+				ItemStack stack0, stack = ssc.get(stack0 = slot.getStack());
+				if (stack == stack0) continue;
+				if (slot instanceof ISpecialSlot)
+					((ISpecialSlot)slot).setStack(stack);
+				else slot.putStack(stack);
+			}
 		}
 	}
 
@@ -305,12 +344,32 @@ public class AdvancedContainer extends Container implements IServerPacketReceive
 
 	public interface IStateInteractionHandler {
 
+		/**Detect changes in additional objects for {@link StateSyncAdv}.
+		 * @param sync set of changed objects.
+		 * Counts from 1, starting with special synchronized Item Slots if any.
+		 * @param cont the open container */
+		default void detectChanges(StateSyncAdv sync, AdvancedContainer cont) {}
+
+		/**Write additional objects for {@link StateSyncAdv}.
+		 * @param pkt packet data to be written
+		 * @param sync set of changed objects to write.
+		 * Counts from 1, starting with special synchronized Item Slots if any.
+		 * @param cont the open container */
+		default void writeChanges(StateSyncAdv sync, PacketBuffer pkt, AdvancedContainer cont) {}
+
+		/**Read additional objects for {@link StateSyncAdv}.
+		 * @param pkt packet data to be read
+		 * @param sync set of changed objects to read
+		 * @param cont the open container
+		 * @throws Exception potential decoding error */
+		default void readChanges(StateSyncAdv sync, PacketBuffer pkt, AdvancedContainer cont) throws Exception {}
+
 		/**
 		 * write current state to synchronizer
 		 * @param state synchronizer
 		 * @param cont the open container
 		 */
-		void writeState(StateSyncServer state, AdvancedContainer cont);
+		default void writeState(StateSyncServer state, AdvancedContainer cont) {}
 
 		/**
 		 * update state from synchronizer
@@ -318,7 +377,7 @@ public class AdvancedContainer extends Container implements IServerPacketReceive
 		 * @param cont the open container
 		 * @throws Exception potential decoding error
 		 */
-		void readState(StateSyncClient state, AdvancedContainer cont) throws Exception;
+		default void readState(StateSyncClient state, AdvancedContainer cont) throws Exception {}
 
 		/**
 		 * when a GUI action packet is received at server side

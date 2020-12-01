@@ -11,6 +11,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.InventoryCrafting;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -112,6 +113,38 @@ public class ItemFluidUtil {
 		ItemStack item = new ItemStack(nbt);
 		item.setCount(nbt.getInteger("Num"));
 		return item;
+	}
+
+	/**Like {@link PacketBuffer#writeItemStack(ItemStack)} but stores
+	 * stacksize with 32-bit precision instead of just 8-bit.
+	 * @param buf packet to write
+	 * @param stack ItemStack to serialize */
+	public static void writeItemHighRes(PacketBuffer buf, ItemStack stack) {
+		if (stack.isEmpty()) buf.writeShort(-1);
+		else {
+			Item item = stack.getItem();
+			buf.writeShort(Item.getIdFromItem(item));
+			buf.writeInt(stack.getCount());
+			buf.writeShort(stack.getMetadata());
+			NBTTagCompound nbt = null;
+			if (item.isDamageable() || item.getShareTag())
+				nbt = item.getNBTShareTag(stack);
+			buf.writeCompoundTag(nbt);
+		}
+	}
+
+	/**Like {@link PacketBuffer#readItemStack()} but loads
+	 * stacksize with 32-bit precision instead of just 8-bit.
+	 * @param buf packet to write
+	 * @return deserialized ItemStack
+	 * @throws IOException */
+	public static ItemStack readItemHighRes(PacketBuffer buf) throws IOException {
+		int id = buf.readShort();
+		if (id < 0) return ItemStack.EMPTY;
+		int n = buf.readInt(), m = buf.readShort();
+		ItemStack stack = new ItemStack(Item.getItemById(id), n, m);
+		stack.setTagCompound(buf.readCompoundTag());
+		return stack;
 	}
 
 	public static NBTTagList saveFluids(FluidStack[] fluids) {
