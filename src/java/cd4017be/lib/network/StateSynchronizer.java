@@ -1,10 +1,7 @@
 package cd4017be.lib.network;
 
-import java.util.Arrays;
-import java.util.BitSet;
-
+import java.nio.ByteBuffer;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import net.minecraft.network.PacketBuffer;
 
 /**
  * <b>Packet format:</b><br>
@@ -14,48 +11,36 @@ import net.minecraft.network.PacketBuffer;
  * - ordered list of changed variable sized objects<br>
  * @author CD4017BE
  */
-public abstract class StateSynchronizer {
+public abstract class StateSynchronizer extends SyncBitset {
 
-	/**the byte sizes / indices of all fixed sized objects */
-	protected final int[] sizes, indices;
-	/**total number of objects */
-	public final int count;
-	/**number of bytes used to encode the modification set */
-	protected final int modSetBytes;
-	/**number of bits used to encode each modified index */
-	protected final int idxBits;
-	/**number of bits used to encode how many objects were modified */
-	protected final int idxCountBits;
-	/**threshold above which to encode the full set rather than individual indices */
-	protected final int maxIdxCount;
-	/**set of modified object indices (starts at 1 for encoding reasons) */
-	public BitSet changes;
+	protected final Object[] objStates;
+	protected final ByteBuffer rawStates;
+	protected final int[] indices, objIdx;
 
-	protected StateSynchronizer(int count, int... sizes) {
-		if (sizes.length > count) throw new IllegalArgumentException("can't have more fixed sized elements than total elements!");
-		this.count = count;
-		this.sizes = sizes;
-		int l = sizes.length;
-		int[] indices = new int[l];
-		for (int i = 0, j = 0; i < l; i++) {
-			indices[i] = j;
-			j += sizes[i];
-		}
+	/**
+	 * @param count
+	 */
+	public StateSynchronizer(int count, int[] indices, int[] objIdx, Object[] objStates, ByteBuffer rawStates) {
+		super(count);
 		this.indices = indices;
-		this.changes = new BitSet(count);
-		if (count < 8) {
-			this.modSetBytes = 1;
-			this.maxIdxCount = 0;
-			this.idxBits = 0;
-			this.idxCountBits = 0;
-		} else {
-			int m = (this.modSetBytes = count / 8 + 1) * 8 - 9;
-			int i = this.idxBits = 32 - Integer.numberOfLeadingZeros(count - 1);
-			int j = 32 - Integer.numberOfLeadingZeros(m / i);
-			j = (m - j) / i;
-			this.idxCountBits = 32 - Integer.numberOfLeadingZeros(j);
-			this.maxIdxCount = j;
+		this.objIdx = objIdx;
+		this.objStates = objStates;
+		this.rawStates = rawStates;
+	}
+
+	protected static int count(int[] sizes) {
+		int l = 0;
+		for (int n : sizes) l += n;
+		return l;
+	}
+
+	protected static int[] accumulate(int[] sizes) {
+		int[] indices = new int[sizes.length];
+		for (int i = 0, l = 0; i < sizes.length; i++) {
+			indices[i] = l;
+			l += sizes[i];
 		}
+		return indices;
 	}
 
 	/**

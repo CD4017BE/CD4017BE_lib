@@ -51,6 +51,9 @@ public class Lib {
 
 	public static final String ID = "cd4017be_lib";
 	public static final String ConfigName = "core";
+	/**whether we are in a modding development environment */
+	public static final boolean DEV_DEBUG = Lib.class.getResource("Lib.class")
+	.getPath().indexOf('!') < 0; //'!' marks a path inside a compiled jar file.
 
 	@Instance
 	public static Lib instance;
@@ -71,6 +74,7 @@ public class Lib {
 	@Mod.EventHandler
 	public void preInit(FMLPreInitializationEvent event) {
 		LOG = event.getModLog();
+		if (DEV_DEBUG) LOG.info("Extra debug info for dev environment enabled!");
 		FileUtil.initConfigDir(event);
 		BlockGuiHandler.register();
 		Capabilities.register();

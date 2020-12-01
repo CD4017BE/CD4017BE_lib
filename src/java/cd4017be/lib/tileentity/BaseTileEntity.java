@@ -6,6 +6,7 @@ import java.util.List;
 import cd4017be.api.IAbstractTile;
 import cd4017be.lib.Lib;
 import cd4017be.lib.block.OrientedBlock;
+import cd4017be.lib.network.*;
 import cd4017be.lib.util.Orientation;
 import cd4017be.lib.util.TooltipUtil;
 import cd4017be.lib.util.Utils;
@@ -36,7 +37,7 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 	private Chunk chunk;
 	/** whether this TileEntity is currently not part of the loaded world and therefore shouldn't perform any actions */
 	protected boolean unloaded = true;
-	protected boolean redraw;
+	protected byte redraw;
 
 	public BaseTileEntity() {}
 
@@ -95,15 +96,15 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 	}
 
 	/**chunk save data: contains the full TileEntity state */
-	public static final int SAVE = 0;
+	public static final int SAVE = Sync.SAVE;
 	/**client chunk data: contains the full TileEntity state relevant for the client */
-	public static final int CLIENT = 1;
+	public static final int CLIENT = Sync.CLIENT;
 	/**client sync data: contains only the TileEntity state that likely changed since last synchronization */
-	public static final int SYNC = 2;
+	public static final int SYNC = Sync.SYNC;
 	/**{@link #SYNC} with a hint for the client to re-render the block */
-	public static final int REDRAW = 3;
+	public static final int REDRAW = 16;
 	/**itemstack data: contains the break/place persistent state of the TileEntity */
-	public static final int ITEM = 4;
+	public static final int ITEM = Sync.SPAWN;
 
 	/**
 	 * marks that the state of this TileEntity changed
@@ -111,15 +112,12 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 	 */
 	public void markDirty(int mode) {
 		if (unloaded) return;
-		switch(mode) {
-		case REDRAW:
-			redraw = true;
-		case SYNC:
+		redraw |= mode >> 4;
+		if (mode > SAVE) {
 			IBlockState state = getBlockState();
 			world.notifyBlockUpdate(pos, state, state, 2);
-		case SAVE:
-			chunk.markDirty();
 		}
+		chunk.markDirty();
 	}
 
 	/**
@@ -128,6 +126,8 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 	 * @param mode the type of data to store: {@link #ITEM} <= {@link #SAVE} => {@link #CLIENT} => {@link #SYNC}
 	 */
 	protected void storeState(NBTTagCompound nbt, int mode) {
+		Synchronizer.of(this.getClass())
+		.writeNBT(this, nbt, mode | (mode & SYNC) * redraw << 2 & 0xff0);
 	}
 
 	/**
@@ -136,6 +136,8 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 	 * @param mode the type of data to load: {@link #ITEM} <= {@link #SAVE} => {@link #CLIENT} => {@link #SYNC}
 	 */
 	protected void loadState(NBTTagCompound nbt, int mode) {
+		Synchronizer.of(this.getClass())
+		.readNBT(this, nbt, mode | (mode & SYNC) * redraw << 2 & 0xff0);
 	}
 
 	@Override
@@ -173,9 +175,9 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 		NBTTagCompound nbt = new NBTTagCompound();
 		storeState(nbt, SYNC);
 		if (nbt.hasNoTags()) return null;
-		if (redraw) {
-			nbt.setBoolean("", true);
-			redraw = false;
+		if (redraw != 0) {
+			nbt.setByte("", redraw);
+			redraw = 0;
 		}
 		return new SPacketUpdateTileEntity(pos, -1, nbt);
 	}
@@ -184,9 +186,9 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 	@Deprecated
 	public void onDataPacket(NetworkManager net, SPacketUpdateTileEntity pkt) {
 		NBTTagCompound nbt = pkt.getNbtCompound();
-		redraw = nbt.getBoolean("");
+		redraw = nbt.getByte("");
 		loadState(nbt, SYNC);
-		if (redraw)
+		if ((redraw & 1) != 0)
 			world.markBlockRangeForRenderUpdate(pos, pos);
 	}
 

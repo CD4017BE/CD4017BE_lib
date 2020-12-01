@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.BitSet;
 import java.util.UUID;
 import cd4017be.lib.util.ItemFluidUtil;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.BlockPos;
@@ -26,7 +25,7 @@ public class StateSyncClient extends StateSynchronizer {
 	 * @param sizes the sizes in bytes for each fixed sized element
 	 */
 	public StateSyncClient(int count, int... sizes) {
-		super(count, sizes);
+		super(count, accumulate(sizes), sizes, null, null);
 		this.fixCount = sizes.length;
 	}
 
@@ -37,31 +36,7 @@ public class StateSyncClient extends StateSynchronizer {
 	 * @return this
 	 */
 	public StateSyncClient decodePacket(PacketBuffer buf) {
-		if ((buf.getByte(buf.readerIndex()) & 1) == 0) {
-			byte[] arr = new byte[modSetBytes];
-			buf.readBytes(arr);
-			this.changes = BitSet.valueOf(arr);
-		} else {
-			int j = idxCountBits + 1, b = idxBits, mask = 0xffff >> (16 - b);
-			int v = j <= 8 ? buf.readUnsignedByte() : buf.readUnsignedShortLE();
-			int cc = (v & 0xffff >> (16 - j)) >> 1;
-			BitSet chng = changes;
-			chng.clear();
-			v >>= j; j = -j & 7;
-			for (int i = 0; i < cc; i++) {
-				if (j < b)
-					if(j < b - 8) {
-						v |= buf.readUnsignedShortLE() << j;
-						j += 16;
-					} else {
-						v |= buf.readUnsignedByte() << j;
-						j += 8;
-					}
-				chng.set((v & mask) + 1);
-				v >>= b;
-				j -= b;
-			}
-		}
+		read(buf);
 		this.buffer = buf;
 		this.elIdx = 0;
 		return this;
@@ -72,7 +47,7 @@ public class StateSyncClient extends StateSynchronizer {
 	 * @return whether the next element has changed
 	 */
 	public boolean next() {
-		return changes.get(++elIdx);
+		return set.get(++elIdx);
 	}
 
 	/**
@@ -82,8 +57,8 @@ public class StateSyncClient extends StateSynchronizer {
 	 */
 	public int get(int old) {
 		int i = ++elIdx;
-		if (changes.get(i))
-			switch(sizes[i - 1]) {
+		if (set.get(i))
+			switch(objIdx[i - 1]) {
 			case 4: return buffer.readInt();
 			case 3: return buffer.readMedium();
 			case 2: return buffer.readShort();
@@ -99,7 +74,7 @@ public class StateSyncClient extends StateSynchronizer {
 	 * @return new value
 	 */
 	public long get(long old) {
-		return changes.get(++elIdx) ? buffer.readLong() : old;
+		return set.get(++elIdx) ? buffer.readLong() : old;
 	}
 
 	/**
@@ -108,7 +83,7 @@ public class StateSyncClient extends StateSynchronizer {
 	 * @return new value
 	 */
 	public float get(float old) {
-		return changes.get(++elIdx) ? buffer.readFloat() : old;
+		return set.get(++elIdx) ? buffer.readFloat() : old;
 	}
 
 	/**
@@ -117,7 +92,7 @@ public class StateSyncClient extends StateSynchronizer {
 	 * @return new value
 	 */
 	public double get(double old) {
-		return changes.get(++elIdx) ? buffer.readDouble() : old;
+		return set.get(++elIdx) ? buffer.readDouble() : old;
 	}
 
 	/**
@@ -128,8 +103,8 @@ public class StateSyncClient extends StateSynchronizer {
 	public byte[] get(byte[] old) {
 		int i = elIdx;
 		if (i < fixCount) {
-			int[] sizes = this.sizes;
-			BitSet chng = changes;
+			int[] sizes = this.objIdx;
+			BitSet chng = set;
 			PacketBuffer buf = buffer;
 			for (int l = old.length, j = 0; j < l; i++) {
 				int n = sizes[i];
@@ -138,7 +113,7 @@ public class StateSyncClient extends StateSynchronizer {
 				j += n;
 			}
 			elIdx = i;
-		} else if (changes.get(elIdx = i + 1))
+		} else if (set.get(elIdx = i + 1))
 			return buffer.readByteArray();
 		return old;
 	}
@@ -151,8 +126,8 @@ public class StateSyncClient extends StateSynchronizer {
 	public int[] get(int[] old) {
 		int i = elIdx;
 		if (i < fixCount) {
-			int[] sizes = this.sizes;
-			BitSet chng = changes;
+			int[] sizes = this.objIdx;
+			BitSet chng = set;
 			PacketBuffer buf = buffer;
 			for (int l = old.length, j = 0; j < l; i++) {
 				int n = sizes[i];
@@ -163,7 +138,7 @@ public class StateSyncClient extends StateSynchronizer {
 				} else j += n >> 2;
 			}
 			elIdx = i;
-		} else if (changes.get(elIdx = i + 1))
+		} else if (set.get(elIdx = i + 1))
 			return buffer.readVarIntArray();
 		return old;
 	}
@@ -174,7 +149,7 @@ public class StateSyncClient extends StateSynchronizer {
 	 * @return new value
 	 */
 	public String get(String old) {
-		return changes.get(++elIdx) ? buffer.readString(32767) : old;
+		return set.get(++elIdx) ? buffer.readString(32767) : old;
 	}
 
 	/**
@@ -196,7 +171,7 @@ public class StateSyncClient extends StateSynchronizer {
 	 * @return new value
 	 */
 	public BlockPos get(BlockPos old) {
-		return changes.get(++elIdx) ? buffer.readBlockPos() : old;
+		return set.get(++elIdx) ? buffer.readBlockPos() : old;
 	}
 
 	/**
@@ -205,7 +180,7 @@ public class StateSyncClient extends StateSynchronizer {
 	 * @return new value
 	 */
 	public UUID get(UUID old) {
-		return changes.get(++elIdx) ? buffer.readUniqueId() : old;
+		return set.get(++elIdx) ? buffer.readUniqueId() : old;
 	}
 
 	/**
@@ -214,15 +189,8 @@ public class StateSyncClient extends StateSynchronizer {
 	 * @return new value
 	 */
 	public ItemStack get(ItemStack old) throws IOException {
-		if (changes.get(++elIdx)) {
-			PacketBuffer buf = buffer;
-			int id = buf.readShort();
-			if (id < 0) return ItemStack.EMPTY;
-			int n = buf.readInt(), m = buf.readShort();
-			ItemStack stack = new ItemStack(Item.getItemById(id), n, m);
-			stack.setTagCompound(buf.readCompoundTag());
-			return stack;
-		}
+		if (set.get(++elIdx))
+			return ItemFluidUtil.readItemHighRes(buffer);
 		return old;
 	}
 
@@ -232,7 +200,7 @@ public class StateSyncClient extends StateSynchronizer {
 	 * @return new value
 	 */
 	public FluidStack get(FluidStack old) throws IOException {
-		if (changes.get(++elIdx))
+		if (set.get(++elIdx))
 			return ItemFluidUtil.readFluidStack(buffer);
 		return old;
 	}
