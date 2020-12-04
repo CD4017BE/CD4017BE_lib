@@ -1,3 +1,7 @@
+v6.6.0:
+- add annotation based object synchronization for NBT & GUI
+WARNING, may break old mods!
+
 v6.5.2
 Changes:
 - add math library: complex numbers
