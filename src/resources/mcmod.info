@@ -2,8 +2,8 @@
 {
   "modid": "cd4017be_lib",
   "name": "CD4017BE_lib",
-  "description": "Large collection of classes needed by my other mods",
-  "version": "6.6.0",
+  "description": "Mainly consists of code that's shared across my mods. But also adds creative resource supplies for testing purposes and a very powerful configuration script that allows changing recipes, adding ore generation or even add new items.",
+  "version": "6.6.1",
   "acceptableRemoteVersions": "[6.6.0,6.7.0)",
   "acceptableSaveVersions": "(,)",
   "acceptedMinecraftVersions": "[1.12,1.13)",

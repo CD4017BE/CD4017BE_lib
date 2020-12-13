@@ -1,3 +1,7 @@
+v6.6.1:
+- add axis reorientation command for script models
+- improved regex oredict listing command (config script)
+
 v6.6.0:
 - add annotation based object synchronization for NBT & GUI
 WARNING, may break old mods!
