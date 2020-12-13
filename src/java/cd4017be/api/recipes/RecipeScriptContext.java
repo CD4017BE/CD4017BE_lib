@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Function;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.Logger;
@@ -56,11 +57,10 @@ public class RecipeScriptContext extends Context {
 				if (name.indexOf(':') < 0) item = BlockItemRegistry.stack(name, 1);
 				else if (name.startsWith("ore:")) {
 					name = name.substring(4);
-					List<ItemStack> list = OreDictionary.getOres(name);
-					if (list.isEmpty()) throw new IllegalArgumentException("empty OreDictionary type: " + name);
-					item = list.get(0).copy();
+					List<ItemStack> list = OreDictionary.getOres(name, false);
+					if (!list.isEmpty()) item = list.get(0).copy();
 				} else item = new ItemStack(Item.getByNameOrId(name));
-				if (item == null || item.getItem() == null) throw new IllegalArgumentException("invalid item name: " + name);
+				if (item == null || item.getItem() == null) return Nil.NIL;
 			} else if (o instanceof ItemStack) item = ((ItemStack)o).copy();
 			else if (o instanceof OreDictStack) {
 				ItemStack[] arr = ((OreDictStack)o).getItems();
@@ -83,7 +83,7 @@ public class RecipeScriptContext extends Context {
 			if (o instanceof String) {
 				String name = (String)o;
 				fluid = FluidRegistry.getFluidStack(name, 0);
-				if (fluid == null) throw new IllegalArgumentException("invalid fluid name: " + name);
+				if (fluid == null) return Nil.NIL;
 			} else if (o instanceof FluidStack) fluid = ((FluidStack)o).copy();
 			else throw new IllegalArgumentException("expected String or FluidStack @ 0");
 			switch(p.param.length) {
@@ -107,7 +107,7 @@ public class RecipeScriptContext extends Context {
 				if (name.indexOf(':') < 0) {
 					if (BlockItemRegistry.stack(name, 1) == null) return Number.FALSE;
 				} else if (name.startsWith("ore:")) {
-					if (OreDictionary.getOres(name.substring(4)).isEmpty()) return Number.FALSE;
+					if (OreDictionary.getOres(name.substring(4), false).isEmpty()) return Number.FALSE;
 				} else if (Item.getByNameOrId(name) == null) return Number.FALSE;
 			}
 			return Number.TRUE;
@@ -123,9 +123,19 @@ public class RecipeScriptContext extends Context {
 			return null;
 		}, LISTORE = (p) -> {
 			Pattern filter = Pattern.compile(p.getString(0));
-			ArrayList<Text> list = new ArrayList<>();
-			for (String name : OreDictionary.getOreNames())
-				if (filter.matcher(name).matches()) list.add(new Text(name));
+			ArrayList<IOperand> list = new ArrayList<>();
+			for (String name : OreDictionary.getOreNames()) {
+				Matcher m = filter.matcher(name);
+				if (!m.matches()) continue;
+				int n = m.groupCount();
+				if (n == 0) list.add(new Text(name));
+				else {
+					IOperand[] arr = new IOperand[n + 1];
+					for (int i = 0; i <= n; i++)
+						arr[i] = new Text(m.group(i));
+					list.add(new Array(arr));
+				}
+			}
 			return new Array(list.toArray(new IOperand[list.size()]));
 		}, LIST = (p) -> {
 			IRecipeList l = RecipeAPI.Lists.get(p.getString(0));

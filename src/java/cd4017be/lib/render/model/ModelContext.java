@@ -36,7 +36,7 @@ public class ModelContext extends Context {
 		Matrix4d matrix;
 		double oU, oV, sU, sV;
 		double[] sColor;
-		int texOfs;
+		int texOfs, orient;
 		State copy(){
 			State state = new State();
 			state.matrix = new Matrix4d(matrix);
@@ -46,6 +46,7 @@ public class ModelContext extends Context {
 			state.sV = sV;
 			state.sColor = sColor.clone();
 			state.texOfs = texOfs;
+			state.orient = orient;
 			return state;
 		}
 
@@ -69,6 +70,7 @@ public class ModelContext extends Context {
 				for (int k = 0, j = 5; k < 4; k++, j++)
 					vert2[j] = vertex[j] * sColor[k];
 			}
+			nQuad.cullFace = orient >> (quadi.cullFace << 2) & 15;
 			return nQuad;
 		}
 	}
@@ -140,7 +142,7 @@ public class ModelContext extends Context {
 	private static final double[] defaultVertex = new double[]{0, 0, 0, 0, 0, 1, 1, 1, 1};
 	private static final String defaultFormat = "xyzuvrgba";
 	private static final int maxStates = 8;
-	private static final String cfNames = "BTNSWE";
+	private static final String cfNames = " BTNSWE", axes = "YyZzXxBTNSWE";
 	private static final boolean[][] rect = {{false, false, true, true}, {false, true, true, false}};
 
 	Stack<State> states = new Stack<State>(maxStates);
@@ -154,8 +156,8 @@ public class ModelContext extends Context {
 		defFunc.put("add", (p) -> {
 			State state = states.get();
 			for (Object o : p.getArrayOrAll()) {
-				Quad quadi = (Quad)o;
-				quads[quadi.cullFace + 1].add(state.transform(quadi));
+				Quad quadi = state.transform((Quad)o);
+				quads[quadi.cullFace].add(quadi);
 			}
 			return null;
 		});
@@ -167,6 +169,28 @@ public class ModelContext extends Context {
 		defFunc.put("pop", (p) -> {
 			if (states.getPos() <= 0) throw new IllegalStateException("can't pop anymore: already at origin state!");
 			states.rem();
+			return null;
+		});
+		defFunc.put("orient", (p) -> {
+			String or = p.getString(0);
+			double[] center = p.getVectorOrAll(1);
+			State state = states.get();
+			Matrix4d mat = new Matrix4d();
+			mat.setColumn(3, center[0], center[1], center[2], 1);
+			int o = 0;
+			for (int i = 0; i < 3; i++) {
+				int a = axes.indexOf(or.charAt(i)) % 6, j = ((a >> 1) + 1) % 3;
+				double d = -1 + (a << 1 & 2);
+				mat.setElement(j, 3, mat.getElement(j, 3) - center[i] * d);
+				mat.setElement(j, i, d);
+				a <<= 2;
+				a = state.orient >> (a ^ 4) & 0xf0
+				  | state.orient >> a << 4 & 0xf00;
+				o |= a << ((i+2) % 3 << 3);
+			}
+			mat.setElement(3, 3, 1);
+			state.mulMat(mat);
+			state.orient = o;
 			return null;
 		});
 		defFunc.put("rotate", (p) -> {
@@ -244,7 +268,7 @@ public class ModelContext extends Context {
 			Quad quad = new Quad();
 			String format = p.getString(2);
 			quad.tex = p.param.length > 3 ? (int)p.getNumber(3) : 0;
-			quad.cullFace = format.length() <= 3 ? -1 : cfNames.indexOf(format.charAt(3));
+			quad.cullFace = format.length() <= 3 ? 0 : cfNames.indexOf(format.charAt(3));
 			int t;
 			int tN = (t = format.indexOf('-')) < 0 ? format.indexOf('+') + 3 : t;
 			boolean inv = tN >= 3; tN %= 3;
@@ -284,6 +308,7 @@ public class ModelContext extends Context {
 		state.sU = 1.0;
 		state.sV = 1.0;
 		state.sColor = new double[] {1.0, 1.0, 1.0, 1.0};
+		state.orient = 0x6543210;
 		states.add(state);
 	}
 
