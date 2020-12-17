@@ -231,7 +231,7 @@ public class TooltipUtil {
 		return I18n.canTranslate(s) || editor != null && editor.hasEdited(s);
 	}
 
-	private static final String[] DecScale =   {"a"  , "f"  , "p"  , "n" , "u" , "m" , "" , "k", "M", "G", "T" , "P" , "E" };
+	private static final String[] DecScale =   {"a" , "f"  , "p", "n","\u03BC", "m" , "" , "k", "M", "G", "T" , "P" , "E" };
 	public static final double[] ScaleUnits = {1e-18, 1e-15, 1e-12, 1e-9, 1e-6, 1e-3, 1e0, 1e3, 1e6, 1e9, 1e12, 1e15, 1e18, 1e21};
 	public static final double[] exp10 = {1, 10, 100, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11, 1e12, 1e13, 1e14, 1e15};
 

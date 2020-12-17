@@ -33,7 +33,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
  */
 public class BaseTileEntity extends TileEntity implements IAbstractTile {
 
-	private IBlockState blockState;
+	protected IBlockState blockState;
 	private Chunk chunk;
 	/** whether this TileEntity is currently not part of the loaded world and therefore shouldn't perform any actions */
 	protected boolean unloaded = true;
@@ -65,10 +65,14 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 					return Blocks.AIR.getDefaultState();
 				}
 			}
-			blockState = chunk.getBlockState(pos);
-			blockType = blockState.getBlock();
+			refreshBlockState();
 		}	
 		return blockState;
+	}
+
+	protected void refreshBlockState() {
+		blockState = chunk.getBlockState(pos);
+		blockType = blockState.getBlock();
 	}
 
 	public Chunk getChunk() {
@@ -197,6 +201,7 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 		if (world.isRemote ? this instanceof ITickableServerOnly : this instanceof ITickableClientOnly)
 			world.tickableTileEntities.remove(this);
 		chunk = world.getChunkFromBlockCoords(pos);
+		refreshBlockState();
 		setupData();
 		if (!unloaded)
 			Lib.LOG.warn("TileEntity @ {} was loaded twice, this might be problematic!", pos);
@@ -236,13 +241,6 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 	@Override
 	public boolean invalid() {
 		return unloaded;
-	}
-
-	@Override
-	public void setWorld(World worldIn) {
-		super.setWorld(worldIn);
-		if (chunk == null && worldIn.isBlockLoaded(pos))
-			chunk = world.getChunkFromBlockCoords(pos);
 	}
 
 	@Override
@@ -287,9 +285,8 @@ public class BaseTileEntity extends TileEntity implements IAbstractTile {
 	@Override
 	public void updateContainingBlockInfo() {
 		super.updateContainingBlockInfo();
-		blockState = null;
-		if (world.isRemote && chunk == null)
-			chunk = world.getChunkFromBlockCoords(pos);
+		if (chunk == null) chunk = world.getChunkFromBlockCoords(pos);
+		refreshBlockState();
 	}
 
 	@Override
