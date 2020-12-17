@@ -1,3 +1,7 @@
+v6.6.2:
+- ensure BlockState in BaseTileEntity is cached as soon as available to fix issues with devices accessing block info during/after unload
+- change micro unit prefix to 'μ'
+
 v6.6.1:
 - add axis reorientation command for script models
 - improved regex oredict listing command (config script)
