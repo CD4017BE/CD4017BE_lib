@@ -1,7 +1,6 @@
 package cd4017be.lib.templates;
 
 import javax.annotation.Nullable;
-
 import cd4017be.lib.tileentity.BaseTileEntity;
 import cd4017be.lib.util.ItemFluidUtil;
 import net.minecraft.block.Block;
@@ -57,6 +56,7 @@ public class Cover {
 		int m = ib.getMetadata(item.getMetadata());
 		IBlockState state = ib.getBlock().getStateForPlacement(world, pos, s, X, Y, Z, m, player, hand);
 		if (!isBlockValid(tile, state)) return false;
+		if (player.world.isRemote) return true;
 		this.stack = ItemHandlerHelper.copyStackWithSize(item, 1);
 		this.state = state;
 		this.opaque = state.isOpaqueCube();
@@ -78,6 +78,7 @@ public class Cover {
 	 */
 	public boolean hit(BaseTileEntity tile, EntityPlayer player) {
 		if (stack == null) return false;
+		if (player.world.isRemote) return true;
 		if (!player.isCreative()) ItemFluidUtil.dropStack(stack, player);
 		World world = tile.getWorld();
 		BlockPos pos = tile.getPos();
@@ -137,6 +138,11 @@ public class Cover {
 	@SuppressWarnings("unchecked")
 	public <M> M module() {
 		return (M)state;
+	}
+
+	public void onBreak(BaseTileEntity tile) {
+		if (stack != null)
+			ItemFluidUtil.dropStack(stack, tile.getWorld(), tile.getPos());
 	}
 
 }
