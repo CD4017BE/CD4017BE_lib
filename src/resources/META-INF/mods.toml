@@ -1,0 +1,33 @@
+modLoader="javafml"
+loaderVersion="[32,)"
+issueTrackerURL="https://github.com/CD4017BE/CD4017BE_lib/issues"
+# A list of mods - how many allowed here is determined by the individual mod loader
+[[mods]]
+modId="cd4017be_lib"
+version="${file.jarVersion}"
+displayName="CD4017BE Lib"
+# A URL to query for updates for this mod. See the JSON update specification <here>
+# updateJSONURL="http://myurl.me/" #optional
+# A URL for the "homepage" for this mod, displayed in the mod UI
+# displayURL="http://example.com/" #optional
+logoFile="cd4017be_lib.png"
+credits="" #optional
+authors="CD4017BE"
+description='''
+The core library mod required for all my other mods. Also includes some basic features:
+
+- Supply Blocks to cheat Items, Fluids and Energy for creative mode testing.
+'''
+
+[[dependencies.cd4017be_lib]]
+    modId="forge"
+    mandatory=true
+    versionRange="[32,)" #mandatory
+    ordering="NONE"
+    side="BOTH"
+[[dependencies.examplemod]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.16.1]"
+    ordering="NONE"
+    side="BOTH"

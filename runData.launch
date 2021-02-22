@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
+    <mapAttribute key="org.eclipse.debug.core.environmentVariables">
+        <mapEntry key="FORGE_GROUP" value="net.minecraftforge"/>
+        <mapEntry key="FORGE_VERSION" value="36.0.42"/>
+        <mapEntry key="MCP_MAPPINGS" value="snapshot_20201028-1.16.3"/>
+        <mapEntry key="MCP_VERSION" value="20210115.111550"/>
+        <mapEntry key="MC_VERSION" value="1.16.5"/>
+        <mapEntry key="MOD_CLASSES" value="cd4017be_lib%%E:\git\CD4017BE_lib\bin\main;cd4017be_lib%%E:\git\CD4017BE_lib\bin\main"/>
+        <mapEntry key="target" value="fmluserdevdata"/>
+    </mapAttribute>
+    <stringAttribute key="org.eclipse.jdt.launching.CLASSPATH_PROVIDER" value="org.eclipse.buildship.core.classpathprovider"/>
+    <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="net.minecraftforge.userdev.LaunchTesting"/>
+    <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="--mod examplemod --all --output E:\git\CD4017BE_lib\src\generated\resources --existing E:\git\CD4017BE_lib\src\main\resources"/>
+    <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="CD4017BE_lib"/>
+    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dforge.logging.console.level=debug -Dforge.logging.markers=REGISTRIES"/>
+    <stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="E:\git\CD4017BE_lib\run\data"/>
+</launchConfiguration>

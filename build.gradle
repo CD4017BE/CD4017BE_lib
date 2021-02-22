@@ -1,36 +1,25 @@
 buildscript {
     repositories {
+        maven { url = 'https://files.minecraftforge.net/maven' }
         jcenter()
-        maven {
-            name = "forge"
-            url = "http://files.minecraftforge.net/maven"
-        }
+        mavenCentral()
     }
     dependencies {
-        classpath "net.minecraftforge.gradle:ForgeGradle:${snapshot}-SNAPSHOT"
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+', changing: true
     }
 }
-
-plugins {
-    id("maven-publish")
-}
-
-apply plugin: 'net.minecraftforge.gradle.forge'
-
-/*
-// for people who want stable - not yet functional for MC 1.8.8 - we require the forgegradle 2.1 snapshot
-plugins {
-    id "net.minecraftforge.gradle.forge" version "2.0.2"
-}
-*/
+apply plugin: 'net.minecraftforge.gradle'
+// Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
+apply plugin: 'eclipse'
+apply plugin: 'maven-publish'
 
 version = "${mc_version}-${lib_version}"
-group= "com.cd4017be.lib" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
+group = "com.cd4017be.lib" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "cd4017be_lib"
 
-sourceCompatibility = "${java_version}"
-targetCompatibility = "${java_version}"
+sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = "${java_version}"
 
+println('Java: ' + System.getProperty('java.version') + ' JVM: ' + System.getProperty('java.vm.version') + '(' + System.getProperty('java.vendor') + ') Arch: ' + System.getProperty('os.arch'))
 sourceSets {
     main {
         java { srcDirs = ["$projectDir/src/java"] }
@@ -39,16 +28,117 @@ sourceSets {
 }
 
 minecraft {
-    version = "${mc_version}-${forge_version}"
-    runDir = "run"
+    // The mappings can be changed at any time, and must be in the following format.
+    // snapshot_YYYYMMDD   Snapshot are built nightly.
+    // stable_#            Stables are built at the discretion of the MCP team.
+    // Use non-default mappings at your own risk. they may not always work.
+    // Simply re-run your setup task after changing the mappings to update your workspace.
+    mappings channel: 'snapshot', version: "${mc_mapping}"
+    // makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
     
-    // the mappings can be changed at any time, and must be in the following format.
-    // snapshot_YYYYMMDD   snapshot are built nightly.
-    // stable_#            stables are built at the discretion of the MCP team.
-    // Use non-default mappings at your own risk. they may not allways work.
-    // simply re-run your setup task after changing the mappings to update your workspace.
-    mappings = "${mc_mapping}"
-    //makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
+    // accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+
+    // Default run configurations.
+    // These can be tweaked, removed, or duplicated as needed.
+    runs {
+        client {
+            workingDirectory project.file('run/client')
+
+            // Recommended logging data for a userdev environment
+            // The markers can be changed as needed. 
+            // "SCAN": For mods scan.
+            // "REGISTRIES": For firing of registry events.
+            // "REGISTRYDUMP": For getting the contents of all registries.
+            property 'forge.logging.markers', 'REGISTRIES'
+
+            // Recommended logging level for the console
+            // You can set various levels here.
+            // Please read: https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
+            property 'forge.logging.console.level', 'debug'
+
+            mods {
+                cd4017be_lib {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        server {
+            workingDirectory project.file('run/server')
+
+            // Recommended logging data for a userdev environment
+            // The markers can be changed as needed. 
+            // "SCAN": For mods scan.
+            // "REGISTRIES": For firing of registry events.
+            // "REGISTRYDUMP": For getting the contents of all registries.
+            property 'forge.logging.markers', 'REGISTRIES'
+
+            // Recommended logging level for the console
+            // You can set various levels here.
+            // Please read: https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
+            property 'forge.logging.console.level', 'debug'
+
+            mods {
+                cd4017be_lib {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        data {
+            workingDirectory project.file('run/data')
+
+            // Recommended logging data for a userdev environment
+            // The markers can be changed as needed. 
+            // "SCAN": For mods scan.
+            // "REGISTRIES": For firing of registry events.
+            // "REGISTRYDUMP": For getting the contents of all registries.
+            property 'forge.logging.markers', 'REGISTRIES'
+
+            // Recommended logging level for the console
+            // You can set various levels here.
+            // Please read: https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
+            property 'forge.logging.console.level', 'debug'
+
+            // Specify the modid for data generation, where to output the resulting resource, and where to look for existing resources.
+            args '--mod', 'examplemod', '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+
+            mods {
+                cd4017be_lib {
+                    source sourceSets.main
+                }
+            }
+        }
+    }
+}
+
+// Include resources generated by data generators.
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+repositories {
+    maven {
+        // location of the maven that hosts JEI files
+        name = "Progwml6 maven"
+        url = "https://dvs1.progwml6.com/files/maven/"
+    }
+    maven {
+        // location of a maven mirror for JEI files, as a fallback
+        name = "ModMaven"
+        url = "https://modmaven.k-4u.nl"
+    }
+}
+
+dependencies {
+    // Specify the version of Minecraft to use, If this is any group other then 'net.minecraft' it is assumed
+    // that the dep is a ForgeGradle 'patcher' dependency. And it's patches will be applied.
+    // The userdev artifact is a special name and will get all sorts of transformations applied to it.
+    minecraft "net.minecraftforge:forge:${mc_version}-${forge_version}"
+    
+    // compile against the JEI API but do not include it at runtime
+    compileOnly fg.deobf("mezz.jei:jei-${jei_version}:api")
+    // at runtime, use the full JEI jar
+    runtimeOnly fg.deobf("mezz.jei:jei-${jei_version}")
+    
 }
 
 task deobfJar(type: Jar) {
@@ -56,79 +146,43 @@ task deobfJar(type: Jar) {
     classifier = 'deobf'
 }
 
-tasks.build.dependsOn('sourceJar', 'deobfJar')
+tasks.build.dependsOn('deobfJar')
 tasks.publish.dependsOn('build')
 
-processResources {
-    from (sourceSets.main.resources.srcDirs)
-}
-
 artifacts {
-	archives deobfJar 
-	archives sourceJar
+	archives deobfJar
 	archives jar
 }
 
-repositories {
-	maven {
-		// location of the maven that hosts JEI files
-		name = "Progwml6 maven"
-		url = "http://dvs1.progwml6.com/files/maven"
-	}
-	maven {
-		// location of a maven mirror for JEI files, as a fallback
-		name = "ModMaven"
-		url = "modmaven.k-4u.nl"
-	}
-	maven {
-		url = "http://maven.cil.li/"
-	}
-	maven {
-		url = "http://maven.ic2.player.to/"
-	}
-}
-
-dependencies {
-	// JEI
-	deobfProvided "mezz.jei:jei_${mc_version}:${jei_version}:api"
-	runtime "mezz.jei:jei_${mc_version}:${jei_version}"
-	// OC
-	compile "li.cil.oc:OpenComputers:${oc_version}"
-	// TIS-3D
-	compile "li.cil.tis3d:TIS-3D:${tis3d_version}"
-	// IC2
-	compile "net.industrial-craft:industrialcraft-2:${ic2_version}:api"
-}
-
-processResources
-{
-    // this will ensure that this task is redone when the versions change.
-    inputs.property "version", project.version
-    inputs.property "mcversion", project.minecraft.version
-
-    // replace stuff in mcmod.info, nothing else
-    from(sourceSets.main.resources.srcDirs) {
-        include 'mcmod.info'
-                
-        // replace version and mcversion
-        expand 'version':project.version, 'mcversion':project.minecraft.version
-    }
-        
-    // copy everything else, thats not the mcmod.info
-    from(sourceSets.main.resources.srcDirs) {
-        exclude 'mcmod.info'
-    }
-    
-    rename '(.+_at.cfg)', 'META-INF/$1'
-}
-
+// Example for how to get properties into the manifest for reading by the runtime..
 jar {
-	manifest {
-	    attributes 'FMLAT': 'cd4017be_lib_at.cfg'
-	}
+    manifest {
+        attributes([
+            "Specification-Title": "cd4017be_lib",
+            "Specification-Vendor": "cd4017be",
+            "Specification-Version": "1",
+            "Implementation-Title": project.name,
+            "Implementation-Version": "${version}",
+            "Implementation-Vendor" :"cd4017be",
+            "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        ])
+    }
 }
+
+// Example configuration to allow publishing using the maven-publish task
+// This is the preferred method to reobfuscate your jar file
+jar.finalizedBy('reobfJar') 
+// However if you are in a multi-project build, dev time needs unobfed jar files, so you can delay the obfuscation until publishing by doing
+//publish.dependsOn('reobfJar')
 
 publishing {
+    publications {
+        gpr(MavenPublication) {
+            artifactId archivesBaseName
+            artifact jar
+            artifact deobfJar
+        }
+    }
     repositories {
         maven {
             name = "GitHubPackages"
@@ -139,13 +193,4 @@ publishing {
             }
         }
     }
-    publications {
-        gpr(MavenPublication) {
-            artifactId archivesBaseName
-            artifact jar
-            artifact deobfJar
-            artifact sourceJar
-        }
-    }
 }
-
