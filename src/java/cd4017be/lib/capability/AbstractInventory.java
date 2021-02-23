@@ -60,4 +60,9 @@ public abstract class AbstractInventory implements IItemHandlerModifiable {
 		}
 	}
 
+	@Override
+	public boolean isItemValid(int slot, ItemStack stack) {
+		return insertAm(slot, stack) > 0;
+	}
+
 }

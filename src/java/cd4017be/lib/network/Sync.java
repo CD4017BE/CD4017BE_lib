@@ -76,7 +76,7 @@ public @interface Sync {
 			this.size = size;
 			if (inType.isPrimitive()) try {
 				Lookup l = MethodHandles.lookup();
-				this.read = l.unreflect(Type.class.getDeclaredMethod("read" + name(), NBTBase.class));
+				this.read = l.unreflect(Type.class.getDeclaredMethod("read" + name(), INBT.class));
 				this.write = l.unreflect(Type.class.getDeclaredMethod("write" + name(), inType));
 				this.comp = l.unreflect(Type.class.getDeclaredMethod("check" + name(), inType, ByteBuffer.class));
 				String name = inType.getName();
@@ -103,20 +103,20 @@ public @interface Sync {
 			return this;
 		}
 
-		static boolean readI1(NBTBase nbt) {return nbt instanceof NBTPrimitive && ((NBTPrimitive)nbt).getByte() != 0;}
-		static byte readI8(NBTBase nbt) {return nbt instanceof NBTPrimitive ? ((NBTPrimitive)nbt).getByte() : 0;}
-		static short readI16(NBTBase nbt) {return nbt instanceof NBTPrimitive ? ((NBTPrimitive)nbt).getShort() : 0;}
-		static int readI32(NBTBase nbt) {return nbt instanceof NBTPrimitive ? ((NBTPrimitive)nbt).getInt() : 0;}
-		static long readI64(NBTBase nbt) {return nbt instanceof NBTPrimitive ? ((NBTPrimitive)nbt).getLong() : 0L;}
-		static float readF32(NBTBase nbt) {return nbt instanceof NBTPrimitive ? ((NBTPrimitive)nbt).getFloat() : 0F;}
-		static double readF64(NBTBase nbt) {return nbt instanceof NBTPrimitive ? ((NBTPrimitive)nbt).getDouble() : 0D;}
-		static NBTBase writeI1(boolean val) {return new NBTTagByte((byte)(val ? 1:0));}
-		static NBTBase writeI8(byte val) {return new NBTTagByte(val);}
-		static NBTBase writeI16(short val) {return new NBTTagShort(val);}
-		static NBTBase writeI32(int val) {return new NBTTagInt(val);}
-		static NBTBase writeI64(long val) {return new NBTTagLong(val);}
-		static NBTBase writeF32(float val) {return new NBTTagFloat(val);}
-		static NBTBase writeF64(double val) {return new NBTTagDouble(val);}
+		static boolean readI1(INBT nbt) {return nbt instanceof NumberNBT && ((NumberNBT)nbt).getByte() != 0;}
+		static byte readI8(INBT nbt) {return nbt instanceof NumberNBT ? ((NumberNBT)nbt).getByte() : 0;}
+		static short readI16(INBT nbt) {return nbt instanceof NumberNBT ? ((NumberNBT)nbt).getShort() : 0;}
+		static int readI32(INBT nbt) {return nbt instanceof NumberNBT ? ((NumberNBT)nbt).getInt() : 0;}
+		static long readI64(INBT nbt) {return nbt instanceof NumberNBT ? ((NumberNBT)nbt).getLong() : 0L;}
+		static float readF32(INBT nbt) {return nbt instanceof NumberNBT ? ((NumberNBT)nbt).getFloat() : 0F;}
+		static double readF64(INBT nbt) {return nbt instanceof NumberNBT ? ((NumberNBT)nbt).getDouble() : 0D;}
+		static INBT writeI1(boolean val) {return ByteNBT.valueOf(val);}
+		static INBT writeI8(byte val) {return ByteNBT.valueOf(val);}
+		static INBT writeI16(short val) {return ShortNBT.valueOf(val);}
+		static INBT writeI32(int val) {return IntNBT.valueOf(val);}
+		static INBT writeI64(long val) {return LongNBT.valueOf(val);}
+		static INBT writeF32(float val) {return FloatNBT.valueOf(val);}
+		static INBT writeF64(double val) {return DoubleNBT.valueOf(val);}
 		static boolean checkI1(boolean val, ByteBuffer state) {
 			if (state.get() == 0 ^ val) return false;
 			state.put(state.position() - 1, (byte)(val ? 1 : 0));

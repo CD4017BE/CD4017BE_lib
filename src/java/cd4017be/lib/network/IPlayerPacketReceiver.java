@@ -1,6 +1,6 @@
 package cd4017be.lib.network;
 
-import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
 
@@ -16,7 +16,7 @@ public interface IPlayerPacketReceiver {
 	 * @param sender the player who sent this
 	 * @throws Exception potential decoding errors
 	 */
-	public void handlePlayerPacket(PacketBuffer pkt, EntityPlayerMP sender) throws Exception;
+	public void handlePlayerPacket(PacketBuffer pkt, ServerPlayerEntity sender) throws Exception;
 
 	/**
 	 * special version for Items
@@ -31,7 +31,7 @@ public interface IPlayerPacketReceiver {
 		 * @param sender the player holding the item
 		 * @throws Exception potential decoding errors
 		 */
-		void handlePlayerPacket(ItemStack stack, int slot, PacketBuffer pkt, EntityPlayerMP sender) throws Exception;
+		void handlePlayerPacket(ItemStack stack, int slot, PacketBuffer pkt, ServerPlayerEntity sender) throws Exception;
 	}
 
 }

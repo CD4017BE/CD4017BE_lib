@@ -1,10 +1,10 @@
 package cd4017be.lib.network;
 
-import net.minecraft.client.entity.EntityPlayerSP;
+import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 /**
  * implemented by TileEntities or Containers to receive data packets send by the server
@@ -17,7 +17,7 @@ public interface IServerPacketReceiver {
 	 * @param pkt contained payload
 	 * @throws Exception potential decoding errors
 	 */
-	@SideOnly(Side.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	void handleServerPacket(PacketBuffer pkt) throws Exception;
 
 	/**
@@ -32,8 +32,8 @@ public interface IServerPacketReceiver {
 		 * @param slot where the item is located in player's inventory
 		 * @param pkt packet payload
 		 */
-		@SideOnly(Side.CLIENT)
-		void handleServerPacket(ItemStack stack, EntityPlayerSP player, int slot, PacketBuffer pkt) throws Exception;
+		@OnlyIn(Dist.CLIENT)
+		void handleServerPacket(ItemStack stack, ClientPlayerEntity player, int slot, PacketBuffer pkt) throws Exception;
 	}
 
 }

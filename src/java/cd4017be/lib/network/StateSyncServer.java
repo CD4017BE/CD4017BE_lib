@@ -8,7 +8,7 @@ import cd4017be.lib.util.ItemFluidUtil;
 import io.netty.buffer.Unpooled;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fluids.FluidStack;
@@ -280,8 +280,8 @@ public class StateSyncServer extends StateSynchronizer {
 			buffer.writeString((String)v);
 		else if (v instanceof UUID)
 			check(i, 16).buffer.writeUniqueId((UUID)v);
-		else if (v instanceof NBTTagCompound)
-			buffer.writeCompoundTag((NBTTagCompound)v);
+		else if (v instanceof CompoundNBT)
+			buffer.writeCompoundTag((CompoundNBT)v);
 		else if (v instanceof ItemStack) {
 			ItemStack stack = (ItemStack)v;
 			if (stack.isEmpty()) buffer.writeShort(-1);
@@ -289,10 +289,10 @@ public class StateSyncServer extends StateSynchronizer {
 				Item item = stack.getItem();
 				buffer.writeShort(Item.getIdFromItem(item));
 				buffer.writeInt(stack.getCount());
-				buffer.writeShort(stack.getMetadata());
-				NBTTagCompound nbt = null;
-				if (item.isDamageable() || item.getShareTag())
-					nbt = item.getNBTShareTag(stack);
+				buffer.writeShort(stack.getDamage());
+				CompoundNBT nbt = null;
+				if (item.isDamageable())
+					nbt = item.getShareTag(stack);
 				buffer.writeCompoundTag(nbt);
 			}
 		} else if (v instanceof FluidStack)

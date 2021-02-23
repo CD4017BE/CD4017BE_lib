@@ -1,152 +1,161 @@
 package cd4017be.lib;
 
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import cd4017be.api.Capabilities;
-import cd4017be.api.computers.ComputerAPI;
-import cd4017be.api.energy.EnergyAPI;
-import cd4017be.api.recipes.RecipeScriptContext;
-import cd4017be.api.recipes.RecipeScriptContext.ConfigConstants;
 import cd4017be.lib.block.AdvancedBlock;
-import cd4017be.lib.item.BaseItem;
-import cd4017be.lib.item.BaseItemBlock;
-import cd4017be.lib.item.ItemMaterial;
+import cd4017be.lib.config.LibClient;
+import cd4017be.lib.container.ContainerEnergySupply;
+import cd4017be.lib.container.ContainerFluidSupply;
+import cd4017be.lib.container.ContainerItemSupply;
+import cd4017be.lib.item.*;
 import cd4017be.lib.network.GuiNetworkHandler;
-import cd4017be.lib.network.SyncNetworkHandler;
-import cd4017be.lib.render.ItemMaterialMeshDefinition;
-import cd4017be.lib.render.SpecialModelLoader;
-import cd4017be.lib.templates.TabMaterials;
+import cd4017be.lib.text.TooltipEditor;
+import cd4017be.lib.text.TooltipUtil;
 import cd4017be.lib.tileentity.test.EnergySupply;
 import cd4017be.lib.tileentity.test.FluidSupply;
 import cd4017be.lib.tileentity.test.ItemSupply;
-import cd4017be.lib.util.FileUtil;
-import cd4017be.lib.util.TooltipEditor;
-import cd4017be.lib.util.TooltipUtil;
+import net.minecraft.block.AbstractBlock.Properties;
 import net.minecraft.block.Block;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
+import net.minecraft.client.gui.ScreenManager;
+import net.minecraft.inventory.container.ContainerType;
+import net.minecraft.item.*;
+import net.minecraft.tileentity.TileEntityType;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.RegistryEvent;
+import net.minecraftforge.common.extensions.IForgeContainerType;
+import net.minecraftforge.event.RegistryEvent.Register;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.Mod.Instance;
-import net.minecraftforge.fml.common.event.FMLInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLServerAboutToStartEvent;
-import net.minecraftforge.fml.common.event.FMLServerStoppingEvent;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import static cd4017be.lib.BlockItemRegistry.registerRender;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.event.server.FMLServerStoppingEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.loading.FMLLoader;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 /**
  * 
  * @author CD4017BE
  */
-@Mod(modid = Lib.ID, useMetadata = true)
+@Mod(Lib.ID)
 public class Lib {
 
 	public static final String ID = "cd4017be_lib";
-	public static final String ConfigName = "core";
 	/**whether we are in a modding development environment */
-	public static final boolean DEV_DEBUG = Lib.class.getResource("Lib.class")
-	.getPath().indexOf('!') < 0; //'!' marks a path inside a compiled jar file.
+	public static final boolean DEV_DEBUG = !FMLLoader.isProduction();
+	public static final Logger LOG = LogManager.getLogger(ID);
+	public static final LibClient CFG_CLIENT = new LibClient();
 
-	@Instance
-	public static Lib instance;
-
-	public static Logger LOG;
-
-	public static Block ENERGY_SUPP, ITEM_SUPP, FLUID_SUPP;
+	public static AdvancedBlock<EnergySupply> ENERGY_SUPP;
+	public static AdvancedBlock<FluidSupply> FLUID_SUPP;
+	public static AdvancedBlock<ItemSupply> ITEM_SUPP;
 	public static Item energy_supp, item_supp, fluid_supp;
+	public static TileEntityType<EnergySupply> T_ENERGY_SUPP;
+	public static TileEntityType<FluidSupply> T_FLUID_SUPP;
+	public static TileEntityType<ItemSupply> T_ITEM_SUPP;
+	public static ContainerType<ContainerEnergySupply> C_ENERGY_SUPP;
+	public static ContainerType<ContainerItemSupply> C_ITEM_SUPP;
+	public static ContainerType<ContainerFluidSupply> C_FLUID_SUPP;
 	public static ItemMaterial materials;
-	public static BaseItem rrwi;
+	public static DocumentedItem rrwi;
 
-	public static final TabMaterials creativeTab = new TabMaterials(ID);
+	public static final ItemGroup creativeTab = new ItemGroup(ID) {
+		@Override
+		public ItemStack createIcon() {
+			return new ItemStack(rrwi);
+		}
+	};
 
 	public Lib() {
-		MinecraftForge.EVENT_BUS.register(this);
+		
+		FMLJavaModLoadingContext.get().getModEventBus().register(this);
+		CFG_CLIENT.register("lib");
+		MinecraftForge.EVENT_BUS.addListener(this::shutdown);
 	}
 
-	@Mod.EventHandler
-	public void preInit(FMLPreInitializationEvent event) {
-		LOG = event.getModLog();
-		if (DEV_DEBUG) LOG.info("Extra debug info for dev environment enabled!");
+	@SubscribeEvent
+	void setup(FMLCommonSetupEvent event) {
+		
+		GuiNetworkHandler.register();
+		/*
 		FileUtil.initConfigDir(event);
-		BlockGuiHandler.register();
-		Capabilities.register();
-		rrwi = new BaseItem("rrwi");
-		(materials = new ItemMaterial("m")).setCreativeTab(creativeTab);
-		creativeTab.item = new ItemStack(materials);
-		//RecipeSorter.register(ID + ":shapedNBT", NBTRecipe.class, RecipeSorter.Category.SHAPED, "after:minecraft:shaped before:minecraft:shapeless");
+		RecipeSorter.register(ID + ":shapedNBT", NBTRecipe.class, RecipeSorter.Category.SHAPED, "after:minecraft:shaped before:minecraft:shapeless");
 		RecipeScriptContext.instance = new RecipeScriptContext(LOG);
 		RecipeScriptContext.instance.setup();
 		RecipeScriptContext.instance.run(ConfigName + ".PRE_INIT");
 		ConfigConstants cfg = new ConfigConstants(RecipeScriptContext.instance.modules.get(ConfigName));
-		GuiNetworkHandler.register();
 		SyncNetworkHandler.register(cfg);
 		EnergyAPI.init(cfg);
-	}
-
-	@Mod.EventHandler
-	public void init(FMLInitializationEvent event) {
 		ComputerAPI.register();
-		RecipeScriptContext.instance.runAll("INIT");
+		*/
 	}
 
-	@Mod.EventHandler
-	public void postInit(FMLPostInitializationEvent event) {
-		RecipeScriptContext.instance.runAll("POST_INIT");
-		TooltipUtil.addScriptVariables();
-		if (event.getSide().isClient()) TooltipEditor.init();
-	}
-
-	@Mod.EventHandler
-	public void afterStart(FMLServerAboutToStartEvent event) {
-		//trash stuff that's not needed anymore
-		RecipeScriptContext.instance = null;
-		System.gc();
-	}
-
-	@Mod.EventHandler
-	public void onShutdown(FMLServerStoppingEvent event) {
+	void shutdown(FMLServerStoppingEvent event) {
 		TickRegistry.instance.clear();
 		if (TooltipUtil.editor != null)
 			TooltipUtil.editor.save();
 	}
 
 	@SubscribeEvent
-	public void registerBlocks(RegistryEvent.Register<Block> ev) {
+	void registerBlocks(Register<Block> ev) {
+		Properties p = Properties.create(Material.IRON).hardnessAndResistance(-1F, Float.POSITIVE_INFINITY).noDrops().sound(SoundType.ANVIL);
 		ev.getRegistry().registerAll(
-			ENERGY_SUPP = new AdvancedBlock("energy_supp", Material.IRON, SoundType.ANVIL, 0, EnergySupply.class).setResistance(Float.POSITIVE_INFINITY).setBlockUnbreakable().setCreativeTab(creativeTab),
-			ITEM_SUPP = new AdvancedBlock("item_supp", Material.IRON, SoundType.ANVIL, 0, ItemSupply.class).setResistance(Float.POSITIVE_INFINITY).setBlockUnbreakable().setCreativeTab(creativeTab),
-			FLUID_SUPP = new AdvancedBlock("fluid_supp", Material.IRON, SoundType.ANVIL, 0, FluidSupply.class).setResistance(Float.POSITIVE_INFINITY).setBlockUnbreakable().setCreativeTab(creativeTab)
+			ENERGY_SUPP = new AdvancedBlock<>("energy_supp", p, 0, EnergySupply.class),
+			FLUID_SUPP = new AdvancedBlock<>("fluid_supp", p, 0, FluidSupply.class),
+			ITEM_SUPP = new AdvancedBlock<>("item_supp", p, 0, ItemSupply.class)
 		);
 	}
 
 	@SubscribeEvent
-	public void registerItems(RegistryEvent.Register<Item> ev) {
+	void registerItems(Register<Item> ev) {
+		Item.Properties p = new Item.Properties().group(creativeTab).rarity(Rarity.EPIC),
+		p1 = new Item.Properties().group(creativeTab);
 		ev.getRegistry().registerAll(
-			energy_supp = new BaseItemBlock(ENERGY_SUPP),
-			item_supp = new BaseItemBlock(ITEM_SUPP),
-			fluid_supp = new BaseItemBlock(FLUID_SUPP),
-			rrwi, materials
+			energy_supp = new DocumentedBlockItem(ENERGY_SUPP, p),
+			fluid_supp = new DocumentedBlockItem(FLUID_SUPP, p),
+			item_supp = new DocumentedBlockItem(ITEM_SUPP, p),
+			rrwi = new DocumentedItem("rrwi", p1)
 		);
 	}
 
-	@SideOnly(Side.CLIENT)
 	@SubscribeEvent
+	void registerTileEntities(Register<TileEntityType<?>> ev) {
+		ev.getRegistry().registerAll(
+			T_ENERGY_SUPP = ENERGY_SUPP.createTileEntityType(),
+			T_FLUID_SUPP = FLUID_SUPP.createTileEntityType(),
+			T_ITEM_SUPP = ITEM_SUPP.createTileEntityType()
+		);
+	}
+
+	@SubscribeEvent
+	void registerContainers(Register<ContainerType<?>> ev) {
+		ev.getRegistry().registerAll(
+			(C_ENERGY_SUPP = IForgeContainerType.create(ContainerEnergySupply::new)).setRegistryName(rl("energy_supp")),
+			(C_ITEM_SUPP = IForgeContainerType.create(ContainerItemSupply::new)).setRegistryName(rl("item_supp")),
+			(C_FLUID_SUPP = IForgeContainerType.create(ContainerFluidSupply::new)).setRegistryName(rl("fluid_supp"))
+		);
+	}
+
+	@SubscribeEvent
+	@OnlyIn(Dist.CLIENT)
+	void setupClient(FMLClientSetupEvent ev) {
+		TooltipEditor.init();
+		ScreenManager.registerFactory(C_ENERGY_SUPP, ContainerEnergySupply::setupGui);
+		ScreenManager.registerFactory(C_ITEM_SUPP, ContainerItemSupply::setupGui);
+		ScreenManager.registerFactory(C_FLUID_SUPP, ContainerFluidSupply::setupGui);
+	}
+
+	@OnlyIn(Dist.CLIENT)
 	public void registerMaterialModels(ModelRegistryEvent ev) {
-		SpecialModelLoader.setMod(ID);
-		registerRender(energy_supp);
-		registerRender(item_supp);
-		registerRender(fluid_supp);
-		registerRender(rrwi);
-		registerRender(materials);
-		registerRender(materials, new ItemMaterialMeshDefinition(materials));
+		
+	}
+
+	public static ResourceLocation rl(String path) {
+		return new ResourceLocation(ID, path);
 	}
 
 }

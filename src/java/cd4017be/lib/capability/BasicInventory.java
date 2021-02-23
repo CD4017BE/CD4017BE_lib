@@ -4,9 +4,9 @@ import java.util.Arrays;
 import java.util.function.ObjIntConsumer;
 
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTBase;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
+import net.minecraft.nbt.INBT;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.ListNBT;
 
 /**
  * 
@@ -49,24 +49,24 @@ public class BasicInventory extends AbstractInventory {
 		return Math.min(64, item.getMaxStackSize());
 	}
 
-	public void read(NBTTagList list) {
+	public void read(ListNBT list) {
 		Arrays.fill(items, ItemStack.EMPTY);
-		for (NBTBase nbt : list) {
-			NBTTagCompound tag = (NBTTagCompound)nbt;
+		for (INBT nbt : list) {
+			CompoundNBT tag = (CompoundNBT)nbt;
 			int slot = tag.getByte("Slot") & 0xff;
 			if (slot < items.length)
-				items[slot] = new ItemStack(tag);
+				items[slot] = ItemStack.read(tag);
 		}
 	}
 
-	public NBTTagList write() {
-		NBTTagList list = new NBTTagList();
+	public ListNBT write() {
+		ListNBT list = new ListNBT();
 		for (int i = 0; i < items.length; i++) {
 			ItemStack item = items[i];
 			if (item.isEmpty()) continue;
-			NBTTagCompound tag = item.writeToNBT(new NBTTagCompound());
-			tag.setByte("Slot", (byte)i);
-			list.appendTag(tag);
+			CompoundNBT tag = item.write(new CompoundNBT());
+			tag.putByte("Slot", (byte)i);
+			list.add(tag);
 		}
 		return list;
 	}

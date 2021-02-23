@@ -1,5 +1,6 @@
 modLoader="javafml"
 loaderVersion="[32,)"
+license="MIT License"
 issueTrackerURL="https://github.com/CD4017BE/CD4017BE_lib/issues"
 # A list of mods - how many allowed here is determined by the individual mod loader
 [[mods]]
@@ -25,9 +26,9 @@ The core library mod required for all my other mods. Also includes some basic fe
     versionRange="[32,)" #mandatory
     ordering="NONE"
     side="BOTH"
-[[dependencies.examplemod]]
+[[dependencies.cd4017be_lib]]
     modId="minecraft"
     mandatory=true
-    versionRange="[1.16.1]"
+    versionRange="[1.16.5]"
     ordering="NONE"
     side="BOTH"

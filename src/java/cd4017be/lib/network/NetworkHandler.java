@@ -1,37 +1,37 @@
 package cd4017be.lib.network;
 
 import java.util.Collection;
-
+import java.util.function.Consumer;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
 
 import cd4017be.lib.Lib;
 import cd4017be.lib.util.DimPos;
-import io.netty.buffer.ByteBuf;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.network.NetHandlerPlayServer;
-import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.network.FMLEventChannel;
-import net.minecraftforge.fml.common.network.NetworkRegistry;
-import net.minecraftforge.fml.common.network.FMLNetworkEvent.ClientCustomPacketEvent;
-import net.minecraftforge.fml.common.network.FMLNetworkEvent.ServerCustomPacketEvent;
-import net.minecraftforge.fml.common.network.NetworkRegistry.TargetPoint;
-import net.minecraftforge.fml.common.network.internal.FMLProxyPacket;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraft.client.Minecraft;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.network.*;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.fml.LogicalSide;
+import net.minecraftforge.fml.LogicalSidedProvider;
+import net.minecraftforge.fml.network.*;
+import net.minecraftforge.fml.network.NetworkEvent.Context;
+import net.minecraftforge.fml.network.event.EventNetworkChannel;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 /**
  * @author CD4017BE
  *
  */
-public abstract class NetworkHandler implements IServerPacketReceiver, IPlayerPacketReceiver {
+public abstract class NetworkHandler implements Consumer<NetworkEvent>, IServerPacketReceiver, IPlayerPacketReceiver {
 
 	private static final long LOG_INTERVAL = 1000;
 	public static final Marker NETWORK = MarkerManager.getMarker("Network");
 
-	public final FMLEventChannel eventChannel;
-	public final String channel;
+	public final EventNetworkChannel eventChannel;
+	public final ResourceLocation channel;
 
 	private long lastErr;
 	private int errCount;
@@ -39,35 +39,46 @@ public abstract class NetworkHandler implements IServerPacketReceiver, IPlayerPa
 	/**
 	 * @param channel packet channel id
 	 */
-	protected NetworkHandler(String channel) {
+	protected NetworkHandler(ResourceLocation channel) {
 		this.channel = channel;
-		(this.eventChannel = NetworkRegistry.INSTANCE.newEventDrivenChannel(channel)).register(this);
+		this.eventChannel = NetworkRegistry.newEventChannel(channel, this::version, this::acceptClient, this::acceptServer);
+		eventChannel.addListener(this);
 	}
 
-	@SideOnly(Side.CLIENT)
-	@SubscribeEvent
-	public void onPacketFromServer(ClientCustomPacketEvent event) {
-		FMLProxyPacket packet = event.getPacket();
-		if (!packet.channel().equals(channel)) return;
-		PacketBuffer buf = new PacketBuffer(packet.payload());
-		try {
-			handleServerPacket(buf);
-		} catch (Exception e) {
-			logError(buf, "SERVER", e);
-		}
+	protected abstract String version();
+
+	protected boolean acceptClient(String version) {
+		return version().equals(version);
 	}
 
-	@SubscribeEvent
-	public void onPacketFromClient(ServerCustomPacketEvent event) {
-		FMLProxyPacket packet = event.getPacket();
-		if (!packet.channel().equals(channel) || !(event.getHandler() instanceof NetHandlerPlayServer)) return;
-		EntityPlayerMP player = ((NetHandlerPlayServer)event.getHandler()).player;
-		ByteBuf b = packet.payload();
-		PacketBuffer buf = b instanceof PacketBuffer ? (PacketBuffer)b : new PacketBuffer(b);
+	protected boolean acceptServer(String version) {
+		return version().equals(version);
+	}
+
+	@Override
+	public void accept(NetworkEvent e) {
+		if (e instanceof NetworkEvent.ChannelRegistrationChangeEvent) return;
+		PacketBuffer data = e.getPayload();
+		Context c = e.getSource().get();
+		String source = "UNKNOWN";
 		try {
-			handlePlayerPacket(buf, player);
-		} catch (Exception e) {
-			logError(buf, "PLAYER \"" + player.getName() + "\"", e);
+			switch(c.getDirection()) {
+			case PLAY_TO_CLIENT:
+				source = "SERVER";
+				handleServerPacket(data);
+				break;
+			case PLAY_TO_SERVER:
+				ServerPlayerEntity player = c.getSender();
+				source = "PLAYER \"" + player.getName() + "\"";
+				handlePlayerPacket(data, player);
+				break;
+				//TODO login packets
+			default:
+				return;
+			}
+			c.setPacketHandled(true);
+		} catch (Exception ex) {
+			logError(data, source, ex);
 		}
 	}
 
@@ -94,12 +105,19 @@ public abstract class NetworkHandler implements IServerPacketReceiver, IPlayerPa
 		sb.setCharAt(sb.length() - 1, ']');
 	}
 
+	public IPacket<?> packet2C(PacketBuffer data) {
+		return NetworkDirection.PLAY_TO_CLIENT.buildPacket(Pair.of(data, 0), channel).getThis();
+	}
+
 	/**
 	 * send a the given packet from client to the server
 	 * @param pkt payload
 	 */
+	@OnlyIn(Dist.CLIENT)
 	public void sendToServer(PacketBuffer pkt) {
-		eventChannel.sendToServer(new FMLProxyPacket(pkt, channel));
+		Minecraft.getInstance().getConnection().sendPacket(
+			NetworkDirection.PLAY_TO_SERVER.buildPacket(Pair.of(pkt, 0), channel).getThis()
+		);
 	}
 
 	/**
@@ -107,8 +125,8 @@ public abstract class NetworkHandler implements IServerPacketReceiver, IPlayerPa
 	 * @param pkt payload
 	 * @param player receiver
 	 */
-	public void sendToPlayer(PacketBuffer pkt, EntityPlayerMP player) {
-		eventChannel.sendTo(new FMLProxyPacket(pkt, channel), player);
+	public void sendToPlayer(PacketBuffer pkt, ServerPlayerEntity player) {
+		player.connection.netManager.sendPacket(packet2C(pkt));
 	}
 
 	/**
@@ -116,21 +134,22 @@ public abstract class NetworkHandler implements IServerPacketReceiver, IPlayerPa
 	 * @param pkt payload
 	 * @param players receivers
 	 */
-	public void sendToPlayers(PacketBuffer pkt, Collection<EntityPlayerMP> players) {
-		FMLProxyPacket packet = new FMLProxyPacket(pkt, channel);
-		for (EntityPlayerMP player : players)
-			eventChannel.sendTo(packet, player);
+	public void sendToPlayers(PacketBuffer pkt, Collection<ServerPlayerEntity> players) {
+		IPacket<?> packet = packet2C(pkt);
+		for (ServerPlayerEntity player : players)
+			player.connection.netManager.sendPacket(packet);
 	}
 
 	/**
 	 * send a the given packet from server to all players that stand within given range
 	 * @param pkt payload
 	 * @param pos target location
-	 * @param range [m] maximum (strait) distance away
+	 * @param range [m] maximum (straight) distance away
 	 */
 	public void sendToAllNear(PacketBuffer pkt, DimPos pos, double range) {
-		eventChannel.sendToAllAround(new FMLProxyPacket(pkt, channel),
-			new TargetPoint(pos.dimId, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, range));
+		LogicalSidedProvider.INSTANCE.<MinecraftServer>get(LogicalSide.SERVER).getPlayerList().sendToAllNearExcept(
+			null, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, range, pos.dim, packet2C(pkt)
+		);
 	}
 
 }

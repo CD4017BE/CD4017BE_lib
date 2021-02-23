@@ -6,28 +6,30 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 
 import cd4017be.api.recipes.RecipeScriptContext.ConfigConstants;
+import cd4017be.lib.Lib;
 import cd4017be.lib.util.Utils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.EntityPlayerSP;
+import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.EnumHand;
+import net.minecraft.util.Hand;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.common.eventhandler.EventPriority;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
-import net.minecraftforge.fml.common.gameevent.TickEvent.ServerTickEvent;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraftforge.eventbus.api.EventPriority;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.event.TickEvent.Phase;
+import net.minecraftforge.event.TickEvent.ServerTickEvent;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 
 /**
@@ -45,22 +47,22 @@ public class SyncNetworkHandler extends NetworkHandler {
 
 	public static void register(ConfigConstants cfg) {
 		MAX_PACKSIZE = Math.min((int)cfg.getNumber("packet_chain_threshold", 255), 255) + HEADERSIZE;
-		if (instance == null) instance = new SyncNetworkHandler("4017s");
+		if (instance == null) instance = new SyncNetworkHandler(new ResourceLocation(Lib.ID, "sy"));
 	}
 
-	private final HashMap<EntityPlayerMP, ByteBuf> chainedPackets;
+	private final HashMap<ServerPlayerEntity, ByteBuf> chainedPackets;
 
-	private SyncNetworkHandler(String channel) {
+	private SyncNetworkHandler(ResourceLocation channel) {
 		super(channel);
 		this.chainedPackets = new HashMap<>();
 		MinecraftForge.EVENT_BUS.register(this);
 	}
 
 	@Override
-	@SideOnly(Side.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public void handleServerPacket(PacketBuffer pkt) throws Exception {
-		World world = Minecraft.getMinecraft().world;
-		EntityPlayerSP player = Minecraft.getMinecraft().player;
+		World world = Minecraft.getInstance().world;
+		ClientPlayerEntity player = Minecraft.getInstance().player;
 		for (PacketBuffer buf : new PacketSplitter(pkt)) {
 			BlockPos target = buf.readBlockPos();
 			int y = target.getY();
@@ -84,9 +86,9 @@ public class SyncNetworkHandler extends NetworkHandler {
 	}
 
 	@Override
-	public void handlePlayerPacket(PacketBuffer pkt, EntityPlayerMP sender) throws Exception {
+	public void handlePlayerPacket(PacketBuffer pkt, ServerPlayerEntity sender) throws Exception {
 		World world = sender.world;
-		for (PacketBuffer buf : new PacketSplitter(pkt)) {
+		for (PacketBuffer buf : new PacketSplitter(pkt)) {//TODO chained packets don't make much sense on client -> server
 			BlockPos target = buf.readBlockPos();
 			int y = target.getY();
 			if (y >= Y_TILEENTITY) {
@@ -111,29 +113,29 @@ public class SyncNetworkHandler extends NetworkHandler {
 	@SubscribeEvent(priority = EventPriority.LOW)
 	public void tick(ServerTickEvent event) {
 		if (event.phase != Phase.END || chainedPackets.isEmpty()) return;
-		for (Entry<EntityPlayerMP, ByteBuf> e : chainedPackets.entrySet())
+		for (Entry<ServerPlayerEntity, ByteBuf> e : chainedPackets.entrySet())
 			super.sendToPlayer(new PacketBuffer(e.getValue()), e.getKey());
 		chainedPackets.clear();
 	}
 
-	private void addPacket(ByteBuf pkt, EntityPlayerMP player) {
+	private void addPacket(ByteBuf pkt, ServerPlayerEntity player) {
 		pkt.setByte(0, pkt.readableBytes() - HEADERSIZE);
 		chainedPackets.merge(player, pkt, ByteBuf::writeBytes);
 	}
 
 	@Override
-	public void sendToPlayer(PacketBuffer pkt, EntityPlayerMP player) {
+	public void sendToPlayer(PacketBuffer pkt, ServerPlayerEntity player) {
 		if (pkt.readableBytes() <= MAX_PACKSIZE) addPacket(pkt, player);
 		else super.sendToPlayer(pkt, player);
 	}
 
 	@Override
-	public void sendToPlayers(PacketBuffer pkt, Collection<EntityPlayerMP> players) {
+	public void sendToPlayers(PacketBuffer pkt, Collection<ServerPlayerEntity> players) {
 		int l = pkt.readableBytes();
 		if (l > MAX_PACKSIZE) super.sendToPlayers(pkt, players);
 		else {
 			pkt.setByte(0, pkt.readableBytes() - HEADERSIZE);
-			for (EntityPlayerMP player : players) {
+			for (ServerPlayerEntity player : players) {
 				ByteBuf buf = chainedPackets.get(player);
 				if (buf == null) chainedPackets.put(player, pkt.copy());
 				else buf.writeBytes(pkt);
@@ -144,7 +146,7 @@ public class SyncNetworkHandler extends NetworkHandler {
 	public static PacketBuffer preparePacket(BlockPos pos) {
 		PacketBuffer pkt = new PacketBuffer(Unpooled.buffer());
 		pkt.writeByte(0);
-		pkt.writeBlockPos(pos);
+		pkt.writeBlockPos(pos);//TODO improve format
 		return pkt;
 	}
 
@@ -152,7 +154,7 @@ public class SyncNetworkHandler extends NetworkHandler {
 	 * @param tile the TileEntity to send to (on the other side)
 	 * @return a new PacketBuffer with prepared header
 	 * @see IServerPacketReceiver#handleServerPacket(PacketBuffer)
-	 * @see IPlayerPacketReceiver#handlePlayerPacket(PacketBuffer, EntityPlayerMP)
+	 * @see IPlayerPacketReceiver#handlePlayerPacket(PacketBuffer, ServerPlayerEntity)
 	 */
 	public static PacketBuffer preparePacket(TileEntity tile) {
 		return preparePacket(tile.getPos());
@@ -162,7 +164,7 @@ public class SyncNetworkHandler extends NetworkHandler {
 	 * @param entity the Entity to send to (on the other side)
 	 * @return a new PacketBuffer with prepared header
 	 * @see IServerPacketReceiver#handleServerPacket(PacketBuffer)
-	 * @see IPlayerPacketReceiver#handlePlayerPacket(PacketBuffer, EntityPlayerMP)
+	 * @see IPlayerPacketReceiver#handlePlayerPacket(PacketBuffer, ServerPlayerEntity)
 	 */
 	public static PacketBuffer preparePacket(Entity entity) {
 		int id = entity.getEntityId();
@@ -172,8 +174,8 @@ public class SyncNetworkHandler extends NetworkHandler {
 	/**
 	 * @param slot the player inventory slot to send to
 	 * @return a new PacketBuffer with prepared header
-	 * @see IServerPacketReceiver.ItemSPR#handleServerPacket(ItemStack, EntityPlayerSP, int, PacketBuffer)
-	 * @see IPlayerPacketReceiver.ItemPPR#handlePlayerPacket(ItemStack, int, PacketBuffer, EntityPlayerMP)
+	 * @see IServerPacketReceiver.ItemSPR#handleServerPacket(ItemStack, PlayerEntitySP, int, PacketBuffer)
+	 * @see IPlayerPacketReceiver.ItemPPR#handlePlayerPacket(ItemStack, int, PacketBuffer, ServerPlayerEntity)
 	 */
 	public static PacketBuffer preparePacket(int slot) {
 		return preparePacket(new BlockPos(slot, Y_ITEM, 0));
@@ -183,11 +185,11 @@ public class SyncNetworkHandler extends NetworkHandler {
 	 * @param player the player holding the item
 	 * @param hand the held item to send to
 	 * @return a new PacketBuffer with prepared header
-	 * @see IServerPacketReceiver.ItemSPR#handleServerPacket(ItemStack, EntityPlayerSP, int, PacketBuffer)
-	 * @see IPlayerPacketReceiver.ItemPPR#handlePlayerPacket(ItemStack, int, PacketBuffer, EntityPlayerMP)
+	 * @see IServerPacketReceiver.ItemSPR#handleServerPacket(ItemStack, PlayerEntitySP, int, PacketBuffer)
+	 * @see IPlayerPacketReceiver.ItemPPR#handlePlayerPacket(ItemStack, int, PacketBuffer, ServerPlayerEntity)
 	 */
-	public static PacketBuffer preparePacket(EntityPlayer player, EnumHand hand) {
-		return preparePacket(new BlockPos(hand == EnumHand.MAIN_HAND ? 40 : player.inventory.currentItem, Y_ITEM, 0));
+	public static PacketBuffer preparePacket(PlayerEntity player, Hand hand) {
+		return preparePacket(new BlockPos(hand == Hand.MAIN_HAND ? 40 : player.inventory.currentItem, Y_ITEM, 0));
 	}
 
 	static class PacketSplitter implements Iterable<PacketBuffer>, Iterator<PacketBuffer> {
@@ -224,6 +226,11 @@ public class SyncNetworkHandler extends NetworkHandler {
 			hasNext = true;
 			return this;
 		}
+	}
+
+	@Override
+	protected String version() {
+		return "0";
 	}
 
 }

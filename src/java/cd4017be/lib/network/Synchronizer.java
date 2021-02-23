@@ -117,7 +117,7 @@ public class Synchronizer<T> {
 	 * @param o object to encode
 	 * @param nbt data tag to store in
 	 * @param mode synchronization event bit-mask for {@link Sync#to()} */
-	public void writeNBT(Object o, NBTTagCompound nbt, int mode) {
+	public void writeNBT(Object o, CompoundNBT nbt, int mode) {
 		T obj = clazz.cast(o);
 		for (Encoder<T> enc : variables)
 			enc.writeNBT(obj, nbt, mode);
@@ -127,7 +127,7 @@ public class Synchronizer<T> {
 	 * @param o object to decode
 	 * @param nbt data tag load from
 	 * @param mode synchronization event bit-mask for {@link Sync#to()} */
-	public void readNBT(Object o, NBTTagCompound nbt, int mode) {
+	public void readNBT(Object o, CompoundNBT nbt, int mode) {
 		T obj = clazz.cast(o);
 		for (Encoder<T> enc : variables)
 			enc.readNBT(obj, nbt, mode);
@@ -158,7 +158,7 @@ public class Synchronizer<T> {
 			if (var.tag.equals(name) && var.index >= 0)
 				return var.index;
 		}
-		throw new IllegalArgumentException("variable '" + name + "' is not defined!");
+		return -1;
 	}
 
 	/**Finds all variable states that differ from the given reference states
@@ -262,31 +262,31 @@ public class Synchronizer<T> {
 			this.tag = tag;
 		}
 
-		public abstract void writeNBT(T o, NBTTagCompound nbt, int mode);
-		public abstract void readNBT(T o, NBTTagCompound nbt, int mode);
+		public abstract void writeNBT(T o, CompoundNBT nbt, int mode);
+		public abstract void readNBT(T o, CompoundNBT nbt, int mode);
 	}
 
 	public static class EncoderNBT<T> extends Encoder<T> {
-		final Function<T, NBTBase> encoder;
-		final BiConsumer<T, NBTBase> decoder;
+		final Function<T, INBT> encoder;
+		final BiConsumer<T, INBT> decoder;
 
-		public EncoderNBT(int flags, int index, String tag, Pair<Function<T, NBTBase>, BiConsumer<T, NBTBase>> enc_dec) {
+		public EncoderNBT(int flags, int index, String tag, Pair<Function<T, INBT>, BiConsumer<T, INBT>> enc_dec) {
 			super(flags, index, tag);
 			this.encoder = enc_dec.getLeft();
 			this.decoder = enc_dec.getRight();
 		}
 
 		@Override
-		public void writeNBT(T o, NBTTagCompound nbt, int mode) {
+		public void writeNBT(T o, CompoundNBT nbt, int mode) {
 			if ((flags & mode) == 0) return;
-			NBTBase nb = encoder.apply(o);
-			if (nb != null) nbt.setTag(tag, nb);
+			INBT nb = encoder.apply(o);
+			if (nb != null) nbt.put(tag, nb);
 		}
 
 		@Override
-		public void readNBT(T o, NBTTagCompound nbt, int mode) {
+		public void readNBT(T o, CompoundNBT nbt, int mode) {
 			if ((flags & mode) == 0) return;
-			decoder.accept(o, nbt.getTag(tag));
+			decoder.accept(o, nbt.get(tag));
 		}
 
 	}
@@ -302,17 +302,17 @@ public class Synchronizer<T> {
 		}
 
 		@Override
-		public void writeNBT(T o, NBTTagCompound nbt, int mode) {
+		public void writeNBT(T o, CompoundNBT nbt, int mode) {
 			if ((flags & mode) == 0) return;
-			NBTTagCompound sub = new NBTTagCompound();
+			CompoundNBT sub = new CompoundNBT();
 			sync.writeNBT(getter.apply(o), sub, mode);
-			nbt.setTag(tag, sub);
+			nbt.put(tag, sub);
 		}
 
 		@Override
-		public void readNBT(T o, NBTTagCompound nbt, int mode) {
+		public void readNBT(T o, CompoundNBT nbt, int mode) {
 			if ((flags & mode) == 0) return;
-			sync.readNBT(getter.apply(o), nbt.getCompoundTag(tag), mode);
+			sync.readNBT(getter.apply(o), nbt.getCompound(tag), mode);
 		}
 	}
 
@@ -377,7 +377,7 @@ public class Synchronizer<T> {
 		> l) {
 			int mask = annotation.to(), index = -1;
 			Type t = annotation.type().actual(type);
-			Pair<Function<T, NBTBase>, BiConsumer<T, NBTBase>> enc_dec;
+			Pair<Function<T, INBT>, BiConsumer<T, INBT>> enc_dec;
 			getter = explicitCastArguments(getter, methodType(t.inType, Object.class));
 			if (setter != null) 
 				setter = explicitCastArguments(setter, methodType(Void.class, Object.class, t.inType));

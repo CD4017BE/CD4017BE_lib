@@ -1,83 +1,42 @@
 package cd4017be.lib.block;
 
-import java.lang.reflect.InvocationTargetException;
+import static java.lang.invoke.MethodHandleProxies.asInterfaceInstance;
+import static java.lang.invoke.MethodHandles.lookup;
+import static java.lang.invoke.MethodType.methodType;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
-import cd4017be.lib.BlockGuiHandler;
-import cd4017be.lib.Lib;
-import cd4017be.lib.Gui.DataContainer;
-import cd4017be.lib.Gui.DataContainer.IGuiData;
 import cd4017be.lib.block.MultipartBlock.IModularTile;
-import cd4017be.lib.network.GuiNetworkHandler;
-import cd4017be.lib.network.IGuiHandlerBlock;
-import cd4017be.lib.network.IGuiHandlerTile;
-import cd4017be.lib.property.PropertyBlockMimic;
-import cd4017be.lib.property.PropertyWrapObj;
-import cd4017be.lib.templates.Cover;
-import cd4017be.lib.tileentity.BaseTileEntity;
-import net.minecraft.block.Block;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import net.minecraft.block.properties.IProperty;
-import net.minecraft.block.state.BlockFaceShape;
-import net.minecraft.block.state.BlockStateContainer;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.inventory.GuiContainer;
+import net.minecraft.block.*;
+import net.minecraft.state.Property;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.inventory.Container;
-import net.minecraft.item.Item;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.projectile.ProjectileEntity;
+import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.EnumBlockRenderType;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumFacing.AxisDirection;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.Explosion;
-import net.minecraft.world.IBlockAccess;
-import net.minecraft.world.World;
-import net.minecraftforge.common.IPlantable;
-import net.minecraftforge.common.property.ExtendedBlockState;
-import net.minecraftforge.common.property.IExtendedBlockState;
-import net.minecraftforge.common.property.IUnlistedProperty;
-import net.minecraftforge.fml.common.registry.GameRegistry;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraft.tileentity.TileEntityType;
+import net.minecraft.util.*;
+import net.minecraft.util.math.*;
+import net.minecraft.world.*;
 
 /**
  * 
  * @author CD4017BE
  */
-public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
+public class AdvancedBlock<T extends TileEntity> extends Block {
 
-	public final Class<? extends TileEntity> tileEntity;
-	protected EnumBlockRenderType renderType;
-	protected AxisAlignedBB[] boundingBox;
+	private final Supplier<T> teFactory;
+	protected BlockRenderType renderType = BlockRenderType.MODEL;
 	/**1:NeighborAware, 2:BreakCleanup, 4:Interactive, 8:PlaceHarvest, 0x10:Redstone, 0x20:Collision, 0x40:hasGui, 0x80:Comparator, 0x100:Multipart, 0x10000:nonOpaque, 0x40000:no sneak place */
 	protected int flags;
 
 	public static final AxisAlignedBB EMPTY_AABB = new AxisAlignedBB(.5, .5, .5, .5, .5, .5);
-	protected static final Set<IProperty<?>> L_PROPERTIES = new HashSet<>();
-	protected static final Set<IUnlistedProperty<?>> UL_PROPERTIES = new HashSet<>();
-
-	private static String initProperties(String id, Class<? extends TileEntity> tile) {
-		if (tile == null) return id;
-		if (IModularTile.class.isAssignableFrom(tile)) UL_PROPERTIES.add(PropertyWrapObj.MULTIPART);
-		if (ICoverableTile.class.isAssignableFrom(tile)) UL_PROPERTIES.add(PropertyWrapObj.COVER);
-		return id;
-	}
+	protected static final Set<Property<?>> L_PROPERTIES = new HashSet<>();
 
 	/**
 	 * 
@@ -86,72 +45,42 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 	 * @param flags 2 = nonOpaque, 1 = noFullBlock, 4 = don't open GUI
 	 * @param tile optional TileEntity to register with this block
 	 */
-	public AdvancedBlock(String id, Material m, SoundType sound, int flags, @Nullable Class<? extends TileEntity> tile) {
-		super(initProperties(id, tile), m);
-		L_PROPERTIES.clear();
-		UL_PROPERTIES.clear();
-		this.setSoundType(sound);
-		this.fullBlock = (flags & 1) == 0;
-		this.flags = flags << 15;
-		this.tileEntity = tile;
-		if (tile != null) {
-			if (INeighborAwareTile.class.isAssignableFrom(tile)) this.flags |= 1;
-			if (ISelfAwareTile.class.isAssignableFrom(tile)) this.flags |= 2;
-			if (IInteractiveTile.class.isAssignableFrom(tile)) this.flags |= 4;
-			if (ITilePlaceHarvest.class.isAssignableFrom(tile)) this.flags |= 8;
-			if (IRedstoneTile.class.isAssignableFrom(tile)) this.flags |= 16;
-			if (ITileCollision.class.isAssignableFrom(tile)) this.flags |= 32;
-			if ((flags & 4) == 0 && (IGuiData.class.isAssignableFrom(tile) || IGuiHandlerTile.class.isAssignableFrom(tile))) this.flags |= 64;
-			if (IComparatorSource.class.isAssignableFrom(tile)) this.flags |= 128;
-			if (IModularTile.class.isAssignableFrom(tile)) this.flags |= 256;
-			if (TileEntity.getKey(tile) == null)
-				GameRegistry.registerTileEntity(tileEntity, getRegistryName());
-		}
-		this.renderType = EnumBlockRenderType.MODEL;
-		this.boundingBox = new AxisAlignedBB[]{FULL_BLOCK_AABB};
-	}
-
-	@Override
-	protected BlockStateContainer createBlockState() {
-		return new ExtendedBlockState(this, L_PROPERTIES.toArray(new IProperty[L_PROPERTIES.size()]), UL_PROPERTIES.toArray(new IUnlistedProperty[UL_PROPERTIES.size()]));
-	}
-
-	@Override
-	public IBlockState getExtendedState(IBlockState state, IBlockAccess world, BlockPos pos) {
-		if ((flags & 0x100) == 0) return state;
-		TileEntity te = world.getTileEntity(pos);
-		if (!(te instanceof IModularTile)) return state;
-		IExtendedBlockState eState = ((IExtendedBlockState)state).withProperty(PropertyWrapObj.MULTIPART, (IModularTile)te);
-		if (te instanceof ICoverableTile) {
-			IBlockState cover = ((ICoverableTile)te).getCover().state;
-			if (cover != null) try {
-				eState = eState.withProperty(PropertyBlockMimic.instance, cover.getBlock().getExtendedState(cover.getActualState(world, pos), world, pos));
-			} catch(IllegalArgumentException e) { //block trying to get invalid properties from wrong IBlockState
-				eState = eState.withProperty(PropertyBlockMimic.instance, cover);
-			}
-		}
-		return eState;
-	}
-
-	@Override
-	public boolean hasTileEntity(IBlockState state) {
-		return tileEntity != null;
-	}
-
-	@Override
-	public TileEntity createTileEntity(World world, IBlockState state) {
-		if (tileEntity != null) {
+	@SuppressWarnings("unchecked")
+	public AdvancedBlock(String id, AbstractBlock.Properties p, int flags, Class<T> teType) {
+		super(p);
+		if (teType != null) {
 			try {
-				try {
-					return tileEntity.getConstructor(IBlockState.class).newInstance(state);
-				} catch (NoSuchMethodException e) {
-					return tileEntity.newInstance();
-				}
-			} catch (InstantiationException | IllegalAccessException | InvocationTargetException ex) {
-				ex.printStackTrace();
+				this.teFactory = asInterfaceInstance(Supplier.class, lookup().findConstructor(teType, methodType(void.class)));
+			} catch(NoSuchMethodException | IllegalAccessException e) {
+				throw new IllegalArgumentException("Can't create TileEntity factory from constructor!", e);
 			}
-		}
-		return null;
+			if (INeighborAwareTile.class.isAssignableFrom(teType)) this.flags |= 1;
+			if (ISelfAwareTile.class.isAssignableFrom(teType)) this.flags |= 2;
+			if (IInteractiveTile.class.isAssignableFrom(teType)) this.flags |= 4;
+			if (ITilePlaceHarvest.class.isAssignableFrom(teType)) this.flags |= 8;
+			if (IRedstoneTile.class.isAssignableFrom(teType)) this.flags |= 16;
+			if (ITileCollision.class.isAssignableFrom(teType)) this.flags |= 32;
+			if ((flags & 4) == 0 && INamedContainerProvider.class.isAssignableFrom(teType)) this.flags |= 64;
+			if (IComparatorSource.class.isAssignableFrom(teType)) this.flags |= 128;
+			if (IModularTile.class.isAssignableFrom(teType)) this.flags |= 256;
+		} else this.teFactory = null;
+		setRegistryName(id);
+	}
+
+	public TileEntityType<T> createTileEntityType() {
+		TileEntityType<T> type = TileEntityType.Builder.create(teFactory, this).build(null);
+		type.setRegistryName(getRegistryName());
+		return type;
+	}
+
+	@Override
+	public boolean hasTileEntity(BlockState state) {
+		return teFactory != null;
+	}
+
+	@Override
+	public TileEntity createTileEntity(BlockState state, IBlockReader world) {
+		return teFactory != null ? teFactory.get() : null;
 	}
 
 	public interface INeighborAwareTile {
@@ -163,32 +92,35 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 		void neighborBlockChange(Block b, BlockPos src);
 		/**
 		 * when neighboring tileEntity added/removed by chunk load/unload
-		 * @param te new TileEntity or null if got removed
 		 * @param side on which the TileEntity changed
 		 */
-		void neighborTileChange(TileEntity te, EnumFacing side);
+		void neighborTileChange(Direction side, boolean unload);
 	}
 
 	@Override
-	public void neighborChanged(IBlockState state, World world, BlockPos pos, Block b, BlockPos src) {
+	public void neighborChanged(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
 		if ((flags & 1) == 0) return;
 		TileEntity te = world.getTileEntity(pos);
-		if (te instanceof INeighborAwareTile) ((INeighborAwareTile)te).neighborBlockChange(b, src);
+		if (te instanceof INeighborAwareTile) ((INeighborAwareTile)te).neighborBlockChange(block, fromPos);
 	}
 
 	public interface ISelfAwareTile {
 		/**
 		 * when this block is about to be removed/changed
 		 */
-		void breakBlock();
+		boolean breakBlock(BlockState oldState, BlockState newState);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
-	public void breakBlock(World world, BlockPos pos, IBlockState state) {
-		if ((flags & 2) == 0) return;
+	public void onReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean isMoving) {
+		if ((flags & 2) == 0) {
+			super.onReplaced(state, world, pos, newState, isMoving);
+			return;
+		}
 		TileEntity te = world.getTileEntity(pos);
-		if (te instanceof ISelfAwareTile) ((ISelfAwareTile)te).breakBlock();
-		world.removeTileEntity(pos);
+		if (te instanceof ISelfAwareTile && ((ISelfAwareTile)te).breakBlock(state, newState))
+			world.removeTileEntity(pos);
 	}
 
 	public interface IInteractiveTile {
@@ -203,31 +135,31 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 		 * @param Z block relative z hit pos
 		 * @return consume event
 		 */
-		boolean onActivated(EntityPlayer player, EnumHand hand, ItemStack item, EnumFacing s, float X, float Y, float Z);
+		ActionResultType onActivated(PlayerEntity player, Hand hand, ItemStack item, BlockRayTraceResult hit);
 		/**
 		 * when left-clicked (hit) by player
 		 * @param player event source player
 		 */
-		void onClicked(EntityPlayer player);
+		void onClicked(PlayerEntity player);
 	}
 
 	@Override
-	public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumHand hand, EnumFacing s, float X, float Y, float Z) {
+	public ActionResultType onBlockActivated(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult hit) {
 		if ((flags & 4) != 0) {
 			TileEntity te = world.getTileEntity(pos);
-			if (te instanceof IInteractiveTile && ((IInteractiveTile)te).onActivated(player, hand, player.getHeldItem(hand), s, X, Y, Z)) return true;
+			if (te instanceof IInteractiveTile)
+				return ((IInteractiveTile)te).onActivated(player, hand, player.getHeldItem(hand), hit);
 		}
 		if ((flags & 64) != 0) {
-			BlockGuiHandler.OPEN_CLIENT = container != null;
-			GuiNetworkHandler.openBlockGui(player, pos, 0);
-			BlockGuiHandler.OPEN_CLIENT = false;
-			return true;
+			if (world.isRemote) return ActionResultType.SUCCESS;
+			player.openContainer(getContainer(state, world, pos));
+			return ActionResultType.CONSUME;
 		}
-		return false;
+		return ActionResultType.PASS;
 	}
 
 	@Override
-	public void onBlockClicked(World world, BlockPos pos, EntityPlayer player) {
+	public void onBlockClicked(BlockState state, World world, BlockPos pos, PlayerEntity player) {
 		if ((flags & 4) == 0) return;
 		TileEntity te = world.getTileEntity(pos);
 		if (te instanceof IInteractiveTile) ((IInteractiveTile)te).onClicked(player);
@@ -239,50 +171,55 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 		 * @param entity event source entity
 		 * @param item held item
 		 */
-		void onPlaced(EntityLivingBase entity, ItemStack item);
+		void onPlaced(LivingEntity entity, ItemStack item);
 		/**
 		 * ask for theoretically dropped items
 		 * @param state state of this block
 		 * @param fortune fortune modifier
 		 * @return drop list
 		 */
-		List<ItemStack> dropItem(IBlockState state, int fortune);
+		List<ItemStack> dropItem(BlockState state, int fortune);
 	}
 
 	@Override
-	public void onBlockPlacedBy(World world, BlockPos pos, IBlockState state, EntityLivingBase entity, ItemStack item) {
+	public void onBlockPlacedBy(World world, BlockPos pos, BlockState state, LivingEntity entity, ItemStack item) {
 		if ((flags & 8) == 0) return;
 		TileEntity te = world.getTileEntity(pos);
 		if (te instanceof ITilePlaceHarvest) ((ITilePlaceHarvest)te).onPlaced(entity, item);
 	}
 
 	@Override
-	public void harvestBlock(World world, EntityPlayer player, BlockPos pos, IBlockState state, TileEntity te, ItemStack stack) {
+	public void harvestBlock(World world, PlayerEntity player, BlockPos pos, BlockState state, TileEntity te, ItemStack stack) {
 		super.harvestBlock(world, player, pos, state, te, stack);
-		world.setBlockState(pos, net.minecraft.init.Blocks.AIR.getDefaultState(), world.isRemote ? 11 : 3);
+		world.setBlockState(pos, net.minecraft.block.Blocks.AIR.getDefaultState(), world.isRemote ? 11 : 3);
 	}
-
+/*
 	@Override
-	public boolean removedByPlayer(IBlockState state, World world, BlockPos pos, EntityPlayer player, boolean willHarvest) {
-		if (willHarvest) return true;
-		if ((flags & 8) != 0 && !world.isRemote && !world.restoringBlockSnapshots) {
+	public void onPlayerDestroy(IWorld world, BlockPos pos, BlockState state) {
+		if ((flags & 8) != 0 && !world.isRemote() && !world.restoringBlockSnapshots) {
 			Item item = getItemDropped(state, RANDOM, 0);
 			int dmg = damageDropped(state);
 			for (ItemStack stack : getDrops(world, pos, state, 0))
-				if (stack.getItem() != item || stack.getItemDamage() != dmg || stack.hasTagCompound())
+				if (stack.getItem() != item || stack.getItemDamage() != dmg || stack.hasTag())
 					spawnAsEntity(world, pos, stack);
 		}
-		return world.setBlockState(pos, net.minecraft.init.Blocks.AIR.getDefaultState(), world.isRemote ? 11 : 3);
+		return world.setBlockState(pos, net.minecraft.block.Blocks.AIR.getDefaultState(), world.isRemote ? 11 : 3);
 	}
 
 	@Override
-	public List<ItemStack> getDrops(IBlockAccess world, BlockPos pos, IBlockState state, int fortune) {
+	public List<ItemStack> getDrops(BlockState state, net.minecraft.loot.LootContext.Builder builder) {
+		// TODO Auto-generated method stub
+		return super.getDrops(state, builder);
+	}
+
+	@Override
+	public List<ItemStack> getDrops(IWorldReader world, BlockPos pos, BlockState state, int fortune) {
 		if ((flags & 8) == 0) return super.getDrops(world, pos, state, fortune);
 		TileEntity te = world.getTileEntity(pos);
 		if (te instanceof ITilePlaceHarvest) return ((ITilePlaceHarvest)te).dropItem(state, fortune);
 		else return super.getDrops(world, pos, state, fortune);
 	}
-
+*/
 	public interface IRedstoneTile {
 		/**
 		 * ask for emitted redstone signal
@@ -290,35 +227,35 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 		 * @param strong whether asked for strong signal
 		 * @return redstone signal
 		 */
-		int redstoneLevel(EnumFacing side, boolean strong);
+		int redstoneLevel(Direction side, boolean strong);
 		/**
 		 * check for redstone connection
 		 * @param side face of neighbor block to emit in
 		 * @return whether to connect
 		 */
-		boolean connectRedstone(EnumFacing side);
+		boolean connectRedstone(Direction side);
 	}
 
 	@Override
-	public boolean canProvidePower(IBlockState state) {
+	public boolean canProvidePower(BlockState state) {
 		return (flags & 16) != 0;
 	}
 
 	@Override
-	public boolean shouldCheckWeakPower(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing side) {
+	public boolean shouldCheckWeakPower(BlockState state, IWorldReader world, BlockPos pos, Direction side) {
 		return (flags & 16) == 0;
 	}
 
 	@Override
-	public int getWeakPower(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing s) {
+	public int getWeakPower(BlockState blockState, IBlockReader world, BlockPos pos, Direction side) {
 		if ((flags & 16) == 0) return 0;
 		TileEntity te = world.getTileEntity(pos);
-		if (te instanceof IRedstoneTile) return ((IRedstoneTile)te).redstoneLevel(s.getOpposite(), false);
+		if (te instanceof IRedstoneTile) return ((IRedstoneTile)te).redstoneLevel(side.getOpposite(), false);
 		else return 0;
 	}
 
 	@Override
-	public int getStrongPower(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing s) {
+	public int getStrongPower(BlockState state, IBlockReader world, BlockPos pos, Direction s) {
 		if ((flags & 16) == 0) return 0;
 		TileEntity te = world.getTileEntity(pos);
 		if (te instanceof IRedstoneTile) return ((IRedstoneTile)te).redstoneLevel(s.getOpposite(), true);
@@ -326,7 +263,7 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 	}
 
 	@Override
-	public boolean canConnectRedstone(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing side) {
+	public boolean canConnectRedstone(BlockState state, IBlockReader world, BlockPos pos, @Nullable Direction side) {
 		if ((flags & 16) == 0) return false;
 		if (side == null) return true;
 		TileEntity te = world.getTileEntity(pos);
@@ -343,12 +280,12 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 	}
 
 	@Override
-	public boolean hasComparatorInputOverride(IBlockState state) {
+	public boolean hasComparatorInputOverride(BlockState state) {
 		return (flags & 128) != 0;
 	}
 
 	@Override
-	public int getComparatorInputOverride(IBlockState state, World world, BlockPos pos) {
+	public int getComparatorInputOverride(BlockState state, World world, BlockPos pos) {
 		if ((flags & 128) == 0) return 0;
 		TileEntity te = world.getTileEntity(pos);
 		if (te instanceof IComparatorSource) return ((IComparatorSource)te).comparatorValue();
@@ -361,47 +298,73 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 		 * @param entity collided entity
 		 */
 		void onEntityCollided(Entity entity);
+
+		void onProjectileCollided(ProjectileEntity projectile, BlockRayTraceResult hit);
 	}
 
 	@Override
-	public void onEntityCollidedWithBlock(World world, BlockPos pos, IBlockState state, Entity entity) {
+	public void onEntityCollision(BlockState state, World world, BlockPos pos, Entity entity) {
 		if ((flags & 32) == 0) return;
 		TileEntity te = world.getTileEntity(pos);
 		if (te instanceof ITileCollision) ((ITileCollision)te).onEntityCollided(entity);
 	}
 
 	@Override
-	public boolean isOpaqueCube(IBlockState state) {
+	public void onProjectileCollision(World world, BlockState state, BlockRayTraceResult hit, ProjectileEntity projectile) {
+		if ((flags & 32) == 0) return;
+		TileEntity te = world.getTileEntity(hit.getPos());
+		if (te instanceof ITileCollision) ((ITileCollision)te).onProjectileCollided(projectile, hit);
+	}
+
+	@Override
+	public INamedContainerProvider getContainer(BlockState state, World world, BlockPos pos) {
+		if ((flags & 64) == 0) return null;
+		TileEntity te = world.getTileEntity(pos);
+		return te instanceof INamedContainerProvider ? (INamedContainerProvider)te : null;
+	}
+
+	public void setRenderType(BlockRenderType t) {
+		renderType = t;
+	}
+
+	@Override
+	public BlockRenderType getRenderType(BlockState state) {
+		return renderType;
+	}
+
+/*
+	@Override
+	public boolean isOpaqueCube(BlockState state) {
 		return (flags & 65536) == 0;
 	}
 
 	@Override
-	public boolean isFullCube(IBlockState state) {
+	public boolean isFullCube(BlockState state) {
 		return boundingBox[0] == FULL_BLOCK_AABB;
 	}
 
 	@Override
-	public boolean isNormalCube(IBlockState state) {
+	public boolean isNormalCube(BlockState state) {
 		return boundingBox[0] == FULL_BLOCK_AABB;
 	}
 
 	@Override
-	public boolean isNormalCube(IBlockState state, IBlockAccess world, BlockPos pos) {
+	public boolean isNormalCube(BlockState state, IWorldReader world, BlockPos pos) {
 		return getBoundingBox(state, world, pos) == FULL_BLOCK_AABB;
 	}
 
 	@Override
-	public boolean isSideSolid(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing side) {
+	public boolean isDistSolid(BlockState state, IWorldReader world, BlockPos pos, Direction side) {
 		AxisAlignedBB box = getBoundingBox(state, world, pos);
 		if (box == FULL_BLOCK_AABB) return true;
 		return getFace(box, side) == (side.getAxisDirection() == AxisDirection.POSITIVE ? 1.0 : 0.0);
 	}
 
 	@Override
-	public BlockFaceShape getBlockFaceShape(IBlockAccess world, IBlockState state, BlockPos pos, EnumFacing side) {
+	public BlockFaceShape getBlockFaceShape(IWorldReader world, BlockState state, BlockPos pos, Direction side) {
 		AxisAlignedBB box = getBBWithoutCover(state, world, pos);
 		if (box == FULL_BLOCK_AABB) return BlockFaceShape.SOLID;
-		IBlockState cover = getCover(world, pos);
+		BlockState cover = getCover(world, pos);
 		if (cover != null) {
 			BlockFaceShape shape = cover.getBlockFaceShape(world, pos, side);
 			if (shape != BlockFaceShape.UNDEFINED) return shape;
@@ -409,7 +372,7 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 		if (box == NULL_AABB) return BlockFaceShape.UNDEFINED;
 		double radA = 1.0, radB = 1.0;
 		int o = 3 - (side.ordinal() >> 1);
-		for (EnumFacing f : EnumFacing.values()) {
+		for (Direction f : Direction.values()) {
 			if (f == side.getOpposite()) continue;
 			double d = getFace(box, f) / 2.0 * (double)f.getAxisDirection().getOffset();
 			if (d < 0.0625 || (f == side && d < 0.5)) return BlockFaceShape.UNDEFINED;
@@ -423,7 +386,7 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 			: BlockFaceShape.SOLID;
 	}
 
-	private static double getFace(AxisAlignedBB box, EnumFacing side) {
+	private static double getFace(AxisAlignedBB box, Direction side) {
 		switch (side) {
 		case DOWN: return box.minY;
 		case UP: return box.maxY;
@@ -436,22 +399,13 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 	}
 
 	@Override
-	public boolean isTopSolid(IBlockState state) {
+	public boolean isTopSolid(BlockState state) {
 		return isNormalCube(state);
 	}
 
 	@Override
-	public boolean canBeReplacedByLeaves(IBlockState state, IBlockAccess world, BlockPos pos) {
+	public boolean canBeReplacedByLeaves(BlockState state, IWorldReader world, BlockPos pos) {
 		return false;
-	}
-
-	public void setRenderType(EnumBlockRenderType t) {
-		renderType = t;
-	}
-
-	@Override
-	public EnumBlockRenderType getRenderType(IBlockState state) {
-		return renderType;
 	}
 
 	private BlockRenderLayer blockLayer = BlockRenderLayer.SOLID;
@@ -465,7 +419,7 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 	}
 
 	@Override
-	public boolean canRenderInLayer(IBlockState state, BlockRenderLayer layer) {
+	public boolean canRenderInLayer(BlockState state, BlockRenderLayer layer) {
 		return blockLayer == null || layer == blockLayer;
 	}
 
@@ -474,11 +428,11 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 		return this;
 	}
 
-	protected AxisAlignedBB getMainBB(IBlockState state, IBlockAccess world, BlockPos pos) {
+	protected AxisAlignedBB getMainBB(BlockState state, IWorldReader world, BlockPos pos) {
 		return boundingBox[0];
 	}
 
-	protected AxisAlignedBB getBBWithoutCover(IBlockState state, IBlockAccess world, BlockPos pos) {
+	protected AxisAlignedBB getBBWithoutCover(BlockState state, IWorldReader world, BlockPos pos) {
 		AxisAlignedBB box = getMainBB(state, world, pos);
 		if (box == FULL_BLOCK_AABB || (flags & 0x100) == 0) return box;
 		TileEntity te = world.getTileEntity(pos);
@@ -496,10 +450,10 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 	}
 
 	@Override
-	public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess world, BlockPos pos) {
+	public AxisAlignedBB getBoundingBox(BlockState state, IWorldReader world, BlockPos pos) {
 		AxisAlignedBB box = getBBWithoutCover(state, world, pos);
 		if (box == FULL_BLOCK_AABB) return box;
-		IBlockState cover = getCover(world, pos);
+		BlockState cover = getCover(world, pos);
 		if (cover != null) {
 			AxisAlignedBB box1 = cover.getBoundingBox(world, pos);
 			if (box1 == FULL_BLOCK_AABB) return box1;
@@ -509,7 +463,7 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 	}
 
 	@Override
-	public void addCollisionBoxToList(IBlockState state, World world, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> list, Entity entity, boolean b) {
+	public void addCollisionBoxToList(BlockState state, World world, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> list, Entity entity, boolean b) {
 		if ((flags & 0x100) == 0) {
 			super.addCollisionBoxToList(state, world, pos, entityBox, list, entity, b);
 			return;
@@ -517,7 +471,7 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 		AxisAlignedBB box = getMainBB(state, world, pos);
 		addCollisionBoxToList(pos, entityBox, list, box);
 		if (box == FULL_BLOCK_AABB) return;
-		IBlockState cover = getCover(world, pos);
+		BlockState cover = getCover(world, pos);
 		if (cover != null) cover.addCollisionBoxToList(world, pos, entityBox, list, entity, false);
 		TileEntity te = world.getTileEntity(pos);
 		if (te instanceof IModularTile) {
@@ -533,10 +487,10 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 	}
 
 	@Override
-	public RayTraceResult collisionRayTrace(IBlockState state, World world, BlockPos pos, Vec3d start, Vec3d end) {
+	public RayTraceResult collisionRayTrace(BlockState state, World world, BlockPos pos, Vector3d start, Vector3d end) {
 		if ((flags & 0x100) == 0) return super.collisionRayTrace(state, world, pos, start, end);
-		Vec3d start1 = start.subtract(pos.getX(), pos.getY(), pos.getZ());
-		Vec3d end1 = end.subtract(pos.getX(), pos.getY(), pos.getZ());
+		Vector3d start1 = start.subtract(pos.getX(), pos.getY(), pos.getZ());
+		Vector3d end1 = end.subtract(pos.getX(), pos.getY(), pos.getZ());
 		int p = 0;
 		RayTraceResult collision = null;
 		AxisAlignedBB box = getMainBB(state, world, pos);
@@ -544,7 +498,7 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 			collision = box.calculateIntercept(start1, end1);
 			if (collision != null) end1 = collision.hitVec;
 		}
-		IBlockState cover;
+		BlockState cover;
 		if (box != FULL_BLOCK_AABB) {
 			TileEntity te = world.getTileEntity(pos);
 			if (te instanceof IModularTile) {
@@ -581,18 +535,15 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 
 	public interface ICoverableTile extends IModularTile, IInteractiveTile {
 
-		/**
-		 * @return the block's cover
-		 */
 		Cover getCover();
 
 		@Override
-		default boolean onActivated(EntityPlayer player, EnumHand hand, ItemStack item, EnumFacing s, float X, float Y, float Z) {
+		default boolean onActivated(PlayerEntity player, Hand hand, ItemStack item, Direction s, float X, float Y, float Z) {
 			return getCover().interact((BaseTileEntity)this, player, hand, item, s, X, Y, Z);
 		}
 
 		@Override
-		default void onClicked(EntityPlayer player) {
+		default void onClicked(PlayerEntity player) {
 			getCover().hit((BaseTileEntity)this, player);
 		}
 
@@ -613,17 +564,17 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 
 	}
 
-	protected IBlockState getCover(IBlockAccess world, BlockPos pos) {
+	protected BlockState getCover(IWorldReader world, BlockPos pos) {
 		if ((flags & 0x100) == 0) return null;
 		TileEntity te = world.getTileEntity(pos);
-		if (te instanceof ICoverableTile && te.getBlockType() == this)
+		if (te instanceof ICoverableTile && te.getBlockState().getBlock() == this)
 			return ((ICoverableTile)te).getCover().state;
 		return null;
 	}
 
 	@Override
-	public float getBlockHardness(IBlockState state, World world, BlockPos pos) {
-		IBlockState cover = getCover(world, pos);
+	public float getBlockHardness(BlockState state, World world, BlockPos pos) {
+		BlockState cover = getCover(world, pos);
 		if (cover == null) return blockHardness;
 		float h = cover.getBlockHardness(world, pos);
 		return h < 0 ? h : h + blockHardness;
@@ -632,154 +583,97 @@ public class AdvancedBlock extends BaseBlock implements IGuiHandlerBlock {
 	@Override
 	public float getExplosionResistance(World world, BlockPos pos, Entity exploder, Explosion explosion) {
 		float r = blockResistance / 5.0F;
-		IBlockState cover = getCover(world, pos);
+		BlockState cover = getCover(world, pos);
 		if (cover != null) try {
 			r += cover.getBlock().getExplosionResistance(world, pos, exploder, explosion);
-		} catch(IllegalArgumentException e) {} //block trying to get invalid properties from wrong IBlockState
+		} catch(IllegalArgumentException e) {} //block trying to get invalid properties from wrong BlockState
 		return r;
 	}
 
 	@Override
-	public boolean canEntityDestroy(IBlockState state, IBlockAccess world, BlockPos pos, Entity entity) {
-		IBlockState cover = getCover(world, pos);
+	public boolean canEntityDestroy(BlockState state, IWorldReader world, BlockPos pos, Entity entity) {
+		BlockState cover = getCover(world, pos);
 		if (cover != null) try {
 			return cover.getBlock().canEntityDestroy(cover, world, pos, entity);
-		} catch(IllegalArgumentException e) {} //block trying to get invalid properties from wrong IBlockState
+		} catch(IllegalArgumentException e) {} //block trying to get invalid properties from wrong BlockState
 		return true;
 	}
 
 	@SuppressWarnings("deprecation")
 	@Override
-	public int getLightValue(IBlockState state, IBlockAccess world, BlockPos pos) {
-		IBlockState cover = getCover(world, pos);
+	public int getLightValue(BlockState state, IWorldReader world, BlockPos pos) {
+		BlockState cover = getCover(world, pos);
 		if (cover == null) return lightValue;
 		//using getLightValue(World, BlockPos) would end in infinite recursion because ... Minecraft.
 		return Math.max(lightValue, cover.getLightValue());
 	}
 
 	@Override
-	public int getLightOpacity(IBlockState state, IBlockAccess world, BlockPos pos) {
-		IBlockState cover = getCover(world, pos);
+	public int getLightOpacity(BlockState state, IWorldReader world, BlockPos pos) {
+		BlockState cover = getCover(world, pos);
 		if (cover == null) return lightOpacity;
 		return Math.max(lightOpacity, cover.getLightOpacity(world, pos));
 	}
 
 	@Override
-	public boolean doesSideBlockRendering(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing face) {
-		if (super.doesSideBlockRendering(state, world, pos, face)) return true;
-		IBlockState cover = getCover(world, pos);
-		return cover != null && cover.doesSideBlockRendering(world, pos, face);
+	public boolean doesDistBlockRendering(BlockState state, IWorldReader world, BlockPos pos, Direction face) {
+		if (super.doesDistBlockRendering(state, world, pos, face)) return true;
+		BlockState cover = getCover(world, pos);
+		return cover != null && cover.doesDistBlockRendering(world, pos, face);
 	}
 
 	@Override
-	public boolean canBeConnectedTo(IBlockAccess world, BlockPos pos, EnumFacing facing) {
-		IBlockState cover = getCover(world, pos);
+	public boolean canBeConnectedTo(IWorldReader world, BlockPos pos, Direction facing) {
+		BlockState cover = getCover(world, pos);
 		if (cover != null) try {
 			return cover.getBlock().canBeConnectedTo(world, pos, facing);
-		} catch(IllegalArgumentException e) {} //block trying to get invalid properties from wrong IBlockState
+		} catch(IllegalArgumentException e) {} //block trying to get invalid properties from wrong BlockState
 		return false;
 	}
 
 	@Override
-	public SoundType getSoundType(IBlockState state, World world, BlockPos pos, Entity entity) {
-		IBlockState cover = getCover(world, pos);
+	public SoundType getSoundType(BlockState state, World world, BlockPos pos, Entity entity) {
+		BlockState cover = getCover(world, pos);
 		if (cover != null) try {
 			return cover.getBlock().getSoundType(cover, world, pos, entity);
-		} catch(IllegalArgumentException e) {} //block trying to get invalid properties from wrong IBlockState
+		} catch(IllegalArgumentException e) {} //block trying to get invalid properties from wrong BlockState
 		return blockSoundType;
 	}
 
 	@Override
-	public boolean canSustainLeaves(IBlockState state, IBlockAccess world, BlockPos pos) {
-		IBlockState cover = getCover(world, pos);
+	public boolean canSustainLeaves(BlockState state, IWorldReader world, BlockPos pos) {
+		BlockState cover = getCover(world, pos);
 		if (cover != null) try {
 			return cover.getBlock().canSustainLeaves(cover, world, pos);
-		} catch(IllegalArgumentException e) {} //block trying to get invalid properties from wrong IBlockState
+		} catch(IllegalArgumentException e) {} //block trying to get invalid properties from wrong BlockState
 		return false;
 	}
 
 	@Override
-	public boolean canSustainPlant(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing direction, IPlantable plantable) {
-		IBlockState cover = getCover(world, pos);
+	public boolean canSustainPlant(BlockState state, IWorldReader world, BlockPos pos, Direction direction, IPlantable plantable) {
+		BlockState cover = getCover(world, pos);
 		if (cover != null) try {
 			return cover.getBlock().canSustainPlant(cover, world, pos, direction, plantable);
-		} catch(IllegalArgumentException e) {} //block trying to get invalid properties from wrong IBlockState
+		} catch(IllegalArgumentException e) {} //block trying to get invalid properties from wrong BlockState
 		return false;
 	}
 
 	@Override
-	public boolean isBurning(IBlockAccess world, BlockPos pos) {
-		IBlockState cover = getCover(world, pos);
+	public boolean isBurning(IWorldReader world, BlockPos pos) {
+		BlockState cover = getCover(world, pos);
 		if (cover != null) try {
 			return cover.getBlock().isBurning(world, pos);
-		} catch(IllegalArgumentException e) {} //block trying to get invalid properties from wrong IBlockState
+		} catch(IllegalArgumentException e) {} //block trying to get invalid properties from wrong BlockState
 		return false;
 	}
 
 	@Override
-	public boolean isFireSource(World world, BlockPos pos, EnumFacing side) {
-		IBlockState cover = getCover(world, pos);
+	public boolean isFireSource(World world, BlockPos pos, Direction side) {
+		BlockState cover = getCover(world, pos);
 		if (cover != null) try {
 			return cover.getBlock().isFireSource(world, pos, side);
-		} catch(IllegalArgumentException e) {} //block trying to get invalid properties from wrong IBlockState
+		} catch(IllegalArgumentException e) {} //block trying to get invalid properties from wrong BlockState
 		return false;
 	}
-
-	public Class<? extends Container> container;
-	@SideOnly(Side.CLIENT)
-	public Class<? extends GuiScreen> guiScreen;
-
-	@Override
-	public Container getContainer(IBlockState state, World world, BlockPos pos, EntityPlayer player, int id) {
-		Container c;
-		TileEntity te = world.getTileEntity(pos);
-		if (te instanceof IGuiHandlerTile)
-			return ((IGuiHandlerTile)te).getContainer(player, id);
-		//Legacy stuff
-		if (container != null && te instanceof IGuiData) {
-			try {
-				c = container.getConstructor(IGuiData.class, EntityPlayer.class).newInstance((IGuiData)te, player);
-			} catch (NoSuchMethodException ex) {
-				Lib.LOG.warn("TileContainer {} is missing the Constructor ({} ,{})", container.getName(), IGuiData.class.getName(), EntityPlayer.class.getName());
-				return null;
-			} catch (InstantiationException | IllegalAccessException | InvocationTargetException ex) {
-				ex.printStackTrace();
-				return null;
-			}
-		} else return null;
-		if (c instanceof DataContainer) ((DataContainer)c).data.initContainer((DataContainer)c);
-		return c;
-	}
-
-	@Override
-	@SideOnly(Side.CLIENT)
-	public GuiScreen getGuiScreen(IBlockState state, World world, BlockPos pos, EntityPlayer player, int id) {
-		TileEntity te = world.getTileEntity(pos);
-		if (te instanceof IGuiHandlerTile)
-			return ((IGuiHandlerTile)te).getGuiScreen(player, id);
-		//Legacy stuff
-		if (guiScreen != null && te instanceof IGuiData) {
-			if(player.openContainer != null && player.openContainer instanceof DataContainer && ((DataContainer)player.openContainer).data == te)
-				return Minecraft.getMinecraft().currentScreen;
-			try {
-				GuiScreen g = guiScreen.getConstructor(IGuiData.class, EntityPlayer.class).newInstance((IGuiData)te, player);
-				if (g instanceof GuiContainer && ((GuiContainer)g).inventorySlots instanceof DataContainer) {
-					DataContainer c = (DataContainer)((GuiContainer)g).inventorySlots;
-					c.data.initContainer(c);
-					c.refInts = c.data.getSyncVariables();
-					if(c.refInts != null && c.data instanceof TileEntity) 
-						for (int i = 0; i < c.refInts.length; i++)
-							c.data.setSyncVariable(i, 0);
-				}
-				return g;
-			} catch (NoSuchMethodException ex) {
-				Lib.LOG.warn("GuiContainer {} is missing the Constructor ({} ,{})", guiScreen.getName(), IGuiData.class.getName(), EntityPlayer.class.getName());
-				return null;
-			} catch (InstantiationException | IllegalAccessException | InvocationTargetException ex) {
-				ex.printStackTrace();
-				return null;
-			}
-		} else return null;
-	}
-
+*/
 }
