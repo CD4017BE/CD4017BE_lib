@@ -1,15 +1,16 @@
 package cd4017be.lib.container.slot;
 
+import cd4017be.lib.container.AdvancedContainer;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.container.ClickType;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.ItemHandlerHelper;
 
-/**
- * @author CD4017BE
- *
- */
+/**Allows Slots to have special interaction behavior
+ * and more control over item extraction insertion
+ * in {@link AdvancedContainer}s.
+ * @author CD4017BE */
 public interface ISpecialSlot {
 
 	/**

@@ -3,46 +3,53 @@ package cd4017be.lib.tileentity.test;
 import java.util.ArrayList;
 import java.util.function.Supplier;
 import cd4017be.lib.Lib;
-import cd4017be.lib.Gui.AdvancedContainer;
-import cd4017be.lib.Gui.SlotHolo;
-import cd4017be.lib.Gui.AdvancedContainer.IStateInteractionHandler;
-import cd4017be.lib.Gui.comp.Button;
-import cd4017be.lib.Gui.comp.FormatText;
-import cd4017be.lib.Gui.comp.GuiFrame;
-import cd4017be.lib.Gui.comp.Slider;
-import cd4017be.lib.Gui.ModularGui;
-import cd4017be.lib.capability.BasicInventory;
-import cd4017be.lib.capability.LinkedInventory;
-import cd4017be.lib.network.IGuiHandlerTile;
-import cd4017be.lib.network.StateSyncClient;
-import cd4017be.lib.network.StateSyncServer;
-import cd4017be.lib.network.StateSynchronizer;
+import cd4017be.lib.container.IUnnamedContainerProvider;
+import cd4017be.lib.container.test.ContainerItemSupply;
+import cd4017be.lib.network.IPlayerPacketReceiver;
+import cd4017be.lib.network.Sync;
 import cd4017be.lib.tileentity.BaseTileEntity;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTBase;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
+import net.minecraft.nbt.INBT;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.ListNBT;
 import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Direction;
 import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.common.util.Constants.NBT;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
+
+import static cd4017be.lib.network.Sync.GUI;
 import static net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY;
 
 /** @author CD4017BE */
 public class ItemSupply extends BaseTileEntity
-implements IItemHandler, IGuiHandlerTile, IStateInteractionHandler {
+implements IItemHandler, IUnnamedContainerProvider, IPlayerPacketReceiver {
 
 	public static int MAX_SLOTS = 64;
 
-	ArrayList<Slot> slots = new ArrayList<>();
-	int scroll;
+	final LazyOptional<IItemHandler> handler = LazyOptional.of(()->this);
+	public final ArrayList<Slot> slots = new ArrayList<>();
+	@Sync(to=GUI) public int scroll;
+
+	public ItemSupply() {
+		super(Lib.T_ITEM_SUPP);
+	}
+
+	@Override
+	public <T> LazyOptional<T> getCapability(Capability<T> cap, Direction side) {
+		if (cap == ITEM_HANDLER_CAPABILITY) return handler.cast();
+		return super.getCapability(cap, side);
+	}
+
+	@Override
+	public boolean isItemValid(int slot, ItemStack stack) {
+		return true;
+	}
 
 	@Override
 	public int getSlots() {
@@ -84,115 +91,38 @@ implements IItemHandler, IGuiHandlerTile, IStateInteractionHandler {
 	}
 
 	@Override
-	public boolean hasCapability(Capability<?> capability, EnumFacing facing) {
-		return capability == ITEM_HANDLER_CAPABILITY;
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	public <T> T getCapability(Capability<T> capability, EnumFacing facing) {
-		return capability == ITEM_HANDLER_CAPABILITY ? (T)this : null;
-	}
-
-	@Override
-	protected void storeState(NBTTagCompound nbt, int mode) {
+	public void storeState(CompoundNBT nbt, int mode) {
 		super.storeState(nbt, mode);
-		NBTTagList list = new NBTTagList();
+		ListNBT list = new ListNBT();
 		for(Slot s : slots) {
-			NBTTagCompound tag = s.stack.writeToNBT(new NBTTagCompound());
-			tag.setInteger("in", s.countIn);
-			tag.setInteger("out", s.countOut);
-			list.appendTag(tag);
+			CompoundNBT tag = s.stack.write(new CompoundNBT());
+			tag.putInt("in", s.countIn);
+			tag.putInt("out", s.countOut);
+			list.add(tag);
 		}
-		nbt.setTag("slots", list);
+		nbt.put("slots", list);
 	}
 
 	@Override
-	protected void loadState(NBTTagCompound nbt, int mode) {
+	public void loadState(CompoundNBT nbt, int mode) {
 		super.loadState(nbt, mode);
 		slots.clear();
-		for(NBTBase tb : nbt.getTagList("slots", NBT.TAG_COMPOUND)) {
-			NBTTagCompound tag = (NBTTagCompound)tb;
-			Slot s = new Slot(new ItemStack(tag));
-			s.countIn = tag.getInteger("in");
-			s.countOut = tag.getInteger("out");
+		for(INBT tb : nbt.getList("slots", NBT.TAG_COMPOUND)) {
+			CompoundNBT tag = (CompoundNBT)tb;
+			Slot s = new Slot(ItemStack.read(tag));
+			s.countIn = tag.getInt("in");
+			s.countOut = tag.getInt("out");
 			slots.add(s);
 		}
 	}
 
-	private ItemStack getSlot(int slot) {
-		return slot + scroll < slots.size() ? slots.get(slot + scroll).stack
-			: ItemStack.EMPTY;
-	}
-
-	private void setSlot(ItemStack stack, int slot) {
-		slot += scroll;
-		if(slot < slots.size()) {
-			if(stack.isEmpty()) {
-				slots.remove(slot);
-				return;
-			}
-			Slot s = slots.get(slot);
-			if(ItemHandlerHelper.canItemStacksStack(stack, s.stack))
-				s.stack.setCount(stack.getCount());
-			else slots.set(slot, new Slot(stack));
-		} else if(!stack.isEmpty())
-			slots.add(new Slot(stack));
+	@Override
+	public ContainerItemSupply createMenu(int id, PlayerInventory inv, PlayerEntity player) {
+		return new ContainerItemSupply(id, inv, this);
 	}
 
 	@Override
-	public AdvancedContainer getContainer(EntityPlayer player, int id) {
-		AdvancedContainer cont = new AdvancedContainer(
-			this, ssb.build(world.isRemote), player
-		);
-		IItemHandler inv = world.isRemote ? new BasicInventory(12)
-			: new LinkedInventory(12, 127, this::getSlot, this::setSlot);
-		for(int j = 0; j < 4; j++)
-			for(int i = 0; i < 3; i++)
-				cont.addItemSlot(
-					new SlotHolo(
-						inv, i + j * 3, 8 + i * 54, 16 + j * 18, false, true
-					), true
-				);
-		cont.addPlayerInventory(8, 104);
-		if(world.isRemote)
-			while(slots.size() < 12)
-			slots.add(new Slot(ItemStack.EMPTY));
-		return cont;
-	}
-
-	private static final StateSynchronizer.Builder ssb = StateSynchronizer
-	.builder().addFix(1).addMulFix(4, 24).addVar(12);
-
-	@Override
-	public void writeState(StateSyncServer state, AdvancedContainer cont) {
-		state.buffer.writeByte(scroll);
-		int l = scroll + 12;
-		for(int i = scroll; i < l; i++)
-			if (i < slots.size()) {
-				Slot s = slots.get(i);
-				state.buffer.writeInt(s.countIn).writeInt(s.countOut);
-			} else state.buffer.writeLong(0);
-		state.endFixed();
-	}
-
-	@Override
-	public void readState(StateSyncClient state, AdvancedContainer cont) {
-		scroll = state.get(scroll);
-		for(int i = 0; i < 12; i++) {
-			Slot s = slots.get(i);
-			s.countIn = state.get(s.countIn);
-			s.countOut = state.get(s.countOut);
-		}
-	}
-
-	@Override
-	public boolean canInteract(EntityPlayer player, AdvancedContainer cont) {
-		return canPlayerAccessUI(player);
-	}
-
-	@Override
-	public void handleAction(PacketBuffer pkt, EntityPlayerMP sender)
+	public void handlePlayerPacket(PacketBuffer pkt, ServerPlayerEntity sender)
 	throws Exception {
 		int cmd = pkt.readByte();
 		if (cmd < 0) {
@@ -215,39 +145,25 @@ implements IItemHandler, IGuiHandlerTile, IStateInteractionHandler {
 		}
 	}
 
-	private static final ResourceLocation TEX = new ResourceLocation(
-		Lib.ID, "textures/gui/supply.png"
-	);
-
-	@Override
-	@SideOnly(Side.CLIENT)
-	public ModularGui getGuiScreen(EntityPlayer player, int id) {
-		ModularGui gui = new ModularGui(getContainer(player, id));
-		GuiFrame frame = new GuiFrame(gui, 186, 186, 25)
-		.title("gui.cd4017be.item_supp.name", 0.5F).background(TEX, 0, 70);
-		new Slider(
-			frame, 8, 12, 70, 170, 16, 176, 0, false, () -> scroll, (x) -> {
-				int s = (int)x;
-				if(s == scroll) return;
-				gui.sendPkt((byte)-1, (byte)(scroll = s));
-			}, null, 0, MAX_SLOTS - 12
-		).scroll(-3).tooltip("gui.cd4017be.scroll");
-		for(int j = 0; j < 4; j++)
-			for(int i = 0; i < 3; i++) {
-				byte k = (byte)(j * 3 + i);
-				new FormatText(
-					frame, 36, 16, 24 + i * 54, 16 + j * 18,
-					"\\\u00a72%d\n\u00a74%d", slots.get(k)
-				);
-				new Button(
-					frame, 36, 16, 24 + i * 54, 16 + j * 18,
-					0, null, (a) -> gui.sendPkt(a == 0 ? k : (byte)(k | 16))
-				).tooltip("gui.cd4017be.reset_count");
-			}
-		gui.compGroup = frame;
-		return gui;
+	public ItemStack getSlot(int slot) {
+		return slot + scroll < slots.size() ? slots.get(slot + scroll).stack
+			: ItemStack.EMPTY;
 	}
 
+	public void setSlot(ItemStack stack, int slot) {
+		slot += scroll;
+		if(slot < slots.size()) {
+			if(stack.isEmpty()) {
+				slots.remove(slot);
+				return;
+			}
+			Slot s = slots.get(slot);
+			if(ItemHandlerHelper.canItemStacksStack(stack, s.stack))
+				s.stack.setCount(stack.getCount());
+			else slots.set(slot, new Slot(stack));
+		} else if(!stack.isEmpty())
+			slots.add(new Slot(stack));
+	}
 
 	public static class Slot implements Supplier<Object[]> {
 
@@ -266,4 +182,5 @@ implements IItemHandler, IGuiHandlerTile, IStateInteractionHandler {
 		}
 
 	}
+
 }

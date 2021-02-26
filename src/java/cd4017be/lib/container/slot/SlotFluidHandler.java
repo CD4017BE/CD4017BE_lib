@@ -16,9 +16,10 @@ import net.minecraftforge.fluids.FluidActionResult;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidUtil;
 import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.items.SlotItemHandler;
 
-/**
- * 
+/**The fluid equivalent of {@link SlotItemHandler} for use in {@link AdvancedContainer}.
+ * Slot interaction allows filling and emptying of fluid containers with the referenced Fluid Tank.
  * @author CD4017BE */
 public class SlotFluidHandler extends Slot implements IFluidSlot, ISpecialSlot {
 

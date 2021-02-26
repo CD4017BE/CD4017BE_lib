@@ -1,7 +1,9 @@
 package cd4017be.lib.container.slot;
 
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.container.Slot;
+import net.minecraft.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -12,7 +14,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
  */
 public class HidableSlot extends Slot {
 
-	private boolean hidden;
+	private boolean hidden, locked;
 
 	/**
 	 * @param inventoryIn
@@ -22,8 +24,13 @@ public class HidableSlot extends Slot {
 	 */
 	public HidableSlot(IInventory inventoryIn, int index, int xPosition, int yPosition) {
 		super(inventoryIn, index, xPosition, yPosition);
-		// TODO Auto-generated constructor stub
 	}
+
+	@Override
+	public boolean isItemValid(ItemStack stack) {return !locked;}
+
+	@Override
+	public boolean canTakeStack(PlayerEntity playerIn) {return !locked;}
 
 	@Override
 	@OnlyIn(Dist.CLIENT)
@@ -33,6 +40,10 @@ public class HidableSlot extends Slot {
 
 	public void hideSlot(boolean hidden) {
 		this.hidden = hidden; 
+	}
+
+	public void lock() {
+		this.locked = true;
 	}
 
 }

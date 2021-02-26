@@ -26,18 +26,26 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.items.ItemHandlerHelper;
 
-/** @author CD4017BE */
+/**A Container that offers improved data synchronization features
+ * and support for {@link ISpecialSlot}s and {@link IFluidSlot}s.
+ * @author CD4017BE */
 public class AdvancedContainer extends Container
 implements IServerPacketReceiver, IPlayerPacketReceiver {
 
 	protected final StateSyncAdv sync;
 	public final PlayerInventory inv;
 	protected final int idxCount;
-	private int playerInvS, playerInvE;
+	private int playerInvS;
+	private int playerInvE;
 	private BitSet syncSlots = new BitSet();
 	boolean hardInvUpdate = false;
 	public final ArrayList<IQuickTransferHandler> transferHandlers = new ArrayList<>();
 
+	/**@param type
+	 * @param id unique GUI session id
+	 * @param inv player's inventory
+	 * @param sync server -> client data synchronization handler
+	 * @param idxCount object indices available for slot synchronization */
 	public AdvancedContainer(
 		ContainerType<?> type, int id, PlayerInventory inv,
 		StateSyncAdv sync, int idxCount
@@ -55,28 +63,38 @@ implements IServerPacketReceiver, IPlayerPacketReceiver {
 		super.addListener(listener);
 	}
 
+	/**Add 36 slots for the player main inventory
+	 * @param x left most slot pos
+	 * @param y upper most slot pos */
 	public void addPlayerInventory(int x, int y) {
-		this.addPlayerInventory(x, y, false, false);
+		this.addPlayerInventory(x, y, false);
 	}
 
-	public void addPlayerInventory(int x, int y, boolean armor, boolean lockSel) {
+	/**Add slots for the player inventory
+	 * @param x left most slot pos
+	 * @param y upper most slot pos
+	 * @param armor whether also add armor and shield slots */
+	public void addPlayerInventory(int x, int y, boolean armor) {
 		playerInvS = this.inventorySlots.size();
 		playerInvE = playerInvS + (armor ? 41 : 36);
+		for (int i = 0; i < 9; i++)
+			this.addSlot(new HidableSlot(inv, i, x + i * 18, y + 58));
 		for (int i = 0; i < 3; i++) 
 			for (int j = 0; j < 9; j++)
 				this.addSlot(new HidableSlot(inv, i * 9 + j + 9, x + j * 18, y + i * 18));
-		for (int i = 0; i < 9; i++)
-			if (lockSel && i == inv.currentItem)
-				this.addSlot(new LockedSlot(inv, i, x + i * 18, y + 58));
-			else this.addSlot(new HidableSlot(inv, i, x + i * 18, y + 58));
 		if (armor) {
-			this.addSlot(new SlotArmor(inv, 40, x - 18, y + 58, EquipmentSlotType.OFFHAND));
 			for (int i = 0; i < 4; i++)
 				this.addSlot(new SlotArmor(inv, i + 36, x - 18, y - i * 18 + 36, EquipmentSlotType.values()[i + 2]));
+			this.addSlot(new SlotArmor(inv, 40, x - 18, y + 58, EquipmentSlotType.OFFHAND));
 		}
 	}
 
-	public void addItemSlot(Slot slot, boolean sync) {
+	/**Adds a slot to this container
+	 * @param slot with support for {@link ISpecialSlot} and {@link IFluidSlot}
+	 * @param sync whether to synchronize items with 32-bit stack-size
+	 *  or the fluid content of {@link IFluidSlot}s.
+	 *  Requires object indices in {@link #sync} (idxCount argument in constructor). */
+	public void addSlot(Slot slot, boolean sync) {
 		this.addSlot(slot);
 		if (sync) {
 			int n = syncSlots.cardinality();

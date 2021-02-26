@@ -1,6 +1,5 @@
 {
 	"variants": {
-		"inventory": { "model": "cd4017be_lib:item_supp" },
-		"normal": { "model": "cd4017be_lib:item_supp" }
+		"": { "model": "cd4017be_lib:block/item_supp" }
 	}
 }

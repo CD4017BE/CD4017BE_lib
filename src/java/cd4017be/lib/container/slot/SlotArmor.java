@@ -37,18 +37,20 @@ public class SlotArmor extends HidableSlot {
 
 	@Override
 	public boolean isItemValid(ItemStack stack) {
-		return type == EquipmentSlotType.OFFHAND
-			|| stack.getItem().canEquip(stack, type, inv.player);
+		return super.isItemValid(stack) && (
+			type == EquipmentSlotType.OFFHAND
+			|| stack.getItem().canEquip(stack, type, inv.player)
+		);
 	}
 
 	@Override
 	public boolean canTakeStack(PlayerEntity player) {
 		ItemStack stack = this.getStack();
-		return (
+		return super.canTakeStack(player) && (
 			type == EquipmentSlotType.OFFHAND
 			|| stack.isEmpty() || player.isCreative()
 			|| !EnchantmentHelper.hasBindingCurse(stack)
-		) && super.canTakeStack(player);
+		);
 	}
 
 }
