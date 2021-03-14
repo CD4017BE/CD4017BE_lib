@@ -1,20 +1,7 @@
 package cd4017be.lib.script.obj;
 
 import java.util.Iterator;
-import net.minecraft.nbt.NBTBase;
-import net.minecraft.nbt.NBTPrimitive;
-import net.minecraft.nbt.NBTTagByte;
-import net.minecraft.nbt.NBTTagByteArray;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagDouble;
-import net.minecraft.nbt.NBTTagFloat;
-import net.minecraft.nbt.NBTTagInt;
-import net.minecraft.nbt.NBTTagIntArray;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.nbt.NBTTagLong;
-import net.minecraft.nbt.NBTTagShort;
-import net.minecraft.nbt.NBTTagString;
-import net.minecraftforge.common.util.Constants.NBT;
+import net.minecraft.nbt.CompoundNBT;
 
 /**
  * @author CD4017BE
@@ -23,13 +10,13 @@ import net.minecraftforge.common.util.Constants.NBT;
 public class NBTWrapper implements IOperand {
 
 	private boolean copied;
-	public final NBTTagCompound nbt;
+	public final CompoundNBT nbt;
 
 	public NBTWrapper() {
-		this.nbt = new NBTTagCompound();
+		this.nbt = new CompoundNBT();
 	}
 
-	public NBTWrapper(NBTTagCompound nbt) {
+	public NBTWrapper(CompoundNBT nbt) {
 		this.nbt = nbt;
 	}
 
@@ -40,8 +27,8 @@ public class NBTWrapper implements IOperand {
 	}
 
 	@Override
-	public boolean asBool() throws Error {
-		return !nbt.hasNoTags();
+	public boolean asBool() {
+		return !nbt.isEmpty();
 	}
 
 	@Override
@@ -51,12 +38,12 @@ public class NBTWrapper implements IOperand {
 
 	@Override
 	public int asIndex() {
-		return nbt.getSize();
+		return nbt.size();
 	}
-
+/*
 	@Override
 	public IOperand len() {
-		return new Number(nbt.getSize());
+		return new Number(nbt.size());
 	}
 
 	@Override
@@ -70,38 +57,38 @@ public class NBTWrapper implements IOperand {
 
 	@Override
 	public IOperand get(IOperand idx) {
-		NBTBase tag = nbt.getTag(idx.toString());
+		INBT tag = nbt.get(idx.toString());
 		return tag == null ? Nil.NIL : expand(tag);
 	}
 
-	private IOperand expand(NBTBase tag) {
+	private IOperand expand(INBT tag) {
 		switch(tag.getId()) {
-		case NBT.TAG_COMPOUND: return new NBTWrapper((NBTTagCompound)tag);
+		case NBT.TAG_COMPOUND: return new NBTWrapper((CompoundNBT)tag);
 		case NBT.TAG_LIST: {
-			NBTTagList list = (NBTTagList)tag;
-			Array a = new Array(list.tagCount());
+			ListNBT list = (ListNBT)tag;
+			Array a = new Array(list.size());
 			for (int i = 0; i < a.array.length; i++)
 				a.array[i] = expand(list.get(i));
 			return a;
 		}
-		case NBT.TAG_STRING: return new Text(((NBTTagString)tag).getString());
+		case NBT.TAG_STRING: return new Text(((StringNBT)tag).getString());
 		case NBT.TAG_BYTE_ARRAY: {
-			byte[] arr = ((NBTTagByteArray)tag).getByteArray();
+			byte[] arr = ((ByteArrayNBT)tag).getByteArray();
 			Vector v = new Vector(arr.length);
 			for (int i = 0; i < arr.length; i++)
 				v.value[i] = arr[i] & 0xff;
 			return v;
 		}
 		case NBT.TAG_INT_ARRAY: {
-			int[] arr = ((NBTTagIntArray)tag).getIntArray();
+			int[] arr = ((IntArrayNBT)tag).getIntArray();
 			Vector v = new Vector(arr.length);
 			for (int i = 0; i < arr.length; i++)
 				v.value[i] = arr[i];
 			return v;
 		}
 		default:
-			if (tag instanceof NBTPrimitive)
-				return new Number(((NBTPrimitive)tag).getDouble());
+			if (tag instanceof NumberNBT)
+				return new Number(((NumberNBT)tag).getDouble());
 			else return Nil.NIL;
 		}
 	}
@@ -112,23 +99,23 @@ public class NBTWrapper implements IOperand {
 		if (key.isEmpty()) return;
 		char c = key.charAt(0);
 		key = key.substring(1);
-		NBTBase tag = val == Nil.NIL ? null : parse(c, val);
-		if (tag == null) nbt.removeTag(key);
-		else nbt.setTag(key, tag);
+		INBT tag = val == Nil.NIL ? null : parse(c, val);
+		if (tag == null) nbt.remove(key);
+		else nbt.put(key, tag);
 	}
 
-	private NBTBase parse(char type, IOperand val) {
+	private INBT parse(char type, IOperand val) {
 		if (val instanceof NBTWrapper)
 			return ((NBTWrapper)val).nbt;
 		else if (val instanceof Array) {
-			NBTTagList list = new NBTTagList();
-			NBTBase tag;
+			ListNBT list = new ListNBT();
+			INBT tag;
 			for (IOperand op : ((Array)val).array)
 				if ((tag = parse(type, op)) != null)
-					list.appendTag(tag);
+					list.add(tag);
 			return list;
 		} else if (val instanceof Text)
-			return new NBTTagString(val.toString());
+			return StringNBT.valueOf(val.toString());
 		else if (val instanceof Vector) {
 			double[] v = ((Vector)val).value;
 			switch(type) {
@@ -136,30 +123,30 @@ public class NBTWrapper implements IOperand {
 				byte[] arr = new byte[v.length];
 				for (int i = 0; i < arr.length; i++)
 					arr[i] = (byte)v[i];
-				return new NBTTagByteArray(arr);
+				return new ByteArrayNBT(arr);
 			}
 			case 'I': {
 				int[] arr = new int[v.length];
 				for (int i = 0; i < arr.length; i++)
 					arr[i] = (int)v[i];
-				return new NBTTagIntArray(arr);
+				return new IntArrayNBT(arr);
 			}
 			default: return null;
 			}
 		} else {
 			double v = val.asDouble();
 			switch(type) {
-			case 'B': return new NBTTagByte((byte)v);
-			case 'S': return new NBTTagShort((short)v);
-			case 'I': return new NBTTagInt((int)v);
-			case 'L': return new NBTTagLong((long)v);
-			case 'F': return new NBTTagFloat((float)v);
-			case 'D': return new NBTTagDouble(v);
+			case 'B': return ByteNBT.valueOf((byte)v);
+			case 'S': return ShortNBT.valueOf((short)v);
+			case 'I': return IntNBT.valueOf((int)v);
+			case 'L': return LongNBT.valueOf((long)v);
+			case 'F': return FloatNBT.valueOf((float)v);
+			case 'D': return DoubleNBT.valueOf(v);
 			default: return null;
 			}
 		}
 	}
-
+*/
 	@Override
 	public String toString() {
 		return nbt.toString();
@@ -167,7 +154,7 @@ public class NBTWrapper implements IOperand {
 
 	@Override
 	public OperandIterator iterator() throws Error {
-		return new KeyIterator(nbt.getKeySet().iterator());
+		return new KeyIterator(nbt.keySet().iterator());
 	}
 
 	static class KeyIterator implements OperandIterator {

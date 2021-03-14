@@ -1,5 +1,7 @@
 package cd4017be.lib.script.obj;
 
+import static cd4017be.lib.script.Parser.OP_NAMES;
+
 import javax.annotation.Nonnull;
 
 /**
@@ -45,8 +47,8 @@ public class Error extends Exception implements IOperand {
 	}
 
 	@Override
-	public boolean asBool() throws Error {
-		throw new Error(this, "attempt to decide on errored value:");
+	public boolean asBool() {
+		return false;
 	}
 
 	@Override
@@ -60,138 +62,33 @@ public class Error extends Exception implements IOperand {
 	}
 
 	@Override
-	public IOperand addR(IOperand x) {
-		return new Error(this, "ERROR + (" + x + ")");
+	public IOperand op(int code) {
+		return new Error(this, OP_NAMES[code] + "ERROR");
 	}
 
 	@Override
-	public IOperand addL(IOperand x) {
-		return new Error(this, "(" + x + ") + ERROR");
+	public IOperand opR(int code, IOperand x) {
+		return new Error(this, "ERROR" + OP_NAMES[code] + "(" + x + ")");
 	}
 
 	@Override
-	public IOperand subR(IOperand x) {
-		return new Error(this, "ERROR - (" + x + ")");
-	}
-
-	@Override
-	public IOperand subL(IOperand x) {
-		return new Error(this, "(" + x + ") - ERROR");
-	}
-
-	@Override
-	public IOperand mulR(IOperand x) {
-		return new Error(this, "ERROR * (" + x + ")");
-	}
-
-	@Override
-	public IOperand mulL(IOperand x) {
-		return new Error(this, "(" + x + ") * ERROR");
-	}
-
-	@Override
-	public IOperand divR(IOperand x) {
-		return new Error(this, "ERROR / (" + x + ")");
-	}
-
-	@Override
-	public IOperand divL(IOperand x) {
-		return new Error(this, "(" + x + ") / ERROR");
-	}
-
-	@Override
-	public IOperand modR(IOperand x) {
-		return new Error(this, "ERROR % (" + x + ")");
-	}
-
-	@Override
-	public IOperand modL(IOperand x) {
-		return new Error(this, "(" + x + ") % ERROR");
-	}
-
-	@Override
-	public IOperand neg() {
-		return new Error(this, "-ERROR");
-	}
-
-	@Override
-	public IOperand inv() {
-		return new Error(this, "/ERROR");
-	}
-
-	@Override
-	public IOperand grR(IOperand x) {
-		return new Error(this, "ERROR > (" + x + ")");
-	}
-
-	@Override
-	public IOperand grL(IOperand x) {
-		return new Error(this, "ERROR < (" + x + ")");
-	}
-
-	@Override
-	public IOperand nlsR(IOperand x) {
-		return new Error(this, "ERROR >= (" + x + ")");
-	}
-
-	@Override
-	public IOperand nlsL(IOperand x) {
-		return new Error(this, "ERROR <= (" + x + ")");
-	}
-
-	@Override
-	public IOperand and(IOperand x) {
-		return new Error(this, "ERROR & (" + x + ")");
-	}
-
-	@Override
-	public IOperand or(IOperand x) {
-		return new Error(this, "ERROR | (" + x + ")");
-	}
-
-	@Override
-	public IOperand nand(IOperand x) {
-		return new Error(this, "ERROR ~& (" + x + ")");
-	}
-
-	@Override
-	public IOperand nor(IOperand x) {
-		return new Error(this, "ERROR ~| (" + x + ")");
-	}
-
-	@Override
-	public IOperand xor(IOperand x) {
-		return new Error(this, "ERROR ^ (" + x + ")");
-	}
-
-	@Override
-	public IOperand xnor(IOperand x) {
-		return new Error(this, "ERROR ~^ (" + x + ")");
-	}
-
-	@Override
-	public IOperand len() {
-		return new Error(this, "#ERROR");
-	}
-
-	@Override
-	public IOperand get(IOperand idx) {
-		return new Error(this, "ERROR:(" + idx + ")");
+	public IOperand opL(int code, IOperand x) {
+		return new Error(this, "(" + x + ")" + OP_NAMES[code] + "ERROR");
 	}
 
 	@Override
 	public String toString() {
-		return message;
-	}
-
-	@Override
-	public String getMessage() {
 		StringBuilder sb = new StringBuilder(depth + ": " + message);
 		if (depth >= MAX_TRACE_DEPTH)
 			sb.append(MAX_TRACE_DEPTH - depth + 1).append(" more operations on ERROR ...");
 		for (Error e = parent; e != null; e = e.parent)
 			sb.append("\n").append(e.depth).append(": ").append(e.message);
 		return sb.toString();
+	}
+
+	@Override
+	public String getMessage() {
+		return message;
 	}
 
 	@Override

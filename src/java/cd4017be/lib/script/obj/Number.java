@@ -1,6 +1,6 @@
 package cd4017be.lib.script.obj;
 
-import java.util.Random;
+import java.util.function.LongBinaryOperator;
 
 /**
  * Represents both numbers and booleans as double precision floating point numbers.
@@ -10,13 +10,11 @@ import java.util.Random;
 public class Number implements IOperand {
 
 	/** The number representing boolean "true" */
-	public static final Number TRUE = new Number(1.0).onCopy();
+	public static final Number TRUE = new Number(-0.0).onCopy();
 	/** The number representing boolean "false" */
 	public static final Number FALSE = new Number(0.0).onCopy();
 	/** The number representing NaN */
 	public static final Number NAN = new Number(Double.NaN).onCopy();
-
-	private static final Random RANDOM = new Random();
 
 	private boolean copied;
 	public double value;
@@ -39,8 +37,7 @@ public class Number implements IOperand {
 
 	@Override
 	public boolean asBool() {
-		double v = value;
-		return v >= 1.0 || v > 0 && v > RANDOM.nextDouble();
+		return Double.doubleToRawLongBits(value) < 0;
 	}
 
 	@Override
@@ -51,11 +48,6 @@ public class Number implements IOperand {
 	@Override
 	public double asDouble() {
 		return value;
-	}
-
-	private double asNumBool() {
-		double v = value;
-		return v >= 1.0 ? 1.0 : v <= 0.0 ? 0.0 : v;
 	}
 
 	@Override
@@ -69,72 +61,122 @@ public class Number implements IOperand {
 	}
 
 	@Override
-	public IOperand addR(IOperand x) {
-		return x instanceof Number ? of(value + ((Number)x).value) : x.addL(this);
+	public IOperand op(int code) {
+		double v = value;
+		switch(code) {
+		case sub: return of(-v);
+		case add: return of(Math.abs(v));
+		case div: return of(1.0 / v);
+		case mod: return of(v - Math.floor(v));
+		case len: return of(Math.rint(v));
+		case pow: return of(Math.sqrt(v));
+		case nls: return of(Math.ceil(v));
+		case ngr: return of(Math.floor(v));
+		case ls: return of(Math.nextDown(v));
+		case gr: return of(Math.nextUp(v));
+		case lsh: return of(Math.exp(v));
+		case rsh: return of(Math.log(v));
+		case or: return of(Math.cos(v));
+		case nor: return of(Math.acos(v));
+		case and: return of(Math.sin(v));
+		case nand: return of(Math.asin(v));
+		case xor: return of(Math.tan(v));
+		case xnor: return of(Math.atan(v));
+		case eq: return of(v >= 1.0 ? 1.0 : v <= 0.0 ? 0.0 : v);
+		case neq: return of(v >= 1.0 ? 0.0 : v <= 0.0 ? 1.0 : 1.0 - v);
+		case text: return of(Math.toDegrees(v));
+		case index: return of(Math.toRadians(v));
+		case ref: return of(Math.signum(v));
+		case mul:
+		default: return IOperand.super.op(code);
+		}
 	}
 
 	@Override
-	public IOperand subR(IOperand x) {
-		return x instanceof Number ? of(value - ((Number)x).value) : x.subL(this);
+	public IOperand opR(int code, IOperand x) {
+		if (!(x instanceof Number)) return x.opL(code, this);
+		double a = value, b = ((Number)x).value;
+		switch(code) {
+		case add: return of(a + b);
+		case sub: return of(a - b);
+		case mul: return of(a * b);
+		case div: return of(a / b);
+		case mod: return of(a % b);
+		case pow: return of(Math.pow(a, b));
+		case eq:  return a == b ? TRUE : FALSE;
+		case neq: return a != b ? TRUE : FALSE;
+		case gr:  return a > b ? TRUE : FALSE;
+		case nls: return a >= b ? TRUE : FALSE;
+		case ls:  return a < b ? TRUE : FALSE;
+		case ngr: return a <= b ? TRUE : FALSE;
+		case lsh: return of(Math.scalb(a, (int)b));
+		case rsh: return of(Math.scalb(a, -(int)b));
+		case and: return of(and(a, b));
+		case nand:return of(-and(a, b));
+		case or:  return of(or(a, b));
+		case nor: return of(-or(a, b));
+		case xor: return of(xor(a, b));
+		case xnor:return of(-xor(a, b));
+		case len: return of(Math.hypot(a, b));
+		case index: return of(Math.atan2(b, a));
+		case ref:
+		case text:
+		default: return x.opL(code, this);
+		}
+	}
+
+	static double and(double a, double b) {
+		return bitwise(a, b, (x, y)-> x & y);
+	}
+
+	static double or(double a, double b) {
+		return bitwise(a, b, (x, y)-> x | y);
+	}
+
+	static double xor(double a, double b) {
+		return bitwise(a, b, (x, y)-> x ^ y);
+	}
+
+	static double bitwise(double a, double b, LongBinaryOperator op) {
+		long la = Double.doubleToRawLongBits(a), lb = Double.doubleToRawLongBits(b);
+		int expA = (int)(la >> 52) & 0x7ff, expB = (int)(lb >> 52) & 0x7ff;
+		if (expA == 0x7ff || expB == 0x7ff) return Double.NaN;
+		la = la & 0x000f_ffff_ffff_ffffL | (expA == 0 ? 0L : 0x0010_0000_0000_0000L) ^ la >> 63;
+		lb = lb & 0x000f_ffff_ffff_ffffL | (expB == 0 ? 0L : 0x0010_0000_0000_0000L) ^ lb >> 63;
+		int exp = expA - expB;
+		if      (exp < 0) la >>= -exp > 63 || expB == 0x7ff ? 63 : -exp;
+		else if (exp > 0) lb >>=  exp > 63 || expA == 0x7ff ? 63 :  exp;
+		exp = Math.max(expA, expB);
+		la = op.applyAsLong(la, lb);
+		lb = la ^ la >> 63;
+		if (lb != 0) {
+			expA = Long.numberOfLeadingZeros(lb) - 11;
+			if ((exp -= expA) <= 0) lb <<= expA + exp;
+			else lb = (long)exp << 52 | lb << expA & 0x000f_ffff_ffff_ffffL;
+		}
+		return Double.longBitsToDouble(lb | la & 0x8000_0000_0000_0000L);
+	}
+
+	public static void main(String[] args) {
+		double a = 0x5p-1026, b = 0x6p-1026;
+		System.out.println("and: " + bitwise(a, b, (x, y)-> x & y));
+		System.out.println("or: " + bitwise(a, b, (x, y)-> x | y));
+		System.out.println("xor: " + bitwise(a, b, (x, y)-> x ^ y));
+		System.out.println("nand: " + bitwise(a, b, (x, y)-> ~(x & y)));
+		System.out.println("nor: " + bitwise(a, b, (x, y)-> ~(x | y)));
+		System.out.println("nxor: " + bitwise(a, b, (x, y)-> ~(x ^ y)));
 	}
 
 	@Override
-	public IOperand mulR(IOperand x) {
-		return x instanceof Number ? of(value * ((Number)x).value) : x.mulL(this);
+	public IOperand opL(int code, IOperand x) {
+		switch(code) {
+		
+		default:
+			return IOperand.super.opL(code, x);
+		}
 	}
 
-	@Override
-	public IOperand divR(IOperand x) {
-		return x instanceof Number ? of(value / ((Number)x).value) : x.divL(this);
-	}
-
-	@Override
-	public IOperand modR(IOperand x) {
-		return x instanceof Number ? of(value % ((Number)x).value) : x.modL(this);
-	}
-
-	@Override
-	public IOperand powR(IOperand x) {
-		return x instanceof Number ? of(Math.pow(value, ((Number)x).value)) : x.powL(this);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		return this == obj || obj instanceof Number && ((Number)obj).value == value;
-	}
-
-	@Override
-	public IOperand grR(IOperand x) {
-		if (x instanceof Number) {
-			double v = ((Number)x).value;
-			return value > v ? TRUE : FALSE;
-		} else return x.grL(this);
-	}
-
-	@Override
-	public IOperand grL(IOperand x) {
-		if (x instanceof Number) {
-			double v = ((Number)x).value;
-			return value < v ? TRUE : FALSE;
-		} else return IOperand.super.grL(x);
-	}
-
-	@Override
-	public IOperand nlsR(IOperand x) {
-		if (x instanceof Number) {
-			double v = ((Number)x).value;
-			return value >= v ? TRUE : FALSE;
-		} else return x.nlsL(this);
-	}
-
-	@Override
-	public IOperand nlsL(IOperand x) {
-		if (x instanceof Number) {
-			double v = ((Number)x).value;
-			return value <= v ? TRUE : FALSE;
-		} else return IOperand.super.nlsL(x);
-	}
-
+	/*
 	@Override
 	public IOperand and(IOperand x) {
 		try {
@@ -188,26 +230,7 @@ public class Number implements IOperand {
 			return of(a + b - 2*a*b);
 		} catch(Error e) {return e.reset(value + " ~^ ERROR");}
 	}
-
-	@Override
-	public IOperand not() {
-		return of(1.0 - value);
-	}
-
-	@Override
-	public IOperand neg() {
-		return of(-value);
-	}
-
-	@Override
-	public IOperand inv() {
-		return of(1.0 / value);
-	}
-
-	@Override
-	public IOperand len() {
-		return of(Math.floor(value));
-	}
+*/
 
 	@Override
 	public OperandIterator iterator() {

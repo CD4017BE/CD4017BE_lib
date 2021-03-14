@@ -4,7 +4,6 @@ import cd4017be.lib.script.obj.Array;
 import cd4017be.lib.script.obj.IOperand;
 import cd4017be.lib.script.obj.Text;
 import cd4017be.lib.script.obj.Vector;
-import cd4017be.lib.script.obj.Error;
 
 /**
  * Represents function parameters given to calls of script or module functions.
@@ -61,8 +60,7 @@ public class Parameters {
 	 */
 	public boolean getBool(int i) {
 		if (i >= param.length) throw num(i);
-		try {return param[i].asBool();}
-		catch(Error e) {throw ex("Boolean", e, i);}
+		return param[i].asBool();
 	}
 
 	/**

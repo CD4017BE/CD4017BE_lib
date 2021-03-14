@@ -1,22 +1,18 @@
 package cd4017be.lib.render.model;
 
-import java.util.Optional;
-
 import cd4017be.lib.script.Parameters;
 import cd4017be.lib.script.obj.IOperand;
 import cd4017be.lib.script.obj.Text;
 import cd4017be.lib.script.obj.Number;
 import cd4017be.lib.util.Orientation;
-import net.minecraft.client.renderer.block.model.ModelRotation;
-import net.minecraftforge.common.model.IModelPart;
-import net.minecraftforge.common.model.IModelState;
-import net.minecraftforge.common.model.TRSRTransformation;
+import net.minecraft.client.renderer.model.IModelTransform;
+import net.minecraft.client.renderer.model.ModelRotation;
 
 /**
  * 
  * @author cd4017be
  */
-public class ParamertisedVariant implements IModelState {
+public class ParamertisedVariant implements IModelTransform {
 
 	public static final ParamertisedVariant BASE = new ParamertisedVariant("model", null);
 
@@ -44,11 +40,6 @@ public class ParamertisedVariant implements IModelState {
 
 	public boolean isBase() {
 		return this == BASE || params == null && orient == ModelRotation.X0_Y0 && subModel.equals(BASE.subModel);
-	}
-
-	@Override
-	public Optional<TRSRTransformation> apply(Optional<? extends IModelPart> part) {
-		return orient.apply(part);
 	}
 
 	public static ParamertisedVariant parse(String name, ModelRotation orient) {

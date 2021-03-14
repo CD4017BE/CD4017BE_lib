@@ -1,24 +1,11 @@
 package cd4017be.lib.script;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.Reader;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.NoSuchElementException;
-
+import java.util.*;
 import javax.script.ScriptException;
 
-import cd4017be.lib.script.obj.IOperand;
-import cd4017be.lib.script.obj.Nil;
-import cd4017be.lib.script.obj.Text;
-import cd4017be.lib.script.obj.Number;
-
 import static cd4017be.lib.script.Function.*;
+import static cd4017be.lib.script.Parser.*;
 
 /**
  * 
@@ -26,704 +13,500 @@ import static cd4017be.lib.script.Function.*;
  */
 public class Compiler {
 
-	private static ByteBuffer buffer = ByteBuffer.allocate(65536);
-	public static void deallocate() {buffer = null;}
-
-	public static Script compile(Context cont, String name, Reader script) throws ScriptException {
-		Compiler c = new Compiler(name, parse(name, script));
-		Script sc = c.compile();
-		cont.add(sc);
-		return sc;
-	}
-
-	private Iterator<Comp> code;
-	private HashMap<String, Function> functions = new HashMap<>();
-	private HashMap<String, IOperand> globals = new HashMap<>();
 	public final String fileName;
+	private ByteBuffer code, out;
+	private final String[] names;
+	private final char[] nameIdx;
+	private final int globals;
+	private final ArrayList<Function> functions = new ArrayList<>();
+	private final ArrayList<Long> lines = new ArrayList<>();
+	private char line, col, val;
+	byte last;
+	//block stack frame:
+	private char locals;
+	//function stack frame:
+	private char locOfs, params, curStack, maxStack;
+	private char[] extraVars;
+	private int funStart;
+	//loop stack frame:
+	ArrayList<Integer> breakPos, continuePos;
 
-	public Compiler(String fileName, List<Comp> code) {
+	public Compiler(String fileName, Parser parser) {
 		this.fileName = fileName;
-		this.code = code.iterator();
-	}
-
-	//parsing:
-
-	public static ArrayList<Comp> parse(String name, Reader script) throws ScriptException {
-		LineTracker code = new LineTracker(script);
-		try {try {
-			boolean read = true;
-			int c = code.next();
-			while(c >= 0) {
-				switch(c) {
-				case ';': code.add(new Comp(Type.sep_cmd)); break;
-				case ',': code.add(new Comp(Type.sep_par)); break;
-				case '(': code.add(new Comp(Type.B_par)); break;
-				case ')': code.add(new Comp(Type.E_par)); break;
-				case '[': code.add(new Comp(Type.B_list)); break;
-				case ']': code.add(new Comp(Type.E_list)); break;
-				case '{': code.add(new Comp(Type.B_block)); break;
-				case '}': code.add(new Comp(Type.E_block)); break;
-				case '=': c = code.next();
-					if (c == '=') code.add(new Comp(Type.op_eq));
-					else {read = false; code.add(new Comp(Type.op_asn));}
-					break;
-				case '<': c = code.next();
-					if (c == '=') code.add(new Comp(Type.op_ngr));
-					else {read = false; code.add(new Comp(Type.op_ls));}
-					break;
-				case '>': c = code.next();
-					if (c == '=') code.add(new Comp(Type.op_nls));
-					else {read = false; code.add(new Comp(Type.op_gr));}
-					break;
-				case '~': c = code.next();
-					if (c == '=') code.add(new Comp(Type.op_neq));
-					else if (c == '&') code.add(new Comp(Type.op_nand));
-					else if (c == '|') code.add(new Comp(Type.op_nor));
-					else if (c == '?') code.add(new Comp(Type.op_xnor));
-					else {read = false; code.add(new Comp(Type.op_not));}
-					break;
-				case '&': code.add(new Comp(Type.op_and)); break;
-				case '|': code.add(new Comp(Type.op_or)); break;
-				case '?': code.add(new Comp(Type.op_xor)); break;
-				case '+': code.add(new Comp(Type.op_add)); break;
-				case '-': code.add(new Comp(Type.op_sub)); break;
-				case '*': code.add(new Comp(Type.op_mul)); break;
-				case '/': code.add(new Comp(Type.op_div)); break;
-				case '%': code.add(new Comp(Type.op_mod)); break;
-				case '^': code.add(new Comp(Type.op_pow)); break;
-				case '#': code.add(new Comp(Type.op_num)); break;
-				case ':': code.add(new Comp(Type.op_ind)); break;
-				case '$': code.add(new Comp(Type.op_text)); break;
-				case '"': {//string
-					String s = "";
-					while(true) {
-						c = code.next();
-						if (c == '\\') {
-							c = code.next();
-							if (c == 'n') c = '\n';
-							else if (c == 't') c = '\t';
-						} else if (c == '"') break;
-						if (c < 0) break;
-						s += (char)c;
-					}
-					code.add(new ConstValue(new Text(s)));
-				} break;
-				case '!': //comment
-					while((c = code.next()) >= 0 && c != '\n');
-					break;
-				default:
-					if (c >= '0' && c <= '9') {//number
-						String s = "" + (char)c;
-						while((c = code.next()) >= 0) {
-							if ((c >= '0' && c <= '9') || c == '.' || c == 'e') s += (char)c;
-							else {read = false;	break;}
-						}
-						try {
-							double x = Double.parseDouble(s);
-							if (code.prev(-1).type == Type.op_div && canInv(code.prev(-2).type)) {
-								code.remPrev();
-								x = 1.0 / x;
-							}
-							if (code.prev(-1).type == Type.op_sub && canInv(code.prev(-2).type)) {
-								code.remPrev();
-								x = -x;
-							}
-							code.add(new ConstValue(new Number(x)));
-						} catch(NumberFormatException e) {
-							throw new ScriptException("illegal number format: " + s, name, code.line, code.col);
-						}
-					} else if (Character.isJavaIdentifierStart(c)) {
-						String s = "" + (char)c;
-						boolean comp = false;
-						while((c = code.next()) >= 0) {
-							if (Character.isJavaIdentifierPart(c)) s += (char)c;
-							else if (c == '.') {s += (char)c; comp = true;}
-							else {read = false; break;}
-						}
-						if ("nil".equals(s))
-							code.add(new ConstValue(Nil.NIL));
-						else if ("false".equals(s))
-							code.add(new ConstValue(Number.FALSE));
-						else if ("true".equals(s))
-							code.add(new ConstValue(Number.TRUE));
-						else if ("NaN".equals(s))
-							code.add(new ConstValue(Number.NAN));
-						else if ("fail".equals(s))
-							code.add(new Comp(Type.K_fail));
-						else if ("if".equals(s))
-							code.add(new Comp(Type.K_if));
-						else if ("else".equals(s))
-							code.add(new Comp(Type.K_else));
-						else if ("for".equals(s))
-							code.add(new Comp(Type.K_for));
-						else if ("return".equals(s))
-							code.add(new Comp(Type.K_ret));
-						else if ("break".equals(s))
-							code.add(new Comp(Type.K_br));
-						else if ("continue".equals(s))
-							code.add(new Comp(Type.K_cont));
-						else if ("Loc".equals(s))
-							code.add(new Comp(Type.K_loc));
-						else //identifier
-							code.add(new Identifier(s, comp));
-					} else if (!Character.isWhitespace(c))
-						throw new ScriptException("unexpected character: " + (char)c, name, code.line, code.col);
-				}
-				if (read) c = code.next();
-				else read = true;
-			}
-			code.reader.close();
-		} catch (ScriptException e) {
-			code.reader.close();
-			throw e;
-		}} catch (IOException e) {
-			throw new ScriptException("[IO-Err] " + e.getMessage());
-		}
-		return code.parsed;
-	}
-
-	private static boolean canInv(Type t) {
-		switch(t) {
-		case val: case id: case op_num: case E_par: case E_list: return false;
-		default: return true;
-		}
+		this.code = parser.getTokens();
+		this.out = code.duplicate().clear().position(code.limit());
+		int l = parser.nameCount();
+		this.names = new String[l];
+		this.nameIdx = new char[l];
+		this.globals = parser.getNames(names, nameIdx);
 	}
 
 	//compiling:
 
 	public Script compile() throws ScriptException {
-		while (code.hasNext()) {
-			Comp c = code.next();
-			try {
-				if (c.type == Type.B_block) {
-					Function func = compFunc(fileName, true);
-					func.script = new Script(fileName, new HashMap<String, Function>(), globals);
-					func.apply(new Parameters());
-					continue;
-				}
-				check(c, Type.id);
-				if (((Identifier)c).com) throw new ScriptException("invalid identifier", fileName, c.line, c.col);
-				String name = ((Identifier)c).id;
-				Comp c1 = code.next();
-				if (c1.type == Type.op_asn) {
-					c1 = code.next();
-					check(c1, Type.val);
-					globals.put(name, ((ConstValue)c1).val);
-					check(code.next(), Type.sep_cmd);
-				} else if (c1.type == Type.B_par) {
-					functions.put(name, compFunc(fileName + "." + name, false));
-				} else throw new ScriptException("exp. assignment or function header", fileName, c1.line, c1.col);
-			} catch(NoSuchElementException e) {
-				throw new ScriptException("unexpected end of file!", fileName, c.line, c.col);
-			}
-		}
-		Script script = new Script(fileName, functions, globals);
-		IOperand v = globals.remove("VERSION");
-		if (v != null) script.version = v.asIndex();
+		int version = 0;
+		byte c = next();
+		if (c == VAR && "VERSION".equals(names[name()])) {
+			check(next(), ASN);
+			c = check(next(), NUM, FALSE, TRUE);
+			if (c == TRUE) version = 1;
+			else if (c == NUM) version = (int)number();
+			check(next(), SEP_CMD);
+		} else code.rewind();
+		functions.add(null);
+		compFunc(-1);
+		functions.set(0, functions.remove(functions.size() - 1));
+		Script script = new Script(fileName, functions.toArray(new Function[functions.size()]), names, globals);
+		script.version = version;
 		return script;
 	}
 
-	private Function compFunc(String name, boolean root) throws ScriptException {
-		State state = new State(name);
-		if (root) state.lineOfs = 0;
-		else {
-			while(true) {
-				Comp id = code.next();
-				if (id.type == Type.E_par) break;
-				check(id, Type.id);
-				if (((Identifier)id).com) state.err("invalid identifier", id);
-				state.regVar(((Identifier)id).id);
-				Comp sep = code.next();
-				if (sep.type == Type.E_par) break;
-				check(sep, Type.sep_par);
+	private char[] compFunc(int param) throws ScriptException {
+		//store old frame
+		int funStart = this.funStart;
+		char line = this.line;
+		char locOfs = this.locOfs;
+		char params = this.params;
+		char curStack = this.curStack;
+		char maxStack = this.maxStack;
+		char[] extraVars = this.extraVars;
+		//init new frame
+		this.funStart = out.position();
+		if (param >= 0) {
+			this.extraVars = new char[param];
+			Arrays.fill(this.extraVars, (char)0xffff);
+			byte t;
+			while((t = next()) == LOCVAR) {
+				defLocal();
+				param++;
 			}
-			Comp c = state.next(Type.B_block);
-			state.lineOfs = c.line;
+			check(t, B_BLOCK);
+		} else this.extraVars = new char[param = 0];
+		this.params = (char)param;
+		this.locOfs = (char)(locals - param);
+		this.curStack = 0;
+		this.maxStack = (char)param;
+		//compile
+		compBlock();
+		addLine();
+		int i = 0, l = lines.size();
+		while(i < l && lines.get(i).intValue() <= this.funStart) i++;
+		char[] lineNumbers = new char[l -= i];
+		char[] codeIndices = new char[l];
+		for (int j = 0; j < l; j++, i++) {
+			long x = lines.get(i);
+			codeIndices[j] = (char)((int)x - this.funStart);
+			lineNumbers[j] = (char)(x >> 32);
 		}
-		int param = state.lastId;
-		buffer.rewind();
-		boolean st = compBlock(state);
-		int p = buffer.position() - (st ? 2 : 0);
-		for (int i : state.returnPos)
-			buffer.putShort(i, (short)p);
-		byte[] data = new byte[p];
-		buffer.rewind();
-		buffer.get(data);
-		return new Function(param, state.maxStack, state.lineOfs, data, state.hasRet, name, state.lines);
+		lines.subList(lines.size() - l, lines.size()).clear();
+		byte[] data = new byte[out.position() - this.funStart];
+		out.get(this.funStart, data).position(this.funStart);
+		functions.add(new Function(param, this.maxStack, line, data, codeIndices, lineNumbers));
+		
+		//restore old frame
+		this.funStart = funStart;
+		this.locOfs = locOfs;
+		this.params = params;
+		this.curStack = curStack;
+		this.maxStack = maxStack;
+		char[] ev = this.extraVars;
+		this.extraVars = extraVars;
+		return ev.length > 0 ? ev : null;
 	}
 
-	private boolean compBlock(State state) throws ScriptException {
-		int lastIf = -1, lastElse = -1, variables = state.lastId;
-		Comp c;
-		while((c = code.next()).type != Type.E_block) {
-			state.curStack = 0;
-			switch(c.type) {
-			case id: {
-				String name = ((Identifier)c).id;
-				Comp c1 = code.next();
-				if (c1.type == Type.op_asn) {//assignment
-					c1 = eval(state, null);
-					check(c1, Type.sep_cmd);
-					Byte p = state.varIds.get(name);
-					if (p != null) {
-						state.op(sloc, c1);
-						buffer.put(p);
-					} else {
-						state.op(svar, c1);
-						Function.putName(buffer, name, false);
+	private void compBlock() throws ScriptException {
+		char locals = this.locals;
+		byte t = next();
+		while(t != E_BLOCK && t != EOF) {
+			t = compExec(t, false);
+			if (curStack != 0)
+				throw err("internal error: invalid stack " + curStack);
+		}
+		if (this.locals != locals) {
+			opClear(locals - locOfs);
+			this.locals = locals;
+		}
+	}
+
+	private byte compExec(byte t, boolean cond) throws ScriptException {
+		switch(t) {
+		case SEP_CMD: break;
+		case B_BLOCK:
+			compBlock();
+			break;
+		case K_LOC:
+			if (cond) err(t);
+			do {
+				check(next(), LOCVAR);
+				byte name = defLocal();
+				t = next();
+				if (t == ASN) {
+					curStack--;
+					t = compExpr(next());
+				} else opClear(name + 1);
+			} while(t == SEP_PAR);
+			check(t, SEP_CMD);
+			break;
+		case K_BR:
+			breakPos.add(opJmp(go));
+			check(next(), SEP_CMD);
+			break;
+		case K_CONT:
+			continuePos.add(opJmp(go));
+			check(next(), SEP_CMD);
+			break;
+		case K_RET:
+			t = next();
+			if (t == SEP_CMD) op(cst_nil, 1);
+			else check(compExpr(t), SEP_CMD);
+			op(ret, -1);
+			break;
+		case K_FOR: {
+			ArrayList<Integer> continuePos = this.continuePos, breakPos = this.breakPos;
+			this.continuePos = new ArrayList<>();
+			this.breakPos = new ArrayList<>();
+			//header
+			check(next(), B_PAR);
+			check(next(), LOCVAR);
+			byte itvar = defLocal();
+			check(next(), index);
+			check(compExpr(next()), E_PAR);
+			char p = pos();
+			int p1 = opJmp(iterate);
+			//body
+			t = compExec(next(), true);
+			char p2 = pos();
+			for (int i : this.continuePos)
+				out.putChar(i, p2);
+			//end
+			op(end, 0);
+			out.put(itvar);
+			out.putChar(p);
+			locals -= 2;
+			p2 = pos();
+			out.putChar(p1, p2);
+			if (!this.breakPos.isEmpty()) {
+				op(clear, 0);
+				out.put((byte)(locals - locOfs));
+				for (int i : this.breakPos)
+					out.putChar(i, p2);
+			}
+			//restore jump ptrs
+			this.continuePos = continuePos;
+			this.breakPos = breakPos;
+		}	return t;
+		case K_IF:
+		case K_IFERR:
+		case K_IFNOT:
+		case K_IFVAL: {
+			check(next(), B_PAR);
+			check(compExpr(next()), E_PAR);
+			//TODO optimize conditional break / continue
+			int p = opJmp(
+				t == K_IF ? goifn :
+				t == K_IFNOT ? goif :
+				t == K_IFERR ? gosucc :
+				gofail
+			);
+			t = compExec(next(), true);
+			if (t == K_ELSE) {
+				int p1 = p; p = opJmp(go);
+				out.putChar(p1, pos());
+				t = compExec(next(), true);
+			}
+			out.putChar(p, pos());
+			return t;
+		}
+		default:
+			t = compExpr(t);
+			if (t == FUNC) {
+				if (last != gvar)
+					err("Function name must be a global variable!");
+				char var = out.getChar(out.position() - 2);
+				out.position(out.position() - 3);
+				curStack--;
+				t = compOperand(t);
+				op(svar, -1);
+				out.putChar(var);
+				return t;
+			} else if (t != ASN) op(pop, -1);
+			else if (last == gloc) {
+				byte var = out.get(out.position() - 1);
+				out.position(out.position() - 2);
+				curStack--;
+				t = compExpr(next());
+				op(sloc, -1);
+				out.put(var);
+			} else if (last == gvar) {
+				char var = out.getChar(out.position() - 2);
+				out.position(out.position() - 3);
+				curStack--;
+				t = compExpr(next());
+				op(svar, -1);
+				out.putChar(var);
+			} else if (last == access) {
+				char var = out.getChar(out.position() - 2);
+				out.position(out.position() - 3);
+				t = compExpr(next());
+				op(assign, -2);
+				out.putChar(var);
+			} else if (last == (index | 32)) {
+				out.position(out.position() - 1);
+				curStack++;
+				t = compExpr(next());
+				op(arr_set, -3);
+			} else err("invalid assignment");
+			check(t, SEP_CMD);
+		}
+		return next();
+	}
+
+	private byte compExpr(byte t) throws ScriptException {
+		if ((t = compOperand(t)) >= 32) return t;
+		byte[] ops = new byte[8];
+		int size = 0;
+		do {
+			ops[size++] = t;
+			t = compOperand(next());
+			for (
+				byte p = t < 32 ? PRIOR[t] : 0, c;
+				size > 0 && PRIOR[c = ops[size - 1]] >= p;
+				size--
+			) op((byte)(c | 32), -1);
+		} while(t < 32);
+		return t;
+	}
+
+	private byte compOperand(byte t) throws ScriptException {
+		switch(t) {
+		case FUNC: {
+			op(cst_func, 1);
+			out.put((byte)functions.size());
+			char[] param = compFunc(val);
+			if (param != null) {
+				//pack passed local variables
+				for (char v : param) {
+					op(gloc, 1);
+					val = v;
+					out.put(local());
+				}
+				op(arr_pack, -param.length);
+				out.put((byte)(param.length + 1));
+			}
+			t = next();
+		}	break;
+		case LOCVAR:
+			op(gloc, 1);
+			out.put(local());
+			t = next();
+			break;
+		case VAR:
+			op(gvar, 1);
+			out.putChar(name());
+			t = next();
+			break;
+		case NUM: {
+			double v = number();
+			int iv = (int)v;
+			if (v != iv) {
+				op(cst_F64, 1);
+				out.putDouble(v);
+			} else if (iv == (byte)iv) {
+				op(cst_I8, 1);
+				out.put((byte)iv);
+			} else if (iv == (short)iv) {
+				op(cst_I16, 1);
+				out.putShort((short)iv);
+			} else {
+				op(cst_I32, 1);
+				out.putInt(iv);
+			}
+			t = next();
+		}	break;
+		case FALSE:
+			op(cst_false, 1);
+			t = next();
+			break;
+		case TRUE:
+			op(cst_true, 1);
+			t = next();
+			break;
+		case NIL:
+			op(cst_nil, 1);
+			t = next();
+			break;
+		case STR:
+			op(cst_T, 1);
+			out.putChar(name());
+			t = next();
+			break;
+		case B_LIST: {
+			int n = 0;
+			t = next();
+			if (t != E_ARR && t != E_VEC && t != E_TEXT) {
+				n++;
+				t = compExpr(t);
+				while(t == SEP_PAR) {
+					if (++n > 255) throw err("too many parameters");
+					t = compExpr(next());
+				}
+			}
+			if (t == E_VEC)
+				op(vec_pack, 1 - n);
+			else if (t == E_TEXT)
+				op(text_pack, 1 - n);
+			else {
+				check(t, E_ARR);
+				op(arr_pack, 1 - n);
+			}
+			out.put((byte)n);
+			t = next();
+		}	break;
+		case B_PAR:
+			check(compExpr(next()), E_PAR);
+			t = next();
+			break;
+		default:
+			if (t >= 32) throw err("expression", t);
+			byte c = t;
+			t = compOperand(next());
+			op(c, 0);
+		}
+		while(t == ACCESS || t == B_PAR) {
+			if (t == ACCESS) {
+				op(access, 0);
+				out.putChar(name());
+			} else {
+				int n = 0;
+				t = next();
+				if (t != E_PAR) {
+					n++;
+					t = compExpr(t);
+					while(t == SEP_PAR) {
+						if (++n > 255) throw err("too many parameters");
+						t = compExpr(next());
 					}
-				} else if (c1.type == Type.op_ind) {//Array set
-					Byte p = state.varIds.get(name);
-					if (p != null) {
-						state.op(gloc, c1);
-						buffer.put(p);
-					} else {
-						state.op(gvar, c1);
-						Function.putName(buffer, name, false);
-					}
-					c1 = eval(state, null);
-					check(c1, Type.op_asn);
-					c1 = eval(state, null);
-					check(c1, Type.sep_cmd);
-					state.op(arr_set, c1);
-				} else if (c1.type == Type.B_par) {//Function call
-					func(state, name, false);
-					state.next(Type.sep_cmd);
-				} else throw state.err(c1);
-			} break;
-			case K_loc: while(true) {//def local var
-				Comp c1 = state.next(Type.id), c2 = code.next();
-				if (((Identifier)c1).com) throw state.err("invalid identifier", c1);
-				String name = ((Identifier)c1).id;
-				if (state.varIds.containsKey(name)) throw state.err("duplicate local variable: " + name, c1);
-				if (c2.type == Type.op_asn) {
-					c2 = eval(state, null);
-					state.curStack--;
-					state.regVar(name);
-				} else {
-					state.regVar(name);
-					int p = buffer.position();
-					if (buffer.get(p - 2) == clear) buffer.position(p - 1);
-					else state.op(clear, null);
-					buffer.put((byte)(state.lastId - 1));
+					check(t, E_PAR);
 				}
-				if (c2.type == Type.sep_cmd) break;
-				check(c2, Type.sep_par);
-			} break;
-			case K_else: {
-				if (lastElse >= 0 || lastIf < 0) state.err("else without if", c);
-				Comp c1 = code.next();
-				if (jump(state, c1, lastIf)) {
-					lastIf = -1;
-					break;
-				}
-				state.op(go, c);
-				lastElse = buffer.position();
-				buffer.position(lastElse + 2);
-				buffer.putShort(lastIf, (short)(lastElse + 2));
-				if (c1.type == Type.B_block) {
-					boolean st = compBlock(state);
-					buffer.putShort(lastElse, (short)(buffer.position() - (st ? 2 : 0)));
-					lastElse = lastIf = -1;
-					break;
-				}
-				check(c1, Type.K_if);
+				op(call, -n);
+				out.put((byte)n);
 			}
-			case K_fail:
-			case K_if: {
-				state.next(Type.B_par);
-				check(eval(state, null), Type.E_par);
-				Comp c1 = code.next();
-				lastIf = buffer.position() + 1;
-				int p;
-				if (jump(state, c1, lastIf)) {
-					state.op(c.type == Type.K_fail ? gofail : goif, c1);
-					buffer.position(p = lastIf + 2);
-					lastIf = -1;
-				} else {
-					state.op(c.type == Type.K_fail ? gosucc : goifn, c1);
-					buffer.position(lastIf + 2);
-					check(c1, Type.B_block);
-					boolean st = compBlock(state);
-					p = buffer.position() - (st ? 2 : 0);
-					buffer.putShort(lastIf, (short)p);
-				}
-				if (lastElse >= 0) {
-					buffer.putShort(lastElse, (short)p);
-					lastElse = -1;
-				}
-			} break;
-			case K_for: {
-				//state backup
-				ArrayList<Integer> breakPos = state.breakPos;
-				state.breakPos = new ArrayList<Integer>();
-				ArrayList<Integer> continuePos = state.continuePos;
-				state.continuePos = new ArrayList<Integer>();
-				//header
-				state.next(Type.B_par);
-				Identifier c1 = (Identifier)state.next(Type.id);
-				if (c1.com) throw state.err("invalid identifier", c1);
-				state.next(Type.op_ind);
-				check(eval(state, null), Type.E_par);
-				state.lastId++;
-				state.regVar(c1.id);
-				int p = buffer.position();
-				state.op(iterate, state.next(Type.B_block));
-				int p1 = buffer.position();
-				buffer.position(p1 + 2);
-				//body
-				boolean st = compBlock(state);
-				int p2 = buffer.position();
-				if (st) buffer.position(p2 -= 2);
-				for (int i : state.continuePos) buffer.putShort(i, (short)p2);
-				state.op(end, null);
-				buffer.put((byte)(state.lastId - 1));
-				buffer.putShort((short)p);
-				state.varIds.remove(c1.id);
-				state.lastId -= 2;
-				p2 = buffer.position();
-				buffer.putShort(p1, (short)p2);
-				if (!state.breakPos.isEmpty()) {
-					state.op(clear, null);
-					buffer.put((byte)(state.lastId - 1));
-					for (int i : state.breakPos) buffer.putShort(i, (short)p2);
-				}
-				//reset state
-				state.breakPos = breakPos;
-				state.continuePos = continuePos;
-			} break;
-			case K_br: case K_cont: {
-				state.op(go, c);
-				int p = buffer.position();
-				buffer.position(p + 2);
-				jump(state, c, p);
-			} break;
-			case K_ret: {
-				Comp c1 = eval(state, Type.sep_cmd);
-				if (c1 != null) {
-					state.hasRet = true;
-					check(c1, Type.sep_cmd);
-				} else c1 = c;
-				state.op(go, c1);
-				int p = buffer.position();
-				state.returnPos.add(p);
-				buffer.position(p + 2);
-			} break;
-			case B_block: compBlock(state); break;
-			default: throw state.err(c);
-			}
+			t = next();
 		}
-		if (state.lastId <= variables) return false;
-		for (Iterator<Entry<String, Byte>> it = state.varIds.entrySet().iterator(); it.hasNext();) {
-			Entry<String, Byte> e = it.next();
-			if (e.getValue() >= variables) it.remove();
-		}
-		int p = buffer.position();
-		if (buffer.get(p - 2) == clear) buffer.position(p - 1);
-		else state.op(clear, null);
-		buffer.put((byte)(variables - 1));
-		state.lastId = variables;
-		return true;
-	}
-
-	private boolean jump(State state, Comp c, int p) throws ScriptException {
-		switch(c.type) {
-		case K_br:
-			if (state.breakPos == null) throw state.err("break outside loop", c);
-			state.breakPos.add(p); break;
-		case K_cont:
-			if (state.continuePos == null) throw state.err("continue outside loop", c);
-			state.continuePos.add(p); break;
-		case K_ret:
-			state.returnPos.add(p); break;
-		default: return false;
-		}
-		state.next(Type.sep_cmd);
-		return true;
-	}
-
-	private Comp eval(State state, Type end) throws ScriptException {
-		Comp c = code.next();
-		if (end != null && c.type == end) return null;
-		ArrayList<Comp> ops = new ArrayList<Comp>();
-		while(true) {
-			c = evalPre(c, state);
-			int p = c.type.prior;
-			if (!ops.isEmpty()) operators(ops, p, state);
-			if (p == 0) return c;
-			ops.add(c);
-			c = code.next();
-		}
-	}
-
-	@SuppressWarnings("incomplete-switch")
-	private void operators(ArrayList<Comp> ops, int prior, State state) {
-		int i = ops.size() - 1;
-		Comp c = ops.get(i);
-		while (c.type.prior >= prior) {
-			switch(c.type) {
-			case op_or: state.op(or, c); break;
-			case op_nor: state.op(nor, c); break;
-			case op_and: state.op(and, c); break;
-			case op_nand: state.op(nand, c); break;
-			case op_xor: state.op(xor, c); break;
-			case op_xnor: state.op(xnor, c); break;
-			case op_not: state.op(not, c); break;
-			case op_eq: state.op(eq, c); break;
-			case op_neq: state.op(neq, c); break;
-			case op_ls: state.op(ls, c); break;
-			case op_nls: state.op(nls, c); break;
-			case op_gr: state.op(gr, c); break;
-			case op_ngr: state.op(ngr, c); break;
-			case op_add: state.op(add, c); break;
-			case op_sub: state.op(sub, c); break;
-			case op_mul: state.op(mul, c); break;
-			case op_div: state.op(div, c); break;
-			case op_mod: state.op(mod, c); break;
-			case op_pow: state.op(pow, c); break;
-			case op_ind: state.op(arr_get, c); break;
-			}
-			ops.remove(i--);
-			if (i < 0) return;
-			c = ops.get(i);
-		}
-	}
-
-	private Comp evalPre(Comp c, State state) throws ScriptException {
-		switch(c.type) {
-		case op_not:
-			c = evalPre(code.next(), state);
-			state.op(not, null);
-			return c;
-		case op_sub:
-			c = evalPre(code.next(), state);
-			state.op(neg, null);
-			return c;
-		case op_div:
-			c = evalPre(code.next(), state);
-			state.op(inv, null);
-			return c;
-		case op_num:
-			c = evalPre(code.next(), state);
-			state.op(arr_l, null);
-			return c;
-		case op_text:{
-			ConstValue c1 = (ConstValue)state.next(Type.val);
-			if (!(c1.val instanceof Text)) state.err("exp. string literal", c1);
-			c = evalPre(code.next(), state);
-			state.op(form, null);
-			Function.putName(buffer, ((Text)c1.val).value, false);
-			return c;
-		}
-		case id: {
-			String name = ((Identifier)c).id;
-			Comp c1 = code.next();
-			if (c1.type == Type.B_par) {
-				func(state, name, true);
-				return code.next();
-			} else {
-				Byte p = state.varIds.get(name);
-				if (p != null) {
-					state.op(gloc, c);
-					buffer.put(p);
-				} else {
-					state.op(gvar, c);
-					Function.putName(buffer, name, false);
-				}
-				return c1;
-			}
-		}
-		case val: {
-			IOperand val = ((ConstValue)c).val;
-			if (val instanceof Number) {
-				if (val == Number.FALSE)
-					state.op(cst_false, c);
-				else if (val == Number.TRUE)
-					state.op(cst_true, c);
-				else {
-					state.op(cst_N, c);
-					buffer.putDouble(((Number)val).value);
-				}
-			} else if (val instanceof Text) {
-				state.op(cst_T, c);
-				Function.putName(buffer, ((Text)val).value, true);
-			} else {
-				state.op(cst_nil, c);
-			}
-		} return code.next();
-		case B_par: {
-			Comp c1 = eval(state, null);
-			check(c1, Type.E_par);
-		} return code.next();
-		case B_list: {
-			int n = params(state, Type.E_list);
-			state.curStack -= n;
-			Comp c1 = code.next();
-			if (c1.type == Type.op_num) {
-				state.op(vec_pack, null);
-				buffer.put((byte)n);
-				return code.next();
-			} else if (c1.type == Type.op_text) {
-				state.op(text_pack, null);
-				buffer.put((byte)n);
-				return code.next();
-			} else {
-				state.op(arr_pack, null);
-				buffer.put((byte)n);
-				return c1;
-			}
-		}
-		default: throw state.err(c);
-		}
-	}
-
-	private int params(State state, Type end) throws ScriptException {
-		int n = 0;
-		while(true) {
-			Comp c = eval(state, end);
-			if (c == null) break;
-			n++;
-			if (c.type == end) break;
-			check(c, Type.sep_par);
-		}
-		return n;
-	}
-
-	private void func(State state, String name, boolean ret) throws ScriptException {
-		int n = params(state, Type.E_par);
-		state.curStack -= n;
-		state.op(call, null);
-		Function.putName(buffer, name, false);
-		if (ret) {
-			if (++state.curStack + state.lastId > state.maxStack) state.maxStack++;
-			n |= 0x80;
-		}
-		buffer.put((byte)n);
+		return t;
 	}
 
 	//utils:
 
-	private void check(Comp c, Type t) throws ScriptException {
-		if (c.type != t) throw new ScriptException(String.format("exp. %s , got %s", t, c.type), fileName, c.line, c.col);
-	}
-
-	private static class LineTracker {
-		final ArrayList<Comp> parsed = new ArrayList<Comp>();
-		final Reader reader;
-		short line = 1, col = 0;
-		
-		LineTracker(Reader reader) {this.reader = reader;}
-		
-		int next() throws IOException {
-			int c = reader.read();
-			if (c == '\n') {
-				line++; col = 0;
-			} else if (c == '\t') col += 4;
-			else col++;
-			return c;
-		}
-		void add(Comp c) {
-			c.line = line;
-			c.col = col;
-			parsed.add(c);
-		}
-		Comp prev(int p) {return parsed.get(parsed.size() + p);}
-		void remPrev() {parsed.remove(parsed.size() - 1);}
-	}
-
-	private class State {
-		HashMap<String, Byte> varIds = new HashMap<String, Byte>();
-		HashMap<Short, Short> lines = new HashMap<Short, Short>();
-		ArrayList<Integer> breakPos, continuePos, returnPos = new ArrayList<Integer>();
-		int lastId = 0, maxStack = 0, lineOfs, curStack = 0;
-		boolean hasRet = false;
-		final String name;
-		
-		State(String name) {this.name = name;}
-		
-		Comp next(Type t) throws ScriptException {
-			Comp c = code.next();
-			if (c.type != t) throw new ScriptException(String.format("exp. %s , got %s", t, c.type), name, c.line, c.col);
-			return c;
-		}
- 		void op(byte op, Comp c) {
-			buffer.put(op);
-			if (c != null) lines.putIfAbsent((short)(c.line - lineOfs), (short)buffer.position());
-			int i = lastId + (curStack += stack(op));
-			if (i > maxStack) maxStack = i;
-		}
-		int regVar(String name) {
-			varIds.put(name, (byte)lastId++);
-			if (lastId > maxStack) maxStack = lastId;
-			return lastId - 1;
-		}
-		ScriptException err(String msg, Comp c) {
-			return new ScriptException(msg, name, c.line, c.col);
-		}
-		ScriptException err(Comp c) {
-			return new ScriptException(String.format("unexpected token: %s", c.type), name, c.line, c.col);
-		}
-	}
-
-	private static class Comp {
-		Comp(Type t) {type = t;}
-		Type type;
-		short line, col;
-	}
-
-	private static class Identifier extends Comp {
-		Identifier(String s, boolean com) {super(Type.id); this.com = com; this.id = s;}
-		/**is combined (containing '.') */
-		boolean com;
-		/**identifier string */
-		String id;
-	}
-
-	private static class ConstValue extends Comp {
-		ConstValue(IOperand val) {super(Type.val); this.val = val;}
-		final IOperand val;
-	}
-
-	private static enum Type {
-		val("literal"), id("identifier"), op_num("#"), op_ind(7, ":"), op_text("$"), op_asn("="),
-		op_or(1, "|"), op_nor(1, "~|"), op_and(2, "&"), op_nand(2, "~&"), op_xor(3, "?"), op_xnor(3, "~?"), op_not("~"),
-		op_eq(4, "=="), op_neq(4, "~="), op_ls(4, "<"), op_gr(4, ">"), op_nls(4, ">="), op_ngr(4, "<="),
-		op_add(5, "+"), op_sub(5, "-"), op_mul(6, "*"), op_div(6, "/"), op_mod(6, "%"), op_pow(7, "^"),
-		B_par("("), E_par(")"), B_list("["), E_list("]"), B_block("{"), E_block("}"), sep_par(","), sep_cmd(";"),
-		K_fail("fail"), K_if("if"), K_else("else"), K_for("for"), K_ret("return"), K_br("break"), K_cont("continue"), K_loc("Loc");
-		private Type(String text) {this(0, text);}
-		private Type(int prior, String text) {this.prior = prior; this.text = text;}
-		public final int prior;
-		private final String text;
-		@Override
-		public String toString() {return text;}
-	}
-
-	private static int stack(byte op) {
-		switch(op) {
-		case gloc: case gvar: case cst_N: case cst_T: case cst_true: case cst_false: case cst_nil:
-		case arr_pack: case vec_pack: case text_pack:
-			return 1;
-		case sloc: case svar: case arr_get:
-		case goif: case goifn: case gosucc: case gofail: case iterate:
-		case add: case sub: case mul: case div: case mod: case pow:
-		case eq: case neq: case ls: case nls: case gr: case ngr:
-		case and: case or: case nand: case nor: case xor: case xnor:
-			return -1;
-		case arr_set:
-			return -3;
+	private byte next() {
+		byte t = code.get();
+		char v = code.getChar();
+		switch(t) {
+		case VAR:
+		case LOCVAR:
+		case NUM:
+		case STR:
+		case FUNC:
+		case ACCESS:
+			val = v;
+			col++;
+			break;
+		case LINE:
+			addLine();
+			line = v;
+			col = 0;
+			return next();
 		default:
-			return 0;
+			col = v;
 		}
+		return t;
 	}
 
-	/**
-	 * Executable utility program for manual script compilation
-	 * @param args takes as argument the combined output file path 
-	 * and will compile all scripts in the same directory.
-	 */
-	public static void main(String[] args) {
-		ScriptFiles.createCompiledPackage(new File(args[0]));
+	private void addLine() {
+		int p = out.position(), l = lines.size() - 1;
+		if (l >= 0 && lines.get(l).intValue() == p)
+			lines.remove(l);
+		lines.add((long)line << 32 | p);
+	}
+
+	private void check(byte t, byte exp) throws ScriptException {
+		if (t != exp)
+			throw err(String.format("exp. %s , got %s", OP_NAMES[exp], OP_NAMES[t]));
+	}
+
+	private byte check(byte t, byte... exp) throws ScriptException {
+		for (byte e : exp)
+			if (e == t) return t;
+		throw err(String.format("exp. %s , got %s", OP_NAMES[exp[0]], OP_NAMES[t]));
+	}
+
+	private ScriptException err(String exp, byte t) {
+		return err(String.format("exp. %s, got %s", exp, OP_NAMES[t]));
+	}
+	
+	private ScriptException err(byte c) {
+		return err(String.format("unexpected token: %s", OP_NAMES[c]));
+	}
+
+	private ScriptException err(String msg) {
+		return new ScriptException(msg, fileName, line, col);
+	}
+
+	private char name() {
+		return nameIdx[val];
+	}
+
+	private double number() {
+		long val = this.val;
+		for (int i = 16; i < 64; i+=16) {
+			next();
+			val |= (long)this.val << i;
+		}
+		return Double.longBitsToDouble(val);
+	}
+
+	private byte defLocal() throws ScriptException {
+		locals = (char)(this.val + 1);
+		if (locals - locOfs > maxStack)
+			maxStack = (char)(locals - locOfs);
+		return local();
+	}
+
+	private byte local() throws ScriptException {
+		int val = this.val - locOfs;
+		if (val >= params || (val -= extraVars.length) >= 0)
+			return (byte)val;
+		for (int i = 0; i < extraVars.length; i++) {
+			char v = extraVars[i];
+			if (v == 0xffff) extraVars[i] = this.val;
+			else if (v != this.val) continue;
+			return (byte)i;
+		}
+		throw err("internal error");
+	}
+
+	private void op(byte code, int stack) {
+		out.put(last = code);
+		curStack += stack;
+		int i = locals - locOfs + curStack;
+		if (i > maxStack) maxStack = (char)i;
+	}
+
+	private void opClear(int lvl) {
+		if (last == clear) out.position(out.position() - 1);
+		else op(clear, 0);
+		out.put((byte)lvl);
+		curStack = 0;
+	}
+
+	private int opJmp(byte code) {
+		op(code, code == go ? 0 : -1);
+		out.putChar('\0');
+		return out.position() - 2;
+	}
+
+	private char pos() {
+		return (char)(out.position() - funStart);
 	}
 
 }

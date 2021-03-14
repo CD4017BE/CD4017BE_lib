@@ -9,6 +9,8 @@ import cd4017be.lib.container.test.ContainerFluidSupply;
 import cd4017be.lib.container.test.ContainerItemSupply;
 import cd4017be.lib.item.*;
 import cd4017be.lib.network.GuiNetworkHandler;
+import cd4017be.lib.render.model.ScriptModel;
+import cd4017be.lib.render.model.TileEntityModel;
 import cd4017be.lib.text.TooltipEditor;
 import cd4017be.lib.text.TooltipUtil;
 import cd4017be.lib.tileentity.test.EnergySupply;
@@ -24,6 +26,7 @@ import net.minecraft.item.*;
 import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.event.ModelRegistryEvent;
+import net.minecraftforge.client.model.ModelLoaderRegistry;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.extensions.IForgeContainerType;
 import net.minecraftforge.event.RegistryEvent.Register;
@@ -148,10 +151,12 @@ public class Lib {
 		ScreenManager.registerFactory(C_ITEM_SUPP, ContainerItemSupply::setupGui);
 		ScreenManager.registerFactory(C_FLUID_SUPP, ContainerFluidSupply::setupGui);
 	}
-
+	
+	@SubscribeEvent
 	@OnlyIn(Dist.CLIENT)
-	public void registerMaterialModels(ModelRegistryEvent ev) {
-		
+	void registerModels(ModelRegistryEvent ev) {
+		ModelLoaderRegistry.registerLoader(rl("te"), TileEntityModel.Loader.INSTANCE);
+		ModelLoaderRegistry.registerLoader(rl("rcp"), ScriptModel.Loader.INSTANCE);
 	}
 
 	public static ResourceLocation rl(String path) {

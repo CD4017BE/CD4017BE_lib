@@ -22,7 +22,7 @@ public class PredicateWrap<T> implements IOperand {
 	}
 
 	@Override
-	public boolean asBool() throws Error {
+	public boolean asBool() {
 		return true;
 	}
 
@@ -30,7 +30,7 @@ public class PredicateWrap<T> implements IOperand {
 	public Object value() {
 		return filter;
 	}
-
+/*
 	@Override
 	public IOperand grR(IOperand x) {
 		Object obj = x.value();
@@ -52,5 +52,5 @@ public class PredicateWrap<T> implements IOperand {
 	public IOperand nlsL(IOperand x) {
 		return Number.FALSE;
 	}
-
+*/
 }

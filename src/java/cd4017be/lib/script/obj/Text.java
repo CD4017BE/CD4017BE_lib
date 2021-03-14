@@ -1,5 +1,7 @@
 package cd4017be.lib.script.obj;
 
+import javax.script.ScriptException;
+
 /**
  * Represents Strings in script
  * @author cd4017be
@@ -29,31 +31,56 @@ public class Text implements IOperand {
 	}
 
 	@Override
-	public IOperand addR(IOperand x) {
-		return new Text(value + x.toString());
-	}
-
-	@Override
-	public IOperand addL(IOperand x) {
-		return new Text(x.toString() + value);
-	}
-
-	@Override
-	public IOperand len() {
-		return new Number(value.length());
-	}
-
-	@Override
-	public IOperand get(IOperand idx) {
-		int l = value.length(),
-			i0 = idx.asIndex(),
-			i1 = l;
-		if (idx instanceof Vector) {
-			Vector v = (Vector)idx;
-			if (v.value.length >= 2)
-				i1 = (int)v.value[1];
+	public IOperand op(int code) {
+		switch(code) {
+		case len: new Number(value.length());
+		case text: return this;
+		default: return IOperand.super.op(code);
 		}
-		return new Text(value.substring(i0 < 0 ? 0 : i0, i1 > l ? l : i1));
+	}
+
+	@Override
+	public IOperand opR(int code, IOperand x) {
+		switch(code) {
+		case add: return new Text(value.concat(x.toString()));
+		case index: {
+			int l = value.length(),
+				i0 = x.asIndex(),
+				i1 = l;
+			if (x instanceof Vector) {
+				Vector v = (Vector)x;
+				if (v.value.length >= 2)
+					i1 = (int)v.value[1];
+			}
+			return new Text(value.substring(i0 < 0 ? 0 : i0, i1 > l ? l : i1));
+		}
+		case gr:
+			if (x instanceof Text) {
+				String s = ((Text)x).value;
+				return value.length() > s.length() ? new Number(value.indexOf(s) + 1) : Number.FALSE;
+			} else break;
+		case nls:
+			if (x instanceof Text)
+				return new Number(value.indexOf(((Text)x).value) + 1);
+			else break;
+		}
+		return x.opL(code, this);
+	}
+
+	@Override
+	public IOperand opL(int code, IOperand x) {
+		switch(code) {
+		case add: return new Text(x.toString().concat(value));
+		default: return IOperand.super.opL(code, x);
+		}
+	}
+
+	@Override
+	public void call(IOperand[] stack, int bot, int top) throws ScriptException {
+		Object[] args = new Object[top - bot];
+		for (int i = 0; i < args.length; i++)
+			args[i] = stack[bot + i].value();
+		stack[bot - 1] = new Text(String.format(value, args));
 	}
 
 	@Override
@@ -69,21 +96,6 @@ public class Text implements IOperand {
 		if (i0 < 0) i0 = 0;
 		if (i1 > l) i1 = l;
 		value = value.substring(0, i0).concat(val.toString()).concat(value.substring(i1));
-	}
-
-	@Override
-	public IOperand grR(IOperand x) {
-		if (x instanceof Text) {
-			String s = ((Text)x).value;
-			return value.length() > s.length() ? new Number(value.indexOf(s) + 1) : Number.FALSE;
-		} else return x.grL(x);
-	}
-
-	@Override
-	public IOperand nlsR(IOperand x) {
-		if (x instanceof Text)
-			return new Number(value.indexOf(((Text)x).value) + 1);
-		else return x.nlsL(x);
 	}
 
 	@Override
