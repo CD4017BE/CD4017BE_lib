@@ -1,8 +1,7 @@
 package cd4017be.lib.util;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.function.ToIntFunction;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.ItemEntity;
@@ -148,6 +147,12 @@ public class ItemFluidUtil {
 		return fluids;
 	}
 
+	public static void readBytes(byte[] dst, byte[] src, byte fallback) {
+		int sl = src.length, dl = dst.length;
+		System.arraycopy(src, 0, dst, 0, Math.min(sl, dl));
+		if (sl < dl) Arrays.fill(dst, sl, dl, fallback);
+	}
+
 	/*public static CraftingInventory craftingInventory(ItemStack[] grid, int size) {
 		CraftingInventory icr = new CraftingInventory(CraftContDummy, size, size);
 		int m = Math.min(grid.length, icr.getSizeInventory());
@@ -201,6 +206,7 @@ public class ItemFluidUtil {
 		return m;
 	}
 
+	@Deprecated
 	public static int drain(IItemHandler inv, OreDictStack ore, ArrayList<ItemStack> buffer) {
 		int n = ore.stacksize, m = 0;
 		for (int i = 0; i < inv.getSlots() && m < n; i++) 
@@ -326,7 +332,8 @@ public class ItemFluidUtil {
 	 */
 	public static void dropStack(ItemStack stack, World world, BlockPos pos) {
 		if (stack.isEmpty()) return;
-		ItemEntity ei = new ItemEntity(world, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, stack);
+		ItemEntity ei = new ItemEntity(world, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, stack);
+		ei.setDefaultPickupDelay();
 		world.addEntity(ei);
 	}
 
@@ -354,5 +361,81 @@ public class ItemFluidUtil {
 	public static Item item(String id) {
 		return ForgeRegistries.ITEMS.getValue(new ResourceLocation(id));
 	}
+
+/*
+	public static class ItemType {
+		public final ItemStack[] types;
+		public final boolean meta;
+		public final boolean nbt;
+		public final int[] ores;
+		/**
+		 * An ItemType that matches all items
+		 */
+/*		public ItemType() 
+		{
+			this.types = null;
+			this.ores = null;
+			this.meta = false;
+			this.nbt = false;
+		}
+		/**
+		 * An ItemType that matches only the exact given items
+		 * @param types the items to match
+		 */
+/*		public ItemType(ItemStack... types)
+		{
+			this.types = types;
+			this.ores = null;
+			this.meta = true;
+			this.nbt = true;
+		}
+		/**
+		 * This ItemType matches the given items with special flags
+		 * @param meta Metadata flag (false = ignore different metadata)
+		 * @param nbt NBT-data flag (false = ignore different NBT-data)
+		 * @param ore OreDictionary flag (true = also matches if equal ore types)
+		 * @param types the items to match
+		 */
+/*		public ItemType(boolean meta, boolean nbt, boolean ore, ItemStack... types)
+		{
+			this.types = types;
+			this.meta = meta;
+			this.nbt = nbt;
+			if (ore) {
+				Set<Integer> list = new HashSet<Integer>();
+				for (int i = 0; i < types.length; i++)
+					for (int j : OreDictionary.getOreIDs(types[i])) 
+						list.add(j);
+				ores = new int[list.size()];
+				int n = 0;
+				for (int i : list) ores[n++] = i;
+			} else ores = null;
+		}
+		
+		public boolean matches(ItemStack item) 
+		{
+			return getMatch(item) >= 0;
+		}
+		
+		public int getMatch(ItemStack item)
+		{
+			if (item.isEmpty()) return -1;
+			else if (types == null) return -1;
+			for (int i = 0; i < types.length; i++) {
+				ItemStack type = types[i];
+				if (item.getItem() == type.getItem() && 
+					(!meta || item.getItemDamage() == type.getItemDamage()) &&
+					(!nbt || ItemStack.areItemStackTagsEqual(item, type)))
+					return i;
+			}
+			if (ores == null) return -1;
+			for (int o : OreDictionary.getOreIDs(item))
+				for (int i = 0; i < ores.length; i++)
+					if (ores[i] == o) return i;
+			return -1;
+		}
+		
+	}
+*/
 
 }

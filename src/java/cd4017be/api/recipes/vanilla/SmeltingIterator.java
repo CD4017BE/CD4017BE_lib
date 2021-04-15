@@ -1,6 +1,7 @@
 package cd4017be.api.recipes.vanilla;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Predicate;
@@ -10,7 +11,6 @@ import cd4017be.lib.script.obj.Array;
 import cd4017be.lib.script.obj.IOperand;
 import cd4017be.lib.script.obj.IOperand.OperandIterator;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.FurnaceRecipes;
 
 /**
  * Lets config scripts iterate over all (or a filtered set of) furnace smelting recipes in order to remove or edit them.
@@ -25,7 +25,7 @@ public class SmeltingIterator implements OperandIterator {
 
 	public SmeltingIterator(Predicate<Object> key, boolean res) {
 		keys = new ArrayList<ItemStack>();
-		recipes = FurnaceRecipes.instance().getSmeltingList();
+		recipes = new HashMap<>(); // FurnaceRecipes.instance().getSmeltingList();
 		for (Entry<ItemStack, ItemStack> e : recipes.entrySet())
 			if (key.test(res ? e.getValue() : e.getKey()))
 				keys.add(e.getKey());

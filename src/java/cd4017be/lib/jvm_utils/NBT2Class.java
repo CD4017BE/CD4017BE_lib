@@ -7,10 +7,10 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Function;
 
-import net.minecraft.nbt.NBTBase;
-import net.minecraft.nbt.NBTTagByteArray;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
+import net.minecraft.nbt.INBT;
+import net.minecraft.nbt.ByteArrayNBT;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.ListNBT;
 import net.minecraftforge.common.util.Constants.NBT;
 
 import static cd4017be.lib.jvm_utils.ClassAssembler.*;
@@ -21,7 +21,7 @@ import static cd4017be.lib.jvm_utils.ClassAssembler.*;
  */
 public class NBT2Class implements Function<String, byte[]> {
 
-	public final NBTTagCompound nbt;
+	public final CompoundNBT nbt;
 	private final SecurityChecker checker;
 	private final Class<?> type;
 	private final List<Class<?>> interfaces;
@@ -36,7 +36,7 @@ public class NBT2Class implements Function<String, byte[]> {
 	 * @param type super class
 	 * @param interfaces implemented interfaces
 	 */
-	public NBT2Class(NBTTagCompound nbt, SecurityChecker checker, Class<?> type, Class<?>... interfaces) {
+	public NBT2Class(CompoundNBT nbt, SecurityChecker checker, Class<?> type, Class<?>... interfaces) {
 		this.nbt = nbt;
 		this.checker = checker;
 		this.type = type;
@@ -70,13 +70,13 @@ public class NBT2Class implements Function<String, byte[]> {
 	public byte[] apply(String name) {
 		//load constant pool table
 		ConstantPool cpt = new ConstantPool(name, type);
-		for (NBTBase tag : nbt.getTagList("cpt", NBT.TAG_BYTE_ARRAY))
-			cpt.add(((NBTTagByteArray)tag).getByteArray());
+		for (INBT tag : nbt.getList("cpt", NBT.TAG_BYTE_ARRAY))
+			cpt.add(((ByteArrayNBT)tag).getByteArray());
 		//load methods
 		ArrayList<byte[]> fields = new ArrayList<>(), methods = new ArrayList<>();
 		if (defConstr) methods.add(DEFAULT_CONSTR);
-		for (NBTBase tag : nbt.getTagList("methods", NBT.TAG_BYTE_ARRAY))
-			methods.add(((NBTTagByteArray)tag).getByteArray());
+		for (INBT tag : nbt.getList("methods", NBT.TAG_BYTE_ARRAY))
+			methods.add(((ByteArrayNBT)tag).getByteArray());
 		//load fields
 		for (int ni : nbt.getIntArray("fields")) {
 			ByteBuffer b = ByteBuffer.allocate(8);
@@ -93,19 +93,19 @@ public class NBT2Class implements Function<String, byte[]> {
 	 * @return a 128-bit unique identification hash for this class
 	 */
 	public UUID getHash() {
-		if (nbt.hasKey("uidM", NBT.TAG_LONG) && nbt.hasKey("uidL", NBT.TAG_LONG))
+		if (nbt.contains("uidM", NBT.TAG_LONG) && nbt.contains("uidL", NBT.TAG_LONG))
 			return new UUID(nbt.getLong("uidM"), nbt.getLong("uidL"));
-		NBTTagList cpt = nbt.getTagList("cpt", NBT.TAG_BYTE_ARRAY),
-				methods = nbt.getTagList("methods", NBT.TAG_BYTE_ARRAY);
-		byte[][] data = new byte[cpt.tagCount() + methods.tagCount()][];
+		ListNBT cpt = nbt.getList("cpt", NBT.TAG_BYTE_ARRAY),
+				methods = nbt.getList("methods", NBT.TAG_BYTE_ARRAY);
+		byte[][] data = new byte[cpt.size() + methods.size()][];
 		int i = 0, n = 0;
-		for (NBTBase tag : cpt) {
-			byte[] arr = ((NBTTagByteArray)tag).getByteArray();
+		for (INBT tag : cpt) {
+			byte[] arr = ((ByteArrayNBT)tag).getByteArray();
 			data[i++] = arr;
 			n += arr.length;
 		}
-		for (NBTBase tag : methods) {
-			byte[] arr = ((NBTTagByteArray)tag).getByteArray();
+		for (INBT tag : methods) {
+			byte[] arr = ((ByteArrayNBT)tag).getByteArray();
 			data[i++] = arr;
 			n += arr.length;
 		}
@@ -118,30 +118,30 @@ public class NBT2Class implements Function<String, byte[]> {
 		StringBuilder tag = new StringBuilder(type.getSimpleName());
 		for (Class<?> c : interfaces) tag.append(',').append(c.getSimpleName());
 		UUID uid = ClassUtils.hash(tag.toString(), buf.array());
-		nbt.setLong("uidM", uid.getMostSignificantBits());
-		nbt.setLong("uidL", uid.getLeastSignificantBits());
+		nbt.putLong("uidM", uid.getMostSignificantBits());
+		nbt.putLong("uidL", uid.getLeastSignificantBits());
 		return uid;
 	}
 
 	/**
-	 * packs a class draft as NBTTagCompound
+	 * packs a class draft as CompoundNBT
 	 * @param cpt constant pool table
 	 * @param fields pairs of field name and type indices: {@code int = 0xNameType}
 	 * @param methods method entries
 	 * @return packed data
 	 */
-	public static NBTTagCompound writeNBT(ConstantPool cpt, int[] fields, List<byte[]> methods) {
-		NBTTagCompound nbt = new NBTTagCompound();
-		NBTTagList list = new NBTTagList();
+	public static CompoundNBT writeNBT(ConstantPool cpt, int[] fields, List<byte[]> methods) {
+		CompoundNBT nbt = new CompoundNBT();
+		ListNBT list = new ListNBT();
 		for (byte[] arr : methods)
-			list.appendTag(new NBTTagByteArray(arr));
-		nbt.setTag("methods", list);
+			list.add(new ByteArrayNBT(arr));
+		nbt.put("methods", list);
 		
-		nbt.setIntArray("fields", fields);
-		list = new NBTTagList();
+		nbt.putIntArray("fields", fields);
+		list = new ListNBT();
 		for (int i = ConstantPool.PREINIT_LEN, l = cpt.getCount(); i < l; i++)
-			list.appendTag(new NBTTagByteArray(cpt.get(i)));
-		nbt.setTag("cpt", list);
+			list.add(new ByteArrayNBT(cpt.get(i)));
+		nbt.put("cpt", list);
 		return nbt;
 	}
 

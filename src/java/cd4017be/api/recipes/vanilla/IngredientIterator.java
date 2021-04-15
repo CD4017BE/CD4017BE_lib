@@ -3,12 +3,9 @@ package cd4017be.api.recipes.vanilla;
 import cd4017be.api.recipes.ItemOperand;
 import cd4017be.lib.script.obj.*;
 import cd4017be.lib.script.obj.IOperand.OperandIterator;
-import cd4017be.lib.script.obj.Number;
-import cd4017be.lib.util.OreDictStack;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.util.NonNullList;
-import net.minecraftforge.oredict.OreIngredient;
 
 
 /**
@@ -38,7 +35,7 @@ public class IngredientIterator implements OperandIterator {
 	public void set(IOperand obj) {
 		if (obj == curElement) return;
 		if (obj instanceof ItemOperand) ingreds.set(idx, Ingredient.fromStacks(((ItemOperand)obj).stack));
-		else if (obj instanceof OreDictStack) ingreds.set(idx, new OreIngredient(((OreDictStack)obj).id));
+		//else if (obj instanceof OreDictStack) ingreds.set(idx, new OreIngredient(((OreDictStack)obj).id));
 		else if (obj == Nil.NIL) {
 			if (shaped) ingreds.set(idx, Ingredient.EMPTY);
 			else ingreds.remove(idx--);
@@ -47,13 +44,13 @@ public class IngredientIterator implements OperandIterator {
 
 	@Override
 	public boolean hasNext() {
-		while (++idx < ingreds.size()) {
+		/*while (++idx < ingreds.size()) {
 			Ingredient ingr = ingreds.get(idx);
 			if (key == null || ingr.apply(key)) {
 				curElement = new PredicateWrap<>(ingr, ItemStack.class);
 				return true;
 			}
-		}
+		}*/
 		return false;
 	}
 
@@ -66,7 +63,7 @@ public class IngredientIterator implements OperandIterator {
 	public Object value() {
 		return this;
 	}
-
+/*
 	@Override
 	public IOperand len() {
 		return new Number(ingreds.size());
@@ -76,5 +73,5 @@ public class IngredientIterator implements OperandIterator {
 	public IOperand get(IOperand idx) {
 		return new Array(ingreds.get(idx.asIndex()).getMatchingStacks(), ItemOperand::new);
 	}
-
+*/
 }

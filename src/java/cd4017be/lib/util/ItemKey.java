@@ -16,7 +16,7 @@ public class ItemKey {
 		final int prime = 31;
 		int result = 1;
 		for (ItemStack item : items)
-			result = prime * result + (item.isEmpty() ? 0 : item.getItem().getRegistryName().hashCode() ^ item.getMetadata());
+			result = prime * result + (item.isEmpty() ? 0 : item.getItem().getRegistryName().hashCode() ^ item.getDamage());
 		this.hash = result;
 	}
 

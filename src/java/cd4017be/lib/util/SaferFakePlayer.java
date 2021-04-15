@@ -1,27 +1,7 @@
 package cd4017be.lib.util;
 
-import java.util.Set;
 import com.mojang.authlib.GameProfile;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.IMerchant;
-import net.minecraft.entity.passive.AbstractHorse;
-import net.minecraft.inventory.Container;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.EnumPacketDirection;
-import net.minecraft.network.NetHandlerPlayServer;
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.Packet;
-import net.minecraft.network.play.server.SPacketPlayerPosLook.EnumFlags;
-import net.minecraft.potion.PotionEffect;
-import net.minecraft.tileentity.TileEntityCommandBlock;
-import net.minecraft.tileentity.TileEntitySign;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.world.IInteractionObject;
-import net.minecraft.world.WorldServer;
+import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.util.FakePlayer;
 
 
@@ -35,11 +15,11 @@ public class SaferFakePlayer extends FakePlayer {
 	 * @param world
 	 * @param name
 	 */
-	public SaferFakePlayer(WorldServer world, GameProfile name) {
+	public SaferFakePlayer(ServerWorld world, GameProfile name) {
 		super(world, name);
-		setNetHandler(this);
+//		setNetHandler(this);
 	}
-
+/* TODO reimplement if needed
 	@Override public void displayGui(IInteractionObject guiOwner) {}
 	@Override public void displayGUIChest(IInventory chestInventory) {}
 	@Override public void displayVillagerTradeGui(IMerchant villager) {}
@@ -47,7 +27,7 @@ public class SaferFakePlayer extends FakePlayer {
 	@Override public boolean isPotionApplicable(PotionEffect potioneffectIn) {return false;}
 	@Override public void openEditSign(TileEntitySign signTile) {}
 	@Override public void openGuiHorseInventory(AbstractHorse horse, IInventory inventoryIn) {}
-	@Override public void openBook(ItemStack stack, EnumHand hand) {}
+	@Override public void openBook(ItemStack stack, Hand hand) {}
 	@Override public void setPositionAndUpdate(double x, double y, double z) {}
 	@Override public SleepResult trySleep(BlockPos bedLocation) {return SleepResult.OTHER_PROBLEM;}
 	@Override public boolean startRiding(Entity entityIn, boolean force) {return false;}
@@ -70,6 +50,7 @@ public class SaferFakePlayer extends FakePlayer {
 	}
 
 	/**dummy net handler shared across all FakePlayer instances. Only used to avoid issues with attempts to send network packets to the FakePlayer */
-	private static NetHandlerPlayServer FAKE_NET_HANDLER;
+//	private static NetHandlerPlayServer FAKE_NET_HANDLER;
+
 
 }

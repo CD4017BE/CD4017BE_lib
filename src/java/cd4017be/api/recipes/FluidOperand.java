@@ -1,10 +1,6 @@
 package cd4017be.api.recipes;
 
-import cd4017be.lib.script.obj.Error;
 import cd4017be.lib.script.obj.IOperand;
-import cd4017be.lib.script.obj.NBTWrapper;
-import cd4017be.lib.script.obj.Nil;
-import cd4017be.lib.script.obj.Number;
 import net.minecraftforge.fluids.FluidStack;
 
 /**
@@ -27,15 +23,15 @@ public class FluidOperand implements IOperand {
 	}
 
 	@Override
-	public boolean asBool() throws Error {
-		return stack.amount > 0;
+	public boolean asBool() {
+		return stack.getAmount() > 0;
 	}
 
 	@Override
 	public Object value() {
 		return stack;
 	}
-
+/*
 	@Override
 	public IOperand addR(IOperand x) {
 		FluidStack stack = this.stack;
@@ -96,5 +92,5 @@ public class FluidOperand implements IOperand {
 	public String toString() {
 		return stack.amount + "*" + stack.getFluid().getName();
 	}
-
+*/
 }

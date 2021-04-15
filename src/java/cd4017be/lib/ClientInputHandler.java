@@ -1,21 +1,22 @@
 package cd4017be.lib;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraftforge.client.event.MouseEvent;
+import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 /**
  * 
  * @author CD4017BE
+ * @deprecated not fully implemented
  */
 public class ClientInputHandler {
 
-	private static final Minecraft mc = Minecraft.getMinecraft();
+	private static final Minecraft mc = Minecraft.getInstance();
 	public static ClientInputHandler instance = new ClientInputHandler();
 	private static boolean initialized = false;
 
@@ -26,19 +27,21 @@ public class ClientInputHandler {
 	}
 
 	@SubscribeEvent
-	public void handleMouseInput(MouseEvent e) {
+	public void handleMouseInput(InputEvent e) {
+		/*
 		if (mc.player != null && mc.gameSettings != null && mc.player.isSneaking()) {
 			ItemStack item = mc.player.getHeldItemMainhand();//TODO add scroll handling for In-World UI blocks
 			if (item.getItem() instanceof IScrollHandlerItem && (e.getDwheel() != 0 || (e.getButton() > 1 && e.isButtonstate()))) {
 				((IScrollHandlerItem)item.getItem()).onSneakScroll(item, mc.player, e.getDwheel());
 				e.setCanceled(true);
 			}
-		}
+		}*/
 	}
 
+	/**@deprecated not fully implemented */
 	public interface IScrollHandlerItem {
-		@SideOnly(Side.CLIENT)
-		public void onSneakScroll(ItemStack item, EntityPlayer player, int scroll);
+		@OnlyIn(Dist.CLIENT)
+		public void onSneakScroll(ItemStack item, PlayerEntity player, int scroll);
 	}
 
 }

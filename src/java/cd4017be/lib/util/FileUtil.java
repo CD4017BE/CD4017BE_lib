@@ -7,8 +7,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
-
 import org.apache.commons.io.IOUtils;
 import cd4017be.lib.Lib;
 
@@ -17,12 +15,6 @@ import cd4017be.lib.Lib;
  * @author CD4017BE
  */
 public class FileUtil {
-
-	public static File configDir;
-
-	public static void initConfigDir(FMLPreInitializationEvent event) {
-		configDir = new File(event.getModConfigurationDirectory(), "cd4017be");
-	}
 
 	public static String readTextFile(InputStream is) throws IOException {
 		InputStreamReader isr = new InputStreamReader(is);

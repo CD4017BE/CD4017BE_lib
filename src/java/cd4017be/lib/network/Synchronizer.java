@@ -381,22 +381,7 @@ public class Synchronizer<T> {
 			getter = explicitCastArguments(getter, methodType(t.inType, Object.class));
 			if (setter != null) 
 				setter = explicitCastArguments(setter, methodType(Void.class, Object.class, t.inType));
-			if (t != Type.Obj) {
-				enc_dec = Pair.of(
-					asInterfaceInstance(Function.class, collectArguments(t.write, 0, getter)),
-					setter == null ? null
-						: asInterfaceInstance(BiConsumer.class, collectArguments(setter, 1, t.read))
-				);
-				if (mask < 0) {
-					index = l.getMiddle().size();
-					l.getMiddle().add(Triple.of(
-						asInterfaceInstance(RawComparator.class, collectArguments(t.comp, 0, getter)),
-						setter == null ? null
-							: asInterfaceInstance(ObjReader.class, collectArguments(setter, 1, t.update)),
-						t.size
-					));
-				}
-			} else {
+			if (t == Type.Obj) {
 				Encoders enc = Encoders.of(type);
 				Function<T, ?> get = asInterfaceInstance(Function.class, getter);
 				if (enc == null) {
@@ -415,6 +400,22 @@ public class Synchronizer<T> {
 						index = l.getRight().size();
 						l.getRight().add(Triple.of(get, set, enc.binary));
 					} else Lib.LOG.error("Failed to handle @Sync(on = GUI) {}:\nBinary serialization not supported for {}!", name, type);
+			} else {
+				Object[] enums = type.getEnumConstants();
+				enc_dec = Pair.of(
+					asInterfaceInstance(Function.class, collectArguments(t.write, 0, getter)),
+					setter == null ? null
+						: asInterfaceInstance(BiConsumer.class, collectArguments(setter, 1, t.read(enums)))
+				);
+				if (mask < 0) {
+					index = l.getMiddle().size();
+					l.getMiddle().add(Triple.of(
+						asInterfaceInstance(RawComparator.class, collectArguments(t.comp, 0, getter)),
+						setter == null ? null
+							: asInterfaceInstance(ObjReader.class, collectArguments(setter, 1, t.update(enums))),
+						t.size
+					));
+				}
 			}
 			if (enc_dec.getLeft() == null && mask != Sync.GUI)
 				Lib.LOG.error("Failed to handle @Sync {}:\nNBT serialization not supported for {}!", name, type);

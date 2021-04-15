@@ -3,41 +3,49 @@ package cd4017be.lib.property;
 import java.util.Arrays;
 import cd4017be.lib.util.Orientation;
 import static cd4017be.lib.util.Orientation.*;
-import net.minecraft.block.properties.PropertyEnum;
-import net.minecraft.util.EnumFacing;
-import static net.minecraft.util.EnumFacing.*;
+
+import net.minecraft.item.BlockItemUseContext;
+import net.minecraft.state.EnumProperty;
+import net.minecraft.util.Direction;
+import static net.minecraft.util.Direction.*;
 
 /**
  * 
  * @author CD4017BE
  */
-public abstract class PropertyOrientation extends PropertyEnum<Orientation> {
+public abstract class PropertyOrientation extends EnumProperty<Orientation> {
 
 	protected PropertyOrientation(String name, Orientation... allowedValues) {
 		super(name, Orientation.class, Arrays.asList(allowedValues));
 	}
 
-	public abstract Orientation getPlacementState(boolean sneak, int y, int p, EnumFacing f, float X, float Y, float Z);
-	public abstract EnumFacing[] rotations();
-	public abstract Orientation getRotatedState(Orientation state, EnumFacing side);
+	public abstract Orientation getPlacementState(BlockItemUseContext context, int flags);
+	public abstract Direction[] rotations();
+	public abstract Orientation getRotatedState(Orientation state, Direction side);
 
-	public static final PropertyOrientation XY_12_ROT = new PropertyOrientation("orient", Bn, Bs, Bw, Be, Tn, Ts, Tw, Te, N, S, W, E) {
+	public static final PropertyOrientation XY_12_ROT = new PropertyOrientation(
+		"orient", S12, W12, N12, E12, UN, UE, US, UW, DS, DE, DN, DW
+	) {
 
 		@Override
-		public Orientation getPlacementState(boolean sneak, int y, int p, EnumFacing f, float X, float Y, float Z) {
+		public Orientation getPlacementState(BlockItemUseContext context, int flags) {
+			throw new UnsupportedOperationException();
+			/*TODO implement
 			if (sneak) {
 				if (f == DOWN) return Z + X > 1F ? (Z > X ? Bs : Be) : (Z < X ? Bn : Bw);
 				if (f == UP) return Z + X > 1F ? (Z > X ? Ts : Te) : (Z < X ? Tn : Tw);
 				return Orientation.fromFacing(f.getOpposite());
 			}
-			return Orientation.values()[y | (p == 0 ? 0 : p < 0 ? 4 : 12)];
+			return Orientation.values()[y | (p == 0 ? 0 : p < 0 ? 4 : 12)]; */
 		}
 
 		@Override
-		public EnumFacing[] rotations() {return EnumFacing.VALUES;}
+		public Direction[] rotations() {return Direction.values();}
 
 		@Override
-		public Orientation getRotatedState(Orientation state, EnumFacing side) {
+		public Orientation getRotatedState(Orientation state, Direction side) {
+			throw new UnsupportedOperationException();
+			/*TODO implement
 			int o = state.ordinal();
 			int ofs = side.getAxisDirection() == AxisDirection.NEGATIVE ? 1 : 3;
 			switch(side.getAxis()) {
@@ -52,25 +60,31 @@ public abstract class PropertyOrientation extends PropertyEnum<Orientation> {
 				if ((o & 1) == 0) return state;
 				return Orientation.values()[o & 3 | ((o & 3) == ofs ? 4 : 12)];
 			default: return state;
-			}
+			}*/
 		}
 
 	};
 
-	public static final PropertyOrientation ALL_AXIS = new PropertyOrientation("orient", Bn, Tn, N, S, W, E) {
+	public static final PropertyOrientation ALL_AXIS = new PropertyOrientation(
+		"orient", S12, W12, N12, E12, UN, DS
+	) {
 
 		@Override
-		public Orientation getPlacementState(boolean sneak, int y, int p, EnumFacing f, float X, float Y, float Z) {
+		public Orientation getPlacementState(BlockItemUseContext context, int flags) {
+			throw new UnsupportedOperationException();
+			/*TODO implement
 			if (sneak) return Orientation.fromFacing(f.getOpposite());
 			if (p == 0) return Orientation.values()[y];
-			return p < 0 ? Bn : Tn;
+			return p < 0 ? Bn : Tn;*/
 		}
 
 		@Override
-		public EnumFacing[] rotations() {return EnumFacing.VALUES;}
+		public Direction[] rotations() {return Direction.values();}
 
 		@Override
-		public Orientation getRotatedState(Orientation state, EnumFacing side) {
+		public Orientation getRotatedState(Orientation state, Direction side) {
+			throw new UnsupportedOperationException();
+			/*TODO implement
 			switch(state.front.ordinal() & 6 | (side.ordinal() & 6) << 4 | (state.front.ordinal() ^ side.ordinal()) & 1) {
 			case 0x40: case 0x05: return S;
 			case 0x41: case 0x04: return N;
@@ -79,27 +93,31 @@ public abstract class PropertyOrientation extends PropertyEnum<Orientation> {
 			case 0x20: case 0x03: return W;
 			case 0x21: case 0x02: return E;
 			default: return state;
-			}
+			}*/
 		}
 
 	};
 
-	public static final PropertyOrientation HOR_AXIS = new PropertyOrientation("orient", N, S, W, E) {
+	public static final PropertyOrientation HOR_AXIS = new PropertyOrientation(
+		"orient", S12, W12, N12, E12
+	) {
 
 		@Override
-		public Orientation getPlacementState(boolean sneak, int y, int p, EnumFacing f, float X, float Y, float Z) {
+		public Orientation getPlacementState(BlockItemUseContext context, int flags) {
+			throw new UnsupportedOperationException();
+			/*TODO implement
 			if (sneak) {
 				if (f == DOWN || f == UP) return Z + X > 1F ? (Z > X ? S : E) : (Z < X ? N : W);
 				return Orientation.fromFacing(f.getOpposite());
 			}
-			return Orientation.values()[y];
+			return Orientation.values()[y];*/
 		}
 
 		@Override
-		public EnumFacing[] rotations() {return new EnumFacing[] {DOWN, UP};}
+		public Direction[] rotations() {return new Direction[] {DOWN, UP};}
 
 		@Override
-		public Orientation getRotatedState(Orientation state, EnumFacing side) {
+		public Orientation getRotatedState(Orientation state, Direction side) {
 			int ofs = side == DOWN ? 1 : side == UP ? 3 : 0;
 			return Orientation.values()[state.ordinal() + ofs & 3];
 		}

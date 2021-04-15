@@ -4,7 +4,6 @@ import static cd4017be.lib.network.Sync.GUI;
 import static net.minecraftforge.fluids.capability.CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY;
 import java.util.ArrayList;
 import java.util.function.Supplier;
-import cd4017be.lib.Lib;
 import cd4017be.lib.capability.IMultiFluidHandler;
 import cd4017be.lib.container.IUnnamedContainerProvider;
 import cd4017be.lib.container.test.ContainerFluidSupply;
@@ -18,6 +17,7 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.network.PacketBuffer;
+import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.Direction;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.Constants.NBT;
@@ -35,8 +35,8 @@ implements IMultiFluidHandler, IUnnamedContainerProvider, IPlayerPacketReceiver 
 	public final ArrayList<Slot> slots = new ArrayList<>();
 	@Sync(to=GUI) public int scroll;
 
-	public FluidSupply() {
-		super(Lib.T_FLUID_SUPP);
+	public FluidSupply(TileEntityType<FluidSupply> type) {
+		super(type);
 	}
 
 	@Override

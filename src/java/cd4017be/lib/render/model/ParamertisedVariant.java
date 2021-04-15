@@ -4,7 +4,6 @@ import cd4017be.lib.script.Parameters;
 import cd4017be.lib.script.obj.IOperand;
 import cd4017be.lib.script.obj.Text;
 import cd4017be.lib.script.obj.Number;
-import cd4017be.lib.util.Orientation;
 import net.minecraft.client.renderer.model.IModelTransform;
 import net.minecraft.client.renderer.model.ModelRotation;
 
@@ -70,8 +69,8 @@ public class ParamertisedVariant implements IModelTransform {
 		ModelRotation orient;
 		if (i < 0) orient = ModelRotation.X0_Y0;
 		else {
-			Orientation or = Orientation.valueOf(Character.toUpperCase(name.charAt(i+1)) + name.substring(i+2));
-			orient = or == null ? ModelRotation.X0_Y0 : or.getModelRotation();
+			orient = ModelRotation.valueOf(name.substring(i+1).toUpperCase());
+			if (orient == null) orient = ModelRotation.X0_Y0;
 			name = name.substring(0, i);
 		}
 		return parse(name, orient);

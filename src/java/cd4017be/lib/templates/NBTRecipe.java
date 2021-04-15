@@ -1,22 +1,24 @@
 package cd4017be.lib.templates;
 
-import net.minecraft.inventory.InventoryCrafting;
+import net.minecraft.inventory.CraftingInventory;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTBase;
-import net.minecraft.nbt.NBTTagByte;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagDouble;
-import net.minecraft.nbt.NBTTagFloat;
-import net.minecraft.nbt.NBTTagInt;
-import net.minecraft.nbt.NBTTagLong;
-import net.minecraft.nbt.NBTTagShort;
+import net.minecraft.item.crafting.Ingredient;
+import net.minecraft.item.crafting.ShapedRecipe;
+import net.minecraft.nbt.INBT;
+import net.minecraft.nbt.ByteNBT;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.DoubleNBT;
+import net.minecraft.nbt.FloatNBT;
+import net.minecraft.nbt.IntNBT;
+import net.minecraft.nbt.LongNBT;
+import net.minecraft.nbt.ShortNBT;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.oredict.ShapedOreRecipe;
 
 /**
  * @author CD4017BE
  */
-public class NBTRecipe extends ShapedOreRecipe {
+public class NBTRecipe extends ShapedRecipe {
 
 	private final String[] nbtVars;
 	private final byte[] addTypes;
@@ -29,8 +31,8 @@ public class NBTRecipe extends ShapedOreRecipe {
 	 * @param nbtTypes NBT-Tags
 	 * @param recipe 
 	 */
-	public NBTRecipe(ResourceLocation group, ItemStack out, String nbtTypes, Object... recipe) {
-		super(group, out, recipe);
+	public NBTRecipe(ResourceLocation name, String group, int w, int h, NonNullList<Ingredient> in, ItemStack out, String nbtTypes) {
+		super(name, group, w, h, in, out);
 		this.nbtVars = nbtTypes.split(",");
 		this.addTypes = new byte[this.nbtVars.length];
 		for (int i = 0; i < nbtVars.length; i++) {
@@ -50,42 +52,42 @@ public class NBTRecipe extends ShapedOreRecipe {
 	}
 
 	@Override
-	public ItemStack getCraftingResult(InventoryCrafting inv) {
+	public ItemStack getCraftingResult(CraftingInventory inv) {
 		ItemStack out = this.getRecipeOutput().copy();
-		if (!out.hasTagCompound()) out.setTagCompound(new NBTTagCompound());
+		if (!out.hasTag()) out.setTag(new CompoundNBT());
 		for (int i = 0; i < inv.getSizeInventory(); i++) {
 			ItemStack stack = inv.getStackInSlot(i);
-			if (stack.hasTagCompound())
+			if (stack.hasTag())
 				for (int j = 0; j < nbtVars.length; j++)
-					if (stack.getTagCompound().hasKey(nbtVars[j]) && !applyTag(out.getTagCompound(), stack.getTagCompound().getTag(nbtVars[j]), j, out.getCount())) {
-						out.setTagCompound(null);
+					if (stack.getTag().contains(nbtVars[j]) && !applyTag(out.getTag(), stack.getTag().get(nbtVars[j]), j, out.getCount())) {
+						out.setTag(null);
 						return out;
 					}
 		}
 		return out;
 	}
 
-	private boolean applyTag(NBTTagCompound nbt, NBTBase tag, int idx, int stacksize) {
+	private boolean applyTag(CompoundNBT nbt, INBT tag, int idx, int stacksize) {
 		String var = nbtVars[idx];
 		byte type = addTypes[idx];
 		if (type == 0){
-			if (!nbt.hasKey(var)) nbt.setTag(var, tag);
+			if (!nbt.contains(var)) nbt.put(var, tag);
 		} else if (type == 5) {
-			if (!nbt.hasKey(var)) nbt.setTag(var, tag);
-			else return nbt.getTag(var).equals(tag);
-		} else if (tag instanceof NBTTagByte) {
-			nbt.setByte(var, (byte)this.applyValue(nbt.getByte(var), ((NBTTagByte)tag).getByte(), type, stacksize));
-		} else if (tag instanceof NBTTagShort) {
-			nbt.setShort(var, (short)this.applyValue(nbt.getShort(var), ((NBTTagShort)tag).getShort(), type, stacksize));
-		} else if (tag instanceof NBTTagInt) {
-			nbt.setInteger(var, (int)this.applyValue(nbt.getInteger(var), ((NBTTagInt)tag).getInt(), type, stacksize));
-		} else if (tag instanceof NBTTagLong) {
-			nbt.setLong(var, (long)this.applyValue(nbt.getLong(var), ((NBTTagLong)tag).getLong(), type, stacksize));
-		} else if (tag instanceof NBTTagFloat) {
-			nbt.setFloat(var, (float)this.applyValue(nbt.getFloat(var), ((NBTTagFloat)tag).getFloat(), type, stacksize));
-		} else if (tag instanceof NBTTagDouble) {
-			nbt.setDouble(var, this.applyValue(nbt.getDouble(var), ((NBTTagDouble)tag).getDouble(), type, stacksize));
-		} else nbt.setTag(var, tag);
+			if (!nbt.contains(var)) nbt.put(var, tag);
+			else return nbt.get(var).equals(tag);
+		} else if (tag instanceof ByteNBT) {
+			nbt.putByte(var, (byte)this.applyValue(nbt.getByte(var), ((ByteNBT)tag).getByte(), type, stacksize));
+		} else if (tag instanceof ShortNBT) {
+			nbt.putShort(var, (short)this.applyValue(nbt.getShort(var), ((ShortNBT)tag).getShort(), type, stacksize));
+		} else if (tag instanceof IntNBT) {
+			nbt.putInt(var, (int)this.applyValue(nbt.getInt(var), ((IntNBT)tag).getInt(), type, stacksize));
+		} else if (tag instanceof LongNBT) {
+			nbt.putLong(var, (long)this.applyValue(nbt.getLong(var), ((LongNBT)tag).getLong(), type, stacksize));
+		} else if (tag instanceof FloatNBT) {
+			nbt.putFloat(var, (float)this.applyValue(nbt.getFloat(var), ((FloatNBT)tag).getFloat(), type, stacksize));
+		} else if (tag instanceof DoubleNBT) {
+			nbt.putDouble(var, this.applyValue(nbt.getDouble(var), ((DoubleNBT)tag).getDouble(), type, stacksize));
+		} else nbt.put(var, tag);
 		return true;
 	}
 

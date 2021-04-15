@@ -56,15 +56,15 @@ public class InfoTab extends GuiCompBase<GuiCompGroup> {
 		String s = "";
 		for (int i = 0; i < headers.length; i++) {
 			String h = headers[i];
-			if (!h.isEmpty() && h.charAt(0) == '�') {
+			if (!h.isEmpty() && h.charAt(0) == '§') {
 				s += h.substring(0, 2);
 				h = h.substring(2);
 			}
-			if (i == page) s += "�m";
-			s += h + "�r | ";
+			if (i == page) s += "§m";
+			s += h + "§r | ";
 		}
 		list.add(s.substring(0, s.length() - 3));
-		for (String l : TooltipUtil.getConfigFormat(keys[page]).split("\n"))
+		for (String l : TooltipUtil.translate(keys[page]).split("\n"))
 			list.add(l);
 		parent.drawTooltip(stack, list, mx, my);
 	}

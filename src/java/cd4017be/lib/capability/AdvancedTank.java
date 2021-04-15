@@ -1,21 +1,22 @@
 package cd4017be.lib.capability;
 
-import cd4017be.lib.Gui.ITankContainer;
-import cd4017be.lib.util.ItemFluidUtil.StackedFluidAccess;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraftforge.fluids.Fluid;
+
+import static net.minecraftforge.fluids.capability.CapabilityFluidHandler.FLUID_HANDLER_ITEM_CAPABILITY;
+import static net.minecraftforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE;
+import static net.minecraftforge.fluids.capability.IFluidHandler.FluidAction.SIMULATE;
+
+import net.minecraft.fluid.Fluid;
+import net.minecraft.fluid.Fluids;
 import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.capability.FluidTankProperties;
-import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.fluids.capability.IFluidTankProperties;
 
 /**
  * IFluidHandler implementation for a single tank with integrated FluidContainer fill/drain mechanism.
  * @author cd4017be
  */
-public class AdvancedTank extends AbstractInventory implements IFluidHandler, ITankContainer {
+public class AdvancedTank extends AbstractInventory implements IFluidHandlerModifiable {
 	/**owner */
 	public final TileEntity tile;
 	/**stored fluid */
@@ -55,7 +56,7 @@ public class AdvancedTank extends AbstractInventory implements IFluidHandler, IT
 		this.need = out ? Integer.MAX_VALUE : Integer.MIN_VALUE;
 		this.fixed = type != null;
 		this.lock = fixed;
-		this.fluid = fixed ? new FluidStack(type, 0) : null;
+		this.fluid = fixed ? new FluidStack(type, 0) : FluidStack.EMPTY;
 		this.cont = ItemStack.EMPTY;
 	}
 
@@ -65,10 +66,11 @@ public class AdvancedTank extends AbstractInventory implements IFluidHandler, IT
 	 */
 	public void setLock(boolean lock) {
 		if (fixed) return;
-		if (lock) this.lock = fluid != null;
+		if (lock) this.lock = !fluid.isEmpty();
 		else {
 			this.lock = false;
-			if (fluid != null && fluid.amount == 0) fluid = null;
+			if (fluid.isEmpty())
+				fluid = FluidStack.EMPTY;
 		}
 	}
 
@@ -84,6 +86,7 @@ public class AdvancedTank extends AbstractInventory implements IFluidHandler, IT
 		}
 	}
 
+	@SuppressWarnings("resource")
 	@Override
 	public void setStackInSlot(int slot, ItemStack stack) {
 		cont = stack;
@@ -109,57 +112,58 @@ public class AdvancedTank extends AbstractInventory implements IFluidHandler, IT
 	}
 
 	@Override
-	public FluidStack getTank(int i) {
+	public FluidStack getFluidInTank(int tank) {
 		return fluid;
 	}
 
 	@Override
-	public int getCapacity(int i) {
+	public int getTankCapacity(int tank) {
 		return cap;
 	}
 
 	@Override
-	public void setTank(int i, FluidStack fluid) {
-		this.fluid = fluid;
+	public void setFluidInTank(int tank, FluidStack stack) {
+		this.fluid = stack;
 	}
 
 	@Override
-	public IFluidTankProperties[] getTankProperties() {
-		return new IFluidTankProperties[] {new FluidTankProperties(fluid, cap)};
+	public boolean isFluidValid(int tank, FluidStack stack) {
+		return !fixed || fluid.isFluidEqual(stack);
 	}
 
 	@Override
-	public int fill(FluidStack res, boolean doFill) {
-		if (fluid == null) {
-			int m = Math.min(res.amount, cap);
-			if (doFill) {
+	public int fill(FluidStack res, FluidAction action) {
+		if (fluid.getRawFluid() == Fluids.EMPTY) {
+			int m = Math.min(res.getAmount(), cap);
+			if (action.execute()) {
 				fluid = new FluidStack(res, m);
 				if (output && m >= need) fillContainer();
 				tile.markDirty();
 			}
 			return m;
 		} else if (fluid.isFluidEqual(res)) {
-			int m = Math.min(res.amount, cap - fluid.amount);
-			if (m != 0 && doFill) increment(m);
+			int m = Math.min(res.getAmount(), cap - fluid.getAmount());
+			if (m != 0 && action.execute()) increment(m);
 			return m;
 		} else return 0;
 	}
 
 	@Override
-	public FluidStack drain(FluidStack res, boolean doDrain) {
-		if (fluid == null || fluid.amount <= 0 || !fluid.isFluidEqual(res)) return null;
-		int m = Math.min(res.amount, fluid.amount);
+	public FluidStack drain(FluidStack res, FluidAction action) {
+		if (fluid.isEmpty() || !fluid.isFluidEqual(res))
+			return FluidStack.EMPTY;
+		int m = Math.min(res.getAmount(), fluid.getAmount());
 		FluidStack ret = new FluidStack(fluid, m);
-		if (doDrain) decrement(m);
+		if (action.execute()) decrement(m);
 		return ret;
 	}
 
 	@Override
-	public FluidStack drain(int m, boolean doDrain) {
-		if (fluid == null || fluid.amount <= 0) return null;
-		if (fluid.amount < m) m = fluid.amount;
+	public FluidStack drain(int m, FluidAction action) {
+		if (fluid.isEmpty()) return FluidStack.EMPTY;
+		if (fluid.getAmount() < m) m = fluid.getAmount();
 		FluidStack ret = new FluidStack(fluid, m);
-		if (doDrain) decrement(m);
+		if (action.execute()) decrement(m);
 		return ret;
 	}
 
@@ -167,14 +171,14 @@ public class AdvancedTank extends AbstractInventory implements IFluidHandler, IT
 	 * @return [mB] stored fluid amount
 	 */
 	public int amount() {
-		return fluid == null ? 0 : fluid.amount;
+		return fluid.getAmount();
 	}
 
 	/**
 	 * @return [mB] remaining free capacity
 	 */
 	public int free() {
-		return fluid == null ? cap : cap - fluid.amount;
+		return cap - fluid.getAmount();
 	}
 
 	/**
@@ -182,7 +186,7 @@ public class AdvancedTank extends AbstractInventory implements IFluidHandler, IT
 	 * @param n [mB] amount to increment the contained fluid by
 	 */
 	public void increment(int n) {
-		n = fluid.amount += n;
+		fluid.setAmount(n += fluid.getAmount());
 		if (output && n >= need) fillContainer();
 		tile.markDirty();
 	}
@@ -192,8 +196,8 @@ public class AdvancedTank extends AbstractInventory implements IFluidHandler, IT
 	 * @param n [mB] amount to decrement the contained fluid by
 	 */
 	public void decrement(int n) {
-		n = fluid.amount -= n;
-		if (n <= 0 && !lock) fluid = null;
+		fluid.setAmount(n = fluid.getAmount() - n);
+		if (n <= 0 && !lock) fluid = FluidStack.EMPTY;
 		if (!output && n <= need) drainContainer();
 		tile.markDirty();
 	}
@@ -205,17 +209,18 @@ public class AdvancedTank extends AbstractInventory implements IFluidHandler, IT
 	public void fillContainer() {
 		need = Integer.MAX_VALUE;
 		if (cont.getCount() == 0) return;
-		if (fluid == null) {
+		if (fluid.getRawFluid() == Fluids.EMPTY) {
 			need = 0;
 			return;
 		}
-		StackedFluidAccess acc = new StackedFluidAccess(cont);
-		if (!acc.valid()) return;
-		int n = fluid.amount -= acc.fill(fluid, true);
-		int m = acc.fill(new FluidStack(fluid, cap), false);
-		if (m > 0) need = m;
-		if (n <= 0 && !lock) fluid = null;
-		cont = acc.result();
+		cont.getCapability(FLUID_HANDLER_ITEM_CAPABILITY).ifPresent(acc -> {
+			fluid.shrink(acc.fill(fluid, EXECUTE));
+			int n = fluid.getAmount();
+			int m = acc.fill(new FluidStack(fluid, cap), SIMULATE);
+			if (m > 0) need = m;
+			if (n <= 0 && !lock) fluid = FluidStack.EMPTY;
+			cont = acc.getContainer();
+		});
 	}
 
 	/**
@@ -224,19 +229,18 @@ public class AdvancedTank extends AbstractInventory implements IFluidHandler, IT
 	 */
 	public void drainContainer() {
 		need = Integer.MIN_VALUE;
-		if (cont.getCount() == 0) return;
-		StackedFluidAccess acc = new StackedFluidAccess(cont);
-		if (!acc.valid()) return;
-		if (fluid == null) {
-			fluid = acc.drain(cap, true);
-			if (fluid == null) return;
-		} else {
-			FluidStack res = acc.drain(new FluidStack(fluid, cap - fluid.amount), true);
-			if (res != null) fluid.amount += res.amount;
-		}
-		FluidStack res = acc.drain(new FluidStack(fluid, cap), false);
-		if (res != null) need = cap - res.amount;
-		cont = acc.result();
+		cont.getCapability(FLUID_HANDLER_ITEM_CAPABILITY).ifPresent(acc -> {
+			if (fluid.getRawFluid() == Fluids.EMPTY) {
+				fluid = acc.drain(cap, EXECUTE);
+				if (fluid.isEmpty()) return;
+			} else {
+				FluidStack res = acc.drain(new FluidStack(fluid, cap - fluid.getAmount()), EXECUTE);
+				if (!res.isEmpty()) fluid.grow(res.getAmount());
+			}
+			FluidStack res = acc.drain(new FluidStack(fluid, cap), SIMULATE);
+			if (!res.isEmpty()) need = cap - res.getAmount();
+			cont = acc.getContainer();
+		});
 	}
 
 	/**
@@ -246,27 +250,28 @@ public class AdvancedTank extends AbstractInventory implements IFluidHandler, IT
 		return output ? need <= cap : need >= 0;
 	}
 
-	public void readNBT(NBTTagCompound nbt) {
-		if (fixed) fluid.amount = nbt.getInteger("Amount");
+	public void readNBT(CompoundNBT nbt) {
+		if (fixed) fluid.setAmount(nbt.getInt("Amount"));
 		else {
 			fluid = FluidStack.loadFluidStackFromNBT(nbt);
-			lock = fluid != null && nbt.getBoolean("lock");
+			lock = nbt.getBoolean("lock") && fluid.getRawFluid() != Fluids.EMPTY;
 		}
-		cont = new ItemStack(nbt);
+		cont = ItemStack.read(nbt);
 		if (cont.getCount() > 0) need = output ? 0 : cap;
 	}
 
-	public NBTTagCompound writeNBT(NBTTagCompound nbt) {
-		if (fluid != null) fluid.writeToNBT(nbt);
-		else nbt.removeTag("FluidName");
-		if (!cont.isEmpty()) cont.writeToNBT(nbt);
-		else nbt.removeTag("id");
-		nbt.setBoolean("lock", lock);
+	public CompoundNBT writeNBT(CompoundNBT nbt) {
+		if (fluid.getRawFluid() != Fluids.EMPTY) fluid.writeToNBT(nbt);
+		else nbt.remove("FluidName");
+		if (!cont.isEmpty()) cont.write(nbt);
+		else nbt.remove("id");
+		nbt.putBoolean("lock", lock);
 		return nbt;
 	}
 
 	public int getComparatorValue() {
-		return fluid == null || fluid.amount <= 0 ? 0 : (int)((long)fluid.amount * 14 / cap) + 1;
+		int n = fluid.getAmount();
+		return n <= 0 ? 0 : (int)((long)n * 14 / cap) + 1;
 	}
 
 }

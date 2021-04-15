@@ -5,42 +5,26 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.function.Function;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.apache.logging.log4j.Logger;
 
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraftforge.fluids.FluidRegistry;
 import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.oredict.OreDictionary;
-import cd4017be.api.recipes.RecipeAPI.IRecipeHandler;
-import cd4017be.api.recipes.RecipeAPI.IRecipeList;
-import cd4017be.lib.BlockItemRegistry;
-import cd4017be.lib.Lib;
+import cd4017be.lib.config.Config;
 import cd4017be.lib.script.Context;
 import cd4017be.lib.script.Module;
 import cd4017be.lib.script.Parameters;
 import cd4017be.lib.script.Script;
 import cd4017be.lib.script.ScriptFiles;
 import cd4017be.lib.script.ScriptFiles.Version;
-import cd4017be.lib.script.obj.Array;
 import cd4017be.lib.script.obj.IOperand;
-import cd4017be.lib.script.obj.NBTWrapper;
 import cd4017be.lib.script.obj.Nil;
 import cd4017be.lib.script.obj.Number;
 import cd4017be.lib.script.obj.ObjWrapper;
 import cd4017be.lib.script.obj.Text;
 import cd4017be.lib.script.obj.Vector;
 import cd4017be.lib.util.FileUtil;
-import cd4017be.lib.util.OreDictStack;
 
 /**
  * 
@@ -48,6 +32,7 @@ import cd4017be.lib.util.OreDictStack;
  */
 public class RecipeScriptContext extends Context {
 
+	/*
 	private static final Function<Parameters, IOperand>
 		IT = (p) -> {
 			ItemStack item = null;
@@ -150,15 +135,16 @@ public class RecipeScriptContext extends Context {
 				return new NBTWrapper(((FluidStack)o).tag);
 			else return Nil.NIL;
 		};
-
+*/
 	public static final List<Version> scriptRegistry = new ArrayList<Version>();
 	static {
-		scriptRegistry.add(new Version(Lib.ConfigName, "/assets/" + Lib.ID + "/config/core.rcp"));
+		//scriptRegistry.add(new Version(Lib.ConfigName, "/assets/" + Lib.ID + "/config/core.rcp"));
 	}
 	public static RecipeScriptContext instance;
 
 	public RecipeScriptContext(Logger log) {
 		super(log);
+		/*
 		defFunc.put("it", IT);
 		defFunc.put("fl", FL);
 		defFunc.put("ore", ORE);
@@ -169,12 +155,13 @@ public class RecipeScriptContext extends Context {
 		defFunc.put("listore", LISTORE);
 		defFunc.put("list", LIST);
 		defFunc.put("nbt", NBT);
+		*/
 	}
 
 	public void setup() {
 		RecipeAPI.addModModules(this);
 		
-		File dir = FileUtil.configDir;
+		File dir = Config.CONFIG_DIR;
 		File comp = new File(dir, "compiled.dat");
 		HashMap<String, Version> versions = new HashMap<String, Version>();
 		for (Version v : scriptRegistry)
@@ -210,7 +197,7 @@ public class RecipeScriptContext extends Context {
 				scripts = ScriptFiles.loadPackage(comp, versions, false);
 			} catch (IOException e) { LOG.error("loading compiled config scripts failed!", e); }
 		}
-		if (scripts != null) for (Script s : scripts) add(s);
+		//if (scripts != null) for (Script s : scripts) add(s);
 	}
 
 	public void runAll(String p) {
@@ -234,14 +221,14 @@ public class RecipeScriptContext extends Context {
 		private final boolean ignDmg, ignAm;
 		public ItemMatcher(ItemStack stack) {
 			ref = stack;
-			ignDmg = stack.getItemDamage() == OreDictionary.WILDCARD_VALUE;
+			ignDmg = stack.getDamage() == -1;
 			ignAm = stack.getCount() <= 0;
 		}
 		@Override
 		public boolean equals(Object obj) {
 			if (!(obj instanceof ItemStack)) return false;
 			ItemStack item = (ItemStack)obj;
-			return item.getItem() == ref.getItem() && (ignDmg || item.getItemDamage() == ref.getItemDamage()) && (ignAm || item.getCount() == ref.getCount());
+			return item.getItem() == ref.getItem() && (ignDmg || item.getDamage() == ref.getDamage()) && (ignAm || item.getCount() == ref.getCount());
 		}
 	}
 
@@ -250,13 +237,13 @@ public class RecipeScriptContext extends Context {
 		private final boolean ignAm;
 		public FluidMatcher(FluidStack stack) {
 			ref = stack;
-			ignAm = stack.amount <= 0;
+			ignAm = stack.getAmount() <= 0;
 		}
 		@Override
 		public boolean equals(Object obj) {
 			if (!(obj instanceof FluidStack)) return false;
 			FluidStack fluid = (FluidStack)obj;
-			return fluid.getFluid() == ref.getFluid() && (ignAm || fluid.amount == ref.amount);
+			return fluid.getFluid() == ref.getFluid() && (ignAm || fluid.getAmount() == ref.getAmount());
 		}
 	}
 
@@ -352,7 +339,7 @@ public class RecipeScriptContext extends Context {
 			m.assign(name, op);
 			return fallback;
 		}
-
+/*
 		public Object[] getArray(String name, int size) {
 			if (m == null) return new Object[size];
 			IOperand o = m.read(name);
@@ -370,7 +357,7 @@ public class RecipeScriptContext extends Context {
 			Arrays.fill(x, Nil.NIL);
 			m.assign(name, new Array(x));
 			return new Object[size];
-		}
+		}*/
 	}
 
 }

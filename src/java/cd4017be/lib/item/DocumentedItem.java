@@ -23,9 +23,8 @@ public class DocumentedItem extends Item {
 
 	private Supplier<Object[]> tooltipArgs;
 
-	public DocumentedItem(String id, Properties p) {
+	public DocumentedItem(Properties p) {
 		super(p);
-		this.setRegistryName(id);
 	}
 
 	/**Supply format arguments for translated tooltip

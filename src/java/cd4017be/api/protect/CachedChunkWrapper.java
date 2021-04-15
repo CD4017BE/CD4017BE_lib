@@ -4,6 +4,7 @@ import java.util.HashMap;
 
 import com.mojang.authlib.GameProfile;
 
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
@@ -32,12 +33,12 @@ public class CachedChunkWrapper implements IProtectionHandler {
 
 	@Override
 	public boolean canEdit(World world, BlockPos pos, GameProfile player) {
-		return canEdit(new Key(pos.getX() >> 4, pos.getZ() >> 4, world.provider.getDimension(), player), world);
+		return canEdit(new Key(pos.getX() >> 4, pos.getZ() >> 4, world.getDimensionKey().getRegistryName(), player), world);
 	}
 
 	@Override
 	public boolean canEdit(World world, BlockPos p0, BlockPos p1, GameProfile player) {
-		int dim = world.provider.getDimension();
+		ResourceLocation dim = world.getDimensionKey().getRegistryName();
 		int x0 = p0.getX() >> 4, x1 = p1.getX() >> 4;
 		if (x0 > x1) {int x = x0; x0 = x1; x1 = x;}
 		int z0 = p0.getZ() >> 4, z1 = p1.getZ() >> 4;
@@ -60,10 +61,11 @@ public class CachedChunkWrapper implements IProtectionHandler {
 
 	static class Key {
 
-		final int cx, cz, dim;
+		final int cx, cz;
+		ResourceLocation dim;
 		final GameProfile player;
 
-		Key(int cx, int cz, int dim, GameProfile player) {
+		Key(int cx, int cz, ResourceLocation dim, GameProfile player) {
 			this.cx = cx;
 			this.cz = cz;
 			this.dim = dim;
@@ -75,7 +77,7 @@ public class CachedChunkWrapper implements IProtectionHandler {
 			final int prime = 31;
 			int result = prime + cx;
 			result = prime * result + cz;
-			result = prime * result + dim;
+			result = prime * result + dim.hashCode();
 			result = prime * result + player.hashCode();
 			return result;
 		}
@@ -85,7 +87,7 @@ public class CachedChunkWrapper implements IProtectionHandler {
 			if (this == obj) return true;
 			if (obj instanceof Key) {
 				Key other = (Key) obj;
-				return cx == other.cx && cz == other.cz && dim == other.dim && player.equals(other.player);
+				return cx == other.cx && cz == other.cz && dim.equals(other.dim) && player.equals(other.player);
 			}
 			return false;
 		}

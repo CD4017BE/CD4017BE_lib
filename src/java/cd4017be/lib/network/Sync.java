@@ -28,6 +28,8 @@ public @interface Sync {
 	int CLIENT = 2;
 	/**data to send to client (freq update) */
 	int SYNC = 4;
+	/**data to store in world save and send with all client updates */
+	int ALL = SAVE | CLIENT | SYNC;
 	/**data to store in a container used to spawn the object */
 	int SPAWN = 8;
 	/**data to synchronize with GUI */
@@ -65,7 +67,11 @@ public @interface Sync {
 		/** 32-bit floating point (float)*/
 		F32(float.class, 4),
 		/** 64-bit floating point (double)*/
-		F64(double.class, 8);
+		F64(double.class, 8),
+		/** 8-bit encoded non null enum */
+		Enum(Enum.class, 1),
+		/** 8-bit encoded nullable enum */
+		Enum0(Enum.class, 1);
 
 		final Class<?> inType;
 		final MethodHandle read, write, comp, update;
@@ -74,33 +80,54 @@ public @interface Sync {
 		private Type(Class<?> inType, int size) {
 			this.inType = inType;
 			this.size = size;
-			if (inType.isPrimitive()) try {
-				Lookup l = MethodHandles.lookup();
-				this.read = l.unreflect(Type.class.getDeclaredMethod("read" + name(), INBT.class));
-				this.write = l.unreflect(Type.class.getDeclaredMethod("write" + name(), inType));
-				this.comp = l.unreflect(Type.class.getDeclaredMethod("check" + name(), inType, ByteBuffer.class));
-				String name = inType.getName();
-				this.update = l.unreflect(ByteBuf.class.getDeclaredMethod(
-					"read" + Character.toUpperCase(name.charAt(0)) + name.substring(1)
-				));
+			try {
+				if (inType.isPrimitive()) {
+					Lookup l = MethodHandles.lookup();
+					this.read = l.unreflect(Type.class.getDeclaredMethod("read" + name(), INBT.class));
+					this.write = l.unreflect(Type.class.getDeclaredMethod("write" + name(), inType));
+					this.comp = l.unreflect(Type.class.getDeclaredMethod("check" + name(), inType, ByteBuffer.class));
+					String name = inType.getName();
+					this.update = l.unreflect(ByteBuf.class.getDeclaredMethod(
+						"read" + Character.toUpperCase(name.charAt(0)) + name.substring(1)
+					));
+				} else if (inType == Enum.class) {
+					Lookup l = MethodHandles.lookup();
+					this.read = l.unreflect(Type.class.getDeclaredMethod("read" + name(), INBT.class, Enum[].class));
+					this.write = l.unreflect(Type.class.getDeclaredMethod("write" + name(), inType));
+					this.comp = l.unreflect(Type.class.getDeclaredMethod("check" + name(), inType, ByteBuffer.class));
+					this.update = l.unreflect(Type.class.getDeclaredMethod("read" + name(), ByteBuf.class, Enum[].class));
+				} else {
+					this.read = null;
+					this.write = null;
+					this.comp = null;
+					this.update = null;
+				}
 			} catch(IllegalAccessException | NoSuchMethodException | SecurityException e) {
 				throw new RuntimeException(e);
-			} else {
-				this.read = null;
-				this.write = null;
-				this.comp = null;
-				this.update = null;
 			}
 		}
 
 		public Type actual(Class<?> type) {
 			//if (type.isArray()) type = type.getComponentType();
+			if (type.isEnum())
+				if (inType == Enum.class) return this;
+				else return Enum;
 			if (!type.isPrimitive()) return Obj;
 			if (inType.isPrimitive()) return this;
 			for (Type t : values())
 				if (t.inType == type)
 					return t;
 			return this;
+		}
+
+		public MethodHandle read(Object[] enums) {
+			return enums == null ? read
+				: MethodHandles.insertArguments(read, 1, (Object)enums);
+		}
+
+		public MethodHandle update(Object[] enums) {
+			return enums == null ? update
+				: MethodHandles.insertArguments(update, 1, (Object)enums);
 		}
 
 		static boolean readI1(INBT nbt) {return nbt instanceof NumberNBT && ((NumberNBT)nbt).getByte() != 0;}
@@ -110,6 +137,20 @@ public @interface Sync {
 		static long readI64(INBT nbt) {return nbt instanceof NumberNBT ? ((NumberNBT)nbt).getLong() : 0L;}
 		static float readF32(INBT nbt) {return nbt instanceof NumberNBT ? ((NumberNBT)nbt).getFloat() : 0F;}
 		static double readF64(INBT nbt) {return nbt instanceof NumberNBT ? ((NumberNBT)nbt).getDouble() : 0D;}
+		static <E extends Enum<E>> E readEnum(INBT nbt, E[] values) {
+			int i = readI8(nbt) & 0xff;
+			return i < values.length ? values[i] : null;
+		}
+		static <E extends Enum<E>> E readEnum(ByteBuf buf, E[] values) {
+			int i = buf.readUnsignedByte();
+			return i < values.length ? values[i] : null;
+		}
+		static <E extends Enum<E>> E readEnum0(INBT nbt, E[] values) {
+			return values[Math.min(readI8(nbt) & 0xff, values.length - 1)];
+		}
+		static <E extends Enum<E>> E readEnum0(ByteBuf buf, E[] values) {
+			return values[Math.min(buf.readUnsignedByte(), values.length - 1)];
+		}
 		static INBT writeI1(boolean val) {return ByteNBT.valueOf(val);}
 		static INBT writeI8(byte val) {return ByteNBT.valueOf(val);}
 		static INBT writeI16(short val) {return ShortNBT.valueOf(val);}
@@ -117,6 +158,8 @@ public @interface Sync {
 		static INBT writeI64(long val) {return LongNBT.valueOf(val);}
 		static INBT writeF32(float val) {return FloatNBT.valueOf(val);}
 		static INBT writeF64(double val) {return DoubleNBT.valueOf(val);}
+		static INBT writeEnum(Enum<?> val) {return writeI8((byte)val.ordinal());}
+		static INBT writeEnum0(Enum<?> val) {return writeI8((byte)(val == null ? -1 : val.ordinal()));}
 		static boolean checkI1(boolean val, ByteBuffer state) {
 			if (state.get() == 0 ^ val) return false;
 			state.put(state.position() - 1, (byte)(val ? 1 : 0));
@@ -144,6 +187,8 @@ public @interface Sync {
 		}
 		static boolean checkF32(float val, ByteBuffer state) {return checkI32(Float.floatToIntBits(val), state);}
 		static boolean checkF64(double val, ByteBuffer state) {return checkI64(Double.doubleToLongBits(val), state);}
+		static boolean checkEnum(Enum<?> val, ByteBuffer state) {return checkI8((byte)val.ordinal(), state);}
+		static boolean checkEnum0(Enum<?> val, ByteBuffer state) {return checkI8((byte)(val == null ? -1 : val.ordinal()), state);}
 	}
 
 }

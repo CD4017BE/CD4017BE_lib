@@ -1,12 +1,7 @@
 package cd4017be.api.recipes;
 
-import cd4017be.lib.script.obj.Error;
 import cd4017be.lib.script.obj.IOperand;
-import cd4017be.lib.script.obj.NBTWrapper;
-import cd4017be.lib.script.obj.Nil;
-import cd4017be.lib.script.obj.Number;
 import net.minecraft.item.ItemStack;
-import net.minecraftforge.items.ItemHandlerHelper;
 
 /**
  * 
@@ -28,7 +23,7 @@ public class ItemOperand implements IOperand {
 	}
 
 	@Override
-	public boolean asBool() throws Error {
+	public boolean asBool() {
 		return !stack.isEmpty();
 	}
 
@@ -36,7 +31,7 @@ public class ItemOperand implements IOperand {
 	public Object value() {
 		return stack;
 	}
-
+/*
 	@Override
 	public IOperand addR(IOperand x) {
 		ItemStack stack = this.stack;
@@ -92,5 +87,5 @@ public class ItemOperand implements IOperand {
 	public String toString() {
 		return stack.getCount() + "*" + stack.getItem().getRegistryName() + "@" + stack.getMetadata();
 	}
-
+*/
 }

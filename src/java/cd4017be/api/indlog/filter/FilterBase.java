@@ -1,6 +1,6 @@
 package cd4017be.api.indlog.filter;
 
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.CompoundNBT;
 
 /**
  * 
@@ -30,15 +30,15 @@ public abstract class FilterBase<Obj, Inv> implements PipeFilter<Obj, Inv> {
 	}
 
 	@Override
-	public NBTTagCompound serializeNBT() {
-		NBTTagCompound nbt = new NBTTagCompound();
-		nbt.setByte("mode", mode);
-		nbt.setByte("prior", priority);
+	public CompoundNBT serializeNBT() {
+		CompoundNBT nbt = new CompoundNBT();
+		nbt.putByte("mode", mode);
+		nbt.putByte("prior", priority);
 		return nbt;
 	}
 
 	@Override
-	public void deserializeNBT(NBTTagCompound nbt) {
+	public void deserializeNBT(CompoundNBT nbt) {
 		mode = nbt.getByte("mode");
 		priority = nbt.getByte("prior");
 	}

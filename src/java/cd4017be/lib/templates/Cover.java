@@ -1,33 +1,27 @@
 package cd4017be.lib.templates;
 
 import javax.annotation.Nullable;
+
 import cd4017be.lib.tileentity.BaseTileEntity;
-import cd4017be.lib.util.ItemFluidUtil;
-import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemBlock;
+import net.minecraft.block.BlockState;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import net.minecraftforge.common.util.Constants;
-import net.minecraftforge.items.ItemHandlerHelper;
+import net.minecraft.util.Direction;
+import net.minecraft.util.Hand;
 
 /**
  * 
  * @author CD4017BE
+ * @deprecated not fully implemented
  */
-@SuppressWarnings("deprecation")
 public class Cover {
 
 	/**the ItemStack used to cover */
 	public ItemStack stack;
 	/**the block state of the cover */
-	public IBlockState state;
+	public BlockState state;
 	/**whether the cover is fully opaque, so the block itself doesn't need to render or update its visuals */
 	public boolean opaque;
 
@@ -43,20 +37,21 @@ public class Cover {
 	 * @param Z
 	 * @return whether this consumed the event
 	 */
-	public boolean interact(BaseTileEntity tile, EntityPlayer player, EnumHand hand, ItemStack item, EnumFacing s, float X, float Y, float Z) {
+	public boolean interact(BaseTileEntity tile, PlayerEntity player, Hand hand, ItemStack item, Direction s, float X, float Y, float Z) {
+		throw new UnsupportedOperationException();
+		/* TODO implement
 		if (stack != null) {
 			if (player.isCreative() && item.isEmpty() && player.isSneaking()) return hit(tile, player);
 			return false;
 		}
-		item = player.getHeldItem(hand = EnumHand.OFF_HAND);
-		if (player.isSneaking() || item.isEmpty() || !(item.getItem() instanceof ItemBlock)) return false;
+		item = player.getHeldItem(hand = Hand.OFF_HAND);
+		if (player.isSneaking() || item.isEmpty() || !(item.getItem() instanceof BlockItem)) return false;
 		World world = tile.getWorld();
 		BlockPos pos = tile.getPos();
-		ItemBlock ib = (ItemBlock)item.getItem();
-		int m = ib.getMetadata(item.getMetadata());
-		IBlockState state = ib.getBlock().getStateForPlacement(world, pos, s, X, Y, Z, m, player, hand);
+		BlockItem ib = (BlockItem)item.getItem();
+		int m = ib.getMetadata(item.getDamage());
+		BlockState state = ib.getBlock().getStateForPlacement(world, pos, s, X, Y, Z, m, player, hand);
 		if (!isBlockValid(tile, state)) return false;
-		if (player.world.isRemote) return true;
 		this.stack = ItemHandlerHelper.copyStackWithSize(item, 1);
 		this.state = state;
 		this.opaque = state.isOpaqueCube();
@@ -67,7 +62,7 @@ public class Cover {
 		world.notifyNeighborsRespectDebug(pos, tile.getBlockType(), true);
 		if (state.getLightValue() > 0 || state.getLightOpacity(world, pos) > 0) world.checkLight(pos);
 		tile.markDirty(BaseTileEntity.REDRAW);
-		return true;
+		return true;*/
 	}
 
 	/**
@@ -76,9 +71,10 @@ public class Cover {
 	 * @param player
 	 * @return whether this consumed the event
 	 */
-	public boolean hit(BaseTileEntity tile, EntityPlayer player) {
+	public boolean hit(BaseTileEntity tile, PlayerEntity player) {
+		throw new UnsupportedOperationException();
+		/* TODO implement
 		if (stack == null) return false;
-		if (player.world.isRemote) return true;
 		if (!player.isCreative()) ItemFluidUtil.dropStack(stack, player);
 		World world = tile.getWorld();
 		BlockPos pos = tile.getPos();
@@ -89,10 +85,10 @@ public class Cover {
 		world.notifyNeighborsRespectDebug(pos, tile.getBlockType(), true);
 		if (checkLight) world.checkLight(pos);
 		tile.markDirty(BaseTileEntity.REDRAW);
-		return true;
+		return true;*/
 	}
 
-	public static boolean isBlockValid(@Nullable TileEntity tile, IBlockState state) {
+	public static boolean isBlockValid(@Nullable TileEntity tile, BlockState state) {
 		if (state.getBlock().hasTileEntity(state)) return false;
 		return state.getMaterial().blocksMovement();
 	}
@@ -103,9 +99,11 @@ public class Cover {
 	 * @param k tag base name
 	 * @param packetReceiver the TileEntity if it received a server -> client sync-packet, otherwise null
 	 */
-	public void readNBT(NBTTagCompound nbt, String k, @Nullable TileEntity packetReceiver) {
-		if (nbt.hasKey(k + "I", Constants.NBT.TAG_COMPOUND))
-			stack = new ItemStack(nbt.getCompoundTag(k + "I"));
+	public void readNBT(CompoundNBT nbt, String k, @Nullable TileEntity packetReceiver) {
+		throw new UnsupportedOperationException();
+		/* TODO implement
+		if (nbt.contains(k + "I", Constants.NBT.TAG_COMPOUND))
+			stack = new ItemStack(nbt.getCompound(k + "I"));
 		else stack = null;
 		String name = nbt.getString(k + "B");
 		state = null;
@@ -117,7 +115,7 @@ public class Cover {
 			}
 		}
 		opaque = state != null && state.isOpaqueCube();
-		if (packetReceiver != null) packetReceiver.getWorld().checkLight(packetReceiver.getPos());
+		if (packetReceiver != null) packetReceiver.getWorld().checkLight(packetReceiver.getPos());*/
 	}
 
 	/**
@@ -126,23 +124,20 @@ public class Cover {
 	 * @param k tag base name
 	 * @param packetSync whether this is for a server -> client sync-packet
 	 */
-	public void writeNBT(NBTTagCompound nbt, String k, boolean packetSync) {
-		if (!packetSync && stack != null) nbt.setTag(k + "I", stack.writeToNBT(new NBTTagCompound()));
+	public void writeNBT(CompoundNBT nbt, String k, boolean packetSync) {
+		throw new UnsupportedOperationException();
+		/* TODO implement
+		if (!packetSync && stack != null) nbt.put(k + "I", stack.write(new CompoundNBT()));
 		if (state != null) {
 			Block block = state.getBlock();
-			nbt.setString(k + "B", block.getRegistryName().toString());
-			nbt.setByte(k + "m", (byte)block.getMetaFromState(state));
-		}
+			nbt.putString(k + "B", block.getRegistryName().toString());
+			nbt.putByte(k + "m", (byte)block.getMetaFromState(state));
+		}*/
 	}
 
 	@SuppressWarnings("unchecked")
 	public <M> M module() {
 		return (M)state;
-	}
-
-	public void onBreak(BaseTileEntity tile) {
-		if (stack != null)
-			ItemFluidUtil.dropStack(stack, tile.getWorld(), tile.getPos());
 	}
 
 }

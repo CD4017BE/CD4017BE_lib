@@ -1,8 +1,6 @@
 package cd4017be.lib.config;
 
-import net.minecraftforge.common.ForgeConfigSpec.BooleanValue;
-import net.minecraftforge.common.ForgeConfigSpec.Builder;
-import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
+import net.minecraftforge.common.ForgeConfigSpec.*;
 import net.minecraftforge.fml.config.ModConfig.Type;
 
 public class LibClient extends Config {
@@ -10,6 +8,7 @@ public class LibClient extends Config {
 	public final ConfigValue<String> tooltipEditPath;
 	public final BooleanValue tooltipEditEnable;
 	public final BooleanValue shiftForMainTooltip;
+	public final IntValue itemModelCache;
 
 	public LibClient() {
 		super(Type.CLIENT);
@@ -17,6 +16,10 @@ public class LibClient extends Config {
 		shiftForMainTooltip = b
 		.comment("Whether the item's main tooltip requires holding down shift.")
 		.define("info_need_shift", false);
+		
+		itemModelCache = b
+		.comment("Maximum cache size for complex nbt dependent item models.")
+		.defineInRange("item_model_cache", 64, 0, 65536);
 		
 		b.comment("The ingame localization editor allows writing translations for my mods by pressing F4 in game.")
 		.push("lang_editor");

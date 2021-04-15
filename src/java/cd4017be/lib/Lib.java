@@ -1,8 +1,10 @@
 package cd4017be.lib;
 
+import static cd4017be.lib.block.BlockTE.flags;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import cd4017be.lib.block.AdvancedBlock;
+import cd4017be.lib.block.BlockTE;
 import cd4017be.lib.config.LibClient;
 import cd4017be.lib.container.test.ContainerEnergySupply;
 import cd4017be.lib.container.test.ContainerFluidSupply;
@@ -53,9 +55,9 @@ public class Lib {
 	public static final Logger LOG = LogManager.getLogger(ID);
 	public static final LibClient CFG_CLIENT = new LibClient();
 
-	public static AdvancedBlock<EnergySupply> ENERGY_SUPP;
-	public static AdvancedBlock<FluidSupply> FLUID_SUPP;
-	public static AdvancedBlock<ItemSupply> ITEM_SUPP;
+	public static BlockTE<EnergySupply> ENERGY_SUPP;
+	public static BlockTE<FluidSupply> FLUID_SUPP;
+	public static BlockTE<ItemSupply> ITEM_SUPP;
 	public static Item energy_supp, item_supp, fluid_supp;
 	public static TileEntityType<EnergySupply> T_ENERGY_SUPP;
 	public static TileEntityType<FluidSupply> T_FLUID_SUPP;
@@ -63,7 +65,6 @@ public class Lib {
 	public static ContainerType<ContainerEnergySupply> C_ENERGY_SUPP;
 	public static ContainerType<ContainerItemSupply> C_ITEM_SUPP;
 	public static ContainerType<ContainerFluidSupply> C_FLUID_SUPP;
-	public static ItemMaterial materials;
 	public static DocumentedItem rrwi;
 
 	public static final ItemGroup creativeTab = new ItemGroup(ID) {
@@ -74,7 +75,6 @@ public class Lib {
 	};
 
 	public Lib() {
-		
 		FMLJavaModLoadingContext.get().getModEventBus().register(this);
 		CFG_CLIENT.register("lib");
 		MinecraftForge.EVENT_BUS.addListener(this::shutdown);
@@ -105,11 +105,13 @@ public class Lib {
 
 	@SubscribeEvent
 	void registerBlocks(Register<Block> ev) {
-		Properties p = Properties.create(Material.IRON).hardnessAndResistance(-1F, Float.POSITIVE_INFINITY).noDrops().sound(SoundType.ANVIL);
+		Properties p = Properties.create(Material.IRON)
+		.hardnessAndResistance(-1F, Float.POSITIVE_INFINITY)
+		.noDrops().sound(SoundType.ANVIL);
 		ev.getRegistry().registerAll(
-			ENERGY_SUPP = new AdvancedBlock<>("energy_supp", p, 0, EnergySupply.class),
-			FLUID_SUPP = new AdvancedBlock<>("fluid_supp", p, 0, FluidSupply.class),
-			ITEM_SUPP = new AdvancedBlock<>("item_supp", p, 0, ItemSupply.class)
+			(ENERGY_SUPP = new BlockTE<>(p, flags(EnergySupply.class))).setRegistryName(rl("energy_supp")),
+			(FLUID_SUPP = new BlockTE<>(p, flags(FluidSupply.class))).setRegistryName(rl("fluid_supp")),
+			(ITEM_SUPP = new BlockTE<>(p, flags(ItemSupply.class))).setRegistryName(rl("item_supp"))
 		);
 	}
 
@@ -121,16 +123,16 @@ public class Lib {
 			energy_supp = new DocumentedBlockItem(ENERGY_SUPP, p),
 			fluid_supp = new DocumentedBlockItem(FLUID_SUPP, p),
 			item_supp = new DocumentedBlockItem(ITEM_SUPP, p),
-			rrwi = new DocumentedItem("rrwi", p1)
+			(rrwi = new DocumentedItem(p1)).setRegistryName(rl("rrwi"))
 		);
 	}
 
 	@SubscribeEvent
 	void registerTileEntities(Register<TileEntityType<?>> ev) {
 		ev.getRegistry().registerAll(
-			T_ENERGY_SUPP = ENERGY_SUPP.createTileEntityType(),
-			T_FLUID_SUPP = FLUID_SUPP.createTileEntityType(),
-			T_ITEM_SUPP = ITEM_SUPP.createTileEntityType()
+			ENERGY_SUPP.makeTEType(EnergySupply::new),
+			FLUID_SUPP.makeTEType(FluidSupply::new),
+			ITEM_SUPP.makeTEType(ItemSupply::new)
 		);
 	}
 

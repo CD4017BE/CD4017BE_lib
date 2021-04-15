@@ -13,7 +13,7 @@ import cd4017be.lib.script.obj.Nil;
  * @author CD4017BE */
 public abstract class ScriptLoader implements IOperand {
 
-	protected final HashMap<String, Script> scripts = new HashMap<>();
+	protected final HashMap<String, IOperand> scripts = new HashMap<>();
 	protected final Parser parser = new Parser();
 
 	@Override
@@ -32,7 +32,7 @@ public abstract class ScriptLoader implements IOperand {
 		return Nil.of(scripts.computeIfAbsent(member, this::load));
 	}
 
-	protected abstract Script load(String name);
+	protected abstract IOperand load(String name);
 
 	public Script compile(String name, Reader src) throws ScriptException, IOException {
 		Script s = new Compiler(name, parser.parse(src, name)).compile();

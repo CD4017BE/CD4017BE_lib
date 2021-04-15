@@ -1,27 +1,12 @@
 package cd4017be.api.computers;
 
-import java.lang.reflect.Method;
-
-import li.cil.oc.api.API;
-import li.cil.oc.api.Network;
-import li.cil.oc.api.network.Component;
-import li.cil.oc.api.network.ComponentConnector;
-import li.cil.oc.api.network.Environment;
-import li.cil.oc.api.network.Node;
-import li.cil.oc.api.network.Visibility;
-
-import cd4017be.lib.Lib;
-import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.Optional;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.tileentity.TileEntity;
-
 /**
  *
  * @author CD4017BE
+ * @deprecated not implemented
  */
-@SuppressWarnings("rawtypes")
 public class ComputerAPI {
+	/*
 	public static final ComputerAPI instance = new ComputerAPI();
 	public static Class OCcomp, OCapi;
 	public static Method CCevent;
@@ -102,5 +87,5 @@ public class ComputerAPI {
 	private static void removeOCnode1(Object node) {
 		if (node != null) ((Node)node).remove();
 	}
-
+*/
 }

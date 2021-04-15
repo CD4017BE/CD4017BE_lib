@@ -5,23 +5,17 @@ import static org.lwjgl.glfw.GLFW.glfwSetClipboardString;
 
 import java.text.DecimalFormatSymbols;
 import java.util.*;
-import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.item.ItemStack;
 import net.minecraft.util.Direction;
 import net.minecraft.util.text.*;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.loading.FMLLoader;
-import cd4017be.api.recipes.RecipeScriptContext;
 import cd4017be.lib.Lib;
-import cd4017be.lib.script.Script;
-import cd4017be.lib.script.ScriptFiles.Version;
-import cd4017be.lib.script.obj.IOperand;
 
 /**
  *
@@ -102,7 +96,7 @@ public class TooltipUtil {
 		}
 		return String.format(LinkPosFormat1, pos.getX(), pos.getY(), pos.getZ(), side != null ? sides[side.ordinal()] : "", dim);
 	}
-*/
+
 	public static void addScriptVariables() {
 		RecipeScriptContext cont = RecipeScriptContext.instance;
 		for (Version v : RecipeScriptContext.scriptRegistry) {
@@ -131,10 +125,11 @@ public class TooltipUtil {
 	}
 
 	private static final HashMap<String, String> variables = new HashMap<String, String>();
-	private static final Pattern varInsertion = Pattern.compile("\\\\<([\\w:]+)>");
-	private static final Pattern variantReplacement = Pattern.compile("\\:(\\d+)");
+*/
+	//private static final Pattern varInsertion = Pattern.compile("\\\\<([\\w:]+)>");
+	//private static final Pattern variantReplacement = Pattern.compile("\\:(\\d+)");
 	private static final Pattern numberFormat = Pattern.compile("%(?:(\\d+)\\$)?(?:(-?\\d?)\\.(\\d+))?u");
-	private static String lastKey, lastValue;
+	//private static String lastKey, lastValue;
 	public static TooltipEditor editor;
 	public static boolean shiftOverride = true, altOverride = false, overrideModifiers = FMLLoader.getDist() == Dist.DEDICATED_SERVER;
 
@@ -142,7 +137,7 @@ public class TooltipUtil {
 	 * @param s translation key
 	 * @return localized text with config variable references resolved
 	 */
-	public static String getConfigFormat(String s) {
+/*	public static String getConfigFormat(String s) {
 		if (s.equals(lastKey) && editor == null) return lastValue; //speed up tooltip rendering performance
 		lastKey = s;
 		String t = editor != null ? editor.getTranslation(s) : LanguageMap.getInstance().func_230503_a_(s);
@@ -166,7 +161,7 @@ public class TooltipUtil {
 			}
 		}
 		return lastValue = s1 + s;
-	}
+	}*/
 
 	/**
 	 * @param s translation key or literal format string prefixed with '\'<br>

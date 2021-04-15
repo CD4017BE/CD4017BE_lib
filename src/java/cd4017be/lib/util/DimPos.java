@@ -4,17 +4,19 @@ import java.lang.ref.WeakReference;
 
 import com.google.common.base.MoreObjects;
 
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
-import net.minecraft.init.Blocks;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.block.Blocks;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.EnumFacing;
+import net.minecraft.util.Direction;
+import net.minecraft.util.RegistryKey;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3i;
+import net.minecraft.util.math.vector.Vector3i;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
-import net.minecraft.world.WorldServer;
-import net.minecraftforge.fml.common.FMLCommonHandler;
-import net.minecraftforge.fml.relauncher.Side;
+import net.minecraft.world.server.ServerWorld;
 
 /**
  * Extended version of {@link BlockPos} with additional dimension (and optional world) information.
@@ -24,23 +26,15 @@ public class DimPos extends BlockPos {
 
 	private static final WeakReference<World> NO_WORLD = new WeakReference<>(null);
 
-	/** the dimension id */
-	public final int dimId;
+	public final RegistryKey<World> dim;
 	private WeakReference<World> world = NO_WORLD;
-	private Side side;
 
 	/**
 	 * get the dimensional block position of the given Entity
 	 * @param source an Entity
 	 */
 	public DimPos(Entity source) {
-		super(source);
-		this.dimId = source.dimension;
-		World world = source.world;
-		if (world != null) {
-			this.world = new WeakReference<>(world);
-			this.side = world.isRemote ? Side.CLIENT : Side.SERVER;
-		}
+		this(source.getPosition(), source.world);
 	}
 
 	/**
@@ -55,17 +49,16 @@ public class DimPos extends BlockPos {
 	 * @param source the block position
 	 * @param world the dimension's world
 	 */
-	public DimPos(Vec3i source, World world) {
-		this(source, world.provider.getDimension());
+	public DimPos(Vector3i source, World world) {
+		this(source, world.getDimensionKey());
 		this.world = new WeakReference<>(world);
-		this.side = world.isRemote ? Side.CLIENT : Side.SERVER;
 	}
 
 	/**
 	 * @param source the block position
 	 * @param dim the dimension id
 	 */
-	public DimPos(Vec3i source, int dim) {
+	public DimPos(Vector3i source, RegistryKey<World> dim) {
 		this(source.getX(), source.getY(), source.getZ(), dim);
 	}
 
@@ -75,9 +68,9 @@ public class DimPos extends BlockPos {
 	 * @param z block Z-coord
 	 * @param d dimension id
 	 */
-	public DimPos(int x, int y, int z, int d) {
+	public DimPos(int x, int y, int z, RegistryKey<World> d) {
 		super(x, y, z);
-		this.dimId = d;
+		this.dim = d;
 	}
 
 	/**
@@ -86,10 +79,17 @@ public class DimPos extends BlockPos {
 	 * @param z block Z-coord
 	 * @param world the dimension's world
 	 */
-	public DimPos(int x, int y, int z, WorldServer world) {
-		this(x, y, z, world.provider.getDimension());
+	public DimPos(int x, int y, int z, ServerWorld world) {
+		this(x, y, z, world.getDimensionKey());
 		this.world = new WeakReference<>(world);
-		this.side = world.isRemote ? Side.CLIENT : Side.SERVER;
+	}
+
+	/**@param nbt data */
+	public DimPos(CompoundNBT nbt) {
+		this(
+			nbt.getInt("x"), nbt.getInt("y"), nbt.getInt("z"),
+			RegistryKey.getOrCreateKey(Registry.WORLD_KEY, new ResourceLocation(nbt.getString("d")))
+		);
 	}
 
 	/**
@@ -97,12 +97,9 @@ public class DimPos extends BlockPos {
 	 * @param world the world instance for this dimension
 	 */
 	public DimPos assignWorld(World world) {
-		if (world.provider.getDimension() != dimId)
+		if (world.getDimensionKey() != dim)
 			throw new IllegalArgumentException("given world represents a different dimension");
-		if (side != null && (side == Side.CLIENT ^ world.isRemote))
-			throw new IllegalArgumentException("given world represents a different logical side");
 		this.world = new WeakReference<>(world);
-		this.side = world.isRemote ? Side.CLIENT : Side.SERVER;
 		return this;
 	}
 
@@ -115,68 +112,56 @@ public class DimPos extends BlockPos {
 	}
 
 	/**
-	 * A special version of {@link #getWorld()} for <b> server side use only</b>, that automatically retrieves and assignes the WorldServer.
+	 * A special version of {@link #getWorld()} for <b> server side use only</b>, that automatically retrieves and assignes the ServerWorld.
 	 * @return the world server associated with this position or null if this dimension id is invalid or the world couldn't be loaded.
 	 */
-	public WorldServer getWorldServer() {
+	public ServerWorld getServerWorld(World ref) {
 		World world = this.world.get();
-		if (world instanceof WorldServer) return (WorldServer)world;
-		WorldServer ws = FMLCommonHandler.instance().getMinecraftServerInstance().getWorld(dimId);
-		if (side != Side.CLIENT) {
-			this.world = new WeakReference<World>(ws);
-			side = Side.SERVER;
-		}
+		if (world instanceof ServerWorld) return (ServerWorld)world;
+		ServerWorld ws = ref.getServer().getWorld(dim);
+		if (ws != null) this.world = new WeakReference<World>(ws);
 		return ws;
-	}
-
-	/**
-	 * @return the logical side of this dimensional position or null if unknown
-	 */
-	public Side getSide() {
-		return side;
 	}
 
 	@Override
 	public DimPos add(int x, int y, int z) {
 		if (x == 0 && y == 0 && z == 0) return this;
-		DimPos pos = new DimPos(getX() + x, getY() + y, getZ() + z, dimId);
+		DimPos pos = new DimPos(getX() + x, getY() + y, getZ() + z, dim);
 		pos.world = world;
-		pos.side = side;
 		return pos;
 	}
 
 	@Override
-	public DimPos offset(EnumFacing facing, int n) {
+	public DimPos offset(Direction facing, int n) {
 		if (n == 0) return this;
-		DimPos pos = new DimPos(getX() + facing.getFrontOffsetX() * n, getY() + facing.getFrontOffsetY() * n, getZ() + facing.getFrontOffsetZ() * n, dimId);
+		DimPos pos = new DimPos(getX() + facing.getXOffset() * n, getY() + facing.getYOffset() * n, getZ() + facing.getZOffset() * n, dim);
 		pos.world = world;
-		pos.side = side;
 		return pos;
 	}
 
 	@Override
 	public boolean equals(Object o) {
-		return super.equals(o) && !(o instanceof DimPos && ((DimPos)o).dimId != dimId);
+		return super.equals(o) && !(o instanceof DimPos && ((DimPos)o).dim != dim);
 	}
 
 	@Override
-	public int compareTo(Vec3i o) {
+	public int compareTo(Vector3i o) {
 		if (o instanceof DimPos) {
-			int dim = ((DimPos)o).dimId;
-			if (dim != dimId)
-				return dimId - dim;
+			RegistryKey<World> dim = ((DimPos)o).dim;
+			if (dim != this.dim)
+				return this.dim.getRegistryName().compareTo(dim.getRegistryName());
 		}
 		return super.compareTo(o);
 	}
 
 	@Override
-	public double distanceSq(Vec3i to) {
-		return to instanceof DimPos && ((DimPos)to).dimId != dimId ? Double.POSITIVE_INFINITY : super.distanceSq(to);
+	public double distanceSq(Vector3i to) {
+		return to instanceof DimPos && ((DimPos)to).dim != dim ? Double.POSITIVE_INFINITY : super.distanceSq(to);
 	}
 
 	@Override
 	public String toString() {
-		return MoreObjects.toStringHelper(this).add("x", this.getX()).add("y", this.getY()).add("z", this.getZ()).add("d", dimId).toString();
+		return MoreObjects.toStringHelper(this).add("x", this.getX()).add("y", this.getY()).add("z", this.getZ()).add("d", dim).toString();
 	}
 
 	/**
@@ -184,13 +169,13 @@ public class DimPos extends BlockPos {
 	 */
 	public boolean isLoaded() {
 		World world = this.world.get();
-		return world != null && world.isBlockLoaded(this);
+		return world != null && world.isBlockPresent(this);
 	}
 
 	/**
 	 * @return the BlockState at this position.
 	 */
-	public IBlockState getBlock() {
+	public BlockState getBlock() {
 		World world = this.world.get();
 		return world == null ? Blocks.AIR.getDefaultState() : world.getBlockState(this);
 	}
@@ -200,7 +185,7 @@ public class DimPos extends BlockPos {
 	 * @param state new block state
 	 * @return whether the change was successful
 	 */
-	public boolean setBlock(IBlockState state) {
+	public boolean setBlock(BlockState state) {
 		World world = this.world.get();
 		return world != null && world.setBlockState(this, state);
 	}
@@ -211,7 +196,15 @@ public class DimPos extends BlockPos {
 	 */
 	public TileEntity getTileEntity() {
 		World world = this.world.get();
-		return world == null || !world.isBlockLoaded(this) ? null : world.getTileEntity(this);
+		return world == null || !world.isBlockPresent(this) ? null : world.getTileEntity(this);
+	}
+
+	public CompoundNBT write(CompoundNBT nbt) {
+		nbt.putInt("x", getX());
+		nbt.putInt("y", getY());
+		nbt.putInt("z", getZ());
+		nbt.putString("d", dim.getLocation().toString());
+		return nbt;
 	}
 
 }

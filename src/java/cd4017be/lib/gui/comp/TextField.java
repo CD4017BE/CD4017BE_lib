@@ -13,7 +13,6 @@ import net.minecraftforge.fml.client.gui.GuiUtils;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.platform.GlStateManager;
-
 import cd4017be.lib.text.TooltipUtil;
 
 /**

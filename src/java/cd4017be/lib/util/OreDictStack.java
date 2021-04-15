@@ -1,20 +1,17 @@
 package cd4017be.lib.util;
 
 import java.util.Iterator;
-import java.util.List;
 import java.util.ListIterator;
 
 import cd4017be.api.recipes.ItemOperand;
 import cd4017be.lib.script.obj.Error;
 import cd4017be.lib.script.obj.IOperand;
-import cd4017be.lib.script.obj.Number;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraftforge.oredict.OreDictionary;
 
 /**
  * Represents an OreDictionary entry with stacksize.
  * @author CD4017BE
+ * @deprecated not fully implemented
  */
 public class OreDictStack implements IOperand {
 
@@ -25,12 +22,12 @@ public class OreDictStack implements IOperand {
 	public OreDictStack(String id, int n) {
 		this.id = id;
 		this.stacksize = n;
-		this.ID = OreDictionary.getOreID(id);
+		//this.ID = OreDictionary.getOreID(id);
 	}
 
 	public OreDictStack(int id, int n) {
 		this.ID = id;
-		this.id = OreDictionary.getOreName(id);
+		//this.id = OreDictionary.getOreName(id);
 		this.stacksize = n;
 	}
 
@@ -47,21 +44,27 @@ public class OreDictStack implements IOperand {
 	}
 
 	public static OreDictStack[] get(ItemStack item) {
+		throw new UnsupportedOperationException();
+		/*TODO implement with tags
 		if (item.isEmpty()) return null;
 		int[] i = OreDictionary.getOreIDs(item);
 		OreDictStack[] stacks = new OreDictStack[i.length];
 		for (int j = 0; j < i.length; j++) stacks[j] = new OreDictStack(i[j], item.getCount());
-		return stacks;
+		return stacks;*/
 	}
 
 	public boolean isEqual(ItemStack item) {
+		throw new UnsupportedOperationException();
+		/*TODO implement with tags
 		if (item.isEmpty()) return false;
 		for (int id : OreDictionary.getOreIDs(item))
 			if (id == ID) return true;
-		return false;
+		return false;*/
 	}
 
 	public ItemStack[] getItems() {
+		throw new UnsupportedOperationException();
+		/*TODO implement with tags
 		List<ItemStack> list = OreDictionary.getOres(id);
 		ItemStack[] items = new ItemStack[list.size()];
 		int n = 0;
@@ -69,15 +72,17 @@ public class OreDictStack implements IOperand {
 			items[n] = item.copy();
 			items[n++].setCount(stacksize);
 		}
-		return items;
+		return items;*/
 	}
 
 	public ItemStack asItem() {
+		throw new UnsupportedOperationException();
+		/*TODO implement with tags
 		List<ItemStack> list = OreDictionary.getOres(id);
 		if (list.isEmpty()) return ItemStack.EMPTY;
 		ItemStack item = list.get(0).copy();
 		item.setCount(stacksize);
-		return item;
+		return item;*/
 	}
 
 	public OreDictStack copy() {
@@ -104,7 +109,7 @@ public class OreDictStack implements IOperand {
 	public String toString() {
 		return "ore:" + id + (stacksize != 1 ? "*" + stacksize : "");
 	}
-
+/*
 	@Override
 	public IOperand mulR(IOperand x) {
 		return new OreDictStack(ID, x.asIndex());
@@ -139,12 +144,12 @@ public class OreDictStack implements IOperand {
 					itemsO = OreDictionary.getOres(ore, false);
 			for (ItemStack stack : itemsT) {
 				if (stack.isEmpty()) continue;
-				int meta = stack.getMetadata();
+				int meta = stack.getDamage();
 				Item item = stack.getItem();
 				boolean wildcard = meta == OreDictionary.WILDCARD_VALUE;
 				boolean miss = true;
 				for (ItemStack stackO : itemsO)
-					if (stackO.getItem() == item && (wildcard || stackO.getMetadata() == meta)) {
+					if (stackO.getItem() == item && (wildcard || stackO.getDamage() == meta)) {
 						miss = false;
 						break;
 					}
@@ -170,15 +175,19 @@ public class OreDictStack implements IOperand {
 	public IOperand nlsL(IOperand x) {
 		return x instanceof OreDictStack ? ((OreDictStack)x).id.equals(id) ? Number.TRUE : Number.FALSE : grR(x);
 	}
-
+*/
 	@Override
 	public OperandIterator iterator() throws Error {
-		return new ItemIterator(OreDictionary.getOres(id).iterator());
+		throw new UnsupportedOperationException();
+		/*TODO implement with tags
+		return new ItemIterator(OreDictionary.getOres(id).iterator());*/
 	}
 
 	@Override
-	public boolean asBool() throws Error {
-		return !OreDictionary.getOres(id, false).isEmpty();
+	public boolean asBool() {
+		throw new UnsupportedOperationException();
+		/*TODO implement with tags
+		return !OreDictionary.getOres(id, false).isEmpty();*/
 	}
 
 	@Override

@@ -8,9 +8,11 @@ import javax.script.ScriptException;
 import com.google.gson.*;
 import com.mojang.datafixers.util.Pair;
 
+import cd4017be.lib.Lib;
 import cd4017be.lib.render.model.ScriptModelBuilder.Quad;
-import cd4017be.lib.script.Script;
 import cd4017be.lib.script.ScriptLoader;
+import cd4017be.lib.script.obj.IOperand;
+import cd4017be.lib.script.obj.Nil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.model.*;
 import net.minecraft.client.renderer.model.SimpleBakedModel.Builder;
@@ -78,14 +80,18 @@ public class ScriptModel implements IModelGeometry<ScriptModel> {
 		for (Quad q : quads) names.add(q.tex);
 		names.add("particle");
 		ArrayList<RenderMaterial> list = new ArrayList<>(names.size());
-		for (String n : names) {
-			RenderMaterial rm = owner.resolveTexture(n);
-			if (rm.getTextureLocation().equals(MissingTextureSprite.getLocation()))
-				missingTextureErrors.add(Pair.of(n, owner.getModelName()));
-			else list.add(rm);
-		}
+		for (String n : names)
+			list.add(resolveTex(n, owner, missingTextureErrors));
 		return list;
 	}
+
+	public static RenderMaterial resolveTex(String name, IModelConfiguration owner, Set<Pair<String, String>> missingTextureErrors) {
+		RenderMaterial rm = owner.resolveTexture(name);
+		if (rm.getTextureLocation().equals(MissingTextureSprite.getLocation()))
+			missingTextureErrors.add(Pair.of(name, owner.getModelName()));
+		return rm;
+	}
+
 
 	@OnlyIn(Dist.CLIENT)
 	public static class Loader extends ScriptLoader implements IModelLoader<ScriptModel> {
@@ -119,14 +125,14 @@ public class ScriptModel implements IModelGeometry<ScriptModel> {
 		}
 
 		@Override
-		protected Script load(String name) {
+		protected IOperand load(String name) {
 			ResourceLocation rl = new ResourceLocation(name);
 			rl = new ResourceLocation(rl.getNamespace(), "models/" + rl.getPath() + ".rcp");
 			try(IResource r = manager.getResource(rl)) {
 				return compile(name, new InputStreamReader(r.getInputStream()));
 			} catch(IOException | ScriptException e) {
-				e.printStackTrace();
-				return null;
+				Lib.LOG.error("Failed to load model script " + rl, e);
+				return Nil.NIL;
 			}
 		}
 	}

@@ -2,7 +2,6 @@ package cd4017be.lib.tileentity.test;
 
 import java.util.ArrayList;
 import java.util.function.Supplier;
-import cd4017be.lib.Lib;
 import cd4017be.lib.container.IUnnamedContainerProvider;
 import cd4017be.lib.container.test.ContainerItemSupply;
 import cd4017be.lib.network.IPlayerPacketReceiver;
@@ -16,6 +15,7 @@ import net.minecraft.nbt.INBT;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.network.PacketBuffer;
+import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.Direction;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
@@ -36,8 +36,8 @@ implements IItemHandler, IUnnamedContainerProvider, IPlayerPacketReceiver {
 	public final ArrayList<Slot> slots = new ArrayList<>();
 	@Sync(to=GUI) public int scroll;
 
-	public ItemSupply() {
-		super(Lib.T_ITEM_SUPP);
+	public ItemSupply(TileEntityType<ItemSupply> type) {
+		super(type);
 	}
 
 	@Override

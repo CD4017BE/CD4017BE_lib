@@ -13,6 +13,7 @@ import net.minecraft.util.math.BlockPos;
  * @param <C> the type of components to use in this SharedNetwork.
  * @param <N> should be the class extending this, so that '(N)this' won't throw a ClassCastException.
  * @author CD4017BE
+ * @deprecated not fully implemented
  */
 @SuppressWarnings("unchecked")
 public abstract class SharedNetwork<C extends NetworkNode<C, N, ?>, N extends SharedNetwork<C, N>> implements IUpdatable { 
@@ -58,7 +59,7 @@ public abstract class SharedNetwork<C extends NetworkNode<C, N, ?>, N extends Sh
 	 * @param comp
 	 */
 	public void add(C comp) {
-		if (comp.network == this || comp.invalid() || comp.tile.isClient()) return;
+		if (comp.network == this || comp.invalid() || !comp.tile.hasWorld() || comp.tile.getWorld().isRemote) return;
 		if (components.size() >= comp.network.components.size()) onMerged(comp.network);
 		else comp.network.onMerged((N)this);
 	}
@@ -80,7 +81,7 @@ public abstract class SharedNetwork<C extends NetworkNode<C, N, ?>, N extends Sh
 	 * @param side the side that disconnected
 	 */
 	public void onDisconnect(C comp, byte side) {
-		if (comp.getNeighbor(side) != null && !comp.tile.isClient()) markDirty();
+		if (comp.getNeighbor(side) != null && comp.tile.hasWorld() && !comp.tile.getWorld().isRemote) markDirty();
 	}
 
 	@Override

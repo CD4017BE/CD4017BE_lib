@@ -25,6 +25,7 @@ import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.client.event.GuiScreenEvent.*;
 
 import static cd4017be.lib.Lib.CFG_CLIENT;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.lwjgl.glfw.GLFW.*;
 
 /**
@@ -142,6 +143,7 @@ public class TooltipEditor {
 	public void render(GuiScreenEvent.BackgroundDrawnEvent e) {
 		if (editingKey == null) return;
 		Screen gui = e.getGui();
+		@SuppressWarnings("resource")
 		FontRenderer fr = gui.getMinecraft().fontRenderer;
 		for (int i = 0; i < 8; i++) {
 			String s = i == ofs ? editingKey : lastKeys[pos-i & 7];
@@ -291,7 +293,7 @@ public class TooltipEditor {
 		file.mkdirs();
 		file = new File(file, lastLanguage.getCode() + ".json");
 		JsonObject jo;
-		try (JsonReader jr = new JsonReader(new FileReader(file))) {
+		try (JsonReader jr = new JsonReader(new FileReader(file, UTF_8))) {
 			jo = Streams.parse(jr).getAsJsonObject();
 		} catch (FileNotFoundException e) {
 			jo = new JsonObject();
@@ -303,7 +305,7 @@ public class TooltipEditor {
 		for (Entry<String, String> e : edited.entrySet())
 			jo.addProperty(e.getKey(), e.getValue());
 		
-		try (JsonWriter jw = new JsonWriter(new FileWriter(file))){
+		try (JsonWriter jw = new JsonWriter(new FileWriter(file, UTF_8))){
 			jw.setIndent("  ");
 			Streams.write(jo, jw);
 			Lib.LOG.info("TooltipEditor modified {} lang entries", edited.size());

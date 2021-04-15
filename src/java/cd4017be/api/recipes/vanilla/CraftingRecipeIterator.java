@@ -1,29 +1,18 @@
 package cd4017be.api.recipes.vanilla;
 
-import java.util.List;
 import java.util.function.Predicate;
 
 import com.google.common.base.Predicates;
 
 import cd4017be.api.recipes.ItemOperand;
-import cd4017be.api.recipes.RecipeAPI;
-import cd4017be.api.recipes.RecipeScriptContext;
-import cd4017be.lib.Lib;
 import cd4017be.lib.script.obj.Array;
 import cd4017be.lib.script.obj.IOperand;
 import cd4017be.lib.script.obj.IOperand.OperandIterator;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.CraftingManager;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.Ingredient;
-import net.minecraft.item.crafting.ShapedRecipes;
-import net.minecraft.item.crafting.ShapelessRecipes;
 import net.minecraft.util.NonNullList;
-import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.common.crafting.CraftingHelper.ShapedPrimer;
 import net.minecraftforge.common.crafting.IShapedRecipe;
-import net.minecraftforge.oredict.ShapedOreRecipe;
-import net.minecraftforge.oredict.ShapelessOreRecipe;
 
 /**
  * Lets config scripts iterate over all (or a filtered set of) crafting recipes in order to remove or edit them.
@@ -42,7 +31,7 @@ public class CraftingRecipeIterator implements OperandIterator {
 	 * @param key the ItemStack as ingredient filter
 	 */
 	public CraftingRecipeIterator(ItemStack key) {
-		this.list = CraftingManager.REGISTRY.iterator();
+		//this.list = CraftingManager.REGISTRY.iterator();
 		this.key = Predicates.alwaysTrue();
 		this.item = key;
 	}
@@ -54,7 +43,7 @@ public class CraftingRecipeIterator implements OperandIterator {
 	public CraftingRecipeIterator(Predicate<Object> key) {
 		this.key = key;
 		this.item = null;
-		this.list = CraftingManager.REGISTRY.iterator();
+		//this.list = CraftingManager.REGISTRY.iterator();
 	}
 
 	@Override
@@ -64,6 +53,7 @@ public class CraftingRecipeIterator implements OperandIterator {
 
 	@Override
 	public void set(IOperand obj) {
+		return;/*
 		if (obj != curElement) {
 			disableRecipe();
 			return;
@@ -91,7 +81,7 @@ public class CraftingRecipeIterator implements OperandIterator {
 			} else
 				RecipeScriptContext.instance.LOG.warn(RecipeScriptContext.SCRIPT,"could not replicate unknown recipe type: {}!", curRecipe.getClass());
 			disableRecipe();
-		}
+		}*/
 	}
 
 	private static NonNullList<Ingredient> copy(NonNullList<Ingredient> list) {
@@ -101,9 +91,10 @@ public class CraftingRecipeIterator implements OperandIterator {
 	}
 
 	private void disableRecipe() {
+		/*
 		List<Ingredient> ingr = curRecipe.getIngredients();
 		for (int i = 0, l = ingr.size(); i < l; i++)
-			ingr.set(i, LOCK_INGRED);
+			ingr.set(i, LOCK_INGRED);*/
 	}
 
 	@Override
@@ -126,7 +117,7 @@ public class CraftingRecipeIterator implements OperandIterator {
 
 	@Override
 	public void reset() {
-		list = CraftingManager.REGISTRY.iterator();
+		//list = CraftingManager.REGISTRY.iterator();
 	}
 
 	@Override
@@ -134,8 +125,9 @@ public class CraftingRecipeIterator implements OperandIterator {
 		return this;
 	}
 
+	/*
 	public static final Ingredient LOCK_INGRED = new Ingredient(new ItemStack[] {new ItemStack(Lib.rrwi)}) {
 		@Override
 		public boolean apply(ItemStack stack) {return false;}
-	};
+	};*/
 }

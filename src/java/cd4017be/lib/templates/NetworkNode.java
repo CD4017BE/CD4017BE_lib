@@ -1,13 +1,12 @@
 package cd4017be.lib.templates;
 
-import cd4017be.api.IAbstractTile;
 import cd4017be.lib.TickRegistry;
 import cd4017be.lib.TickRegistry.IUpdatable;
 import cd4017be.lib.util.ICachableInstance;
+import cd4017be.lib.util.Utils;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.EnumFacing;
+import net.minecraft.util.Direction;
 import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.ICapabilityProvider;
 
 /**
  * 
@@ -15,9 +14,10 @@ import net.minecraftforge.common.capabilities.ICapabilityProvider;
  * @param <N> the type of {@link SharedNetwork} this operates with.
  * @param <T> the type of {@link IAbstractTile} (usually a TileEntity) providing instances of this
  * @author CD4017BE
+ * @deprecated not fully implemented
  */
 @SuppressWarnings("unchecked")
-public abstract class NetworkNode<C extends NetworkNode<C, N, T>, N extends SharedNetwork<C, N>, T extends IAbstractTile> implements ICachableInstance {
+public abstract class NetworkNode<C extends NetworkNode<C, N, T>, N extends SharedNetwork<C, N>, T extends TileEntity> implements ICachableInstance {
 
 	public N network;
 	public final T tile;
@@ -59,12 +59,12 @@ public abstract class NetworkNode<C extends NetworkNode<C, N, T>, N extends Shar
 	}
 
 	public void markDirty() {
-		if (!updateCon && tile instanceof IUpdatable && !tile.isClient()) TickRegistry.instance.updates.add((IUpdatable)tile);
+		if (!updateCon && tile instanceof IUpdatable && tile.hasWorld() && !tile.getWorld().isRemote) TickRegistry.instance.updates.add((IUpdatable)tile);
 		updateCon = true;
 	}
 
 	/**
-	 * @param side usually EnumFacing index
+	 * @param side usually Direction index
 	 * @return true if it can connect to given side
 	 */
 	public boolean canConnect(byte side) {
@@ -72,7 +72,7 @@ public abstract class NetworkNode<C extends NetworkNode<C, N, T>, N extends Shar
 	}
 
 	/**
-	 * @param side usually EnumFacing index
+	 * @param side usually Direction index
 	 * @param c whether to connect there
 	 */
 	public void setConnect(byte side, boolean c) {
@@ -87,13 +87,11 @@ public abstract class NetworkNode<C extends NetworkNode<C, N, T>, N extends Shar
 	}
 
 	/**
-	 * @param side usually EnumFacing index
+	 * @param side usually Direction index
 	 * @return the neighbor component at given side or null if none
 	 */
 	public C getNeighbor(byte side) {
-		ICapabilityProvider te = tile.getTileOnSide(EnumFacing.VALUES[side]);
-		if (te == null) return null;
-		C comp = te.getCapability(getCap(), EnumFacing.VALUES[side^1]);
+		C comp = Utils.neighborCapability(tile, Direction.values()[side], getCap());
 		return comp != null && comp.canConnect((byte)(side^1)) ? comp : null;
 	}
 
@@ -101,12 +99,12 @@ public abstract class NetworkNode<C extends NetworkNode<C, N, T>, N extends Shar
 	public abstract Capability<C> getCap();
 
 	public boolean invalid() {
-		return network == null || tile.invalid();
+		return network == null || tile.isRemoved();
 	}
 
 	@Override
 	public String toString() {
-		return "MultiblockComp [network=" + (network == null ? "none" : network.components.size()) + ", tile=" + (tile.invalid() ? "invalid " : "") + (tile instanceof TileEntity ? ((TileEntity)tile).getPos() : tile) + ", uid=" + uid + ", con=" + con
+		return "MultiblockComp [network=" + (network == null ? "none" : network.components.size()) + ", tile=" + (tile.isRemoved() ? "invalid " : "") + (tile instanceof TileEntity ? ((TileEntity)tile).getPos() : tile) + ", uid=" + uid + ", con=" + con
 				+ ", update=" + updateCon + "]";
 	}
 

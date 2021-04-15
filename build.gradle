@@ -18,6 +18,7 @@ group = "com.cd4017be.lib" // http://maven.apache.org/guides/mini/guide-naming-c
 archivesBaseName = "cd4017be_lib"
 
 sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = "${java_version}"
+compileJava.options.encoding = 'UTF-8'
 
 println('Java: ' + System.getProperty('java.version') + ' JVM: ' + System.getProperty('java.vm.version') + '(' + System.getProperty('java.vendor') + ') Arch: ' + System.getProperty('os.arch'))
 sourceSets {
@@ -101,7 +102,7 @@ minecraft {
             property 'forge.logging.console.level', 'debug'
 
             // Specify the modid for data generation, where to output the resulting resource, and where to look for existing resources.
-            args '--mod', 'examplemod', '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+            args '--mod', 'cd4017be_lib', '--all', '--output', file('src/generated/resources/'), '--existing', file('src/resources/')
 
             mods {
                 cd4017be_lib {

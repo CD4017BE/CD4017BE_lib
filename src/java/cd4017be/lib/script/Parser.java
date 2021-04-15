@@ -86,25 +86,25 @@ public class Parser {
 					if (prev(-1) == E_PAR)
 						for(int i = tokens.position() - 6; i >= 0; i-=3) {
 							byte t = tokens.get(i);
-							if (t == B_PAR) {
-								funcPtrs.add((long)blockLvl | (long)i << 32);
-								tokens.put(i, FUNC);
-								tokens.position(i += 3);
-								//filter & compress parameters
-								for (int j = i; (t = tokens.get(j)) != E_PAR; j+=3)
-									if (t == VAR)
-										tokens.put(LOCVAR).putShort(tokens.getShort(j + 1));
-									else if (t == LINE) newline = true;
-								//translate parameters
-								for (int j = tokens.position() - 2; j > i; j-=3) {
-									String s = rem(tokens.getShort(j));
-									short l = (short)nextLocal++;
-									if (locals.put(s, (long)(l & 0xffff | blockLvl + 1 << 16)) != null)
-										throw new ScriptException("duplicate local variable: " + s, name, line, col);
-									tokens.putShort(j, l);
-								}
-								break;
-							} else if (t != VAR && t != SEP_PAR && t != LINE) break;
+							if (t == VAR || t == SEP_PAR || t == LINE) continue;
+							if (t != B_PAR) break;
+							funcPtrs.add((long)blockLvl | (long)i << 32);
+							tokens.put(i, FUNC);
+							tokens.position(i += 3);
+							//filter & compress parameters
+							for (int j = i; (t = tokens.get(j)) != E_PAR; j+=3)
+								if (t == VAR) {
+									tokens.put(LOCVAR).putShort(tokens.getShort(j + 1));
+									nextLocal++;
+								} else if (t == LINE) newline = true;
+							//translate parameters
+							for (int j = tokens.position() - 2, l = nextLocal - 1; j > i; j-=3, l--) {
+								String s = rem(tokens.getShort(j));
+								if (locals.put(s, (long)(l & 0xffff | blockLvl + 1 << 16)) != null)
+									throw new ScriptException("duplicate local variable: " + s, name, line, col);
+								tokens.putShort(j, (short)l);
+							}
+							break;
 						}
 					add(B_BLOCK);
 					if (loop) loop = false;
@@ -328,7 +328,7 @@ public class Parser {
 
 	private static boolean canInv(byte t) {
 		switch(t) {
-		case NUM: case FALSE: case TRUE: case NIL: case STR: case VAR:
+		case NUM: case FALSE: case TRUE: case NIL: case STR: case VAR: case LOCVAR:
 		case E_PAR: case E_ARR: case E_VEC: case E_TEXT: return false;
 		default: return true;
 		}

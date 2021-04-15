@@ -5,7 +5,6 @@ import java.util.function.Predicate;
 import cd4017be.lib.script.obj.FilteredIterator.FilterableIterator;
 import cd4017be.lib.script.obj.IOperand;
 import cd4017be.lib.script.obj.Text;
-import net.minecraftforge.oredict.OreDictionary;
 
 /**
  * 
@@ -18,7 +17,7 @@ public class OreDictList implements FilterableIterator {
 	int idx = 0;
 
 	public OreDictList() {
-		this.ores = OreDictionary.getOreNames();
+		this.ores = new String[0]; //OreDictionary.getOreNames();
 	}
 
 	@Override

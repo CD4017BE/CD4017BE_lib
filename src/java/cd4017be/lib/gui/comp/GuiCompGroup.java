@@ -270,6 +270,7 @@ public class GuiCompGroup extends IndexedSet<IGuiComp> implements IGuiComp {
 		if (inheritRender) parent.drawNow();
 		else if (drawing) {
 			GlStateManager.color4f(1F, 1F, 1F, 1F);
+			GlStateManager.enableBlend();
 			bindTexture(mainTex);
 			tessellator.draw();
 			drawing = false;

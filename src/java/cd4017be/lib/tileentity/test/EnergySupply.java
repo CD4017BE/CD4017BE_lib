@@ -1,16 +1,15 @@
 package cd4017be.lib.tileentity.test;
 
-import cd4017be.lib.Lib;
-import cd4017be.lib.block.AdvancedBlock.INeighborAwareTile;
+import cd4017be.lib.block.BlockTE.ITENeighborChange;
 import cd4017be.lib.capability.CachedCap;
 import cd4017be.lib.container.IUnnamedContainerProvider;
 import cd4017be.lib.container.test.ContainerEnergySupply;
 import cd4017be.lib.network.*;
 import cd4017be.lib.tileentity.BaseTileEntity;
 import cd4017be.lib.tileentity.BaseTileEntity.ITickableServerOnly;
-import net.minecraft.block.Block;
 import net.minecraft.entity.player.*;
 import net.minecraft.network.PacketBuffer;
+import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.common.capabilities.Capability;
@@ -22,7 +21,7 @@ import static cd4017be.lib.network.Sync.*;
 
 /** @author CD4017BE */
 public class EnergySupply extends BaseTileEntity
-implements IEnergyStorage, ITickableServerOnly, INeighborAwareTile, IUnnamedContainerProvider, IPlayerPacketReceiver {
+implements IEnergyStorage, ITickableServerOnly, ITENeighborChange, IUnnamedContainerProvider, IPlayerPacketReceiver {
 
 	final LazyOptional<IEnergyStorage> handler = LazyOptional.of(()->this);
 	@SuppressWarnings("unchecked")
@@ -36,8 +35,8 @@ implements IEnergyStorage, ITickableServerOnly, INeighborAwareTile, IUnnamedCont
 	@Sync(to=GUI) public long t() {return world.getGameTime() - t0 - 1;}
 	boolean updateCaps;
 
-	public EnergySupply() {
-		super(Lib.T_ENERGY_SUPP);
+	public EnergySupply(TileEntityType<EnergySupply> type) {
+		super(type);
 	}
 
 	@Override
@@ -69,12 +68,7 @@ implements IEnergyStorage, ITickableServerOnly, INeighborAwareTile, IUnnamedCont
 	}
 
 	@Override
-	public void neighborBlockChange(Block b, BlockPos src) {
-		updateCaps = true;
-	}
-
-	@Override
-	public void neighborTileChange(Direction side, boolean unload) {
+	public void onNeighborTEChange(BlockPos from) {
 		updateCaps = true;
 	}
 
@@ -153,4 +147,5 @@ implements IEnergyStorage, ITickableServerOnly, INeighborAwareTile, IUnnamedCont
 		}
 		saveDirty();
 	}
+
 }

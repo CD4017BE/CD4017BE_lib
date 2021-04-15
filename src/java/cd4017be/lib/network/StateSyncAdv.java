@@ -40,8 +40,7 @@ public class StateSyncAdv extends StateSynchronizer {
 	}
 
 	/**@param client whether this is used on client side.
-	 * @param indices number of extra indices to reserve for custom data.
-	 * @param extraRaw number of extra bytes to reserve for custom data.
+	 * @param rawIdx byte index table for custom raw data.
 	 * @param objects number of extra objects to reserve for custom data.
 	 * @param elements Objects to synchronize via annotations.
 	 * For client side these are just Classes, not the objects themselves!

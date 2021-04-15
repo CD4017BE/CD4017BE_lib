@@ -1,8 +1,8 @@
 package cd4017be.lib.capability;
 
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraftforge.fluids.Fluid;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.fluid.Fluid;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.templates.FluidHandlerItemStack;
 
@@ -23,15 +23,15 @@ public class SingleFluidItemHandler extends FluidHandlerItemStack {
 
 	@Override
 	public FluidStack getFluid() {
-		return new FluidStack(type, container.hasTagCompound() ? container.getTagCompound().getInteger(tag) : 0);
+		return new FluidStack(type, container.hasTag() ? container.getTag().getInt(tag) : 0);
 	}
 
 	@Override
 	protected void setFluid(FluidStack fluid) {
-		int n = fluid == null ? 0 : fluid.amount;
-		NBTTagCompound nbt = container.getTagCompound();
-		if (nbt == null) container.setTagCompound(nbt = new NBTTagCompound());
-		nbt.setInteger(tag, n);
+		int n = fluid == null ? 0 : fluid.getAmount();
+		CompoundNBT nbt = container.getTag();
+		if (nbt == null) container.setTag(nbt = new CompoundNBT());
+		nbt.putInt(tag, n);
 	}
 
 	@Override
@@ -41,7 +41,7 @@ public class SingleFluidItemHandler extends FluidHandlerItemStack {
 
 	@Override
 	protected void setContainerToEmpty() {
-		if (container.hasTagCompound()) container.getTagCompound().setInteger(tag, 0);
+		if (container.hasTag()) container.getTag().putInt(tag, 0);
 	}
 
 }

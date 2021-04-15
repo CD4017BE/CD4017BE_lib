@@ -16,12 +16,15 @@ public class BasicInventory extends AbstractInventory {
 
 	public final ItemStack[] items;
 	public ObjIntConsumer<ItemStack> onModify;
-	public Restriction restriction;
+	public Restriction restriction = super::insertAm;
 
 	public BasicInventory(int slots) {
-		items = new ItemStack[slots];
-		restriction = super::insertAm;
+		this.items = new ItemStack[slots];
 		Arrays.fill(items, ItemStack.EMPTY);
+	}
+
+	public BasicInventory(ItemStack[] items) {
+		this.items = items;
 	}
 
 	@Override

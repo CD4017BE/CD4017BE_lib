@@ -26,7 +26,7 @@ import static cd4017be.lib.network.Sync.*;
 public class BaseTileEntity extends TileEntity implements INBTSynchronized {
 
 	private Chunk chunk;
-	private boolean unloaded;
+	protected boolean unloaded = true;
 	protected boolean redraw;
 
 	public BaseTileEntity(TileEntityType<?> type) {
@@ -64,14 +64,6 @@ public class BaseTileEntity extends TileEntity implements INBTSynchronized {
 	public static final int REDRAW = 16;
 
 	@Override
-	public BlockState getBlockState() {
-		return super.getBlockState();
-		/*if(cachedBlockState == null)
-			cachedBlockState = chunk.getBlockState(pos);
-		return cachedBlockState;*/
-	}
-
-	@Override
 	public CompoundNBT write(CompoundNBT nbt) {
 		storeState(nbt, SAVE);
 		return super.write(nbt);
@@ -100,24 +92,22 @@ public class BaseTileEntity extends TileEntity implements INBTSynchronized {
 	@Override
 	public SUpdateTileEntityPacket getUpdatePacket() {
 		CompoundNBT nbt = new CompoundNBT();
-		storeState(nbt, SYNC | (redraw ? REDRAW : 0));
+		int i = SYNC | (redraw ? REDRAW : 0);
+		storeState(nbt, i);
 		if(nbt.isEmpty()) return null;
-		if(redraw) {
-			nbt.putBoolean("", true);
-			redraw = false;
-		}
-		return new SUpdateTileEntityPacket(pos, -1, nbt);
+		redraw = false;
+		return new SUpdateTileEntityPacket(pos, i, nbt);
 	}
 
 	@Override
 	public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket pkt) {
 		CompoundNBT nbt = pkt.getNbtCompound();
-		redraw = nbt.getBoolean("");
-		loadState(nbt, SYNC | (redraw ? REDRAW : 0));
-		if(redraw) {
+		int i = pkt.getTileEntityType();
+		loadState(nbt, SYNC | i);
+		if(redraw = (i & REDRAW) != 0) {
 			requestModelDataUpdate();
 			BlockState state = getBlockState();
-			world.markBlockRangeForRenderUpdate(pos, state, state);
+			world.notifyBlockUpdate(pos, state, state, 2);
 		}
 	}
 
@@ -136,7 +126,6 @@ public class BaseTileEntity extends TileEntity implements INBTSynchronized {
 		chunk = null;
 		unloaded = true;
 		onUnload();
-		//As far as I can tell, Forge doesn't actually invalidate capabilities on chunk unload (but it should!).
 		invalidateCaps();
 	}
 
@@ -146,10 +135,6 @@ public class BaseTileEntity extends TileEntity implements INBTSynchronized {
 		chunk = null;
 		unloaded = true;
 		onUnload();
-	}
-
-	public BlockPos pos() {
-		return pos;
 	}
 
 	@Override // just skip all the ugly hard-coding in superclass
@@ -185,6 +170,10 @@ public class BaseTileEntity extends TileEntity implements INBTSynchronized {
 		if(World.isOutsideBuildHeight(pos)) return null;
 		Chunk c = getChunk(pos, loadChunks);
 		return c != null ? c.getTileEntity(pos, CreateEntityType.IMMEDIATE) : null;
+	}
+
+	public @Nullable TileEntity getNeighborTileEntity(Direction side, boolean loadChunks) {
+		return getTileEntity(pos.offset(side), loadChunks);
 	}
 
 	/**

@@ -8,7 +8,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.furnace.FurnaceFuelBurnTimeEvent;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 /**
  * Handles adding of furnace fuels
@@ -24,7 +24,7 @@ public class FuelHandler implements IRecipeHandler {
 	}
 
 	int key(ItemStack item) {
-		return Item.getIdFromItem(item.getItem()) & 0xffff | (item.getItemDamage() & 0xffff) << 16;
+		return Item.getIdFromItem(item.getItem()) & 0xffff | (item.getDamage() & 0xffff) << 16;
 	}
 
 	@Override

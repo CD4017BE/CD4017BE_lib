@@ -2,20 +2,11 @@ package cd4017be.lib.render.model;
 
 import java.util.Arrays;
 
-import cd4017be.lib.render.Util;
-import cd4017be.lib.render.model.ModelContext.Quad;
-import cd4017be.lib.script.Module;
-import cd4017be.lib.script.obj.Array;
-import cd4017be.lib.script.obj.IOperand;
 import cd4017be.lib.util.Orientation;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.block.model.ModelRotation;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.util.EnumFacing.Axis;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.Direction.Axis;
 
 /**
  * 
@@ -37,55 +28,6 @@ public class IntArrayModel {
 
 	public IntArrayModel(int[] data) {this(data, 0xffffffff, 0);}
 	public IntArrayModel(int n) {this(new int[n * 28]);}
-
-	public IntArrayModel(ModelContext context) {
-		this(context.quads[0].size());
-		int j = 0;
-		for (Quad quad : context.quads[0])
-			for (double[] vert : quad.vertices) {
-				vertexData[j++] = Float.floatToRawIntBits((float)vert[0] / 16F);	//X
-				vertexData[j++] = Float.floatToRawIntBits((float)vert[1] / 16F);	//Y
-				vertexData[j++] = Float.floatToRawIntBits((float)vert[2] / 16F);	//Z
-				vertexData[j++] = (int)MathHelper.clamp(vert[5] * 255D, 0, 255)	//R
-						| (int)MathHelper.clamp(vert[6] * 255D, 0, 255) << 8	//G
-						| (int)MathHelper.clamp(vert[7] * 255D, 0, 255) << 16	//B
-						| (int)MathHelper.clamp(vert[8] * 255D, 0, 255) << 24;	//A
-				vertexData[j++] = Float.floatToRawIntBits((float)vert[3]);	//U
-				vertexData[j++] = Float.floatToRawIntBits((float)vert[4]);	//V
-				vertexData[j++] = brightness;
-			}
-	}
-
-	public static TextureAtlasSprite[] getTextures(Module script) {
-		IOperand var = script.read("textures");
-		if (!(var instanceof Array)) return null;
-		Object[] names = (Object[]) var.value();
-		TextureMap map = Minecraft.getMinecraft().getTextureMapBlocks();
-		TextureAtlasSprite[] textures = new TextureAtlasSprite[names.length];
-		for (int i = 0; i < textures.length; i++)
-			textures[i] = map.getAtlasSprite((String)names[i]);
-		return textures;
-	}
-
-	public IntArrayModel(ModelContext context, TextureAtlasSprite[] textures) {
-		this(context.quads[0].size());
-		int j = 0;
-		for (Quad quad : context.quads[0]) {
-			TextureAtlasSprite tex = textures == null ? null : textures[quad.tex];
-			for (double[] vert : quad.vertices) {
-				vertexData[j++] = Float.floatToRawIntBits((float)vert[0] / 16F);	//X
-				vertexData[j++] = Float.floatToRawIntBits((float)vert[1] / 16F);	//Y
-				vertexData[j++] = Float.floatToRawIntBits((float)vert[2] / 16F);	//Z
-				vertexData[j++] = (int)MathHelper.clamp(vert[7] * 255D, 0, 255)	//B
-						| (int)MathHelper.clamp(vert[6] * 255D, 0, 255) << 8	//G
-						| (int)MathHelper.clamp(vert[5] * 255D, 0, 255) << 16	//R
-						| (int)MathHelper.clamp(vert[8] * 255D, 0, 255) << 24;	//A
-				vertexData[j++] = Float.floatToRawIntBits(tex == null ? (float)vert[3] : tex.getInterpolatedU(vert[3]));	//U
-				vertexData[j++] = Float.floatToRawIntBits(tex == null ? (float)vert[4] : tex.getInterpolatedV(vert[4]));	//V
-				vertexData[j++] = brightness;
-			}
-		}
-	}
 
 	public IntArrayModel origin(float x, float y, float z) {
 		ofsX = x;
@@ -171,11 +113,13 @@ public class IntArrayModel {
 	}
 
 	public IntArrayModel rotated(Orientation o) {
+		throw new UnsupportedOperationException();
+		/* TODO implement
 		ModelRotation r = o.getModelRotation();
 		int[] data = Arrays.copyOf(vertexData, vertexData.length);
 		for (int i = 0; i < data.length; i += 7)
 			Util.rotate(data, i, r);
-		return new IntArrayModel(data, color, brightness);
+		return new IntArrayModel(data, color, brightness);*/
 	}
 
 }

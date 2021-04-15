@@ -17,7 +17,7 @@ import cd4017be.lib.text.TooltipUtil;
  */
 public class Button extends GuiCompBase<GuiCompGroup> {
 
-	private final IntSupplier get;
+	protected final IntSupplier get;
 	private final IntConsumer set;
 	public final int states;
 	public int tx = 0, ty = Integer.MIN_VALUE;

@@ -5,30 +5,15 @@ import java.util.HashMap;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
-import cd4017be.api.recipes.mods.ImmersiveEngineeringModule;
 import cd4017be.api.recipes.vanilla.CraftingRecipeIterator;
 import cd4017be.api.recipes.vanilla.FuelHandler;
 import cd4017be.api.recipes.vanilla.SmeltingIterator;
-import cd4017be.lib.Lib;
 import cd4017be.lib.script.Parameters;
-import cd4017be.lib.script.obj.Error;
 import cd4017be.lib.script.obj.FilteredIterator;
 import cd4017be.lib.script.obj.IOperand;
 import cd4017be.lib.script.obj.IOperand.OperandIterator;
 import cd4017be.lib.script.obj.Text;
-import cd4017be.lib.templates.NBTRecipe;
-import net.minecraft.block.Block;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.IRecipe;
-import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
-import net.minecraftforge.fml.common.registry.GameRegistry;
-import net.minecraftforge.oredict.OreDictionary;
-import net.minecraftforge.oredict.ShapedOreRecipe;
-import net.minecraftforge.oredict.ShapelessOreRecipe;
-import net.minecraftforge.registries.IForgeRegistryEntry.Impl;
 
 /**
  * 
@@ -52,31 +37,31 @@ public class RecipeAPI {
 		Handlers = new HashMap<String, IRecipeHandler>();
 		Lists = new HashMap<String, IRecipeList>();
 		UsedNames = new HashMap<String, Integer>();
-		Handlers.put("shaped", (p) -> addRecipe(new ShapedOreRecipe(null, p.get(1, ItemStack.class), decodePattern(p, 2))));
-		Handlers.put("shapedNBT", (p) -> addRecipe(new NBTRecipe(null, p.get(2, ItemStack.class), p.getString(1), decodePattern(p, 3))));
-		Handlers.put("ore", (p) -> {
+		//Handlers.put("shaped", (p) -> addRecipe(new ShapedOreRecipe(null, p.get(1, ItemStack.class), decodePattern(p, 2))));
+		//Handlers.put("shapedNBT", (p) -> addRecipe(new NBTRecipe(null, p.get(2, ItemStack.class), p.getString(1), decodePattern(p, 3))));
+		/*Handlers.put("ore", (p) -> {
 			String name = p.getString(1);
 			for (int i = 2; i < p.param.length; i++)
 				OreDictionary.registerOre(name, p.get(i, ItemStack.class));
-		});
+		});*/
 		Lists.put("ore", (p) -> new FilteredIterator(new OreDictList(), new RegexFilter(p.getString(1))));
 		Lists.put("craftIng", (p) -> new CraftingRecipeIterator(p.get(1, ItemStack.class)));
 		Lists.put("craftRes", (p) -> new CraftingRecipeIterator(getFilter(p.param[1])));
 		Lists.put("smeltIng", (p) -> new SmeltingIterator(getFilter(p.param[1]), false));
 		Lists.put("smeltRes", (p) -> new SmeltingIterator(getFilter(p.param[1]), true));
-		Handlers.put("shapeless", (p) -> addRecipe(new ShapelessOreRecipe(null, p.get(1, ItemStack.class), p.getArrayOrAll(2))));
-		Handlers.put("smelt", (p) -> GameRegistry.addSmelting(p.get(1, ItemStack.class), p.get(2, ItemStack.class), p.param.length > 3 ? (float)p.getNumber(3) : 0F));
+		//Handlers.put("shapeless", (p) -> addRecipe(new ShapelessOreRecipe(null, p.get(1, ItemStack.class), p.getArrayOrAll(2))));
+		//Handlers.put("smelt", (p) -> GameRegistry.addSmelting(p.get(1, ItemStack.class), p.get(2, ItemStack.class), p.param.length > 3 ? (float)p.getNumber(3) : 0F));
 		Handlers.put("fuel", new FuelHandler());
 		Handlers.put("worldgen", new OreGenHandler());
-		Handlers.put("item", (p) -> {
+		/*Handlers.put("item", (p) -> {
 			int n = p.param.length;
 			Lib.materials.addMaterial((int)p.getNumber(1), p.getString(2), n > 3 ? p.getString(3) : null, n > 4 ? p.getString(4) : null);
-		});
+		});*/
 		//TODO Handlers.put("fluidCont", (p) -> FluidContainerRegistry.registerFluidContainer(p.get(1, FluidStack.class), p.get(2, ItemStack.class), p.get(3, ItemStack.class)));
 	}
 
 	public static void addModModules(RecipeScriptContext cont) {
-		if (Loader.isModLoaded("immersiveengineering")) cont.add(new ImmersiveEngineeringModule());
+		//if (FMLLoader.isModLoaded("immersiveengineering")) cont.add(new ImmersiveEngineeringModule());
 		//TODO include more mods
 	}
 
@@ -96,6 +81,7 @@ public class RecipeAPI {
 		return j < arr.length ? Arrays.copyOf(arr, j) : arr;
 	}
 
+	/*
 	public static String genericName(IRecipe rcp) {
 		ItemStack stack = rcp.getRecipeOutput();
 		Item item = stack.getItem();
@@ -119,16 +105,12 @@ public class RecipeAPI {
 
 	public static <T extends Impl<IRecipe> & IRecipe> void addRecipe(T rcp) {
 		ForgeRegistries.RECIPES.register(rcp.setRegistryName(genericName(rcp)));
-	}
+	}*/
 
 	public static Predicate<Object> getFilter(IOperand o) {
 		if (o instanceof Text) return new RegexFilter(((Text)o).value);
 		return (p) -> {
-			try {
-				return p instanceof IOperand ? o.nlsR((IOperand)p).asBool() : o.value().equals(p);
-			} catch (Error e) {
-				throw new IllegalArgumentException(e);
-			}
+			return /*p instanceof IOperand ? o.nlsR((IOperand)p).asBool() :*/ o.value().equals(p);
 		};
 	}
 
@@ -143,6 +125,7 @@ public class RecipeAPI {
 		}
 	}
 
+	/*
 	public static void createOreDictEntries(Class<?> c, String name) {
 		if (Block.class.isAssignableFrom(c)) {
 			Item item;
@@ -154,6 +137,6 @@ public class RecipeAPI {
 				if (c.isInstance(item))
 					OreDictionary.registerOre(name, item);
 		} 
-	}
+	}*/
 
 }

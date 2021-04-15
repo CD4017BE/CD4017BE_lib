@@ -3,7 +3,7 @@ package cd4017be.api.indlog.filter;
 import cd4017be.lib.util.IFilter;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.util.INBTSerializable;
 
@@ -14,7 +14,7 @@ import net.minecraftforge.common.util.INBTSerializable;
  * @see {@link FluidFilterProvider}, {@link ItemFilterProvider}
  * @author CD4017BE
  */
-public interface PipeFilter<Obj, Inv> extends IFilter<Obj, Inv>, INBTSerializable<NBTTagCompound> {
+public interface PipeFilter<Obj, Inv> extends IFilter<Obj, Inv>, INBTSerializable<CompoundNBT> {
 
 	/**
 	 * @param obj resource to check
@@ -53,17 +53,17 @@ public interface PipeFilter<Obj, Inv> extends IFilter<Obj, Inv>, INBTSerializabl
 	 */
 	default ItemStack getItemStack() {
 		ItemStack stack = new ItemStack(item());
-		stack.setTagCompound(serializeNBT());
+		stack.setTag(serializeNBT());
 		return stack;
 	}
 
 	/**
 	 * @return the NBT data representing this filter (must have the string-tag 'id' set to the item registry name)
 	 */
-	default NBTTagCompound writeNBT() {
-		NBTTagCompound nbt = serializeNBT();
+	default CompoundNBT writeNBT() {
+		CompoundNBT nbt = serializeNBT();
 		ResourceLocation id = item().getRegistryName();
-		if (id != null) nbt.setString("id", id.toString());
+		if (id != null) nbt.putString("id", id.toString());
 		return nbt;
 	}
 

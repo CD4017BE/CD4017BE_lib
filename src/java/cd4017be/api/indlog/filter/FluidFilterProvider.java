@@ -4,10 +4,11 @@ import javax.annotation.Nullable;
 
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraftforge.common.util.Constants.NBT;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.registries.ForgeRegistries;
 
 /**
  * Implemented by Items that should act as filter for fluids.
@@ -21,10 +22,8 @@ public interface FluidFilterProvider {
 	 */
 	PipeFilter<FluidStack, IFluidHandler> getFluidFilter(@Nullable ItemStack stack);
 
-	public static PipeFilter<FluidStack, IFluidHandler> load(NBTTagCompound nbt) {
-		Item item;
-		if (nbt.hasKey("id", NBT.TAG_STRING)) item = Item.getByNameOrId(nbt.getString("id"));
-		else item = Item.getByNameOrId("indlog:fluid_filter"); //backward compatibility
+	public static PipeFilter<FluidStack, IFluidHandler> load(CompoundNBT nbt) {
+		Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(nbt.getString("id")));
 		if (item instanceof FluidFilterProvider) {
 			PipeFilter<FluidStack, IFluidHandler> filter = ((FluidFilterProvider)item).getFluidFilter(null);
 			if (filter != null) filter.deserializeNBT(nbt);

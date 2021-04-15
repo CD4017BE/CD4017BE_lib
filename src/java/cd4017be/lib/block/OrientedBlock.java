@@ -2,123 +2,75 @@ package cd4017be.lib.block;
 
 import cd4017be.lib.property.PropertyOrientation;
 import cd4017be.lib.util.Orientation;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import net.minecraft.block.properties.IProperty;
-import net.minecraft.block.state.BlockStateContainer;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.state.StateContainer.Builder;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
 import net.minecraft.util.Mirror;
 import net.minecraft.util.Rotation;
-import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.IBlockAccess;
-import net.minecraft.world.World;
+import net.minecraft.util.math.shapes.ISelectionContext;
+import net.minecraft.util.math.shapes.VoxelShape;
+import net.minecraft.world.*;
 
 /**
  * 
  * @author CD4017BE
  */
-public class OrientedBlock extends AdvancedBlock {
+public class OrientedBlock<T extends TileEntity> extends BlockTE<T> {
 
-	public PropertyOrientation orientProp;
-
-	private static String addProp(String id, PropertyOrientation prop) {
-		L_PROPERTIES.add(prop);
-		return id;
-	}
+	public final PropertyOrientation orientProp;
+	VoxelShape[] shapes;
 
 	/**
-	 * @param id resource location
-	 * @param m material
-	 * @param sound sound type
-	 * @param flags 2 = nonOpaque, 1 = noFullBlock, 4 = don't open GUI, 8 = no special sneak placement, 16 = inverse placement
-	 * @param tile associated TileEntity
 	 * @param prop orientation type
 	 */
-	public OrientedBlock(String id, Material m, SoundType sound, int flags, Class<? extends TileEntity> tile, PropertyOrientation prop) {
-		super(addProp(id, prop), m, sound, flags, tile);
-	}
-
-	@Deprecated
-	public static OrientedBlock create(String id, Material m, SoundType sound, int flags, Class<? extends TileEntity> tile, PropertyOrientation prop) {
-		return new OrientedBlock(id, m, sound, flags, tile, prop);
+	public OrientedBlock(Properties p, int flags, PropertyOrientation prop) {
+		super(p, flags);
+		this.orientProp = prop;
 	}
 
 	@Override
-	protected BlockStateContainer createBlockState() {
-		for (IProperty<?> p : L_PROPERTIES)
-			if (p instanceof PropertyOrientation)
-				orientProp = (PropertyOrientation)p;
-		return super.createBlockState();
+	protected void fillStateContainer(Builder<Block, BlockState> builder) {
+		super.fillStateContainer(builder);
+		//FIXME field not initialized in time
+		builder.add(orientProp);
 	}
 
 	@Override
-	public IBlockState getStateFromMeta(int meta) {
-		return this.blockState.getBaseState().withProperty(orientProp, Orientation.values()[meta]);
+	public BlockState getStateForPlacement(BlockItemUseContext context) {
+		return getDefaultState().with(orientProp, orientProp.getPlacementState(context, handlerFlags >> 24 & 3));
 	}
 
 	@Override
-	public int getMetaFromState(IBlockState state) {
-		return state.getValue(orientProp).ordinal();
+	public VoxelShape
+	getShape(BlockState state, IBlockReader world, BlockPos pos, ISelectionContext context) {
+		return shapes != null ? shapes[state.get(orientProp).ordinal()]
+			: super.getShape(state, world, pos, context);
 	}
 
-	@Override
-	public IBlockState getStateForPlacement(World world, BlockPos pos, EnumFacing s, float X, float Y, float Z, int m, EntityLivingBase placer, EnumHand hand) {
-		int p = placer.rotationPitch > 45 ? 1 : placer.rotationPitch < -35 ? -1 : 0;
-		int y = MathHelper.floor((double)(placer.rotationYaw * 4.0F / 360.0F) + 0.5D) & 3;
-		if ((flags & 0x80000) != 0) {
-			p = -p;
-			y ^= 2;
-		}
-		return blockState.getBaseState().withProperty(orientProp, orientProp.getPlacementState(placer.isSneaking() && (flags & 0x40000) == 0, y, p, s, X, Y, Z));
-	}
-
-	@Override
-	public OrientedBlock setBlockBounds(AxisAlignedBB box) {
-		boundingBox = new AxisAlignedBB[16];
+	public OrientedBlock<T> setShape(VoxelShape main) {
+		shapes = new VoxelShape[16];
 		for (Orientation o : orientProp.getAllowedValues())
-			boundingBox[o.ordinal()] = o.rotate(box);
+			shapes[o.ordinal()] = o.apply(main);
 		return this;
 	}
 
 	@Override
-	protected AxisAlignedBB getMainBB(IBlockState state, IBlockAccess world, BlockPos pos) {
-		return boundingBox.length == 1 ? boundingBox[0] : boundingBox[state.getValue(orientProp).ordinal()];
-	}
-
-	@Override
-	public boolean rotateBlock(World world, BlockPos pos, EnumFacing axis) {
-		Orientation o = world.getBlockState(pos).getValue(orientProp);
-		Orientation no = orientProp.getRotatedState(o, axis);
-		if (no == o) return false;
-		world.setBlockState(pos, getDefaultState().withProperty(orientProp, no));
-		return true;
-	}
-
-	@Override
-	public EnumFacing[] getValidRotations(World world, BlockPos pos) {
-		return orientProp.rotations();
-	}
-
-	@Override
-	public IBlockState withRotation(IBlockState state, Rotation rot) {
+	public BlockState rotate(BlockState state, Rotation rot) {
 		if (rot == Rotation.NONE) return state;
-		int i = state.getValue(orientProp).ordinal();
+		int i = state.get(orientProp).ordinal();
 		Orientation o = Orientation.values()[i & 12 | rot.rotate(i & 3, 4)];
-		return orientProp.getAllowedValues().contains(o) ? state.withProperty(orientProp, o) : state;
+		return orientProp.getAllowedValues().contains(o) ? state.with(orientProp, o) : state;
 	}
 
 	@Override
-	public IBlockState withMirror(IBlockState state, Mirror mirror) {
+	public BlockState mirror(BlockState state, Mirror mirror) {
 		if (mirror == Mirror.NONE) return state;
-		int i = state.getValue(orientProp).ordinal();
+		int i = state.get(orientProp).ordinal();
 		Orientation o = Orientation.values()[i & 12 | mirror.mirrorRotation(i & 3, 4)];
-		return orientProp.getAllowedValues().contains(o) ? state.withProperty(orientProp, o) : state;
+		return orientProp.getAllowedValues().contains(o) ? state.with(orientProp, o) : state;
 	}
 
 }

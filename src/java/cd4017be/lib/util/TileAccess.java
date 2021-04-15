@@ -1,7 +1,7 @@
 package cd4017be.lib.util;
 
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.EnumFacing;
+import net.minecraft.util.Direction;
 
 /**
  * 
@@ -10,8 +10,8 @@ import net.minecraft.util.EnumFacing;
 public class TileAccess {
 
 	public final TileEntity te;
-	public final EnumFacing side;
+	public final Direction side;
 
-	public TileAccess(TileEntity te, EnumFacing side) {this.te = te; this.side = side;}
+	public TileAccess(TileEntity te, Direction side) {this.te = te; this.side = side;}
 
 }

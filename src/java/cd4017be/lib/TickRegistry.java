@@ -1,24 +1,14 @@
 package cd4017be.lib;
 
 import java.util.ArrayList;
-import java.util.Map.Entry;
-
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
 
 import java.util.Arrays;
 
-import cd4017be.lib.block.AdvancedBlock.INeighborAwareTile;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.World;
-import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.world.ChunkEvent;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.event.TickEvent;
 
 /**
  * Handles single use update ticks for various things.
@@ -122,60 +112,6 @@ public class TickRegistry {
 	public interface ITickReceiver {
 		/** @return whether to continue sending ticks to this */
 		public boolean tick();
-	}
-
-	/**
-	 * Some TileEntities in my mods need to be notified when neighboring TileEntities appear or disappear (especially on multiblock structures).
-	 * Unfortunately since 1.11 Minecraft won't let TileEntities notify their neighbors on Chunk load anymore, so I have to do it manually now.
-	 */
-	@SubscribeEvent
-	public void chunkLoad(ChunkEvent.Load ev) {
-		Chunk chunk = ev.getChunk();
-		World world = chunk.getWorld();
-		ChunkPos cp = chunk.getPos();
-		boolean loadedN = world.isBlockLoaded(cp.getBlock(0, 0, -1)),
-				loadedS = world.isBlockLoaded(cp.getBlock(0, 0, 16)),
-				loadedW = world.isBlockLoaded(cp.getBlock(-1, 0, 0)),
-				loadedE = world.isBlockLoaded(cp.getBlock(16, 0, 0));
-		for (Entry<BlockPos, TileEntity> e : chunk.getTileEntityMap().entrySet()) {
-			//only check for TileEntitys that sit on the chunk border
-			BlockPos pos = e.getKey();
-			int x = pos.getX() & 15, z = pos.getZ() & 15;
-			if (z == 0 && loadedN) notifyNeighborTile(world, pos, EnumFacing.NORTH, e.getValue());
-			else if (z == 15 && loadedS) notifyNeighborTile(world, pos, EnumFacing.SOUTH, e.getValue());
-			if (x == 0 && loadedW) notifyNeighborTile(world, pos, EnumFacing.WEST, e.getValue());
-			else if (x == 15 && loadedE) notifyNeighborTile(world, pos, EnumFacing.EAST, e.getValue());
-		}
-	}
-
-	/**
-	 * Some TileEntities in my mods need to be notified when neighboring TileEntities appear or disappear (especially on multiblock structures).
-	 * Unfortunately since 1.11 Minecraft won't let TileEntities notify their neighbors on Chunk unload anymore, so I have to do it manually now.
-	 */
-	@SubscribeEvent
-	public void chunkUnload(ChunkEvent.Unload ev) {
-		Chunk chunk = ev.getChunk();
-		World world = chunk.getWorld();
-		ChunkPos cp = chunk.getPos();
-		boolean loadedN = world.isBlockLoaded(cp.getBlock(0, 0, -1)),
-				loadedS = world.isBlockLoaded(cp.getBlock(0, 0, 16)),
-				loadedW = world.isBlockLoaded(cp.getBlock(-1, 0, 0)),
-				loadedE = world.isBlockLoaded(cp.getBlock(16, 0, 0));
-		if (loadedN | loadedS | loadedW | loadedE)
-			for (BlockPos pos : chunk.getTileEntityMap().keySet()) {
-				int x = pos.getX() & 15, z = pos.getZ() & 15;
-				if (z == 0 && loadedN) notifyNeighborTile(world, pos, EnumFacing.NORTH, null);
-				else if (z == 15 && loadedS) notifyNeighborTile(world, pos, EnumFacing.SOUTH, null);
-				if (x == 0 && loadedW) notifyNeighborTile(world, pos, EnumFacing.WEST, null);
-				else if (x == 15 && loadedE) notifyNeighborTile(world, pos, EnumFacing.EAST, null);
-			}
-	}
-
-	private void notifyNeighborTile(World world, BlockPos pos, EnumFacing side, TileEntity newTe) {
-		TileEntity te = world.getTileEntity(pos.offset(side));
-		//only do it for TileEntities that explicitly want notification to not screw up other mods
-		if (te instanceof INeighborAwareTile)
-			((INeighborAwareTile)te).neighborTileChange(newTe, side.getOpposite());
 	}
 
 }

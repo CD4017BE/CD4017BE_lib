@@ -1,5 +1,7 @@
 package cd4017be.lib.config;
 
+import java.io.File;
+
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.config.ModConfig.Type;
@@ -11,9 +13,11 @@ import net.minecraftforge.fml.loading.FMLPaths;
  * @author CD4017BE */
 public class Config {
 
+	public static final File CONFIG_DIR;
 	static {
+		CONFIG_DIR = FMLPaths.CONFIGDIR.get().resolve("cd4017be").toFile();
 		//Workaround for config file creation failing in missing sub-directories
-		FMLPaths.CONFIGDIR.get().resolve("cd4017be").toFile().mkdirs();
+		CONFIG_DIR.mkdirs();
 	}
 
 	public final Type cfgType;

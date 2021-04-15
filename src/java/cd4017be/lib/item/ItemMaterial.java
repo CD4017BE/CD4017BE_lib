@@ -2,59 +2,58 @@ package cd4017be.lib.item;
 
 import java.util.Arrays;
 import java.util.HashMap;
-import cd4017be.lib.BlockItemRegistry;
-import cd4017be.lib.util.TooltipUtil;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.item.Item;
+import cd4017be.lib.text.TooltipUtil;
+import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.text.ITextComponent;
 
 /**
  * 
  * @author CD4017BE
+ * @deprecated might not work anymore
  */
-public class ItemMaterial extends BaseItem {
+public class ItemMaterial extends DocumentedItem {
 
 	public HashMap<Integer, Variant> variants = new HashMap<Integer, Variant>();
 
-	public ItemMaterial(String id) {
-		super(id);
-		this.setHasSubtypes(true);
+	public ItemMaterial(Properties p) {
+		super(p);
+		//this.setHasSubtypes(true);
 	}
 
 	@Override
-	protected void init() {}
-
-	@Override
-	public String getUnlocalizedName(ItemStack item) {
-		Variant name = variants.get(item.getItemDamage());
-		return this.getUnlocalizedName() + (name == null ? "" : ":" + name);
+	public String getTranslationKey(ItemStack item) {
+		Variant name = variants.get(item.getDamage());
+		return this.getTranslationKey() + (name == null ? "" : ":" + name);
 	}
 
 	@Override
-	public String getItemStackDisplayName(ItemStack item) {
-		Variant name = variants.get(item.getItemDamage());
+	public ITextComponent getDisplayName(ItemStack item) {
+		Variant name = variants.get(item.getDamage());
 		if (name != null) return name.getLocName();
-		return TooltipUtil.translate(this.getUnlocalizedName());
+		return TooltipUtil.cTranslate(this.getTranslationKey());
 	}
 
 	@Override
-	public void getSubItems(CreativeTabs tab, NonNullList<ItemStack> subItems) {
-		if (!isInCreativeTab(tab)) return;
-		Item item = this;
-		subItems.add(new ItemStack(this, 1, 0));
+	public void fillItemGroup(ItemGroup group, NonNullList<ItemStack> items) {
+		if (!isInGroup(group)) return;
+		items.add(new ItemStack(this));
 		int[] ids = new int[variants.size()];
 		int n = 0;
 		for (int i : variants.keySet()) ids[n++] = i;
 		Arrays.sort(ids);
-		for (int i : ids) subItems.add(new ItemStack(item, 1, i));
+		for (int i : ids) {
+			ItemStack stack = new ItemStack(this, 1);
+			stack.setDamage(i);
+			items.add(stack);
+		}
 	}
 
 	public void addMaterial(int id, String name, String model, String locName) {
 		if (id <= 0 || id >= 32768 || variants.containsKey(id)) throw new IllegalArgumentException("Id already occupied or out of range!");
 		variants.put(id, new Variant(name, locName, model == null ? null : new ResourceLocation(model)));
-		BlockItemRegistry.registerItemStack(new ItemStack(this, 1, id), this.getRegistryName().getResourcePath() + "." + name);
 	}
 
 	public class Variant {
@@ -69,9 +68,9 @@ public class ItemMaterial extends BaseItem {
 			this.model = model != null ? model : new ResourceLocation(getRegistryName().toString() + "/" + name);
 		}
 
-		public String getLocName() {
-			if (locName != null) return locName;
-			return TooltipUtil.translate(getUnlocalizedName() + ":" + name + ".name");
+		public ITextComponent getLocName() {
+			if (locName != null) return TooltipUtil.convert(locName);
+			return TooltipUtil.cTranslate(getTranslationKey() + ":" + name + ".name");
 		}
 
 		@Override

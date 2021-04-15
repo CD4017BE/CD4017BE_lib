@@ -247,12 +247,12 @@ public class ScriptModelBuilder implements IOperand {
 			int[] data = new int[32];
 			float[] vert = vertices;
 			for (int i = 0, j = 0, k = 0; i < 4; i++, j+=8) {
-				Vector4f posi = new Vector4f(vert[k++] / 16F, vert[k++] / 16F, vert[k++] / 16F, 1);
+				Vector4f posi = new Vector4f(vert[k++] / 16F - .5F, vert[k++] / 16F - .5F, vert[k++] / 16F - .5F, 1);
 				transf.transformPosition(posi);
 				pos[i] = new Vector3f(posi.getX(), posi.getY(), posi.getZ());
-				data[j  ] = floatToRawIntBits(posi.getX());
-				data[j+1] = floatToRawIntBits(posi.getY());
-				data[j+2] = floatToRawIntBits(posi.getZ());
+				data[j  ] = floatToRawIntBits(posi.getX() + .5F);
+				data[j+1] = floatToRawIntBits(posi.getY() + .5F);
+				data[j+2] = floatToRawIntBits(posi.getZ() + .5F);
 				data[j+4] = floatToRawIntBits(sprite.getInterpolatedU(vert[k++]));
 				data[j+5] = floatToRawIntBits(sprite.getInterpolatedV(vert[k++]));
 				data[j+3] = (int)clamp(vert[k++] * 255D, 0, 255)

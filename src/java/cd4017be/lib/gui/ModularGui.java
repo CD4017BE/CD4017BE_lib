@@ -2,6 +2,7 @@ package cd4017be.lib.gui;
 
 import cd4017be.lib.Lib;
 import cd4017be.lib.network.GuiNetworkHandler;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.Tessellator;
@@ -54,6 +55,7 @@ public class ModularGui<T extends AdvancedContainer> extends ContainerScreen<T> 
 	protected byte drawTitles;
 	private Slot lastClickSlot;
 	public GuiCompGroup compGroup;
+	public final Int2ObjectOpenHashMap<String> slotTooltips = new Int2ObjectOpenHashMap<>();
 
 	/**
 	 * Creates a new ModularGui instance<br>
@@ -109,6 +111,10 @@ public class ModularGui<T extends AdvancedContainer> extends ContainerScreen<T> 
 			info.add(stack != null ? stack.getDisplayName().getString() : translate("cd4017be.tankEmpty"));
 			info.add(format("cd4017be.tankAmount", stack != null ? (double)stack.getAmount() / 1000D : 0D, (double)fslot.getCapacity() / 1000D));
 			GuiUtils.drawHoveringText(matrixStack, convertText(info), x, y, width, height, -1, font);
+		} else if (hoveredSlot != null && !hoveredSlot.getHasStack()) {
+			String s = slotTooltips.get(hoveredSlot.slotNumber);
+			if (s != null)
+				GuiUtils.drawHoveringText(matrixStack, convertText(translate(s)), x, y, width, height, -1, font);
 		}
 		//GlStateManager.color4f(1, 1, 1, 1);
 		//GlStateManager.disableDepthTest();

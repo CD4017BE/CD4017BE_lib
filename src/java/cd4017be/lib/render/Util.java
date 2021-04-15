@@ -9,52 +9,42 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 
 import cd4017be.lib.util.Orientation;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.OpenGlHelper;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.block.model.ModelRotation;
+import net.minecraft.client.renderer.model.ModelRotation;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec2f;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.util.Direction;
+import net.minecraft.util.math.vector.Vector2f;
+import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.util.math.vector.Vector3i;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 /**
  * 
  * @author CD4017BE
  */
-@SideOnly(Side.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class Util {
 
 	public static final FloatBuffer[] matrices = new FloatBuffer[16];
 
 	static {
-		Vec3d X = new Vec3d(1, 0, 0),
-			Y = new Vec3d(0, 1, 0),
-			Z = new Vec3d(0, 0, 1);
-		Vec3d x1, y1, z1;
+		Vector3i x1, y1, z1;
 		FloatBuffer buff;
 		for (Orientation o : Orientation.values()) {
-			x1 = o.rotate(X);
-			y1 = o.rotate(Y);
-			z1 = o.rotate(Z);
+			x1 = o.r.getDirectionVec();
+			y1 = o.u.getDirectionVec();
+			z1 = o.b.getDirectionVec();
 			buff = BufferUtils.createFloatBuffer(16);
 			buff.put(new float[] {
-				(float)x1.x, (float)x1.y, (float)x1.z, 0,
-				(float)y1.x, (float)y1.y, (float)y1.z, 0,
-				(float)z1.x, (float)z1.y, (float)z1.z, 0,
+				x1.getX(), x1.getY(), x1.getZ(), 0,
+				y1.getX(), y1.getY(), y1.getZ(), 0,
+				z1.getX(), z1.getY(), z1.getZ(), 0,
 				0, 0, 0, 1
 			});
 			buff.flip();
@@ -66,21 +56,24 @@ public class Util {
 		GL11.glTranslated(x + 0.5D, y + 0.5D, z + 0.5D);
 		FloatBuffer mat = matrices[o.ordinal()];
 		mat.rewind();
-		GL11.glMultMatrix(mat);
+		GL11.glMultMatrixf(mat);
 	}
 
 	public static void rotateTo(Orientation o) {
 		FloatBuffer mat = matrices[o.ordinal()];
 		mat.rewind();
-		GL11.glMultMatrix(mat);
+		GL11.glMultMatrixf(mat);
 	}
 
-	public static void luminate(TileEntity te, EnumFacing side, int b) {
+	@Deprecated
+	public static void luminate(TileEntity te, Direction side, int b) {
+		throw new UnsupportedOperationException();
+		/* TODO implement
 		BlockPos pos = side == null ? te.getPos() : te.getPos().offset(side);
 		World world = te.getWorld();
-		IBlockState state = world.getBlockState(pos);
+		BlockState state = world.getBlockState(pos);
 		int l = world.getCombinedLight(pos, Math.max(state.getLightValue(world, pos), b));
-		OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, l & 0xffff, l >> 16);
+		OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, l & 0xffff, l >> 16);*/
 	}
 
 	public static int rotateNormal(int n, ModelRotation rot) {
@@ -205,8 +198,6 @@ public class Util {
 
 	public static final Util instance = new Util();
 	public static int RenderFrame = 0;
-	private long lastFrame;
-	public static float FakeMotionBlur;
 
 	private Util() {
 		MinecraftForge.EVENT_BUS.register(this);
@@ -214,11 +205,7 @@ public class Util {
 
 	@SubscribeEvent
 	public void renderTick(TickEvent.RenderTickEvent event) {
-		if (event.phase != Phase.START) return;
 		RenderFrame++;
-		long t = System.currentTimeMillis();
-		FakeMotionBlur = (float)((Math.random() - 0.5) * (double)(t - lastFrame) / 50.0);
-		lastFrame = t;
 	}
 
 	public static int[] texturedRect(float x, float y, float z, float w, float h, float tx, float ty, float tw, float th) {
@@ -230,7 +217,7 @@ public class Util {
 		};
 	}
 
-	public static int[] texturedRect(Vec3d p, Vec3d w, Vec3d h, Vec2f t0, Vec2f t1, int color, int light) {
+	public static int[] texturedRect(Vector3d p, Vector3d w, Vector3d h, Vector2f t0, Vector2f t1, int color, int light) {
 		return new int[] {
 			floatToIntBits((float)(p.x            )), floatToIntBits((float)(p.y            )), floatToIntBits((float)(p.z            )), color, floatToIntBits(t0.x), floatToIntBits(t0.y), light,
 			floatToIntBits((float)(p.x + w.x      )), floatToIntBits((float)(p.y + w.y      )), floatToIntBits((float)(p.z + w.z      )), color, floatToIntBits(t1.x), floatToIntBits(t0.y), light,
@@ -240,25 +227,13 @@ public class Util {
 	}
 
 	/**
-	 * @param b vertex buffer
-	 * @param p origin position
-	 * @param w width vector
-	 * @param h height vector
-	 * @param t0 origin uv
-	 * @param t1 second uv
-	 */
-	public static void drawQuad(BufferBuilder b, Vec3d p, Vec3d w, Vec3d h, Vec2f t0, Vec2f t1) {
-		b.addVertexData(texturedRect(p, w, h, t0, t1, -1, 0x00f000f0));
-	}
-
-	/**
 	 * @param tex texture
 	 * @param u
 	 * @param v
 	 * @return interpolated uv
 	 */
-	public static Vec2f getUV(TextureAtlasSprite tex, float u, float v) {
-		return new Vec2f(tex.getInterpolatedU(u), tex.getInterpolatedV(v));
+	public static Vector2f getUV(TextureAtlasSprite tex, float u, float v) {
+		return new Vector2f(tex.getInterpolatedU(u), tex.getInterpolatedV(v));
 	}
 
 	/**
@@ -267,11 +242,12 @@ public class Util {
 	 * @param to end vertex index
 	 * @return the vertex data
 	 */
+	@Deprecated
 	public static int[] extractData(BufferBuilder b, int from, int to) {
 		int l = b.getVertexFormat().getIntegerSize();
 		from *= l; to *= l;
 		int[] arr = new int [to - from];
-		ByteBuffer bb = b.getByteBuffer();
+		ByteBuffer bb = b.getNextBuffer().getSecond();
 		int p = bb.position();
 		bb.position(from * 4);
 		IntBuffer ib = bb.asIntBuffer();
@@ -289,7 +265,10 @@ public class Util {
 	 * @param bc background color
 	 * @param lines text lines to draw
 	 */
+	@Deprecated
 	public static void renderToolTip(FontRenderer fr, int x, int y, int tc, int bc, String... lines) {
+		throw new UnsupportedOperationException();
+		/* TODO implement
 		GlStateManager.disableLighting();
 		int width = 0, height = lines.length * fr.FONT_HEIGHT;
 		int[] w = new int[lines.length];
@@ -303,8 +282,8 @@ public class Util {
 		int z0 = 0;
 		int c1 = (bc & 0xff00ff00) | (bc >> 16 & 0xff) | (bc & 0xff) << 16, c0 = c1;// & 0xffffff;
 		GlStateManager.enableBlend();
-		GlStateManager.disableAlpha();
-		GlStateManager.disableTexture2D();
+		GlStateManager.disableAlphaTest();
+		GlStateManager.disableTexture();
 		GlStateManager.depthFunc(GL11.GL_ALWAYS);
 		BufferBuilder buff = Tessellator.getInstance().getBuffer();
 		buff.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
@@ -316,10 +295,10 @@ public class Util {
 				  x1, y2, z0, c1,  x1, y1, z0, c1,  x0, y0, z0, c0,  x0, y3, z0, c0, //left fade out
 			});
 		Tessellator.getInstance().draw();
-		GlStateManager.enableTexture2D();
+		GlStateManager.enableTexture();
 		for (int i = 0; i < w.length; i++)
 			fr.drawString(lines[i], x - w[i] / 2, y - height + i * fr.FONT_HEIGHT, tc);
-		GlStateManager.depthFunc(GL11.GL_LEQUAL);
+		GlStateManager.depthFunc(GL11.GL_LEQUAL);*/
 	}
 
 }
