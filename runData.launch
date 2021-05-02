@@ -9,7 +9,6 @@
         <mapEntry key="MOD_CLASSES" value="cd4017be_lib%%E:\git\CD4017BE_lib\bin\main;cd4017be_lib%%E:\git\CD4017BE_lib\bin\main"/>
         <mapEntry key="target" value="fmluserdevdata"/>
     </mapAttribute>
-    <stringAttribute key="org.eclipse.jdt.launching.CLASSPATH_PROVIDER" value="org.eclipse.buildship.core.classpathprovider"/>
     <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="net.minecraftforge.userdev.LaunchTesting"/>
     <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="--mod examplemod --all --output E:\git\CD4017BE_lib\src\generated\resources --existing E:\git\CD4017BE_lib\src\main\resources"/>
     <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="CD4017BE_lib"/>

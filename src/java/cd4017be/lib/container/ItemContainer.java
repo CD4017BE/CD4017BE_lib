@@ -35,7 +35,7 @@ public class ItemContainer extends AdvancedContainer {
 
 	/**@return the ItemStack currently in the slot that's interacted with through the GUI */
 	protected ItemStack getStack() {
-		return inv.getStackInSlot(slot);
+		return inv.getItem(slot);
 	}
 
 	/**@return the Compound tag of the stack (gets created if needed)
@@ -49,7 +49,7 @@ public class ItemContainer extends AdvancedContainer {
 	}
 
 	@Override
-	public boolean canInteractWith(PlayerEntity player) {
+	public boolean stillValid(PlayerEntity player) {
 		return player.isAlive() && getStack().getItem() == item;
 	}
 

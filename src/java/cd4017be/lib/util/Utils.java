@@ -86,9 +86,9 @@ public class Utils {
 	 * @return neighbor TileEntity or null if not existing or chunk not loaded
 	 */
 	public static @Nullable TileEntity neighborTile(TileEntity tile, Direction side) {
-		World world = tile.getWorld();
-		BlockPos pos = tile.getPos().offset(side);
-		return world.isBlockPresent(pos) ? world.getTileEntity(pos) : null;
+		World world = tile.getLevel();
+		BlockPos pos = tile.getBlockPos().relative(side);
+		return world.isLoaded(pos) ? world.getBlockEntity(pos) : null;
 	}
 
 	/**
@@ -98,7 +98,7 @@ public class Utils {
 	 * @return the TileEntity or null if not existing or chunk not loaded
 	 */
 	public static @Nullable TileEntity getTileAt(World world, BlockPos pos) {
-		return world.isBlockPresent(pos) ? world.getTileEntity(pos) : null;
+		return world.isLoaded(pos) ? world.getBlockEntity(pos) : null;
 	}
 
 	/**
@@ -110,10 +110,10 @@ public class Utils {
 	 */
 	@Deprecated
 	public static @Nullable <T> T neighborCapability(TileEntity tile, Direction side, Capability<T> cap) {
-		World world = tile.getWorld();
-		BlockPos pos = tile.getPos().offset(side);
-		if (!world.isBlockPresent(pos)) return null;
-		TileEntity te = world.getTileEntity(pos);
+		World world = tile.getLevel();
+		BlockPos pos = tile.getBlockPos().relative(side);
+		if (!world.isLoaded(pos)) return null;
+		TileEntity te = world.getBlockEntity(pos);
 		return te != null ? te.getCapability(cap, side.getOpposite()).orElse(null) : null;
 	}
 
@@ -127,8 +127,8 @@ public class Utils {
 	 */
 	@Deprecated
 	public static @Nullable <T> T getCapabilityAt(World world, BlockPos pos, @Nullable Direction side, Capability<T> cap) {
-		if (!world.isBlockPresent(pos)) return null;
-		TileEntity te = world.getTileEntity(pos);
+		if (!world.isLoaded(pos)) return null;
+		TileEntity te = world.getBlockEntity(pos);
 		return te != null ? te.getCapability(cap, side).orElse(null) : null;
 	}
 
@@ -139,8 +139,8 @@ public class Utils {
 	 */
 	public static boolean neighboursLoaded(World world, BlockPos pos) {
 		int x = pos.getX() & 15, z = pos.getZ() & 15;
-		return (x == 0 ? world.isBlockPresent(pos.add(-1, 0, 0)) : x == 15 ? world.isBlockPresent(pos.add(1, 0, 0)) : true)
-			&& (z == 0 ? world.isBlockPresent(pos.add(0, 0, -1)) : z == 15 ? world.isBlockPresent(pos.add(0, 0, 1)) : true);
+		return (x == 0 ? world.isLoaded(pos.offset(-1, 0, 0)) : x == 15 ? world.isLoaded(pos.offset(1, 0, 0)) : true)
+			&& (z == 0 ? world.isLoaded(pos.offset(0, 0, -1)) : z == 15 ? world.isLoaded(pos.offset(0, 0, 1)) : true);
 	}
 
 	/**
@@ -186,15 +186,15 @@ public class Utils {
 	}
 
 	public static Direction getLookDirStrict(Entity entity) {
-		if (entity.rotationPitch < -45.0F) return Direction.DOWN;
-		if (entity.rotationPitch > 45.0F) return Direction.UP;
-		return entity.getHorizontalFacing();
+		if (entity.xRot < -45.0F) return Direction.DOWN;
+		if (entity.xRot > 45.0F) return Direction.UP;
+		return entity.getDirection();
 	}
 
 	public static Direction getLookDirPlacement(Entity entity) {
-		if (entity.rotationPitch < -35.0F) return Direction.DOWN;
-		if (entity.rotationPitch > 40.0F) return Direction.UP;
-		return entity.getHorizontalFacing();
+		if (entity.xRot < -35.0F) return Direction.DOWN;
+		if (entity.xRot > 40.0F) return Direction.UP;
+		return entity.getDirection();
 	}
 
 	/**
@@ -429,19 +429,19 @@ public class Utils {
 
 	public static void writeTag(ByteBuf data, INBT tag) {
 		switch(tag.getId()) {
-		case NBT.TAG_BYTE: data.writeByte(((ByteNBT)tag).getByte()); return;
-		case NBT.TAG_SHORT: data.writeShort(((ShortNBT)tag).getShort()); return;
-		case NBT.TAG_INT: data.writeInt(((IntNBT)tag).getInt()); return;
-		case NBT.TAG_LONG: data.writeLong(((LongNBT)tag).getLong()); return;
-		case NBT.TAG_FLOAT: data.writeFloat(((FloatNBT)tag).getFloat()); return;
-		case NBT.TAG_DOUBLE: data.writeDouble(((DoubleNBT)tag).getDouble()); return;
+		case NBT.TAG_BYTE: data.writeByte(((ByteNBT)tag).getAsByte()); return;
+		case NBT.TAG_SHORT: data.writeShort(((ShortNBT)tag).getAsShort()); return;
+		case NBT.TAG_INT: data.writeInt(((IntNBT)tag).getAsInt()); return;
+		case NBT.TAG_LONG: data.writeLong(((LongNBT)tag).getAsLong()); return;
+		case NBT.TAG_FLOAT: data.writeFloat(((FloatNBT)tag).getAsFloat()); return;
+		case NBT.TAG_DOUBLE: data.writeDouble(((DoubleNBT)tag).getAsDouble()); return;
 		case NBT.TAG_BYTE_ARRAY: {
-			byte[] arr = ((ByteArrayNBT)tag).getByteArray();
+			byte[] arr = ((ByteArrayNBT)tag).getAsByteArray();
 			data.writeInt(arr.length);
 			data.writeBytes(arr);
 		}	return;
 		case NBT.TAG_INT_ARRAY: {
-			int[] arr = ((IntArrayNBT)tag).getIntArray();
+			int[] arr = ((IntArrayNBT)tag).getAsIntArray();
 			data.writeInt(arr.length);
 			for (int v : arr)
 				data.writeInt(v);
@@ -453,13 +453,13 @@ public class Utils {
 				data.writeLong(v);
 		}	return;*/
 		case NBT.TAG_STRING: {
-			byte[] arr = ((StringNBT)tag).getString().getBytes(UTF8);
+			byte[] arr = ((StringNBT)tag).getAsString().getBytes(UTF8);
 			data.writeShort(arr.length);
 			data.writeBytes(arr);
 		}	return;
 		case NBT.TAG_LIST: {
 			ListNBT list = (ListNBT)tag;
-			data.writeByte(list.getTagType());
+			data.writeByte(list.getElementType());
 			data.writeInt(list.size());
 			for (INBT stag : list)
 				writeTag(data, stag);

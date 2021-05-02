@@ -21,7 +21,6 @@
     <booleanAttribute key="org.eclipse.jdt.launching.ATTR_ATTR_USE_ARGFILE" value="false"/>
     <booleanAttribute key="org.eclipse.jdt.launching.ATTR_SHOW_CODEDETAILS_IN_EXCEPTION_MESSAGES" value="true"/>
     <booleanAttribute key="org.eclipse.jdt.launching.ATTR_USE_CLASSPATH_ONLY_JAR" value="false"/>
-    <stringAttribute key="org.eclipse.jdt.launching.CLASSPATH_PROVIDER" value="org.eclipse.buildship.core.classpathprovider"/>
     <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="net.minecraftforge.userdev.LaunchTesting"/>
     <stringAttribute key="org.eclipse.jdt.launching.MODULE_NAME" value="CD4017BE_lib"/>
     <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="CD4017BE_lib"/>

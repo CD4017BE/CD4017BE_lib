@@ -59,7 +59,7 @@ public abstract class SharedNetwork<C extends NetworkNode<C, N, ?>, N extends Sh
 	 * @param comp
 	 */
 	public void add(C comp) {
-		if (comp.network == this || comp.invalid() || !comp.tile.hasWorld() || comp.tile.getWorld().isRemote) return;
+		if (comp.network == this || comp.invalid() || !comp.tile.hasLevel() || comp.tile.getLevel().isClientSide) return;
 		if (components.size() >= comp.network.components.size()) onMerged(comp.network);
 		else comp.network.onMerged((N)this);
 	}
@@ -81,7 +81,7 @@ public abstract class SharedNetwork<C extends NetworkNode<C, N, ?>, N extends Sh
 	 * @param side the side that disconnected
 	 */
 	public void onDisconnect(C comp, byte side) {
-		if (comp.getNeighbor(side) != null && comp.tile.hasWorld() && !comp.tile.getWorld().isRemote) markDirty();
+		if (comp.getNeighbor(side) != null && comp.tile.hasLevel() && !comp.tile.getLevel().isClientSide) markDirty();
 	}
 
 	@Override
@@ -132,7 +132,7 @@ public abstract class SharedNetwork<C extends NetworkNode<C, N, ?>, N extends Sh
 	private static final int spreader = 549568949;
 	public static long ExtPosUID(BlockPos pos, int dimId) {
 		dimId *= spreader;
-		return pos.toLong() ^ (long)dimId << 32;
+		return pos.asLong() ^ (long)dimId << 32;
 	}
 	public static long SidedPosUID(long base, int side) {
 		return base ^ (long)(side * spreader);

@@ -210,11 +210,11 @@ public class TooltipUtil {
 	 * @return localized text
 	 */
 	public static String translate(String s) {
-		return s.startsWith("\\") ? s.substring(1) : editor != null ? editor.getTranslation(s) : LanguageMap.getInstance().func_230503_a_(s);
+		return s.startsWith("\\") ? s.substring(1) : editor != null ? editor.getTranslation(s) : LanguageMap.getInstance().getOrDefault(s);
 	}
 
 	public static boolean hasTranslation(String s) {
-		return LanguageMap.getInstance().func_230506_b_(s) || editor != null && editor.hasEdited(s);
+		return LanguageMap.getInstance().has(s) || editor != null && editor.hasEdited(s);
 	}
 
 	private static final String[] DecScale =   {"a"  , "f"  , "p"  , "n" , "u" , "m" , "" , "k", "M", "G", "T" , "P" , "E" };
@@ -321,11 +321,11 @@ public class TooltipUtil {
 	}
 
 	public static String getClipboardString() {
-		return glfwGetClipboardString(Minecraft.getInstance().getMainWindow().getHandle());
+		return glfwGetClipboardString(Minecraft.getInstance().getWindow().getWindow());
 	}
 
 	public static void setClipboardString(String s) {
-		glfwSetClipboardString(Minecraft.getInstance().getMainWindow().getHandle(), s);
+		glfwSetClipboardString(Minecraft.getInstance().getWindow().getWindow(), s);
 	}
 
 }

@@ -275,25 +275,25 @@ public class StateSyncServer extends StateSynchronizer {
 			writeInt(((Enum<?>)v).ordinal());
 		else if (v == null)
 			if (i < fixCount) writeInt(-1);
-			else buffer.writeString("");
+			else buffer.writeUtf("");
 		else if (v instanceof String)
-			buffer.writeString((String)v);
+			buffer.writeUtf((String)v);
 		else if (v instanceof UUID)
-			check(i, 16).buffer.writeUniqueId((UUID)v);
+			check(i, 16).buffer.writeUUID((UUID)v);
 		else if (v instanceof CompoundNBT)
-			buffer.writeCompoundTag((CompoundNBT)v);
+			buffer.writeNbt((CompoundNBT)v);
 		else if (v instanceof ItemStack) {
 			ItemStack stack = (ItemStack)v;
 			if (stack.isEmpty()) buffer.writeShort(-1);
 			else {
 				Item item = stack.getItem();
-				buffer.writeShort(Item.getIdFromItem(item));
+				buffer.writeShort(Item.getId(item));
 				buffer.writeInt(stack.getCount());
-				buffer.writeShort(stack.getDamage());
+				buffer.writeShort(stack.getDamageValue());
 				CompoundNBT nbt = null;
-				if (item.isDamageable())
+				if (item.canBeDepleted())
 					nbt = item.getShareTag(stack);
-				buffer.writeCompoundTag(nbt);
+				buffer.writeNbt(nbt);
 			}
 		} else if (v instanceof FluidStack)
 			ItemFluidUtil.writeFluidStack(buffer, (FluidStack)v);

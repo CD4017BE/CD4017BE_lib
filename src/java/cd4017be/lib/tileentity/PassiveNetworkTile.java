@@ -50,7 +50,7 @@ public class PassiveNetworkTile<C extends NetworkNode<C, N, T>, N extends Shared
 	@Override
 	public void onLoad() {
 		super.onLoad();
-		comp.setUID(SharedNetwork.ExtPosUID(pos, world.getDimensionKey().hashCode()));
+		comp.setUID(SharedNetwork.ExtPosUID(worldPosition, level.dimension().hashCode()));
 	}
 
 	@Override

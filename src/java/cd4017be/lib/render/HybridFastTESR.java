@@ -24,9 +24,9 @@ public class HybridFastTESR {
 	 */
 	public static boolean isAimedAt(TileEntity te) {
 		@SuppressWarnings("resource")
-		RayTraceResult rts = Minecraft.getInstance().objectMouseOver;
+		RayTraceResult rts = Minecraft.getInstance().hitResult;
 		return rts instanceof BlockRayTraceResult
-		&& te.getPos().equals(((BlockRayTraceResult)rts).getPos());
+		&& te.getBlockPos().equals(((BlockRayTraceResult)rts).getBlockPos());
 	}
 
 	/**
@@ -35,9 +35,9 @@ public class HybridFastTESR {
 	 * @return whether given TileEntity is within given distance to the camera
 	 */
 	public static boolean isWithinRange(TileEntity te, double range) {
-		EntityRendererManager rm = Minecraft.getInstance().getRenderManager();
-		BlockPos pos = te.getPos();
-		return rm.getDistanceToCamera(
+		EntityRendererManager rm = Minecraft.getInstance().getEntityRenderDispatcher();
+		BlockPos pos = te.getBlockPos();
+		return rm.distanceToSqr(
 			pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5
 		) < range * range;
 	}

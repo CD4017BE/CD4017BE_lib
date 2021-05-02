@@ -67,8 +67,8 @@ public class ModularGui<T extends AdvancedContainer> extends ContainerScreen<T> 
 		if (container.hasPlayerInv()) {
 			this.drawTitles |= 2;
 			Slot slot = container.getSlot(container.playerInvStart());
-			playerInventoryTitleX = slot.xPos;
-			playerInventoryTitleY = slot.yPos - 13;
+			inventoryLabelX = slot.x;
+			inventoryLabelY = slot.y - 13;
 		}
 	}
 
@@ -80,17 +80,17 @@ public class ModularGui<T extends AdvancedContainer> extends ContainerScreen<T> 
 
 	@Override
 	protected void init() {
-		this.xSize = compGroup.w;
-		this.ySize = compGroup.h;
+		this.imageWidth = compGroup.w;
+		this.imageHeight = compGroup.h;
 		super.init();
 		compGroup.init(width, height, 0, font);
-		compGroup.position(guiLeft, guiTop);
+		compGroup.position(leftPos, topPos);
 		//Keyboard.enableRepeatEvents(true);
 	}
 
 	@Override
-	public void onClose() {
-		super.onClose();
+	public void removed() {
+		super.removed();
 		//Keyboard.enableRepeatEvents(false);
 	}
 
@@ -98,12 +98,12 @@ public class ModularGui<T extends AdvancedContainer> extends ContainerScreen<T> 
 	public void render(MatrixStack matrixStack, int mx, int my, float partialTicks) {
 		renderBackground(matrixStack);
 		super.render(matrixStack, mx, my, partialTicks);
-		renderHoveredTooltip(matrixStack, mx, my);
+		renderTooltip(matrixStack, mx, my);
 	}
 
 	@Override
-	protected void renderHoveredTooltip(MatrixStack matrixStack, int x, int y) {
-		super.renderHoveredTooltip(matrixStack, x, y);
+	protected void renderTooltip(MatrixStack matrixStack, int x, int y) {
+		super.renderTooltip(matrixStack, x, y);
 		if (hoveredSlot instanceof IFluidSlot) {
 			IFluidSlot fslot = ((IFluidSlot)hoveredSlot);
 			FluidStack stack = fslot.getFluid();
@@ -111,8 +111,8 @@ public class ModularGui<T extends AdvancedContainer> extends ContainerScreen<T> 
 			info.add(stack != null ? stack.getDisplayName().getString() : translate("cd4017be.tankEmpty"));
 			info.add(format("cd4017be.tankAmount", stack != null ? (double)stack.getAmount() / 1000D : 0D, (double)fslot.getCapacity() / 1000D));
 			GuiUtils.drawHoveringText(matrixStack, convertText(info), x, y, width, height, -1, font);
-		} else if (hoveredSlot != null && !hoveredSlot.getHasStack()) {
-			String s = slotTooltips.get(hoveredSlot.slotNumber);
+		} else if (hoveredSlot != null && !hoveredSlot.hasItem()) {
+			String s = slotTooltips.get(hoveredSlot.index);
 			if (s != null)
 				GuiUtils.drawHoveringText(matrixStack, convertText(translate(s)), x, y, width, height, -1, font);
 		}
@@ -124,8 +124,8 @@ public class ModularGui<T extends AdvancedContainer> extends ContainerScreen<T> 
 	}
 
 	@Override
-	protected void drawGuiContainerForegroundLayer(MatrixStack matrixStack, int x, int y) {
-		for (Slot slot : container.inventorySlots)
+	protected void renderLabels(MatrixStack matrixStack, int x, int y) {
+		for (Slot slot : menu.slots)
 			if (slot instanceof IFluidSlot) {
 				IFluidSlot fslot = ((IFluidSlot)slot);
 				FluidStack stack = fslot.getFluid();
@@ -133,40 +133,40 @@ public class ModularGui<T extends AdvancedContainer> extends ContainerScreen<T> 
 				float h = (float)stack.getAmount() / (float)fslot.getCapacity();
 				if (Float.isNaN(h) || h > 1F || h < 0F) h = 16F;
 				else h *= 16F;
-				drawFluid(matrixStack, stack, slot.xPos, slot.yPos + 16 - h, 16, h);
+				drawFluid(matrixStack, stack, slot.x, slot.y + 16 - h, 16, h);
 			}
 		color(-1);
 	}
 
 	protected void drawFluid(MatrixStack matrixStack, FluidStack stack, float x, float y, float w, float h) {
-		Matrix4f mat = matrixStack.getLast().getMatrix();
+		Matrix4f mat = matrixStack.last().pose();
 		FluidAttributes attr = stack.getFluid().getAttributes();
-		TextureAtlasSprite tex = minecraft.getAtlasSpriteGetter(AtlasTexture.LOCATION_BLOCKS_TEXTURE)
+		TextureAtlasSprite tex = minecraft.getTextureAtlas(AtlasTexture.LOCATION_BLOCKS)
 			.apply(attr.getStillTexture(stack));
-		float u0 = tex.getMinU(), v0 = tex.getMinV(), u1 = tex.getMaxU(), v1 = tex.getMaxV();
+		float u0 = tex.getU0(), v0 = tex.getV0(), u1 = tex.getU1(), v1 = tex.getV1();
 		color(attr.getColor(stack));
-		minecraft.textureManager.bindTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE);
+		minecraft.textureManager.bind(AtlasTexture.LOCATION_BLOCKS);
 		Tessellator tessellator = Tessellator.getInstance();
-		BufferBuilder bufferbuilder = tessellator.getBuffer();
+		BufferBuilder bufferbuilder = tessellator.getBuilder();
 		bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX);
-		bufferbuilder.pos(mat, x, y + h, 0F).tex(u0, v1).endVertex();
-		bufferbuilder.pos(mat, x + w, y + h, 0F).tex(u1, v1).endVertex();
-		bufferbuilder.pos(mat, x + w, y, 0F).tex(u1, v0).endVertex();
-		bufferbuilder.pos(mat, x, y, 0F).tex(u0, v0).endVertex();
-		tessellator.draw();
+		bufferbuilder.vertex(mat, x, y + h, 0F).uv(u0, v1).endVertex();
+		bufferbuilder.vertex(mat, x + w, y + h, 0F).uv(u1, v1).endVertex();
+		bufferbuilder.vertex(mat, x + w, y, 0F).uv(u1, v0).endVertex();
+		bufferbuilder.vertex(mat, x, y, 0F).uv(u0, v0).endVertex();
+		tessellator.end();
 	}
 
 	@Override
-	protected void drawGuiContainerBackgroundLayer(
+	protected void renderBg(
 		MatrixStack matrixStack, float partialTicks, int mx, int my
 	) {
 		compGroup.drawBackground(matrixStack, mx, my, partialTicks);
-		if ((drawTitles & 1) != 0) font.func_243248_b(
-				matrixStack, title, guiLeft + titleX, guiTop + titleY, 0x404040
+		if ((drawTitles & 1) != 0) font.draw(
+				matrixStack, title, leftPos + titleLabelX, topPos + titleLabelY, 0x404040
 			);
-		if ((drawTitles & 2) != 0) font.func_243248_b(
-				matrixStack, playerInventory.getDisplayName(),
-				guiLeft + playerInventoryTitleX, guiTop + playerInventoryTitleY, 0x404040
+		if ((drawTitles & 2) != 0) font.draw(
+				matrixStack, inventory.getDisplayName(),
+				leftPos + inventoryLabelX, topPos + inventoryLabelY, 0x404040
 			);
 	}
 
@@ -180,11 +180,11 @@ public class ModularGui<T extends AdvancedContainer> extends ContainerScreen<T> 
 	public boolean mouseDragged(double x, double y, int b, double dx, double dy) {
 		if (compGroup.mouseIn((int)x, (int)y, b, A_HOLD)) return true;
 		Slot slot = this.getSlotUnderMouse();
-		ItemStack itemstack = playerInventory.getItemStack();
+		ItemStack itemstack = inventory.getCarried();
 		if (slot instanceof SlotHolo && slot != lastClickSlot) {
-			ItemStack slotstack = slot.getStack();
+			ItemStack slotstack = slot.getItem();
 			if (itemstack.isEmpty() || slotstack.isEmpty() || ItemHandlerHelper.canItemStacksStack(itemstack, slotstack))
-				this.handleMouseClick(slot, slot.slotNumber, b, ClickType.PICKUP);
+				this.slotClicked(slot, slot.index, b, ClickType.PICKUP);
 			lastClickSlot = slot;
 			return true;
 		}
@@ -218,13 +218,13 @@ public class ModularGui<T extends AdvancedContainer> extends ContainerScreen<T> 
 	public void drawLocString(MatrixStack stack, int x, int y, int h, int c, String s, Object... args) {
 		String[] text = format(s, args).split("\n");
 		for (String l : text) {
-			this.font.drawString(stack, l, x, y, c);
+			this.font.draw(stack, l, x, y, c);
 			y += h;
 		}
 	}
 
 	public void drawStringCentered(MatrixStack stack, String s, int x, int y, int c) {
-		this.font.drawString(stack, s, x - this.font.getStringWidth(s) / 2, y, c);
+		this.font.draw(stack, s, x - this.font.width(s) / 2, y, c);
 	}
 
 	/**
@@ -297,13 +297,13 @@ public class ModularGui<T extends AdvancedContainer> extends ContainerScreen<T> 
 		*/
 	}
 
-	public void drawItemStack(ItemStack stack, int x, int y, String altText){
-		itemRenderer.zLevel = 200.0F;
+	public void renderFloatingItem(ItemStack stack, int x, int y, String altText){
+		itemRenderer.blitOffset = 200.0F;
 		net.minecraft.client.gui.FontRenderer font = stack.getItem().getFontRenderer(stack);
 		if (font == null) font = this.font;
-		itemRenderer.renderItemAndEffectIntoGUI(stack, x, y);
-		itemRenderer.renderItemOverlayIntoGUI(font, stack, x, y, altText);
-		itemRenderer.zLevel = 0.0F;
+		itemRenderer.renderAndDecorateItem(stack, x, y);
+		itemRenderer.renderGuiItemDecorations(font, stack, x, y, altText);
+		itemRenderer.blitOffset = 0.0F;
 	}
 
 	/**
@@ -315,8 +315,8 @@ public class ModularGui<T extends AdvancedContainer> extends ContainerScreen<T> 
 	}
 
 	public static void color(int c) {
-		GlStateManager.enableBlend();
-		GlStateManager.color4f((float)(c >> 16 & 0xff) / 255F, (float)(c >> 8 & 0xff) / 255F, (float)(c & 0xff) / 255F, (float)(c >> 24 & 0xff) / 255F);
+		GlStateManager._enableBlend();
+		GlStateManager._color4f((float)(c >> 16 & 0xff) / 255F, (float)(c >> 8 & 0xff) / 255F, (float)(c & 0xff) / 255F, (float)(c >> 24 & 0xff) / 255F);
 	}
 
 	/**
@@ -325,7 +325,7 @@ public class ModularGui<T extends AdvancedContainer> extends ContainerScreen<T> 
 	 * @param c value to send
 	 */
 	public void sendCommand(int c) {
-		PacketBuffer buff = GuiNetworkHandler.preparePacket(container);
+		PacketBuffer buff = GuiNetworkHandler.preparePacket(menu);
 		buff.writeByte(c);
 		GuiNetworkHandler.GNH_INSTANCE.sendToServer(buff);
 	}
@@ -336,7 +336,7 @@ public class ModularGui<T extends AdvancedContainer> extends ContainerScreen<T> 
 	 * @param args data to send (supports: byte, short, int, long, float, double, String)
 	 */
 	public void sendPkt(Object... args) {
-		PacketBuffer buff = GuiNetworkHandler.preparePacket(container);
+		PacketBuffer buff = GuiNetworkHandler.preparePacket(menu);
 		for (Object arg : args) {
 			if (arg instanceof Byte) buff.writeByte((Byte)arg);
 			else if (arg instanceof Short) buff.writeShort((Short)arg);
@@ -344,7 +344,7 @@ public class ModularGui<T extends AdvancedContainer> extends ContainerScreen<T> 
 			else if (arg instanceof Long) buff.writeLong((Long)arg);
 			else if (arg instanceof Float) buff.writeFloat((Float)arg);
 			else if (arg instanceof Double) buff.writeDouble((Double)arg);
-			else if (arg instanceof String) buff.writeString((String)arg);
+			else if (arg instanceof String) buff.writeUtf((String)arg);
 			else throw new IllegalArgumentException();
 		}
 		GuiNetworkHandler.GNH_INSTANCE.sendToServer(buff);

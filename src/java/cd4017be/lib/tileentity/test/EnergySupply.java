@@ -32,7 +32,7 @@ implements IEnergyStorage, ITickableServerOnly, ITENeighborChange, IUnnamedConta
 	@Sync(to=SAVE|GUI) public int limI, limO;
 	@Sync(to=SAVE|GUI) public long sumI, sumO;
 	@Sync(to=SAVE) public long t0;
-	@Sync(to=GUI) public long t() {return world.getGameTime() - t0 - 1;}
+	@Sync(to=GUI) public long t() {return level.getGameTime() - t0 - 1;}
 	boolean updateCaps;
 
 	public EnergySupply(TileEntityType<EnergySupply> type) {
@@ -77,7 +77,7 @@ implements IEnergyStorage, ITickableServerOnly, ITENeighborChange, IUnnamedConta
 		super.onLoad();
 		for (Direction d : Direction.values())
 			receivers[d.ordinal()] = new CachedCap<>(
-				world, pos.offset(d, -1), d, ENERGY, INSTANCE
+				level, worldPosition.relative(d, -1), d, ENERGY, INSTANCE
 			);
 		updateCaps = true;
 	}
@@ -140,7 +140,7 @@ implements IEnergyStorage, ITickableServerOnly, ITENeighborChange, IUnnamedConta
 		case 2:
 			sumI = 0;
 			sumO = 0;
-			t0 = world.getGameTime();
+			t0 = level.getGameTime();
 			break;
 		default:
 			return;

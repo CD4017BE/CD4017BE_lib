@@ -53,7 +53,7 @@ public class TooltipEditor {
 
 	public TooltipEditor() {
 		MinecraftForge.EVENT_BUS.register(this);
-		this.lastLanguage = Minecraft.getInstance().getLanguageManager().getCurrentLanguage();
+		this.lastLanguage = Minecraft.getInstance().getLanguageManager().getSelected();
 	}
 
 	/**
@@ -74,7 +74,7 @@ public class TooltipEditor {
 		if (key.equals(editingKey)) return textField();
 		String s = edited.get(key);
 		if (s != null) return s;
-		return LanguageMap.getInstance().func_230503_a_(key);
+		return LanguageMap.getInstance().getOrDefault(key);
 	}
 
 	private String textField() {
@@ -91,11 +91,11 @@ public class TooltipEditor {
 	public void keyPressed(KeyboardKeyPressedEvent.Pre event) {
 		int k = event.getKeyCode();
 		if (editingKey != null) textFieldInput(k);
-		else if (k == GLFW_KEY_S && glfwGetKey(Minecraft.getInstance().getMainWindow().getHandle(), GLFW_KEY_F4) == GLFW_PRESS) {
+		else if (k == GLFW_KEY_S && glfwGetKey(Minecraft.getInstance().getWindow().getWindow(), GLFW_KEY_F4) == GLFW_PRESS) {
 			specialCombo = true;
 			save();
 		} else if (k == GLFW_KEY_F4) {
-			Language l = Minecraft.getInstance().getLanguageManager().getCurrentLanguage();
+			Language l = Minecraft.getInstance().getLanguageManager().getSelected();
 			if (!l.equals(lastLanguage)) {
 				save();
 				lastLanguage = l;
@@ -144,12 +144,12 @@ public class TooltipEditor {
 		if (editingKey == null) return;
 		Screen gui = e.getGui();
 		@SuppressWarnings("resource")
-		FontRenderer fr = gui.getMinecraft().fontRenderer;
+		FontRenderer fr = gui.getMinecraft().font;
 		for (int i = 0; i < 8; i++) {
 			String s = i == ofs ? editingKey : lastKeys[pos-i & 7];
 			if (s == null) continue;
-			fr.drawStringWithShadow(
-				e.getMatrixStack(), s, 5, gui.height - fr.FONT_HEIGHT * (i + 1) - 5,
+			fr.drawShadow(
+				e.getMatrixStack(), s, 5, gui.height - fr.lineHeight * (i + 1) - 5,
 				i == ofs ? 0xffff80 : edited.containsKey(s) ? 0x8080ff : 0xc0c0c0
 			);
 		}

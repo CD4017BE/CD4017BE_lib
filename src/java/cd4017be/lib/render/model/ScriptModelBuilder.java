@@ -102,7 +102,7 @@ public class ScriptModelBuilder implements IOperand {
 				  | state.orient >> a << 4 & 0xf00;
 				o |= a << ((i+2) % 3 << 3);
 			}
-			state.matrix.mul(new Matrix4f(mat));
+			state.matrix.multiply(new Matrix4f(mat));
 			state.orient = o;
 		}, (s, b, t) -> { //pop
 			IOperand.check(t-b, 0, 0);
@@ -158,19 +158,19 @@ public class ScriptModelBuilder implements IOperand {
 			double[] v;
 			if (t - b == 3) {
 				v = IOperand.vec(s, b, ++b, 3);
-				tr = Matrix4f.makeTranslate((float)v[0], (float)v[1], (float)v[2]);
-				mat.mul(tr);
+				tr = Matrix4f.createTranslateMatrix((float)v[0], (float)v[1], (float)v[2]);
+				mat.multiply(tr);
 				tr.setTranslation(-(float)v[0], -(float)v[1], -(float)v[2]);
 			}
 			v = IOperand.vec(s, b, t - 1, 3);
-			mat.mul(new Quaternion(
+			mat.multiply(new Quaternion(
 				new Vector3f((float)v[0], (float)v[1], (float)v[2]),
 				(float)s[t - 1].asDouble(), true
 			));
-			if (tr != null) mat.mul(tr);
+			if (tr != null) mat.multiply(tr);
 		}, (s, b, t) -> { //scale
 			double[] v = IOperand.vec(s, b, t, 3);
-			states[curState].matrix.mul(Matrix4f.makeScale((float)v[0], (float)v[1], (float)v[2]));
+			states[curState].matrix.multiply(Matrix4f.createScaleMatrix((float)v[0], (float)v[1], (float)v[2]));
 		}, (s, b, t) -> { //scaleUV
 			double[] v = IOperand.vec(s, b, t, 2);
 			float[] uvc = states[curState].sUVC;
@@ -178,7 +178,7 @@ public class ScriptModelBuilder implements IOperand {
 			uvc[1] *= v[1];
 		}, (s, b, t) -> { //translate
 			double[] v = IOperand.vec(s, b, t, 3);
-			states[curState].matrix.mul(Matrix4f.makeTranslate((float)v[0], (float)v[1], (float)v[2]));
+			states[curState].matrix.multiply(Matrix4f.createTranslateMatrix((float)v[0], (float)v[1], (float)v[2]));
 		}, (s, b, t) -> { //translateUV
 			double[] v = IOperand.vec(s, b, t, 2);
 			State st = states[curState];
@@ -226,9 +226,9 @@ public class ScriptModelBuilder implements IOperand {
 			for (int i = 0; i < 36; i+=9) {
 				v.set(vt[i], vt[i+1], vt[i+2], 1);
 				v.transform(s.matrix);
-				vt[i] = v.getX();
-				vt[i+1] = v.getY();
-				vt[i+2] = v.getZ();
+				vt[i] = v.x();
+				vt[i+1] = v.y();
+				vt[i+2] = v.z();
 				for (int k = i + 3, j = 0; j < 6; j++, k++)
 					vt[k] *= s.sUVC[j];
 				vt[i+3] += s.oU;
@@ -249,12 +249,12 @@ public class ScriptModelBuilder implements IOperand {
 			for (int i = 0, j = 0, k = 0; i < 4; i++, j+=8) {
 				Vector4f posi = new Vector4f(vert[k++] / 16F - .5F, vert[k++] / 16F - .5F, vert[k++] / 16F - .5F, 1);
 				transf.transformPosition(posi);
-				pos[i] = new Vector3f(posi.getX(), posi.getY(), posi.getZ());
-				data[j  ] = floatToRawIntBits(posi.getX() + .5F);
-				data[j+1] = floatToRawIntBits(posi.getY() + .5F);
-				data[j+2] = floatToRawIntBits(posi.getZ() + .5F);
-				data[j+4] = floatToRawIntBits(sprite.getInterpolatedU(vert[k++]));
-				data[j+5] = floatToRawIntBits(sprite.getInterpolatedV(vert[k++]));
+				pos[i] = new Vector3f(posi.x(), posi.y(), posi.z());
+				data[j  ] = floatToRawIntBits(posi.x() + .5F);
+				data[j+1] = floatToRawIntBits(posi.y() + .5F);
+				data[j+2] = floatToRawIntBits(posi.z() + .5F);
+				data[j+4] = floatToRawIntBits(sprite.getU(vert[k++]));
+				data[j+5] = floatToRawIntBits(sprite.getV(vert[k++]));
 				data[j+3] = (int)clamp(vert[k++] * 255D, 0, 255)
 				| (int)clamp(vert[k++] * 255F, 0, 255) << 8
 				| (int)clamp(vert[k++] * 255F, 0, 255) << 16
@@ -266,13 +266,13 @@ public class ScriptModelBuilder implements IOperand {
 			v.cross(pos[3]);
 			v.normalize();
 			data[7] = data[15] = data[23] = data[31] = 
-				   Math.round(v.getX() * 127F) & 0xff
-				| (Math.round(v.getY() * 127F) & 0xff) << 8
-				| (Math.round(v.getZ() * 127F) & 0xff) << 16;
-			Direction d = Direction.getFacingFromVector(v.getX(), v.getY(), v.getZ());
+				   Math.round(v.x() * 127F) & 0xff
+				| (Math.round(v.y() * 127F) & 0xff) << 8
+				| (Math.round(v.z() * 127F) & 0xff) << 16;
+			Direction d = Direction.getNearest(v.x(), v.y(), v.z());
 			BakedQuad bq = new BakedQuad(data, -1, d, sprite, shade);
-			if (cullFace == 0) b.addGeneralQuad(bq);
-			else b.addFaceQuad(transf.rotateTransform(Direction.byIndex(cullFace - 1)), bq);
+			if (cullFace == 0) b.addUnculledFace(bq);
+			else b.addCulledFace(transf.rotateTransform(Direction.from3DDataValue(cullFace - 1)), bq);
 		}
 	}
 

@@ -90,10 +90,10 @@ public class AdvancedTank extends AbstractInventory implements IFluidHandlerModi
 	@Override
 	public void setStackInSlot(int slot, ItemStack stack) {
 		cont = stack;
-		if (!tile.hasWorld() || tile.getWorld().isRemote) return;
+		if (!tile.hasLevel() || tile.getLevel().isClientSide) return;
 		if (output) fillContainer();
 		else drainContainer();
-		tile.markDirty();
+		tile.setChanged();
 	}
 
 	@Override
@@ -138,7 +138,7 @@ public class AdvancedTank extends AbstractInventory implements IFluidHandlerModi
 			if (action.execute()) {
 				fluid = new FluidStack(res, m);
 				if (output && m >= need) fillContainer();
-				tile.markDirty();
+				tile.setChanged();
 			}
 			return m;
 		} else if (fluid.isFluidEqual(res)) {
@@ -188,7 +188,7 @@ public class AdvancedTank extends AbstractInventory implements IFluidHandlerModi
 	public void increment(int n) {
 		fluid.setAmount(n += fluid.getAmount());
 		if (output && n >= need) fillContainer();
-		tile.markDirty();
+		tile.setChanged();
 	}
 
 	/**
@@ -199,7 +199,7 @@ public class AdvancedTank extends AbstractInventory implements IFluidHandlerModi
 		fluid.setAmount(n = fluid.getAmount() - n);
 		if (n <= 0 && !lock) fluid = FluidStack.EMPTY;
 		if (!output && n <= need) drainContainer();
-		tile.markDirty();
+		tile.setChanged();
 	}
 
 	/**
@@ -256,14 +256,14 @@ public class AdvancedTank extends AbstractInventory implements IFluidHandlerModi
 			fluid = FluidStack.loadFluidStackFromNBT(nbt);
 			lock = nbt.getBoolean("lock") && fluid.getRawFluid() != Fluids.EMPTY;
 		}
-		cont = ItemStack.read(nbt);
+		cont = ItemStack.of(nbt);
 		if (cont.getCount() > 0) need = output ? 0 : cap;
 	}
 
 	public CompoundNBT writeNBT(CompoundNBT nbt) {
 		if (fluid.getRawFluid() != Fluids.EMPTY) fluid.writeToNBT(nbt);
 		else nbt.remove("FluidName");
-		if (!cont.isEmpty()) cont.write(nbt);
+		if (!cont.isEmpty()) cont.save(nbt);
 		else nbt.remove("id");
 		nbt.putBoolean("lock", lock);
 		return nbt;

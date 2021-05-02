@@ -68,7 +68,7 @@ public class ScriptModel implements IModelGeometry<ScriptModel> {
 		
 		Builder b = new Builder(owner, overrides);
 		for (Quad q : quads) q.bake(b, transf, resolver);
-		return b.setTexture(resolver.apply("particle")).build();
+		return b.particle(resolver.apply("particle")).build();
 	}
 
 	@Override
@@ -87,7 +87,7 @@ public class ScriptModel implements IModelGeometry<ScriptModel> {
 
 	public static RenderMaterial resolveTex(String name, IModelConfiguration owner, Set<Pair<String, String>> missingTextureErrors) {
 		RenderMaterial rm = owner.resolveTexture(name);
-		if (rm.getTextureLocation().equals(MissingTextureSprite.getLocation()))
+		if (rm.texture().equals(MissingTextureSprite.getLocation()))
 			missingTextureErrors.add(Pair.of(name, owner.getModelName()));
 		return rm;
 	}

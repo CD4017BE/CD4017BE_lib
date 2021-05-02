@@ -24,7 +24,7 @@ public class FuelHandler implements IRecipeHandler {
 	}
 
 	int key(ItemStack item) {
-		return Item.getIdFromItem(item.getItem()) & 0xffff | (item.getDamage() & 0xffff) << 16;
+		return Item.getId(item.getItem()) & 0xffff | (item.getDamageValue() & 0xffff) << 16;
 	}
 
 	@Override

@@ -95,8 +95,8 @@ public class IntArrayModel {
 	public IntArrayModel withTexture(TextureAtlasSprite tex) {
 		int[] data = Arrays.copyOf(vertexData, vertexData.length);
 		for (int i = 4; i < data.length; i += 6) {
-			data[i] = Float.floatToIntBits(tex.getInterpolatedU(Float.intBitsToFloat(data[i])));//U
-			data[++i] = Float.floatToIntBits(tex.getInterpolatedV(Float.intBitsToFloat(data[i])));//V
+			data[i] = Float.floatToIntBits(tex.getU(Float.intBitsToFloat(data[i])));//U
+			data[++i] = Float.floatToIntBits(tex.getV(Float.intBitsToFloat(data[i])));//V
 		}
 		return new IntArrayModel(data, color, brightness);
 	}

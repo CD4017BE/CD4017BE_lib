@@ -61,7 +61,7 @@ public class SyncNetworkHandler extends NetworkHandler {
 	@Override
 	@OnlyIn(Dist.CLIENT)
 	public void handleServerPacket(PacketBuffer pkt) throws Exception {
-		World world = Minecraft.getInstance().world;
+		World world = Minecraft.getInstance().level;
 		ClientPlayerEntity player = Minecraft.getInstance().player;
 		for (PacketBuffer buf : new PacketSplitter(pkt)) {
 			BlockPos target = buf.readBlockPos();
@@ -71,13 +71,13 @@ public class SyncNetworkHandler extends NetworkHandler {
 				if (te instanceof IServerPacketReceiver)
 					((IServerPacketReceiver)te).handleServerPacket(buf);
 			} else if (y == Y_ENTITY) {
-				Entity entity = world.getEntityByID(target.getX() & 0xffff | target.getZ() << 16);
+				Entity entity = world.getEntity(target.getX() & 0xffff | target.getZ() << 16);
 				if (entity instanceof IServerPacketReceiver)
 					((IServerPacketReceiver)entity).handleServerPacket(buf);
 			} else if (y == Y_ITEM) {
 				int slot = target.getX();
-				if (slot < 0 || slot >= player.inventory.getSizeInventory()) continue;
-				ItemStack stack = player.inventory.getStackInSlot(slot);
+				if (slot < 0 || slot >= player.inventory.getContainerSize()) continue;
+				ItemStack stack = player.inventory.getItem(slot);
 				Item item = stack.getItem();
 				if (item instanceof IServerPacketReceiver.ItemSPR)
 					((IServerPacketReceiver.ItemSPR)item).handleServerPacket(stack, player, slot, buf);
@@ -87,7 +87,7 @@ public class SyncNetworkHandler extends NetworkHandler {
 
 	@Override
 	public void handlePlayerPacket(PacketBuffer pkt, ServerPlayerEntity sender) throws Exception {
-		World world = sender.world;
+		World world = sender.level;
 		for (PacketBuffer buf : new PacketSplitter(pkt)) {//TODO chained packets don't make much sense on client -> server
 			BlockPos target = buf.readBlockPos();
 			int y = target.getY();
@@ -96,13 +96,13 @@ public class SyncNetworkHandler extends NetworkHandler {
 				if (te instanceof IPlayerPacketReceiver)
 					((IPlayerPacketReceiver)te).handlePlayerPacket(buf, sender);
 			} else if (y == Y_ENTITY) {
-				Entity entity = world.getEntityByID(target.getX() & 0xffff | target.getZ() << 16);
+				Entity entity = world.getEntity(target.getX() & 0xffff | target.getZ() << 16);
 				if (entity instanceof IPlayerPacketReceiver)
 					((IPlayerPacketReceiver)entity).handlePlayerPacket(buf, sender);
 			} else if (y == Y_ITEM) {
 				int slot = target.getX();
-				if (slot < 0 || slot >= sender.inventory.getSizeInventory()) continue;
-				ItemStack stack = sender.inventory.getStackInSlot(slot);
+				if (slot < 0 || slot >= sender.inventory.getContainerSize()) continue;
+				ItemStack stack = sender.inventory.getItem(slot);
 				Item item = stack.getItem();
 				if (item instanceof IPlayerPacketReceiver.ItemPPR)
 					((IPlayerPacketReceiver.ItemPPR)item).handlePlayerPacket(stack, slot, buf, sender);
@@ -157,7 +157,7 @@ public class SyncNetworkHandler extends NetworkHandler {
 	 * @see IPlayerPacketReceiver#handlePlayerPacket(PacketBuffer, ServerPlayerEntity)
 	 */
 	public static PacketBuffer preparePacket(TileEntity tile) {
-		return preparePacket(tile.getPos());
+		return preparePacket(tile.getBlockPos());
 	}
 
 	/**
@@ -167,7 +167,7 @@ public class SyncNetworkHandler extends NetworkHandler {
 	 * @see IPlayerPacketReceiver#handlePlayerPacket(PacketBuffer, ServerPlayerEntity)
 	 */
 	public static PacketBuffer preparePacket(Entity entity) {
-		int id = entity.getEntityId();
+		int id = entity.getId();
 		return preparePacket(new BlockPos(id & 0xffff, Y_ENTITY, id >> 16 & 0xffff));
 	}
 
@@ -189,7 +189,7 @@ public class SyncNetworkHandler extends NetworkHandler {
 	 * @see IPlayerPacketReceiver.ItemPPR#handlePlayerPacket(ItemStack, int, PacketBuffer, ServerPlayerEntity)
 	 */
 	public static PacketBuffer preparePacket(PlayerEntity player, Hand hand) {
-		return preparePacket(new BlockPos(hand == Hand.MAIN_HAND ? 40 : player.inventory.currentItem, Y_ITEM, 0));
+		return preparePacket(new BlockPos(hand == Hand.MAIN_HAND ? 40 : player.inventory.selected, Y_ITEM, 0));
 	}
 
 	static class PacketSplitter implements Iterable<PacketBuffer>, Iterator<PacketBuffer> {

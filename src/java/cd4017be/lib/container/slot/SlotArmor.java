@@ -27,26 +27,26 @@ public class SlotArmor extends HidableSlot {
 		case OFFHAND: loc = PlayerContainer.EMPTY_ARMOR_SLOT_SHIELD; break;
 		default: return;
 		}
-		setBackground(PlayerContainer.LOCATION_BLOCKS_TEXTURE, loc);
+		setBackground(PlayerContainer.BLOCK_ATLAS, loc);
 	}
 
 	@Override
-	public int getSlotStackLimit() {
+	public int getMaxStackSize() {
 		return type == EquipmentSlotType.OFFHAND ? 64 : 1;
 	}
 
 	@Override
-	public boolean isItemValid(ItemStack stack) {
-		return super.isItemValid(stack) && (
+	public boolean mayPlace(ItemStack stack) {
+		return super.mayPlace(stack) && (
 			type == EquipmentSlotType.OFFHAND
 			|| stack.getItem().canEquip(stack, type, inv.player)
 		);
 	}
 
 	@Override
-	public boolean canTakeStack(PlayerEntity player) {
-		ItemStack stack = this.getStack();
-		return super.canTakeStack(player) && (
+	public boolean mayPickup(PlayerEntity player) {
+		ItemStack stack = this.getItem();
+		return super.mayPickup(player) && (
 			type == EquipmentSlotType.OFFHAND
 			|| stack.isEmpty() || player.isCreative()
 			|| !EnchantmentHelper.hasBindingCurse(stack)

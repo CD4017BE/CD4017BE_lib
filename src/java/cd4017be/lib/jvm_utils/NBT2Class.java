@@ -71,12 +71,12 @@ public class NBT2Class implements Function<String, byte[]> {
 		//load constant pool table
 		ConstantPool cpt = new ConstantPool(name, type);
 		for (INBT tag : nbt.getList("cpt", NBT.TAG_BYTE_ARRAY))
-			cpt.add(((ByteArrayNBT)tag).getByteArray());
+			cpt.add(((ByteArrayNBT)tag).getAsByteArray());
 		//load methods
 		ArrayList<byte[]> fields = new ArrayList<>(), methods = new ArrayList<>();
 		if (defConstr) methods.add(DEFAULT_CONSTR);
 		for (INBT tag : nbt.getList("methods", NBT.TAG_BYTE_ARRAY))
-			methods.add(((ByteArrayNBT)tag).getByteArray());
+			methods.add(((ByteArrayNBT)tag).getAsByteArray());
 		//load fields
 		for (int ni : nbt.getIntArray("fields")) {
 			ByteBuffer b = ByteBuffer.allocate(8);
@@ -100,12 +100,12 @@ public class NBT2Class implements Function<String, byte[]> {
 		byte[][] data = new byte[cpt.size() + methods.size()][];
 		int i = 0, n = 0;
 		for (INBT tag : cpt) {
-			byte[] arr = ((ByteArrayNBT)tag).getByteArray();
+			byte[] arr = ((ByteArrayNBT)tag).getAsByteArray();
 			data[i++] = arr;
 			n += arr.length;
 		}
 		for (INBT tag : methods) {
-			byte[] arr = ((ByteArrayNBT)tag).getByteArray();
+			byte[] arr = ((ByteArrayNBT)tag).getAsByteArray();
 			data[i++] = arr;
 			n += arr.length;
 		}

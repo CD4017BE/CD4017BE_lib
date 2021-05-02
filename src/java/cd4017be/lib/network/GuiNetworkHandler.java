@@ -42,8 +42,8 @@ public class GuiNetworkHandler extends NetworkHandler {
 	@Override
 	@OnlyIn(Dist.CLIENT)
 	public void handleServerPacket(PacketBuffer pkt) throws Exception {
-		Container container = Minecraft.getInstance().player.openContainer;
-		int curId = container.windowId;
+		Container container = Minecraft.getInstance().player.containerMenu;
+		int curId = container.containerId;
 		int id = pkt.markReaderIndex().readInt();
 		if ((curId == id || curId == 0) && container instanceof IServerPacketReceiver) {
 			((IServerPacketReceiver)container).handleServerPacket(pkt);
@@ -59,21 +59,21 @@ public class GuiNetworkHandler extends NetworkHandler {
 			}
 			pkt.resetReaderIndex();
 			packetQueue.add(pkt);
-		} else Lib.LOG.warn(NETWORK, "received packet for invalid GUI {} @CLIENT, expected id {} ({})", id, container.windowId, container.getClass());
+		} else Lib.LOG.warn(NETWORK, "received packet for invalid GUI {} @CLIENT, expected id {} ({})", id, container.containerId, container.getClass());
 	}
 
 	@Override
 	public void handlePlayerPacket(PacketBuffer pkt, ServerPlayerEntity sender) throws Exception {
 		int id = pkt.readInt();
-		Container container = sender.openContainer;
-		if (container.windowId == id && container instanceof IPlayerPacketReceiver) {
+		Container container = sender.containerMenu;
+		if (container.containerId == id && container instanceof IPlayerPacketReceiver) {
 			((IPlayerPacketReceiver)container).handlePlayerPacket(pkt, sender);
 			if (pkt.readableBytes() > 0) {
 				StringBuilder sb = new StringBuilder("Packet > SERVER: ");
 				printPacketData(sb, pkt);
 				Lib.LOG.info(NETWORK, sb.toString());
 			}
-		} else Lib.LOG.warn(NETWORK, "received packet for invalid GUI {} @SERVER, expected id {} ({})", id, container.windowId, container.getClass());
+		} else Lib.LOG.warn(NETWORK, "received packet for invalid GUI {} @SERVER, expected id {} ({})", id, container.containerId, container.getClass());
 	}
 
 	@SubscribeEvent
@@ -93,7 +93,7 @@ public class GuiNetworkHandler extends NetworkHandler {
 	 */
 	public static PacketBuffer preparePacket(Container container) {
 		PacketBuffer pkt = new PacketBuffer(Unpooled.buffer());
-		pkt.writeInt(container.windowId);
+		pkt.writeInt(container.containerId);
 		return pkt;
 	}
 

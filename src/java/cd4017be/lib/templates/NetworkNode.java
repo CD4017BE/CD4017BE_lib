@@ -59,7 +59,7 @@ public abstract class NetworkNode<C extends NetworkNode<C, N, T>, N extends Shar
 	}
 
 	public void markDirty() {
-		if (!updateCon && tile instanceof IUpdatable && tile.hasWorld() && !tile.getWorld().isRemote) TickRegistry.instance.updates.add((IUpdatable)tile);
+		if (!updateCon && tile instanceof IUpdatable && tile.hasLevel() && !tile.getLevel().isClientSide) TickRegistry.instance.updates.add((IUpdatable)tile);
 		updateCon = true;
 	}
 
@@ -104,7 +104,7 @@ public abstract class NetworkNode<C extends NetworkNode<C, N, T>, N extends Shar
 
 	@Override
 	public String toString() {
-		return "MultiblockComp [network=" + (network == null ? "none" : network.components.size()) + ", tile=" + (tile.isRemoved() ? "invalid " : "") + (tile instanceof TileEntity ? ((TileEntity)tile).getPos() : tile) + ", uid=" + uid + ", con=" + con
+		return "MultiblockComp [network=" + (network == null ? "none" : network.components.size()) + ", tile=" + (tile.isRemoved() ? "invalid " : "") + (tile instanceof TileEntity ? ((TileEntity)tile).getBlockPos() : tile) + ", uid=" + uid + ", con=" + con
 				+ ", update=" + updateCon + "]";
 	}
 

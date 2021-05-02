@@ -32,7 +32,7 @@ public class ItemFluidUtil {
 		for (int i = 0; i < list.size(); i++) {
 			CompoundNBT tag = list.getCompound(i);
 			int s = tag.getByte("slot") & 0xff;
-			if (s < inv.length) inv[s] = ItemStack.read(tag);
+			if (s < inv.length) inv[s] = ItemStack.of(tag);
 		}
 	}
 
@@ -41,7 +41,7 @@ public class ItemFluidUtil {
 		for (int i = 0; i < inv.length; i++)
 			if (!inv[i].isEmpty()) {
 				CompoundNBT tag = new CompoundNBT();
-				inv[i].write(tag);
+				inv[i].save(tag);
 				tag.putByte("slot", (byte)i);
 				list.add(tag);
 			}
@@ -51,14 +51,14 @@ public class ItemFluidUtil {
 	public static ItemStack[] loadItems(ListNBT list) {
 		ItemStack[] items = new ItemStack[list.size()];
 		for (int i = 0; i < items.length; i++)
-			items[i] = ItemStack.read(list.getCompound(i));
+			items[i] = ItemStack.of(list.getCompound(i));
 		return items;
 	}
 
 	public static void loadItems(ListNBT list, ItemStack[] items) {
 		int m = Math.min(items.length, list.size());
 		for (int i = 0; i < m; i++)
-			items[i] = ItemStack.read(list.getCompound(i));
+			items[i] = ItemStack.of(list.getCompound(i));
 		Arrays.fill(items, m, items.length, ItemStack.EMPTY);
 	}
 
@@ -67,7 +67,7 @@ public class ItemFluidUtil {
 		for (ItemStack item : items)
 			if (!item.isEmpty()) {
 				CompoundNBT tag = new CompoundNBT();
-				item.write(tag);
+				item.save(tag);
 				list.add(tag);
 			}
 		return list;
@@ -80,7 +80,7 @@ public class ItemFluidUtil {
 	 */
 	public static CompoundNBT saveItemHighRes(ItemStack item) {
 		CompoundNBT nbt = new CompoundNBT();
-		item.write(nbt);
+		item.save(nbt);
 		nbt.remove("Count");
 		nbt.putInt("Num", item.getCount());
 		return nbt;
@@ -92,7 +92,7 @@ public class ItemFluidUtil {
 	 * @return
 	 */
 	public static ItemStack loadItemHighRes(CompoundNBT nbt) {
-		ItemStack item = ItemStack.read(nbt);
+		ItemStack item = ItemStack.of(nbt);
 		item.setCount(nbt.getInt("Num"));
 		return item;
 	}
@@ -106,10 +106,10 @@ public class ItemFluidUtil {
 		else {
 			buf.writeBoolean(true);
 			Item item = stack.getItem();
-			buf.writeVarInt(Item.getIdFromItem(item));
+			buf.writeVarInt(Item.getId(item));
 			buf.writeVarInt(stack.getCount());
-			buf.writeCompoundTag(
-				item.isDamageable(stack) || item.shouldSyncTag()
+			buf.writeNbt(
+				item.isDamageable(stack) || item.shouldOverrideMultiplayerNbt()
 					? stack.getShareTag() : null
 			);
 		}
@@ -124,8 +124,8 @@ public class ItemFluidUtil {
 		if (!buf.readBoolean()) return ItemStack.EMPTY;
 		int i = buf.readVarInt();
 		int j = buf.readVarInt();
-		ItemStack itemstack = new ItemStack(Item.getItemById(i), j);
-		itemstack.readShareTag(buf.readCompoundTag());
+		ItemStack itemstack = new ItemStack(Item.byId(i), j);
+		itemstack.readShareTag(buf.readNbt());
 		return itemstack;
 	}
 
@@ -182,7 +182,7 @@ public class ItemFluidUtil {
 	public static int findStack(ItemStack item, IItemHandler inv, int p) {
 		if (item.isEmpty()) return -1;
 		for (int i = p; i < inv.getSlots(); i++)
-			if (ItemStack.areItemStacksEqual(item, inv.getStackInSlot(i))) return i;
+			if (ItemStack.matches(item, inv.getStackInSlot(i))) return i;
 		return -1;
 	}
 
@@ -320,8 +320,8 @@ public class ItemFluidUtil {
 	 */
 	public static void dropStack(ItemStack stack, Entity entity) {
 		if (stack.isEmpty()) return;
-		ItemEntity ei = new ItemEntity(entity.world, entity.getPosX(), entity.getPosY(), entity.getPosZ(), stack);
-		entity.world.addEntity(ei);
+		ItemEntity ei = new ItemEntity(entity.level, entity.getX(), entity.getY(), entity.getZ(), stack);
+		entity.level.addFreshEntity(ei);
 	}
 
 	/**
@@ -333,8 +333,8 @@ public class ItemFluidUtil {
 	public static void dropStack(ItemStack stack, World world, BlockPos pos) {
 		if (stack.isEmpty()) return;
 		ItemEntity ei = new ItemEntity(world, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, stack);
-		ei.setDefaultPickupDelay();
-		world.addEntity(ei);
+		ei.setDefaultPickUpDelay();
+		world.addFreshEntity(ei);
 	}
 
 	public static void writeFluidStack(PacketBuffer buf, FluidStack stack) {

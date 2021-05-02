@@ -42,8 +42,8 @@ public enum Orientation implements IStringSerializable {
 	private Orientation(Direction u, Direction b) {
 		this.u = u;
 		this.b = b;
-		Vector3i vec = u.getDirectionVec().crossProduct(b.getDirectionVec());
-		this.r = Direction.byLong(vec.getX(), vec.getY(), vec.getZ());
+		Vector3i vec = u.getNormal().cross(b.getNormal());
+		this.r = Direction.fromNormal(vec.getX(), vec.getY(), vec.getZ());
 		this.o = (r.getAxis().ordinal() << 1 | r.ordinal() & 1
 		| u.getAxis().ordinal() << 5 | u.ordinal() << 4 & 0x10
 		| b.getAxis().ordinal() << 9 | b.ordinal() << 8 & 0x100)
@@ -114,7 +114,7 @@ public enum Orientation implements IStringSerializable {
 	}
 
 	@Override
-	public String getString() {
+	public String getSerializedName() {
 		return name().toLowerCase();
 	}
 

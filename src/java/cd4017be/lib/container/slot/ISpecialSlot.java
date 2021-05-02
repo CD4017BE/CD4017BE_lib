@@ -49,13 +49,13 @@ public interface ISpecialSlot {
 	 * @param item the item type to quick select
 	 */
 	public static void quickSelect(PlayerEntity player, ItemStack item) {
-		ItemStack stack = player.inventory.getItemStack();
+		ItemStack stack = player.inventory.getCarried();
 		if (!stack.isEmpty() && !ItemHandlerHelper.canItemStacksStack(item, stack)) return;
 		item = ItemHandlerHelper.copyStackWithSize(item, item.getMaxStackSize() - stack.getCount());
 		if (item.isEmpty()) return;
 		int n = stack.getCount() + getFromPlayerInv(item, player.inventory);
 		stack = ItemHandlerHelper.copyStackWithSize(item, player.isCreative() ? item.getMaxStackSize() : n);
-		player.inventory.setItemStack(stack);
+		player.inventory.setCarried(stack);
 	}
 
 	/**
@@ -67,9 +67,9 @@ public interface ISpecialSlot {
 	public static int putInPlayerInv(ItemStack item, PlayerInventory inv) {
 		int x = item.getCount();
 		int m = item.getMaxStackSize();
-		int es = inv.mainInventory.size();
-		for (int i = 0; i < inv.mainInventory.size(); i++) {
-			ItemStack stack = inv.mainInventory.get(i);
+		int es = inv.items.size();
+		for (int i = 0; i < inv.items.size(); i++) {
+			ItemStack stack = inv.items.get(i);
 			int n = stack.getCount();
 			if (n > 0 && n < m && ItemHandlerHelper.canItemStacksStack(stack, item)) {
 				if (x <= m - n) {
@@ -81,15 +81,15 @@ public interface ISpecialSlot {
 				}
 			} else if (n == 0 && i < es) es = i;
 		}
-		for (int i = es; i < inv.mainInventory.size(); i++)
-			if (inv.mainInventory.get(i).isEmpty()) {
+		for (int i = es; i < inv.items.size(); i++)
+			if (inv.items.get(i).isEmpty()) {
 				if (x <= m) {
 					item.setCount(x);
-					inv.mainInventory.set(i, item);
+					inv.items.set(i, item);
 					return 0;
 				} else {
 					x -= m;
-					inv.mainInventory.set(i, ItemHandlerHelper.copyStackWithSize(item, m));
+					inv.items.set(i, ItemHandlerHelper.copyStackWithSize(item, m));
 				}
 			}
 		return x;
@@ -103,12 +103,12 @@ public interface ISpecialSlot {
 	 */
 	public static int getFromPlayerInv(ItemStack item, PlayerInventory inv) {
 		int n = 0;
-		for (int i = 0; i < inv.mainInventory.size(); i++) {
-			ItemStack stack = inv.mainInventory.get(i);
+		for (int i = 0; i < inv.items.size(); i++) {
+			ItemStack stack = inv.items.get(i);
 			if (ItemHandlerHelper.canItemStacksStack(item, stack)) {
 				n += stack.getCount();
 				if (n <= item.getCount()) {
-					inv.mainInventory.set(i, ItemStack.EMPTY);
+					inv.items.set(i, ItemStack.EMPTY);
 					if (n == item.getCount()) return n;
 				} else {
 					stack.setCount(n - item.getCount());

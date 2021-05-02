@@ -16,7 +16,7 @@ public class SlotTank extends SlotItemHandler {
 	}
 
 	@Override
-	public boolean isItemValid(ItemStack item) {
+	public boolean mayPlace(ItemStack item) {
 		return FluidUtil.getFluidHandler(item) != null;
 	}
 

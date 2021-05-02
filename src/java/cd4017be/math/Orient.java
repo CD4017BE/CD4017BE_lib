@@ -82,8 +82,8 @@ public class Orient {
 	 * @param dir direction
 	 * @return re-oriented direction */
 	public static Direction orient(int o, Direction dir) {
-		int d = dir.getIndex();
-		return Direction.byIndex(
+		int d = dir.get3DDataValue();
+		return Direction.from3DDataValue(
 			(o >> (((d >> 1) + 1) % 3 << 2) & 7) + 4 ^ (d ^ o >> 13) & 1
 		);
 	}
@@ -130,7 +130,7 @@ public class Orient {
 	 * @param ofs translation in input coordinate system (see {@link #origin()})
 	 * @return a new re-oriented quad */
 	public static BakedQuad orient(int o, BakedQuad quad, float... ofs) {
-		int[] old = quad.getVertexData(), data = old.clone(); {
+		int[] old = quad.getVertices(), data = old.clone(); {
 			int mirX = (o &   1) << 31, iX = o >> 1 & 3;
 			int mirY = (o &  16) << 27, iY = o >> 5 & 3;
 			int mirZ = (o & 256) << 23, iZ = o >> 9 & 3;
@@ -150,8 +150,8 @@ public class Orient {
 			// < 1% error shouldn't be noticeable in normals.
 		}
 		return new BakedQuad(
-			data, quad.getTintIndex(), orient(o, quad.getFace()),
-			quad.getSprite(), quad.applyDiffuseLighting()
+			data, quad.getTintIndex(), orient(o, quad.getDirection()),
+			quad.getSprite(), quad.isShade()
 		);
 	}
 

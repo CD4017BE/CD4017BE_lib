@@ -16,7 +16,7 @@ import net.minecraft.nbt.CompoundNBT;
  */
 public class MovedBlock {
 
-	public static final MovedBlock AIR = new MovedBlock(Blocks.AIR.getDefaultState(), null);
+	public static final MovedBlock AIR = new MovedBlock(Blocks.AIR.defaultBlockState(), null);
 
 	public final CompoundNBT nbt;
 	public final BlockState block;

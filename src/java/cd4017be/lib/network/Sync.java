@@ -130,13 +130,13 @@ public @interface Sync {
 				: MethodHandles.insertArguments(update, 1, (Object)enums);
 		}
 
-		static boolean readI1(INBT nbt) {return nbt instanceof NumberNBT && ((NumberNBT)nbt).getByte() != 0;}
-		static byte readI8(INBT nbt) {return nbt instanceof NumberNBT ? ((NumberNBT)nbt).getByte() : 0;}
-		static short readI16(INBT nbt) {return nbt instanceof NumberNBT ? ((NumberNBT)nbt).getShort() : 0;}
-		static int readI32(INBT nbt) {return nbt instanceof NumberNBT ? ((NumberNBT)nbt).getInt() : 0;}
-		static long readI64(INBT nbt) {return nbt instanceof NumberNBT ? ((NumberNBT)nbt).getLong() : 0L;}
-		static float readF32(INBT nbt) {return nbt instanceof NumberNBT ? ((NumberNBT)nbt).getFloat() : 0F;}
-		static double readF64(INBT nbt) {return nbt instanceof NumberNBT ? ((NumberNBT)nbt).getDouble() : 0D;}
+		static boolean readI1(INBT nbt) {return nbt instanceof NumberNBT && ((NumberNBT)nbt).getAsByte() != 0;}
+		static byte readI8(INBT nbt) {return nbt instanceof NumberNBT ? ((NumberNBT)nbt).getAsByte() : 0;}
+		static short readI16(INBT nbt) {return nbt instanceof NumberNBT ? ((NumberNBT)nbt).getAsShort() : 0;}
+		static int readI32(INBT nbt) {return nbt instanceof NumberNBT ? ((NumberNBT)nbt).getAsInt() : 0;}
+		static long readI64(INBT nbt) {return nbt instanceof NumberNBT ? ((NumberNBT)nbt).getAsLong() : 0L;}
+		static float readF32(INBT nbt) {return nbt instanceof NumberNBT ? ((NumberNBT)nbt).getAsFloat() : 0F;}
+		static double readF64(INBT nbt) {return nbt instanceof NumberNBT ? ((NumberNBT)nbt).getAsDouble() : 0D;}
 		static <E extends Enum<E>> E readEnum(INBT nbt, E[] values) {
 			int i = readI8(nbt) & 0xff;
 			return i < values.length ? values[i] : null;

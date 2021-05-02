@@ -95,7 +95,7 @@ implements IItemHandler, IUnnamedContainerProvider, IPlayerPacketReceiver {
 		super.storeState(nbt, mode);
 		ListNBT list = new ListNBT();
 		for(Slot s : slots) {
-			CompoundNBT tag = s.stack.write(new CompoundNBT());
+			CompoundNBT tag = s.stack.save(new CompoundNBT());
 			tag.putInt("in", s.countIn);
 			tag.putInt("out", s.countOut);
 			list.add(tag);
@@ -109,7 +109,7 @@ implements IItemHandler, IUnnamedContainerProvider, IPlayerPacketReceiver {
 		slots.clear();
 		for(INBT tb : nbt.getList("slots", NBT.TAG_COMPOUND)) {
 			CompoundNBT tag = (CompoundNBT)tb;
-			Slot s = new Slot(ItemStack.read(tag));
+			Slot s = new Slot(ItemStack.of(tag));
 			s.countIn = tag.getInt("in");
 			s.countOut = tag.getInt("out");
 			slots.add(s);

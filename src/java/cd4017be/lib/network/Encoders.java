@@ -94,9 +94,9 @@ public class Encoders<T> {
 			nbt -> nbt instanceof CompoundNBT ? (CompoundNBT)nbt : new CompoundNBT(),
 			null, new BinObjEnc<CompoundNBT>() {
 				@Override public void encode(CompoundNBT val, PacketBuffer pkt)
-				{pkt.writeCompoundTag(val);}
+				{pkt.writeNbt(val);}
 				@Override public CompoundNBT decode(CompoundNBT old, PacketBuffer pkt) throws IOException
-				{return pkt.readCompoundTag();}
+				{return pkt.readNbt();}
 			}
 		);
 		register(ListNBT.class,
@@ -106,22 +106,22 @@ public class Encoders<T> {
 		);
 		register(String.class,
 			StringNBT::valueOf,
-			nbt -> nbt instanceof StringNBT ? ((StringNBT)nbt).getString() : "",
+			nbt -> nbt instanceof StringNBT ? ((StringNBT)nbt).getAsString() : "",
 			null, new BinObjEnc<String>() {
 				@Override public void encode(String val, PacketBuffer pkt)
-				{pkt.writeString(val);}
+				{pkt.writeUtf(val);}
 				@Override public String decode(String old, PacketBuffer pkt)
-				{return pkt.readString(1024);}
+				{return pkt.readUtf(1024);}
 			}
 		);
 		register(ItemStack.class,
-			val -> val.isEmpty() ? null : val.write(new CompoundNBT()),
-			nbt -> nbt instanceof CompoundNBT ? ItemStack.read((CompoundNBT)nbt) : ItemStack.EMPTY,
+			val -> val.isEmpty() ? null : val.save(new CompoundNBT()),
+			nbt -> nbt instanceof CompoundNBT ? ItemStack.of((CompoundNBT)nbt) : ItemStack.EMPTY,
 			null, new BinObjEnc<ItemStack>() {
 				@Override public void encode(ItemStack val, PacketBuffer pkt)
-				{pkt.writeItemStack(val);}
+				{pkt.writeItem(val);}
 				@Override public ItemStack decode(ItemStack old, PacketBuffer pkt) throws IOException
-				{return pkt.readItemStack();}
+				{return pkt.readItem();}
 			}
 		);
 		register(FluidStack.class,
@@ -135,8 +135,8 @@ public class Encoders<T> {
 			}
 		);
 		register(BlockPos.class,
-			val -> val == null ? null : LongNBT.valueOf(val.toLong()),
-			nbt -> nbt instanceof LongNBT ? BlockPos.fromLong(((LongNBT)nbt).getLong()) : null,
+			val -> val == null ? null : LongNBT.valueOf(val.asLong()),
+			nbt -> nbt instanceof LongNBT ? BlockPos.of(((LongNBT)nbt).getAsLong()) : null,
 			null, new BinObjEnc<BlockPos>() {
 				@Override public void encode(BlockPos val, PacketBuffer pkt)
 				{pkt.writeBlockPos(val != null ? val : Utils.NOWHERE);}
@@ -146,8 +146,8 @@ public class Encoders<T> {
 		);
 		register(byte[].class,
 			ByteArrayNBT::new,
-			nbt -> nbt instanceof ByteArrayNBT ? ((ByteArrayNBT)nbt).getByteArray() : new byte[0],
-			(val, nbt)-> relaxedArrayCopy(val, nbt instanceof ByteArrayNBT ? ((ByteArrayNBT)nbt).getByteArray() : null),
+			nbt -> nbt instanceof ByteArrayNBT ? ((ByteArrayNBT)nbt).getAsByteArray() : new byte[0],
+			(val, nbt)-> relaxedArrayCopy(val, nbt instanceof ByteArrayNBT ? ((ByteArrayNBT)nbt).getAsByteArray() : null),
 			new BinObjEnc<byte[]>() {
 				@Override public void encode(byte[] val, PacketBuffer pkt)
 				{pkt.writeByteArray(val);}
@@ -157,8 +157,8 @@ public class Encoders<T> {
 		);
 		register(int[].class,
 			IntArrayNBT::new,
-			nbt -> nbt instanceof IntArrayNBT ? ((IntArrayNBT)nbt).getIntArray() : new int[0],
-			(val, nbt)-> relaxedArrayCopy(val, nbt instanceof IntArrayNBT ? ((IntArrayNBT)nbt).getIntArray() : null),
+			nbt -> nbt instanceof IntArrayNBT ? ((IntArrayNBT)nbt).getAsIntArray() : new int[0],
+			(val, nbt)-> relaxedArrayCopy(val, nbt instanceof IntArrayNBT ? ((IntArrayNBT)nbt).getAsIntArray() : null),
 			new BinObjEnc<int[]>() {
 				@Override public void encode(int[] val, PacketBuffer pkt)
 				{pkt.writeVarIntArray(val);}

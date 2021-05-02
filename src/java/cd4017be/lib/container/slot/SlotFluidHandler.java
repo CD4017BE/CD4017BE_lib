@@ -32,32 +32,32 @@ public class SlotFluidHandler extends Slot implements IFluidSlot, ISpecialSlot {
 	}
 
 	@Override
-	public boolean isItemValid(ItemStack stack) {
+	public boolean mayPlace(ItemStack stack) {
 		return false;
 	}
 
 	@Override
-	public ItemStack getStack() {
+	public ItemStack getItem() {
 		return ItemStack.EMPTY;
 	}
 
 	@Override
-	public void putStack(ItemStack stack) {
+	public void set(ItemStack stack) {
 		throw new UnsupportedOperationException("Fluid slots don't have an item stack to set!");
 	}
 
 	@Override
-	public int getSlotStackLimit() {
+	public int getMaxStackSize() {
 		return 0;
 	}
 
 	@Override
-	public ItemStack decrStackSize(int amount) {
+	public ItemStack remove(int amount) {
 		return ItemStack.EMPTY;
 	}
 
 	@Override
-	public boolean canTakeStack(PlayerEntity playerIn) {
+	public boolean mayPickup(PlayerEntity playerIn) {
 		return false;
 	}
 
@@ -85,24 +85,24 @@ public class SlotFluidHandler extends Slot implements IFluidSlot, ISpecialSlot {
 
 	@Override
 	public ItemStack onClick(int b, ClickType ct, PlayerEntity player, AdvancedContainer advancedContainer) {
-		ItemStack curItem = player.inventory.getItemStack();
+		ItemStack curItem = player.inventory.getCarried();
 		if (ct == ClickType.CLONE) {
 			if (!curItem.isEmpty()) return ItemStack.EMPTY;
 			FluidStack stack = getFluid();
 			Predicate<FluidStack> filter = f ->
 				stack.isEmpty() ? fluidHandler.isFluidValid(getSlotIndex(), f)
 					: f.isEmpty() || f.isFluidEqual(stack);
-			NonNullList<ItemStack> inv =  player.inventory.mainInventory;
+			NonNullList<ItemStack> inv =  player.inventory.items;
 			for (int i = 0; i < inv.size(); i++) {
 				ItemStack item = inv.get(i);
 				if (FluidUtil.getFluidContained(item).filter(filter).isPresent()) {
-					player.inventory.setItemStack(item);
+					player.inventory.setCarried(item);
 					inv.set(i, curItem);
 					break;
 				}
 			}
 			if (player.isCreative() && !stack.isEmpty())
-				player.inventory.setItemStack(FluidUtil.getFilledBucket(stack));
+				player.inventory.setCarried(FluidUtil.getFilledBucket(stack));
 		} else if (ct == ClickType.PICKUP || ct == ClickType.PICKUP_ALL || ct == ClickType.QUICK_MOVE) {
 			IFluidHandler inv = fluidHandler;
 			if (inv instanceof IMultiFluidHandler)
@@ -112,7 +112,7 @@ public class SlotFluidHandler extends Slot implements IFluidSlot, ISpecialSlot {
 			if (b == 0)
 				r = FluidUtil.tryEmptyContainerAndStow(curItem, inv, null, limit, player, true);
 			else r = FluidUtil.tryFillContainerAndStow(curItem, inv, null, limit, player, true);
-			if (r.success) player.inventory.setItemStack(r.result);
+			if (r.success) player.inventory.setCarried(r.result);
 		}
 		return ItemStack.EMPTY;
 	}

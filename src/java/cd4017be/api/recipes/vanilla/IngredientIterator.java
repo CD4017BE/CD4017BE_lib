@@ -34,7 +34,7 @@ public class IngredientIterator implements OperandIterator {
 	@Override
 	public void set(IOperand obj) {
 		if (obj == curElement) return;
-		if (obj instanceof ItemOperand) ingreds.set(idx, Ingredient.fromStacks(((ItemOperand)obj).stack));
+		if (obj instanceof ItemOperand) ingreds.set(idx, Ingredient.of(((ItemOperand)obj).stack));
 		//else if (obj instanceof OreDictStack) ingreds.set(idx, new OreIngredient(((OreDictStack)obj).id));
 		else if (obj == Nil.NIL) {
 			if (shaped) ingreds.set(idx, Ingredient.EMPTY);

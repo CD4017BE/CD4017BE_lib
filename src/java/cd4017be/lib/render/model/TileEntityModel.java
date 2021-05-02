@@ -145,7 +145,7 @@ public class TileEntityModel implements IModelGeometry<TileEntityModel> {
 		}
 
 		@Override
-		public boolean isAmbientOcclusion() {
+		public boolean useAmbientOcclusion() {
 			return smoothLight;
 		}
 
@@ -155,17 +155,17 @@ public class TileEntityModel implements IModelGeometry<TileEntityModel> {
 		}
 
 		@Override
-		public boolean isSideLit() {
+		public boolean usesBlockLight() {
 			return sideLit;
 		}
 
 		@Override
-		public boolean isBuiltInRenderer() {
+		public boolean isCustomRenderer() {
 			return false;
 		}
 
 		@Override
-		public TextureAtlasSprite getParticleTexture() {
+		public TextureAtlasSprite getParticleIcon() {
 			return particle;
 		}
 
@@ -174,10 +174,10 @@ public class TileEntityModel implements IModelGeometry<TileEntityModel> {
 		public TextureAtlasSprite getParticleTexture(IModelData data) {
 			IBakedModel model = data.getData(JIT_BAKED_MODEL);
 			if (model != null) {
-				TextureAtlasSprite tex = model.getParticleTexture();
+				TextureAtlasSprite tex = model.getParticleIcon();
 				if (tex != null) return tex;
 			}
-			return getParticleTexture();
+			return getParticleIcon();
 		}
 
 		@Override
@@ -186,7 +186,7 @@ public class TileEntityModel implements IModelGeometry<TileEntityModel> {
 		}
 
 		@Override
-		public ItemCameraTransforms getItemCameraTransforms() {
+		public ItemCameraTransforms getTransforms() {
 			return transforms;
 		}
 

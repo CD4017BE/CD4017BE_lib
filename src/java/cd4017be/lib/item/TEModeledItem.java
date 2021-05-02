@@ -27,13 +27,13 @@ public class TEModeledItem extends DocumentedBlockItem implements IModelDataItem
 	public IModelData getModelData(
 		ItemStack stack, ClientWorld world, LivingEntity entity
 	) {
-		CompoundNBT nbt = stack.getChildTag(BlockTE.TE_TAG);
+		CompoundNBT nbt = stack.getTagElement(BlockTE.TE_TAG);
 		if (nbt == null) return EmptyModelData.INSTANCE;
 		return ModelDataItemOverride.getCached(
 			nbt.getInt("hash"), ()-> {
 				BlockTE<?> block = (BlockTE<?>)getBlock();
 				TileEntity te = block.tileType.create();
-				te.read(block.getDefaultState(), nbt);
+				te.load(block.defaultBlockState(), nbt);
 				return te.getModelData();
 			}
 		);

@@ -221,14 +221,14 @@ public class RecipeScriptContext extends Context {
 		private final boolean ignDmg, ignAm;
 		public ItemMatcher(ItemStack stack) {
 			ref = stack;
-			ignDmg = stack.getDamage() == -1;
+			ignDmg = stack.getDamageValue() == -1;
 			ignAm = stack.getCount() <= 0;
 		}
 		@Override
 		public boolean equals(Object obj) {
 			if (!(obj instanceof ItemStack)) return false;
 			ItemStack item = (ItemStack)obj;
-			return item.getItem() == ref.getItem() && (ignDmg || item.getDamage() == ref.getDamage()) && (ignAm || item.getCount() == ref.getCount());
+			return item.getItem() == ref.getItem() && (ignDmg || item.getDamageValue() == ref.getDamageValue()) && (ignAm || item.getCount() == ref.getCount());
 		}
 	}
 

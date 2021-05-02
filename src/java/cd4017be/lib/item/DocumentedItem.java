@@ -37,18 +37,18 @@ public class DocumentedItem extends Item {
 
 	@Override
 	@OnlyIn(Dist.CLIENT)
-	public void addInformation(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
-		addInformation(getTranslationKey(), tooltipArgs, tooltip);
-		super.addInformation(stack, world, tooltip, flag);
+	public void appendHoverText(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
+		addInformation(getDescriptionId(), tooltipArgs, tooltip);
+		super.appendHoverText(stack, world, tooltip, flag);
 	}
 
 	@Override
-	public ITextComponent getDisplayName(ItemStack stack) {
-		return cTranslate(getTranslationKey(stack));
+	public ITextComponent getName(ItemStack stack) {
+		return cTranslate(getDescriptionId(stack));
 	}
 
 	public static void addInformation(String key, Supplier<Object[]> tooltipArgs, List<ITextComponent> tooltip) {
-		Style style = Style.EMPTY.setFormatting(TextFormatting.GRAY);
+		Style style = Style.EMPTY.withColor(TextFormatting.GRAY);
 		String key1;
 		if (hasTranslation(key1 = key + ".tip"))
 			if (showShiftHint())

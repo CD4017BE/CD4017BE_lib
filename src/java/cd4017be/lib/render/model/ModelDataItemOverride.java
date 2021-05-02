@@ -47,7 +47,7 @@ public class ModelDataItemOverride extends ItemOverrideList {
 	}
 
 	@Override
-	public IBakedModel getOverrideModel(
+	public IBakedModel resolve(
 		IBakedModel model, ItemStack stack, ClientWorld world, LivingEntity livingEntity
 	) {
 		Item item = stack.getItem();
@@ -74,8 +74,8 @@ public class ModelDataItemOverride extends ItemOverrideList {
 		}
 
 		@Override
-		public boolean isAmbientOcclusion() {
-			return parent.isAmbientOcclusion();
+		public boolean useAmbientOcclusion() {
+			return parent.useAmbientOcclusion();
 		}
 
 		@Override
@@ -84,17 +84,17 @@ public class ModelDataItemOverride extends ItemOverrideList {
 		}
 
 		@Override
-		public boolean isSideLit() {
-			return parent.isSideLit();
+		public boolean usesBlockLight() {
+			return parent.usesBlockLight();
 		}
 
 		@Override
-		public boolean isBuiltInRenderer() {
-			return parent.isBuiltInRenderer();
+		public boolean isCustomRenderer() {
+			return parent.isCustomRenderer();
 		}
 
 		@Override
-		public TextureAtlasSprite getParticleTexture() {
+		public TextureAtlasSprite getParticleIcon() {
 			return parent.getParticleTexture(data);
 		}
 
@@ -105,8 +105,8 @@ public class ModelDataItemOverride extends ItemOverrideList {
 
 		@Override
 		@SuppressWarnings("deprecation")
-		public ItemCameraTransforms getItemCameraTransforms() {
-			return parent.getItemCameraTransforms();
+		public ItemCameraTransforms getTransforms() {
+			return parent.getTransforms();
 		}
 
 	}

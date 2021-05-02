@@ -21,7 +21,7 @@ import net.minecraftforge.client.model.data.IModelData;
 public class WrappedBlockModel implements IBakedModel {
 
 	public static final BlockModelShapes MODELS
-	= Minecraft.getInstance().getBlockRendererDispatcher().getBlockModelShapes();
+	= Minecraft.getInstance().getBlockRenderer().getBlockModelShaper();
 
 	public final IBakedModel model;
 	public final BlockState state;
@@ -33,7 +33,7 @@ public class WrappedBlockModel implements IBakedModel {
 	}
 
 	public WrappedBlockModel(BlockState state) {
-		this(MODELS.getModel(state), state);
+		this(MODELS.getBlockModel(state), state);
 	}
 
 	public List<BakedQuad> getQuads(Direction side, Random rand) {
@@ -50,8 +50,8 @@ public class WrappedBlockModel implements IBakedModel {
 	}
 
 	@Override
-	public boolean isAmbientOcclusion() {
-		return model.isAmbientOcclusion();
+	public boolean useAmbientOcclusion() {
+		return model.useAmbientOcclusion();
 	}
 
 	@Override
@@ -60,17 +60,17 @@ public class WrappedBlockModel implements IBakedModel {
 	}
 
 	@Override
-	public boolean isSideLit() {
-		return model.isSideLit();
+	public boolean usesBlockLight() {
+		return model.usesBlockLight();
 	}
 
 	@Override
-	public boolean isBuiltInRenderer() {
-		return model.isBuiltInRenderer();
+	public boolean isCustomRenderer() {
+		return model.isCustomRenderer();
 	}
 
 	@Override
-	public TextureAtlasSprite getParticleTexture() {
+	public TextureAtlasSprite getParticleIcon() {
 		return model.getParticleTexture(data);
 	}
 

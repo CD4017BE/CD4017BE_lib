@@ -88,10 +88,10 @@ public class SideSelector extends GuiCompBase<GuiCompGroup> {
 				s = s.substring(0, s.length()-1) + (side == null ? "0" : "1");
 			parent.drawTooltip(stack, TooltipUtil.format(s, TooltipUtil.translate("enumfacing." + side)), mx, my);
 		}
-		GlStateManager.pushMatrix();
-		GlStateManager.translatef(gui.getGuiLeft(), gui.getGuiTop(), 0);
+		GlStateManager._pushMatrix();
+		GlStateManager._translatef(gui.getGuiLeft(), gui.getGuiTop(), 0);
 		gui.drawSideConfig(stack, side, type);
-		GlStateManager.popMatrix();
+		GlStateManager._popMatrix();
 	}
 
 	@Override

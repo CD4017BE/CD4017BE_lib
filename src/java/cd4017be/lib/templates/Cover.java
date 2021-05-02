@@ -90,7 +90,7 @@ public class Cover {
 
 	public static boolean isBlockValid(@Nullable TileEntity tile, BlockState state) {
 		if (state.getBlock().hasTileEntity(state)) return false;
-		return state.getMaterial().blocksMovement();
+		return state.getMaterial().blocksMotion();
 	}
 
 	/**

@@ -63,7 +63,7 @@ public class BlockTE<T extends TileEntity> extends Block {
 	/**@param factory the TileEntity factory function
 	 * @return the TileEntityType created for this block */
 	public TileEntityType<T> makeTEType(Function<TileEntityType<T>, T> factory) {
-		tileType = Builder.create(() -> factory.apply(tileType), this).build(null);
+		tileType = Builder.of(() -> factory.apply(tileType), this).build(null);
 		tileType.setRegistryName(getRegistryName());
 		return tileType;
 	}
@@ -73,14 +73,14 @@ public class BlockTE<T extends TileEntity> extends Block {
 		Class<I> type, Consumer<I> action
 	) {
 		if((handlerFlags & event) == 0 || !hasTileEntity(state)) return;
-		TileEntity te = world.getTileEntity(pos);
+		TileEntity te = world.getBlockEntity(pos);
 		if(type.isInstance(te))
 			action.accept(type.cast(te));
 	}
 
 	@Override
 	@SuppressWarnings("deprecation")
-	public void onReplaced(
+	public void onRemove(
 		BlockState state, World world, BlockPos pos,
 		BlockState newState, boolean isMoving
 	) {
@@ -88,7 +88,7 @@ public class BlockTE<T extends TileEntity> extends Block {
 			state, H_BREAK, world, pos, ITEBreak.class,
 			te -> te.onBreak(newState, isMoving)
 		);
-		super.onReplaced(state, world, pos, newState, isMoving);
+		super.onRemove(state, world, pos, newState, isMoving);
 	}
 
 	@Override
@@ -113,17 +113,17 @@ public class BlockTE<T extends TileEntity> extends Block {
 	}
 
 	@Override
-	public ActionResultType onBlockActivated(
+	public ActionResultType use(
 		BlockState state, World world, BlockPos pos,
 		PlayerEntity player, Hand hand, BlockRayTraceResult hit
 	) {
 		if (!hasTileEntity(state)) return ActionResultType.PASS;
 		if((handlerFlags & H_INTERACT) != 0) {
-			TileEntity te = world.getTileEntity(pos);
+			TileEntity te = world.getBlockEntity(pos);
 			return te instanceof ITEInteract ? ((ITEInteract)te).onActivated(player, hand, hit)
 				: ActionResultType.PASS;
 		}
-		INamedContainerProvider ncp = getContainer(state, world, pos);
+		INamedContainerProvider ncp = getMenuProvider(state, world, pos);
 		if (ncp == null) return ActionResultType.PASS;
 		if (!(player instanceof ServerPlayerEntity))
 			return ActionResultType.SUCCESS;
@@ -135,7 +135,7 @@ public class BlockTE<T extends TileEntity> extends Block {
 	}
 
 	@Override
-	public void onBlockClicked(
+	public void attack(
 		BlockState state, World world, BlockPos pos, PlayerEntity player
 	) {
 		handleTE(
@@ -145,7 +145,7 @@ public class BlockTE<T extends TileEntity> extends Block {
 	}
 
 	@Override
-	public void onEntityCollision(BlockState state, World world, BlockPos pos, Entity entity) {
+	public void entityInside(BlockState state, World world, BlockPos pos, Entity entity) {
 		handleTE(
 			state, H_COLLIDE, world, pos, ITECollision.class,
 			te -> te.onEntityCollided(entity)
@@ -153,17 +153,17 @@ public class BlockTE<T extends TileEntity> extends Block {
 	}
 
 	@Override
-	public void onProjectileCollision(
+	public void onProjectileHit(
 		World world, BlockState state, BlockRayTraceResult hit, ProjectileEntity projectile
 	) {
 		handleTE(
-			state, H_COLLIDE, world, hit.getPos(), ITECollision.class,
+			state, H_COLLIDE, world, hit.getBlockPos(), ITECollision.class,
 			te -> te.onProjectileCollided(projectile, hit)
 		);
 	}
 
 	@Override
-	public boolean canProvidePower(BlockState state) {
+	public boolean isSignalSource(BlockState state) {
 		return (handlerFlags & H_REDSTONE) != 0 && hasTileEntity(state);
 	}
 
@@ -171,24 +171,24 @@ public class BlockTE<T extends TileEntity> extends Block {
 	public boolean shouldCheckWeakPower(
 		BlockState state, IWorldReader world, BlockPos pos, Direction side
 	) {
-		return !canProvidePower(state) && super.shouldCheckWeakPower(state, world, pos, side);
+		return !isSignalSource(state) && super.shouldCheckWeakPower(state, world, pos, side);
 	}
 
 	@Override
-	public int getWeakPower(
+	public int getSignal(
 		BlockState state, IBlockReader world, BlockPos pos, Direction side
 	) {
-		if(!canProvidePower(state)) return 0;
-		TileEntity te = world.getTileEntity(pos);
+		if(!isSignalSource(state)) return 0;
+		TileEntity te = world.getBlockEntity(pos);
 		return te instanceof ITERedstone ? ((ITERedstone)te).redstoneSignal(side, false) : 0;
 	}
 
 	@Override
-	public int getStrongPower(
+	public int getDirectSignal(
 		BlockState state, IBlockReader world, BlockPos pos, Direction side
 	) {
-		if(!canProvidePower(state)) return 0;
-		TileEntity te = world.getTileEntity(pos);
+		if(!isSignalSource(state)) return 0;
+		TileEntity te = world.getBlockEntity(pos);
 		return te instanceof ITERedstone ? ((ITERedstone)te).redstoneSignal(side, true) : 0;
 	}
 
@@ -196,26 +196,26 @@ public class BlockTE<T extends TileEntity> extends Block {
 	public boolean canConnectRedstone(
 		BlockState state, IBlockReader world, BlockPos pos, @Nullable Direction side
 	) {
-		if(!canProvidePower(state)) return false;
+		if(!isSignalSource(state)) return false;
 		if(side == null) return true;
-		TileEntity te = world.getTileEntity(pos);
+		TileEntity te = world.getBlockEntity(pos);
 		return te instanceof ITERedstone && ((ITERedstone)te).redstoneConnection(side);
 	}
 
 	@Override
-	public boolean hasComparatorInputOverride(BlockState state) {
+	public boolean hasAnalogOutputSignal(BlockState state) {
 		return (handlerFlags & H_COMPARATOR) != 0 && hasTileEntity(state);
 	}
 
 	@Override
-	public int getComparatorInputOverride(BlockState state, World world, BlockPos pos) {
-		if(!hasComparatorInputOverride(state)) return 0;
-		TileEntity te = world.getTileEntity(pos);
+	public int getAnalogOutputSignal(BlockState state, World world, BlockPos pos) {
+		if(!hasAnalogOutputSignal(state)) return 0;
+		TileEntity te = world.getBlockEntity(pos);
 		return te instanceof ITEComparator ? ((ITEComparator)te).comparatorSignal() : 0;
 	}
 
 	@Override
-	public void spawnAdditionalDrops(
+	public void spawnAfterBreak(
 		BlockState state, ServerWorld world, BlockPos pos, ItemStack stack
 	) {
 		handleTE(
@@ -225,9 +225,9 @@ public class BlockTE<T extends TileEntity> extends Block {
 	}
 
 	@Override
-	public INamedContainerProvider getContainer(BlockState state, World world, BlockPos pos) {
+	public INamedContainerProvider getMenuProvider(BlockState state, World world, BlockPos pos) {
 		if ((handlerFlags & H_GUI) == 0 || !hasTileEntity(state)) return null;
-		TileEntity te = world.getTileEntity(pos);
+		TileEntity te = world.getBlockEntity(pos);
 		return te instanceof INamedContainerProvider ? (INamedContainerProvider)te : null;
 	}
 
@@ -236,39 +236,39 @@ public class BlockTE<T extends TileEntity> extends Block {
 		BlockState state, IBlockReader world, BlockPos pos, ISelectionContext context
 	) {
 		if ((handlerFlags & H_SHAPE) != 0 && hasTileEntity(state)) {
-			TileEntity te = world.getTileEntity(pos);
+			TileEntity te = world.getBlockEntity(pos);
 			if (te instanceof ITEShape)
 				return ((ITEShape)te).getShape(context);
 		}
-		return VoxelShapes.fullCube();
+		return VoxelShapes.block();
 	}
 
 	@Override
-	public VoxelShape getRenderShape(BlockState state, IBlockReader worldIn, BlockPos pos) {
-		return VoxelShapes.fullCube();
+	public VoxelShape getOcclusionShape(BlockState state, IBlockReader worldIn, BlockPos pos) {
+		return VoxelShapes.block();
 	}
 
 	@Override
-	public ItemStack getItem(IBlockReader world, BlockPos pos, BlockState state) {
+	public ItemStack getCloneItemStack(IBlockReader world, BlockPos pos, BlockState state) {
 		ItemStack stack = new ItemStack(this);
 		if ((handlerFlags & H_ITEMDATA) != 0 && hasTileEntity(state)) {
-			TileEntity te = world.getTileEntity(pos);
+			TileEntity te = world.getBlockEntity(pos);
 			if (te instanceof ITEPickItem)
 				return ((ITEPickItem)te).getItem();
 			else if (te != null)
-				te.write(stack.getOrCreateChildTag(TE_TAG));
+				te.save(stack.getOrCreateTagElement(TE_TAG));
 		}
 		return stack;
 	}
 
 	@Override
-	public void onBlockHarvested(
+	public void playerWillDestroy(
 		World world, BlockPos pos, BlockState state, PlayerEntity player
 	) {
-		super.onBlockHarvested(world, pos, state, player);
-		if (world.isRemote || !player.isCreative()) return;
+		super.playerWillDestroy(world, pos, state, player);
+		if (world.isClientSide || !player.isCreative()) return;
 		if ((handlerFlags & H_ITEMDATA) == 0 || !hasTileEntity(state)) return;
-		TileEntity te = world.getTileEntity(pos);
+		TileEntity te = world.getBlockEntity(pos);
 		if (te == null) return;
 		ItemStack stack;
 		if (te instanceof ITEPickItem) {
@@ -276,7 +276,7 @@ public class BlockTE<T extends TileEntity> extends Block {
 			if (!stack.hasTag()) return;
 		} else {
 			stack = new ItemStack(this);
-			CompoundNBT nbt = te.write(stack.getOrCreateChildTag(TE_TAG));
+			CompoundNBT nbt = te.save(stack.getOrCreateTagElement(TE_TAG));
 			nbt.remove("id");
 			nbt.remove("x");
 			nbt.remove("y");

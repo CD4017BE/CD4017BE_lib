@@ -52,11 +52,11 @@ public class NBTRecipe extends ShapedRecipe {
 	}
 
 	@Override
-	public ItemStack getCraftingResult(CraftingInventory inv) {
-		ItemStack out = this.getRecipeOutput().copy();
+	public ItemStack assemble(CraftingInventory inv) {
+		ItemStack out = this.getResultItem().copy();
 		if (!out.hasTag()) out.setTag(new CompoundNBT());
-		for (int i = 0; i < inv.getSizeInventory(); i++) {
-			ItemStack stack = inv.getStackInSlot(i);
+		for (int i = 0; i < inv.getContainerSize(); i++) {
+			ItemStack stack = inv.getItem(i);
 			if (stack.hasTag())
 				for (int j = 0; j < nbtVars.length; j++)
 					if (stack.getTag().contains(nbtVars[j]) && !applyTag(out.getTag(), stack.getTag().get(nbtVars[j]), j, out.getCount())) {
@@ -76,17 +76,17 @@ public class NBTRecipe extends ShapedRecipe {
 			if (!nbt.contains(var)) nbt.put(var, tag);
 			else return nbt.get(var).equals(tag);
 		} else if (tag instanceof ByteNBT) {
-			nbt.putByte(var, (byte)this.applyValue(nbt.getByte(var), ((ByteNBT)tag).getByte(), type, stacksize));
+			nbt.putByte(var, (byte)this.applyValue(nbt.getByte(var), ((ByteNBT)tag).getAsByte(), type, stacksize));
 		} else if (tag instanceof ShortNBT) {
-			nbt.putShort(var, (short)this.applyValue(nbt.getShort(var), ((ShortNBT)tag).getShort(), type, stacksize));
+			nbt.putShort(var, (short)this.applyValue(nbt.getShort(var), ((ShortNBT)tag).getAsShort(), type, stacksize));
 		} else if (tag instanceof IntNBT) {
-			nbt.putInt(var, (int)this.applyValue(nbt.getInt(var), ((IntNBT)tag).getInt(), type, stacksize));
+			nbt.putInt(var, (int)this.applyValue(nbt.getInt(var), ((IntNBT)tag).getAsInt(), type, stacksize));
 		} else if (tag instanceof LongNBT) {
-			nbt.putLong(var, (long)this.applyValue(nbt.getLong(var), ((LongNBT)tag).getLong(), type, stacksize));
+			nbt.putLong(var, (long)this.applyValue(nbt.getLong(var), ((LongNBT)tag).getAsLong(), type, stacksize));
 		} else if (tag instanceof FloatNBT) {
-			nbt.putFloat(var, (float)this.applyValue(nbt.getFloat(var), ((FloatNBT)tag).getFloat(), type, stacksize));
+			nbt.putFloat(var, (float)this.applyValue(nbt.getFloat(var), ((FloatNBT)tag).getAsFloat(), type, stacksize));
 		} else if (tag instanceof DoubleNBT) {
-			nbt.putDouble(var, this.applyValue(nbt.getDouble(var), ((DoubleNBT)tag).getDouble(), type, stacksize));
+			nbt.putDouble(var, this.applyValue(nbt.getDouble(var), ((DoubleNBT)tag).getAsDouble(), type, stacksize));
 		} else nbt.put(var, tag);
 		return true;
 	}

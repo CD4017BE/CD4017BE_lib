@@ -23,17 +23,17 @@ public class SlotHolo extends SlotItemHandler implements ISpecialSlot {
 	}
 
 	@Override
-	public boolean canTakeStack(PlayerEntity player) {
+	public boolean mayPickup(PlayerEntity player) {
 		return !locked;
 	}
 
 	@Override
-	public boolean isItemValid(ItemStack par1ItemStack) {
+	public boolean mayPlace(ItemStack par1ItemStack) {
 		return !locked;
 	}
 
 	@Override
-	public int getSlotStackLimit() {
+	public int getMaxStackSize() {
 		return stack ? 127 : 1;
 	}
 
@@ -46,18 +46,18 @@ public class SlotHolo extends SlotItemHandler implements ISpecialSlot {
 
 	@Override
 	public ItemStack onClick(int b, ClickType ct, PlayerEntity player, AdvancedContainer container) {
-		ItemStack item = getStack();
+		ItemStack item = getItem();
 		if (ct == ClickType.CLONE) {
 			ISpecialSlot.quickSelect(player, item);
 			return ItemStack.EMPTY;
 		} else if (ct != ClickType.PICKUP && ct != ClickType.QUICK_MOVE)
 			return ItemStack.EMPTY;
-		if (player.world.isRemote)
+		if (player.level.isClientSide)
 			return ItemStack.EMPTY;
 		container.hardInvUpdate();
-		ItemStack curItem = player.inventory.getItemStack();
+		ItemStack curItem = player.inventory.getCarried();
 		if (ct == ClickType.QUICK_MOVE) {
-			putStack(curItem.copy());
+			set(curItem.copy());
 			return ItemStack.EMPTY;
 		}
 		if (curItem.getCount() > 0 && (item.isEmpty() || ItemHandlerHelper.canItemStacksStack(item, curItem))) {

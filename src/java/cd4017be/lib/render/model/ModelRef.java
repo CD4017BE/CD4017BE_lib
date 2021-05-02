@@ -36,7 +36,7 @@ public class ModelRef implements IModelGeometry<ModelRef> {
 		IModelConfiguration owner, Function<ResourceLocation, IUnbakedModel> modelGetter,
 		Set<Pair<String, String>> missingTextureErrors
 	) {
-		return modelGetter.apply(loc).getTextures(modelGetter, missingTextureErrors);
+		return modelGetter.apply(loc).getMaterials(modelGetter, missingTextureErrors);
 	}
 
 }

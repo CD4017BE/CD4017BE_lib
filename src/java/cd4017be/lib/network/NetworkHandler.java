@@ -115,7 +115,7 @@ public abstract class NetworkHandler implements Consumer<NetworkEvent>, IServerP
 	 */
 	@OnlyIn(Dist.CLIENT)
 	public void sendToServer(PacketBuffer pkt) {
-		Minecraft.getInstance().getConnection().sendPacket(
+		Minecraft.getInstance().getConnection().send(
 			NetworkDirection.PLAY_TO_SERVER.buildPacket(Pair.of(pkt, 0), channel).getThis()
 		);
 	}
@@ -126,7 +126,7 @@ public abstract class NetworkHandler implements Consumer<NetworkEvent>, IServerP
 	 * @param player receiver
 	 */
 	public void sendToPlayer(PacketBuffer pkt, ServerPlayerEntity player) {
-		player.connection.netManager.sendPacket(packet2C(pkt));
+		player.connection.connection.send(packet2C(pkt));
 	}
 
 	/**
@@ -137,7 +137,7 @@ public abstract class NetworkHandler implements Consumer<NetworkEvent>, IServerP
 	public void sendToPlayers(PacketBuffer pkt, Collection<ServerPlayerEntity> players) {
 		IPacket<?> packet = packet2C(pkt);
 		for (ServerPlayerEntity player : players)
-			player.connection.netManager.sendPacket(packet);
+			player.connection.connection.send(packet);
 	}
 
 	/**
@@ -147,7 +147,7 @@ public abstract class NetworkHandler implements Consumer<NetworkEvent>, IServerP
 	 * @param range [m] maximum (straight) distance away
 	 */
 	public void sendToAllNear(PacketBuffer pkt, DimPos pos, double range) {
-		LogicalSidedProvider.INSTANCE.<MinecraftServer>get(LogicalSide.SERVER).getPlayerList().sendToAllNearExcept(
+		LogicalSidedProvider.INSTANCE.<MinecraftServer>get(LogicalSide.SERVER).getPlayerList().broadcast(
 			null, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, range, pos.dim, packet2C(pkt)
 		);
 	}

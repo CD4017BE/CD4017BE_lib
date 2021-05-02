@@ -92,11 +92,11 @@ public class GuiFrame extends GuiCompGroup {
 		if (bgTexture != null) {
 			bound = false;
 			bindTexture(bgTexture);
-			GlStateManager.color4f(1F, 1F, 1F, 1F);
+			GlStateManager._color4f(1F, 1F, 1F, 1F);
 			GuiUtils.drawTexturedModalRect(stack, x, y, bgX, bgY, w, h, zLevel);
 		}
 		if (title != null)
-			fontRenderer.drawString(stack, title, x + (int)(titleX * (float)(w - fontRenderer.getStringWidth(title))), y + titleY, 0x404040);
+			fontRenderer.draw(stack, title, x + (int)(titleX * (float)(w - fontRenderer.width(title))), y + titleY, 0x404040);
 		super.drawBackground(stack, mx, my, t);
 	}
 

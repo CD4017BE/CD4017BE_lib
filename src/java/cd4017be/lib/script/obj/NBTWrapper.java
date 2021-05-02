@@ -154,7 +154,7 @@ public class NBTWrapper implements IOperand {
 
 	@Override
 	public OperandIterator iterator() throws Error {
-		return new KeyIterator(nbt.keySet().iterator());
+		return new KeyIterator(nbt.getAllKeys().iterator());
 	}
 
 	static class KeyIterator implements OperandIterator {

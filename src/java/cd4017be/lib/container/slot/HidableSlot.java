@@ -27,14 +27,14 @@ public class HidableSlot extends Slot {
 	}
 
 	@Override
-	public boolean isItemValid(ItemStack stack) {return !locked;}
+	public boolean mayPlace(ItemStack stack) {return !locked;}
 
 	@Override
-	public boolean canTakeStack(PlayerEntity playerIn) {return !locked;}
+	public boolean mayPickup(PlayerEntity playerIn) {return !locked;}
 
 	@Override
 	@OnlyIn(Dist.CLIENT)
-	public boolean isEnabled() {
+	public boolean isActive() {
 		return !hidden;
 	}
 

@@ -33,12 +33,12 @@ public class CachedChunkWrapper implements IProtectionHandler {
 
 	@Override
 	public boolean canEdit(World world, BlockPos pos, GameProfile player) {
-		return canEdit(new Key(pos.getX() >> 4, pos.getZ() >> 4, world.getDimensionKey().getRegistryName(), player), world);
+		return canEdit(new Key(pos.getX() >> 4, pos.getZ() >> 4, world.dimension().getRegistryName(), player), world);
 	}
 
 	@Override
 	public boolean canEdit(World world, BlockPos p0, BlockPos p1, GameProfile player) {
-		ResourceLocation dim = world.getDimensionKey().getRegistryName();
+		ResourceLocation dim = world.dimension().getRegistryName();
 		int x0 = p0.getX() >> 4, x1 = p1.getX() >> 4;
 		if (x0 > x1) {int x = x0; x0 = x1; x1 = x;}
 		int z0 = p0.getZ() >> 4, z1 = p1.getZ() >> 4;

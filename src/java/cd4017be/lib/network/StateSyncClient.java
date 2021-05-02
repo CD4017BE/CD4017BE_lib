@@ -149,7 +149,7 @@ public class StateSyncClient extends StateSynchronizer {
 	 * @return new value
 	 */
 	public String get(String old) {
-		return set.get(++elIdx) ? buffer.readString(32767) : old;
+		return set.get(++elIdx) ? buffer.readUtf(32767) : old;
 	}
 
 	/**
@@ -180,7 +180,7 @@ public class StateSyncClient extends StateSynchronizer {
 	 * @return new value
 	 */
 	public UUID get(UUID old) {
-		return set.get(++elIdx) ? buffer.readUniqueId() : old;
+		return set.get(++elIdx) ? buffer.readUUID() : old;
 	}
 
 	/**

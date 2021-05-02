@@ -57,10 +57,10 @@ implements IServerPacketReceiver, IPlayerPacketReceiver {
 	}
 
 	@Override
-	public void addListener(IContainerListener listener) {
+	public void addSlotListener(IContainerListener listener) {
 		if (listener instanceof ServerPlayerEntity)
 			sync.set.set(0);
-		super.addListener(listener);
+		super.addSlotListener(listener);
 	}
 
 	/**Add 36 slots for the player main inventory
@@ -75,7 +75,7 @@ implements IServerPacketReceiver, IPlayerPacketReceiver {
 	 * @param y upper most slot pos
 	 * @param armor whether also add armor and shield slots */
 	public void addPlayerInventory(int x, int y, boolean armor) {
-		playerInvS = this.inventorySlots.size();
+		playerInvS = this.slots.size();
 		playerInvE = playerInvS + (armor ? 41 : 36);
 		for (int i = 0; i < 3; i++) 
 			for (int j = 0; j < 9; j++)
@@ -99,7 +99,7 @@ implements IServerPacketReceiver, IPlayerPacketReceiver {
 		if (sync) {
 			int n = syncSlots.cardinality();
 			if (n < idxCount) {
-				syncSlots.set(slot.slotNumber);
+				syncSlots.set(slot.index);
 				this.sync.set(n, slot instanceof IFluidSlot ? FluidStack.EMPTY : ItemStack.EMPTY);
 			} else Lib.LOG.error(
 				"Can't add another synced ItemSlot in {}, only {} channels reserved!",
@@ -121,12 +121,12 @@ implements IServerPacketReceiver, IPlayerPacketReceiver {
 	}
 
 	@Override
-	public boolean mergeItemStack(ItemStack item, int ss, int se, boolean d) {
+	public boolean moveItemStackTo(ItemStack item, int ss, int se, boolean d) {
 		ItemStack item1 = item.copy();
 		if (item1.isStackable())
 			for (int i = se - ss; i > 0 && item1.getCount() > 0; i--) {
-				Slot slot = inventorySlots.get(d ? i + ss - 1 : se - i);
-				ItemStack stack = slot.getStack();
+				Slot slot = slots.get(d ? i + ss - 1 : se - i);
+				ItemStack stack = slot.getItem();
 				if (stack.isEmpty()) continue;
 				if (slot instanceof ISpecialSlot) {
 					ISpecialSlot s = (ISpecialSlot)slot;
@@ -139,23 +139,23 @@ implements IServerPacketReceiver, IPlayerPacketReceiver {
 					}
 				} else if (ItemHandlerHelper.canItemStacksStack(stack, item1)) {
 					int j = stack.getCount() + item1.getCount();
-					int mxs = Math.min(item1.getMaxStackSize(), slot.getSlotStackLimit());
+					int mxs = Math.min(item1.getMaxStackSize(), slot.getMaxStackSize());
 					if (j <= mxs) {
 						item.setCount(0);
 						stack.setCount(j);
-						slot.onSlotChanged();
+						slot.setChanged();
 						return true;
 					} else if (stack.getCount() < mxs) {
 						item1.shrink(mxs - stack.getCount());
 						stack.setCount(mxs);
-						slot.onSlotChanged();
+						slot.setChanged();
 					}
 				}
 			}
 		if (item1.getCount() > 0)
 			for (int i = se - ss; i > 0; i--) {
-				Slot slot = inventorySlots.get(d ? i + ss - 1 : se - i);
-				if (slot.getStack().getCount() != 0) continue;
+				Slot slot = slots.get(d ? i + ss - 1 : se - i);
+				if (slot.getItem().getCount() != 0) continue;
 				if (slot instanceof ISpecialSlot) {
 					ISpecialSlot s = (ISpecialSlot)slot;
 					if ((item1 = s.insertItem(item1, false)).getCount() == 0) {
@@ -165,16 +165,16 @@ implements IServerPacketReceiver, IPlayerPacketReceiver {
 						item.setCount(item1.getCount());
 						return true;
 					}
-				} else if (slot.isItemValid(item1)) {
-					int mxs = slot.getItemStackLimit(item1);
+				} else if (slot.mayPlace(item1)) {
+					int mxs = slot.getMaxStackSize(item1);
 					if (item1.getCount() <= mxs) {
-						slot.putStack(item1.copy());
-						slot.onSlotChanged();
+						slot.set(item1.copy());
+						slot.setChanged();
 						item.setCount(0);
 						return true;
 					} else {
-						slot.putStack(item1.split(mxs));
-						slot.onSlotChanged();
+						slot.set(item1.split(mxs));
+						slot.setChanged();
 					}
 				}
 			}
@@ -185,38 +185,38 @@ implements IServerPacketReceiver, IPlayerPacketReceiver {
 	}
 
 	@Override
-	public ItemStack transferStackInSlot(PlayerEntity player, int id) {
-		Slot slot = inventorySlots.get(id);
-		if (slot == null || !slot.getHasStack()) return ItemStack.EMPTY;
-		ItemStack stack = slot.getStack();
+	public ItemStack quickMoveStack(PlayerEntity player, int id) {
+		Slot slot = slots.get(id);
+		if (slot == null || !slot.hasItem()) return ItemStack.EMPTY;
+		ItemStack stack = slot.getItem();
 		ItemStack item = stack.copy();
 		if (id >= playerInvS && id < playerInvE) {
 			for (IQuickTransferHandler h : transferHandlers)
 				if (h.transfer(stack, this)) break;
-		} else mergeItemStack(stack, playerInvS, playerInvE, false);
+		} else moveItemStackTo(stack, playerInvS, playerInvE, false);
 		if (stack.getCount() == item.getCount()) return ItemStack.EMPTY;
-		slot.onSlotChange(stack, item);
-		slot.onSlotChanged();
+		slot.onQuickCraft(stack, item);
+		slot.setChanged();
 		slot.onTake(player, stack);
 		return item;
 	}
 
 	@Override
-	public ItemStack slotClick(int s, int b, ClickType m, PlayerEntity player) {
-		Slot slot = s >= 0 && s < inventorySlots.size() ? inventorySlots.get(s) : null;
+	public ItemStack clicked(int s, int b, ClickType m, PlayerEntity player) {
+		Slot slot = s >= 0 && s < slots.size() ? slots.get(s) : null;
 		if (slot instanceof ISpecialSlot) {
 			ISpecialSlot ss = (ISpecialSlot)slot;
 			return ss.onClick(b, m, player, this);
-		} else return super.slotClick(s, b, m, player);
+		} else return super.clicked(s, b, m, player);
 	}
 
 	@Override
-	public void detectAndSendChanges() {
+	public void broadcastChanges() {
 		if (hardInvUpdate && inv.player instanceof ServerPlayerEntity) {
-			((ServerPlayerEntity)inv.player).isChangingQuantityOnly = false;
+			((ServerPlayerEntity)inv.player).ignoreSlotUpdateHack = false;
 			hardInvUpdate = false;
 		}
-		super.detectAndSendChanges();
+		super.broadcastChanges();
 		detectChanges(sync.clear());
 		sync.detectChanges();
 		if(!sync.isEmpty()) {
@@ -231,14 +231,14 @@ implements IServerPacketReceiver, IPlayerPacketReceiver {
 	protected void detectChanges(BitSet chng) {
 		BitSet slots = syncSlots;
 		for (int i = slots.nextSetBit(0), j = 0; i >= 0; i = slots.nextSetBit(i + 1), j++) {
-			Slot slot = inventorySlots.get(i);
+			Slot slot = this.slots.get(i);
 			if (slot instanceof IFluidSlot) {
 				FluidStack fluidN = ((IFluidSlot)slot).getFluid();
 				FluidStack fluidO = sync.get(j);
 				if (!fluidO.isFluidStackIdentical(fluidN))
 					sync.set(j, fluidN.copy());
 			} else {
-				ItemStack itemN = slot.getStack();
+				ItemStack itemN = slot.getItem();
 				ItemStack itemO = sync.get(j);
 				if (!itemO.equals(itemN, true))
 					sync.set(j, itemN.copy());
@@ -261,25 +261,25 @@ implements IServerPacketReceiver, IPlayerPacketReceiver {
 		BitSet slots = syncSlots;
 		for (int i = slots.nextSetBit(0), j = sync.objIdxOfs(); i >= 0; i = slots.nextSetBit(i + 1), j++)
 			if (chng.get(j)) {
-				Slot slot = inventorySlots.get(i);
+				Slot slot = this.slots.get(i);
 				if (slot instanceof IFluidSlot)
 					((IFluidSlot)slot).putFluid(ItemFluidUtil.readFluidStack(pkt));
-				else slot.putStack(ItemFluidUtil.readItemHighRes(pkt));
+				else slot.set(ItemFluidUtil.readItemHighRes(pkt));
 			}
 	}
 
 	@Override
-	public void putStackInSlot(int slotID, ItemStack stack) {
+	public void setItem(int slotID, ItemStack stack) {
 		if (syncSlots.get(slotID)) return;
-		getSlot(slotID).putStack(stack);
+		getSlot(slotID).set(stack);
 	}
 
 	@Override
 	@OnlyIn(Dist.CLIENT)
 	public void setAll(List<ItemStack> items) {
-		int m = Math.min(items.size(), inventorySlots.size());
+		int m = Math.min(items.size(), slots.size());
 		for (int i = 0; i < m; ++i)
-			putStackInSlot(i, items.get(i));
+			setItem(i, items.get(i));
 	}
 
 	@Override
@@ -299,12 +299,12 @@ implements IServerPacketReceiver, IPlayerPacketReceiver {
 	}
 
 	@Override
-	public boolean canInteractWith(PlayerEntity playerIn) {
+	public boolean stillValid(PlayerEntity playerIn) {
 		for(Object e : sync.holders)
 			if(e instanceof TileEntity) {
 				TileEntity te = (TileEntity)e;
-				if(te.isRemoved() || te.getWorld() != playerIn.world) return false;
-				if(!te.getPos().withinDistance(playerIn.getPositionVec(), 8)) return false;
+				if(te.isRemoved() || te.getLevel() != playerIn.level) return false;
+				if(!te.getBlockPos().closerThan(playerIn.position(), 8)) return false;
 			}
 		return true;
 	}
@@ -312,7 +312,7 @@ implements IServerPacketReceiver, IPlayerPacketReceiver {
 	public BlockPos getPos() {
 		for(Object e : sync.holders)
 			if(e instanceof TileEntity)
-				return ((TileEntity)e).getPos();
+				return ((TileEntity)e).getBlockPos();
 		return Utils.NOWHERE;
 	}
 

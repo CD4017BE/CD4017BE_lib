@@ -46,15 +46,15 @@ implements ObjIntConsumer<GuiList>, Supplier<String>, Consumer<String> {
 
 	@Override
 	public void drawBackground(MatrixStack stack, int mx, int my, float t) {
-		GlStateManager.disableDepthTest();
+		GlStateManager._disableDepthTest();
 		super.drawBackground(stack, mx, my, t);
 		String path = dir.getPath() + "/";
-		if(fontRenderer.getStringWidth(path) > w - 16)
-			path = "..." + fontRenderer.func_238413_a_(
-				path, w - 16 - fontRenderer.getStringWidth("..."), true
+		if(fontRenderer.width(path) > w - 16)
+			path = "..." + fontRenderer.plainSubstrByWidth(
+				path, w - 16 - fontRenderer.width("..."), true
 			);
-		fontRenderer.drawString(stack, path, x + 8, y + 16, 0xff202020);
-		GlStateManager.enableDepthTest();
+		fontRenderer.draw(stack, path, x + 8, y + 16, 0xff202020);
+		GlStateManager._enableDepthTest();
 	}
 
 	/** close this sub Frame */

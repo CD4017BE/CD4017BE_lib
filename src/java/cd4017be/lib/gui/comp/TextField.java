@@ -75,30 +75,30 @@ public class TextField extends Tooltip {
 		int ofs = 0;
 		if (focused()) {
 			if (cur > text.length()) cur = text.length();
-			int l = fr.getStringWidth(text);
-			int k = fr.getStringWidth(text.substring(0, cur));
+			int l = fr.width(text);
+			int k = fr.width(text.substring(0, cur));
 			if (l > w)
 				if (k <= w/2) {
-					t = fr.func_238413_a_(text, w, false);
+					t = fr.plainSubstrByWidth(text, w, false);
 				} else if (l - k < w/2) {
 					k = k - l + w;
-					t = fr.func_238413_a_(text, w, true);
-					ofs = w - fr.getStringWidth(t);
+					t = fr.plainSubstrByWidth(text, w, true);
+					ofs = w - fr.width(t);
 				} else {
 					k = w/2;
-					t = fr.func_238413_a_(text.substring(0, cur), k, true);
-					ofs = k - fr.getStringWidth(t);
-					t += fr.func_238413_a_(text.substring(cur), w - k, false);
+					t = fr.plainSubstrByWidth(text.substring(0, cur), k, true);
+					ofs = k - fr.width(t);
+					t += fr.plainSubstrByWidth(text.substring(cur), w - k, false);
 				}
 			else t = text;
-			GuiUtils.drawGradientRect(stack.getLast().getMatrix(), (int)parent.zLevel, x - 1 + k, y + (h - fr.FONT_HEIGHT) / 2 + 1, x + k, y + (h + 7) / 2, cc, cc);
+			GuiUtils.drawGradientRect(stack.last().pose(), (int)parent.zLevel, x - 1 + k, y + (h - fr.lineHeight) / 2 + 1, x + k, y + (h + 7) / 2, cc, cc);
 		} else {
 			text = get.get();
-			t = fr.func_238413_a_(text, w, true);
-			if (t.length() < text.length()) ofs = w - fr.getStringWidth(t);
+			t = fr.plainSubstrByWidth(text, w, true);
+			if (t.length() < text.length()) ofs = w - fr.width(t);
 		}
-		fr.drawString(stack, t, x + ofs, y + (h - 8) / 2, tc);
-		GlStateManager.color4f(1, 1, 1, 1);
+		fr.draw(stack, t, x + ofs, y + (h - 8) / 2, tc);
+		GlStateManager._color4f(1, 1, 1, 1);
 	}
 
 	@Override

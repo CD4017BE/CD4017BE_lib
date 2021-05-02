@@ -101,7 +101,7 @@ public class CraftingRecipeIterator implements OperandIterator {
 	public boolean hasNext() {
 		while (list.hasNext()) {
 			curRecipe = list.next();
-			ItemOperand result = new ItemOperand(curRecipe.getRecipeOutput());
+			ItemOperand result = new ItemOperand(curRecipe.getResultItem());
 			if (!key.test(result)) continue;
 			result.onCopy();
 			OperandIterator ingred = new IngredientIterator(curRecipe.getIngredients(), item, curRecipe instanceof IShapedRecipe);

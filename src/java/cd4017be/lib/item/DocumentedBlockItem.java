@@ -34,15 +34,15 @@ public class DocumentedBlockItem extends BlockItem {
 	}
 
 	@Override
-	public ITextComponent getDisplayName(ItemStack stack) {
-		return cTranslate(getTranslationKey(stack));
+	public ITextComponent getName(ItemStack stack) {
+		return cTranslate(getDescriptionId(stack));
 	}
 
 	@Override
 	@OnlyIn(Dist.CLIENT)
-	public void addInformation(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
-		DocumentedItem.addInformation(getTranslationKey(), tooltipArgs, tooltip);
-		super.addInformation(stack, world, tooltip, flag);
+	public void appendHoverText(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
+		DocumentedItem.addInformation(getDescriptionId(), tooltipArgs, tooltip);
+		super.appendHoverText(stack, world, tooltip, flag);
 	}
 
 }

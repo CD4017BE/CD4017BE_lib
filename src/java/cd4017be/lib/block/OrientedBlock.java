@@ -32,27 +32,27 @@ public class OrientedBlock<T extends TileEntity> extends BlockTE<T> {
 	}
 
 	@Override
-	protected void fillStateContainer(Builder<Block, BlockState> builder) {
-		super.fillStateContainer(builder);
+	protected void createBlockStateDefinition(Builder<Block, BlockState> builder) {
+		super.createBlockStateDefinition(builder);
 		//FIXME field not initialized in time
 		builder.add(orientProp);
 	}
 
 	@Override
 	public BlockState getStateForPlacement(BlockItemUseContext context) {
-		return getDefaultState().with(orientProp, orientProp.getPlacementState(context, handlerFlags >> 24 & 3));
+		return defaultBlockState().setValue(orientProp, orientProp.getPlacementState(context, handlerFlags >> 24 & 3));
 	}
 
 	@Override
 	public VoxelShape
 	getShape(BlockState state, IBlockReader world, BlockPos pos, ISelectionContext context) {
-		return shapes != null ? shapes[state.get(orientProp).ordinal()]
+		return shapes != null ? shapes[state.getValue(orientProp).ordinal()]
 			: super.getShape(state, world, pos, context);
 	}
 
 	public OrientedBlock<T> setShape(VoxelShape main) {
 		shapes = new VoxelShape[16];
-		for (Orientation o : orientProp.getAllowedValues())
+		for (Orientation o : orientProp.getPossibleValues())
 			shapes[o.ordinal()] = o.apply(main);
 		return this;
 	}
@@ -60,17 +60,17 @@ public class OrientedBlock<T extends TileEntity> extends BlockTE<T> {
 	@Override
 	public BlockState rotate(BlockState state, Rotation rot) {
 		if (rot == Rotation.NONE) return state;
-		int i = state.get(orientProp).ordinal();
+		int i = state.getValue(orientProp).ordinal();
 		Orientation o = Orientation.values()[i & 12 | rot.rotate(i & 3, 4)];
-		return orientProp.getAllowedValues().contains(o) ? state.with(orientProp, o) : state;
+		return orientProp.getPossibleValues().contains(o) ? state.setValue(orientProp, o) : state;
 	}
 
 	@Override
 	public BlockState mirror(BlockState state, Mirror mirror) {
 		if (mirror == Mirror.NONE) return state;
-		int i = state.get(orientProp).ordinal();
-		Orientation o = Orientation.values()[i & 12 | mirror.mirrorRotation(i & 3, 4)];
-		return orientProp.getAllowedValues().contains(o) ? state.with(orientProp, o) : state;
+		int i = state.getValue(orientProp).ordinal();
+		Orientation o = Orientation.values()[i & 12 | mirror.mirror(i & 3, 4)];
+		return orientProp.getPossibleValues().contains(o) ? state.setValue(orientProp, o) : state;
 	}
 
 }

@@ -42,17 +42,17 @@ public class GlitchSaveSlot extends SlotItemHandler implements ISpecialSlot {
 	// prevent vanilla from synchronizing with low stack size resolution and other unwanted things like other mods's inventory sorting mechanisms messing up everything. //
 
 	@Override
-	public boolean isItemValid(ItemStack stack) {
+	public boolean mayPlace(ItemStack stack) {
 		return false;
 	}
 
 	@Override
-	public boolean canTakeStack(PlayerEntity playerIn) {
+	public boolean mayPickup(PlayerEntity playerIn) {
 		return false;
 	}
 
 	@Override
-	public ItemStack decrStackSize(int amount) {
+	public ItemStack remove(int amount) {
 		return ItemStack.EMPTY;
 	}
 
@@ -65,19 +65,19 @@ public class GlitchSaveSlot extends SlotItemHandler implements ISpecialSlot {
 
 	@Override
 	public ItemStack onClick(int b, ClickType ct, PlayerEntity player, AdvancedContainer container) {
-		ItemStack item = getStack();
+		ItemStack item = getItem();
 		if (ct == ClickType.CLONE) {
 			ISpecialSlot.quickSelect(player, item);
 			return ItemStack.EMPTY;
 		} else if (ct != ClickType.PICKUP && ct != ClickType.QUICK_MOVE)
 			return ItemStack.EMPTY;
 		if (!clientInteract) {
-			if (player.world.isRemote)
+			if (player.level.isClientSide)
 				return ItemStack.EMPTY;
 			container.hardInvUpdate();
 		}
 		boolean boost = ct == ClickType.QUICK_MOVE;
-		ItemStack curItem = player.inventory.getItemStack();
+		ItemStack curItem = player.inventory.getCarried();
 		if (curItem.getCount() > 0 && (item.isEmpty() || ItemHandlerHelper.canItemStacksStack(item, curItem))) {
 			if (boost) {
 				ItemStack rem = insertItem(ItemHandlerHelper.copyStackWithSize(curItem, 65536), true);
@@ -87,7 +87,7 @@ public class GlitchSaveSlot extends SlotItemHandler implements ISpecialSlot {
 					if (n < curItem.getCount()) curItem.shrink(n1 = n);
 					else {
 						n1 = curItem.getCount();
-						player.inventory.setItemStack(ItemStack.EMPTY);
+						player.inventory.setCarried(ItemStack.EMPTY);
 					}
 				}
 				if (n1 < n)
@@ -97,7 +97,7 @@ public class GlitchSaveSlot extends SlotItemHandler implements ISpecialSlot {
 				int n = b == 0 ? curItem.getCount() : 1;
 				ItemStack rem = insertItem(ItemHandlerHelper.copyStackWithSize(curItem, n), false);
 				curItem.shrink(n - rem.getCount());
-				if (curItem.getCount() <= 0) player.inventory.setItemStack(ItemStack.EMPTY);
+				if (curItem.getCount() <= 0) player.inventory.setCarried(ItemStack.EMPTY);
 			}
 		} else if (item.getCount() > 0) {
 			int n = boost ? (b == 0 ? item.getMaxStackSize() : 65536) : (b == 0 ? 1 : 8);
@@ -106,7 +106,7 @@ public class GlitchSaveSlot extends SlotItemHandler implements ISpecialSlot {
 			if (transferTarget != null)
 				for (int i = 0; i < transferTarget.length; i+=2) {
 					int ss = transferTarget[i], se = transferTarget[i|1];
-					if (container.mergeItemStack(item1, Math.min(ss, se), Math.max(ss, se), ss > se))
+					if (container.moveItemStackTo(item1, Math.min(ss, se), Math.max(ss, se), ss > se))
 						break;
 				}
 			int rem = item1.getCount() <= 0 ? 0 : ISpecialSlot.putInPlayerInv(item1, player.inventory);

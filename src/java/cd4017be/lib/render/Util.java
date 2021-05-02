@@ -37,9 +37,9 @@ public class Util {
 		Vector3i x1, y1, z1;
 		FloatBuffer buff;
 		for (Orientation o : Orientation.values()) {
-			x1 = o.r.getDirectionVec();
-			y1 = o.u.getDirectionVec();
-			z1 = o.b.getDirectionVec();
+			x1 = o.r.getNormal();
+			y1 = o.u.getNormal();
+			z1 = o.b.getNormal();
 			buff = BufferUtils.createFloatBuffer(16);
 			buff.put(new float[] {
 				x1.getX(), x1.getY(), x1.getZ(), 0,
@@ -233,7 +233,7 @@ public class Util {
 	 * @return interpolated uv
 	 */
 	public static Vector2f getUV(TextureAtlasSprite tex, float u, float v) {
-		return new Vector2f(tex.getInterpolatedU(u), tex.getInterpolatedV(v));
+		return new Vector2f(tex.getU(u), tex.getV(v));
 	}
 
 	/**
@@ -247,7 +247,7 @@ public class Util {
 		int l = b.getVertexFormat().getIntegerSize();
 		from *= l; to *= l;
 		int[] arr = new int [to - from];
-		ByteBuffer bb = b.getNextBuffer().getSecond();
+		ByteBuffer bb = b.popNextBuffer().getSecond();
 		int p = bb.position();
 		bb.position(from * 4);
 		IntBuffer ib = bb.asIntBuffer();

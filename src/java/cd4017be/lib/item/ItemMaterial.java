@@ -24,21 +24,21 @@ public class ItemMaterial extends DocumentedItem {
 	}
 
 	@Override
-	public String getTranslationKey(ItemStack item) {
-		Variant name = variants.get(item.getDamage());
-		return this.getTranslationKey() + (name == null ? "" : ":" + name);
+	public String getDescriptionId(ItemStack item) {
+		Variant name = variants.get(item.getDamageValue());
+		return this.getDescriptionId() + (name == null ? "" : ":" + name);
 	}
 
 	@Override
-	public ITextComponent getDisplayName(ItemStack item) {
-		Variant name = variants.get(item.getDamage());
+	public ITextComponent getName(ItemStack item) {
+		Variant name = variants.get(item.getDamageValue());
 		if (name != null) return name.getLocName();
-		return TooltipUtil.cTranslate(this.getTranslationKey());
+		return TooltipUtil.cTranslate(this.getDescriptionId());
 	}
 
 	@Override
-	public void fillItemGroup(ItemGroup group, NonNullList<ItemStack> items) {
-		if (!isInGroup(group)) return;
+	public void fillItemCategory(ItemGroup group, NonNullList<ItemStack> items) {
+		if (!allowdedIn(group)) return;
 		items.add(new ItemStack(this));
 		int[] ids = new int[variants.size()];
 		int n = 0;
@@ -46,7 +46,7 @@ public class ItemMaterial extends DocumentedItem {
 		Arrays.sort(ids);
 		for (int i : ids) {
 			ItemStack stack = new ItemStack(this, 1);
-			stack.setDamage(i);
+			stack.setDamageValue(i);
 			items.add(stack);
 		}
 	}
@@ -70,7 +70,7 @@ public class ItemMaterial extends DocumentedItem {
 
 		public ITextComponent getLocName() {
 			if (locName != null) return TooltipUtil.convert(locName);
-			return TooltipUtil.cTranslate(getTranslationKey() + ":" + name + ".name");
+			return TooltipUtil.cTranslate(getDescriptionId() + ":" + name + ".name");
 		}
 
 		@Override

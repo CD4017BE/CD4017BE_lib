@@ -55,7 +55,7 @@ public class JitBakedModel implements IBakedModel {
 	}
 
 	@Override
-	public boolean isAmbientOcclusion() {
+	public boolean useAmbientOcclusion() {
 		return (mode & AOC) != 0;
 	}
 
@@ -65,17 +65,17 @@ public class JitBakedModel implements IBakedModel {
 	}
 
 	@Override
-	public boolean isSideLit() {
+	public boolean usesBlockLight() {
 		return (mode & LIT) != 0;
 	}
 
 	@Override
-	public boolean isBuiltInRenderer() {
+	public boolean isCustomRenderer() {
 		return false;
 	}
 
 	@Override
-	public TextureAtlasSprite getParticleTexture() {
+	public TextureAtlasSprite getParticleIcon() {
 		return particle;
 	}
 

@@ -58,7 +58,7 @@ public class BasicInventory extends AbstractInventory {
 			CompoundNBT tag = (CompoundNBT)nbt;
 			int slot = tag.getByte("Slot") & 0xff;
 			if (slot < items.length)
-				items[slot] = ItemStack.read(tag);
+				items[slot] = ItemStack.of(tag);
 		}
 	}
 
@@ -67,7 +67,7 @@ public class BasicInventory extends AbstractInventory {
 		for (int i = 0; i < items.length; i++) {
 			ItemStack item = items[i];
 			if (item.isEmpty()) continue;
-			CompoundNBT tag = item.write(new CompoundNBT());
+			CompoundNBT tag = item.save(new CompoundNBT());
 			tag.putByte("Slot", (byte)i);
 			list.add(tag);
 		}

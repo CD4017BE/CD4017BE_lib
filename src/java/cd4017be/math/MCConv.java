@@ -16,9 +16,9 @@ public class MCConv {
 
 	public static float[] dirVecF(Direction dir, float l) {
 		return new float[] {
-			dir.getXOffset() * l,
-			dir.getYOffset() * l,
-			dir.getZOffset() * l
+			dir.getStepX() * l,
+			dir.getStepY() * l,
+			dir.getStepZ() * l
 		};
 	}
 

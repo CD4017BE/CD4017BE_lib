@@ -16,7 +16,7 @@ public class InventoryItem extends AbstractInventory {
 
 	public InventoryItem(PlayerEntity player) {
 		this.ref = player.inventory;
-		ItemStack item = ref.mainInventory.get(ref.currentItem);
+		ItemStack item = ref.items.get(ref.selected);
 		if (!(item.getItem() instanceof IItemInventory)) throw new IllegalArgumentException("Held item not InventoryItem compatible!");
 		this.inv = (IItemInventory)item.getItem();
 		this.cache = inv.loadInventory(item, player);
@@ -35,13 +35,13 @@ public class InventoryItem extends AbstractInventory {
 	@Override
 	public void setStackInSlot(int slot, ItemStack stack) {
 		cache[slot] = stack;
-		ItemStack item = ref.mainInventory.get(ref.currentItem);
+		ItemStack item = ref.items.get(ref.selected);
 		if (item.getItem() == inv)
 			inv.saveInventory(item, ref.player, cache);
 	}
 
 	public void update() {
-		ItemStack item = ref.mainInventory.get(ref.currentItem);
+		ItemStack item = ref.items.get(ref.selected);
 		if (item.getItem() == inv) {
 			ItemStack[] items = inv.loadInventory(item, ref.player);
 			System.arraycopy(items, 0, cache, 0, Math.min(cache.length, items.length));

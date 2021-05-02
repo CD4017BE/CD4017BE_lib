@@ -16,7 +16,7 @@ public class ItemKey {
 		final int prime = 31;
 		int result = 1;
 		for (ItemStack item : items)
-			result = prime * result + (item.isEmpty() ? 0 : item.getItem().getRegistryName().hashCode() ^ item.getDamage());
+			result = prime * result + (item.isEmpty() ? 0 : item.getItem().getRegistryName().hashCode() ^ item.getDamageValue());
 		this.hash = result;
 	}
 
@@ -34,7 +34,7 @@ public class ItemKey {
 			if (other.items.length != n) return false;
 			for (int i = 0; i < n; i++) {
 				ItemStack item = items[i];
-				if (!(item.isEmpty() ? other.items[i].isEmpty() : item.isItemEqual(other.items[i])))
+				if (!(item.isEmpty() ? other.items[i].isEmpty() : item.sameItem(other.items[i])))
 					return false;
 			}
 			return true;

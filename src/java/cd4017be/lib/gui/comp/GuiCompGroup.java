@@ -242,7 +242,7 @@ public class GuiCompGroup extends IndexedSet<IGuiComp> implements IGuiComp {
 		if (tex != mainTex) bound = false;
 		else if (bound) return;
 		else bound = true;
-		if (tex != null) Minecraft.getInstance().textureManager.bindTexture(tex);
+		if (tex != null) Minecraft.getInstance().textureManager.bind(tex);
 	}
 
 	/**
@@ -255,7 +255,7 @@ public class GuiCompGroup extends IndexedSet<IGuiComp> implements IGuiComp {
 			return b;
 		}
 		if (tessellator == null) tessellator = new Tessellator(256 * 5);
-		BufferBuilder b = tessellator.getBuffer();
+		BufferBuilder b = tessellator.getBuilder();
 		if (!drawing) {
 			b.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
 			drawing = true;
@@ -269,10 +269,10 @@ public class GuiCompGroup extends IndexedSet<IGuiComp> implements IGuiComp {
 	public void drawNow() {
 		if (inheritRender) parent.drawNow();
 		else if (drawing) {
-			GlStateManager.color4f(1F, 1F, 1F, 1F);
-			GlStateManager.enableBlend();
+			GlStateManager._color4f(1F, 1F, 1F, 1F);
+			GlStateManager._enableBlend();
 			bindTexture(mainTex);
-			tessellator.draw();
+			tessellator.end();
 			drawing = false;
 		}
 	}
@@ -287,16 +287,16 @@ public class GuiCompGroup extends IndexedSet<IGuiComp> implements IGuiComp {
 	 * @param h height in pixels
 	 */
 	public void drawRect(MatrixStack stack, int x, int y, int tx, int ty, int w, int h) {
-		Matrix4f mat = stack.getLast().getMatrix();
+		Matrix4f mat = stack.last().pose();
 		BufferBuilder b = getDraw();
 		int X = x + w, Y = y + h;
 		float u = (float)tx / (float)texW, U = (float)(tx + w) / (float)texW,
 				v = (float)ty / (float)texH, V = (float)(ty + h) / (float)texH,
 				z = zLevel;
-		b.pos(mat, x, Y, z).tex(u, V).endVertex();
-		b.pos(mat, X, Y, z).tex(U, V).endVertex();
-		b.pos(mat, X, y, z).tex(U, v).endVertex();
-		b.pos(mat, x, y, z).tex(u, v).endVertex();
+		b.vertex(mat, x, Y, z).uv(u, V).endVertex();
+		b.vertex(mat, X, Y, z).uv(U, V).endVertex();
+		b.vertex(mat, X, y, z).uv(U, v).endVertex();
+		b.vertex(mat, x, y, z).uv(u, v).endVertex();
 	}
 
 	/**

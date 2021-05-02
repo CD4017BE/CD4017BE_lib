@@ -88,14 +88,14 @@ implements DoubleSupplier, DoubleConsumer {
 		int y = this.y, dy = h / n;
 		for(int l = Math.min(n + scroll, elements.length), i = scroll; i < l; i++, y += dy) {
 			String s = elements[i];
-			if (fr.getStringWidth(s) > w)
-				s = fr.func_238413_a_(s, w - fr.getStringWidth(" ..."), false) + " ...";
-			fr.drawString(stack, s, x, y, tc);
+			if (fr.width(s) > w)
+				s = fr.plainSubstrByWidth(s, w - fr.width(" ..."), false) + " ...";
+			fr.draw(stack, s, x, y, tc);
 		}
 		int i = sel - scroll;
 		if(i >= 0 && i < n) {
 			y = this.y + i * dy;
-			GuiUtils.drawGradientRect(stack.getLast().getMatrix(), x, y, x + w, y + dy, sc, i, i);
+			GuiUtils.drawGradientRect(stack.last().pose(), x, y, x + w, y + dy, sc, i, i);
 		}
 	}
 

@@ -69,7 +69,7 @@ public class Lib {
 
 	public static final ItemGroup creativeTab = new ItemGroup(ID) {
 		@Override
-		public ItemStack createIcon() {
+		public ItemStack makeIcon() {
 			return new ItemStack(rrwi);
 		}
 	};
@@ -105,8 +105,8 @@ public class Lib {
 
 	@SubscribeEvent
 	void registerBlocks(Register<Block> ev) {
-		Properties p = Properties.create(Material.IRON)
-		.hardnessAndResistance(-1F, Float.POSITIVE_INFINITY)
+		Properties p = Properties.of(Material.METAL)
+		.strength(-1F, Float.POSITIVE_INFINITY)
 		.noDrops().sound(SoundType.ANVIL);
 		ev.getRegistry().registerAll(
 			(ENERGY_SUPP = new BlockTE<>(p, flags(EnergySupply.class))).setRegistryName(rl("energy_supp")),
@@ -117,8 +117,8 @@ public class Lib {
 
 	@SubscribeEvent
 	void registerItems(Register<Item> ev) {
-		Item.Properties p = new Item.Properties().group(creativeTab).rarity(Rarity.EPIC),
-		p1 = new Item.Properties().group(creativeTab);
+		Item.Properties p = new Item.Properties().tab(creativeTab).rarity(Rarity.EPIC),
+		p1 = new Item.Properties().tab(creativeTab);
 		ev.getRegistry().registerAll(
 			energy_supp = new DocumentedBlockItem(ENERGY_SUPP, p),
 			fluid_supp = new DocumentedBlockItem(FLUID_SUPP, p),
@@ -149,9 +149,9 @@ public class Lib {
 	@OnlyIn(Dist.CLIENT)
 	void setupClient(FMLClientSetupEvent ev) {
 		TooltipEditor.init();
-		ScreenManager.registerFactory(C_ENERGY_SUPP, ContainerEnergySupply::setupGui);
-		ScreenManager.registerFactory(C_ITEM_SUPP, ContainerItemSupply::setupGui);
-		ScreenManager.registerFactory(C_FLUID_SUPP, ContainerFluidSupply::setupGui);
+		ScreenManager.register(C_ENERGY_SUPP, ContainerEnergySupply::setupGui);
+		ScreenManager.register(C_ITEM_SUPP, ContainerItemSupply::setupGui);
+		ScreenManager.register(C_FLUID_SUPP, ContainerFluidSupply::setupGui);
 	}
 	
 	@SubscribeEvent

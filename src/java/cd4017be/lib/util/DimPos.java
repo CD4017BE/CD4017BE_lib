@@ -34,7 +34,7 @@ public class DimPos extends BlockPos {
 	 * @param source an Entity
 	 */
 	public DimPos(Entity source) {
-		this(source.getPosition(), source.world);
+		this(source.blockPosition(), source.level);
 	}
 
 	/**
@@ -42,7 +42,7 @@ public class DimPos extends BlockPos {
 	 * @param source a TileEntity (must be added to a world)
 	 */
 	public DimPos(TileEntity source) {
-		this(source.getPos(), source.getWorld());
+		this(source.getBlockPos(), source.getLevel());
 	}
 
 	/**
@@ -50,7 +50,7 @@ public class DimPos extends BlockPos {
 	 * @param world the dimension's world
 	 */
 	public DimPos(Vector3i source, World world) {
-		this(source, world.getDimensionKey());
+		this(source, world.dimension());
 		this.world = new WeakReference<>(world);
 	}
 
@@ -80,7 +80,7 @@ public class DimPos extends BlockPos {
 	 * @param world the dimension's world
 	 */
 	public DimPos(int x, int y, int z, ServerWorld world) {
-		this(x, y, z, world.getDimensionKey());
+		this(x, y, z, world.dimension());
 		this.world = new WeakReference<>(world);
 	}
 
@@ -88,7 +88,7 @@ public class DimPos extends BlockPos {
 	public DimPos(CompoundNBT nbt) {
 		this(
 			nbt.getInt("x"), nbt.getInt("y"), nbt.getInt("z"),
-			RegistryKey.getOrCreateKey(Registry.WORLD_KEY, new ResourceLocation(nbt.getString("d")))
+			RegistryKey.create(Registry.DIMENSION_REGISTRY, new ResourceLocation(nbt.getString("d")))
 		);
 	}
 
@@ -97,7 +97,7 @@ public class DimPos extends BlockPos {
 	 * @param world the world instance for this dimension
 	 */
 	public DimPos assignWorld(World world) {
-		if (world.getDimensionKey() != dim)
+		if (world.dimension() != dim)
 			throw new IllegalArgumentException("given world represents a different dimension");
 		this.world = new WeakReference<>(world);
 		return this;
@@ -118,13 +118,13 @@ public class DimPos extends BlockPos {
 	public ServerWorld getServerWorld(World ref) {
 		World world = this.world.get();
 		if (world instanceof ServerWorld) return (ServerWorld)world;
-		ServerWorld ws = ref.getServer().getWorld(dim);
+		ServerWorld ws = ref.getServer().getLevel(dim);
 		if (ws != null) this.world = new WeakReference<World>(ws);
 		return ws;
 	}
 
 	@Override
-	public DimPos add(int x, int y, int z) {
+	public DimPos offset(int x, int y, int z) {
 		if (x == 0 && y == 0 && z == 0) return this;
 		DimPos pos = new DimPos(getX() + x, getY() + y, getZ() + z, dim);
 		pos.world = world;
@@ -132,9 +132,9 @@ public class DimPos extends BlockPos {
 	}
 
 	@Override
-	public DimPos offset(Direction facing, int n) {
+	public DimPos relative(Direction facing, int n) {
 		if (n == 0) return this;
-		DimPos pos = new DimPos(getX() + facing.getXOffset() * n, getY() + facing.getYOffset() * n, getZ() + facing.getZOffset() * n, dim);
+		DimPos pos = new DimPos(getX() + facing.getStepX() * n, getY() + facing.getStepY() * n, getZ() + facing.getStepZ() * n, dim);
 		pos.world = world;
 		return pos;
 	}
@@ -155,8 +155,8 @@ public class DimPos extends BlockPos {
 	}
 
 	@Override
-	public double distanceSq(Vector3i to) {
-		return to instanceof DimPos && ((DimPos)to).dim != dim ? Double.POSITIVE_INFINITY : super.distanceSq(to);
+	public double distSqr(Vector3i to) {
+		return to instanceof DimPos && ((DimPos)to).dim != dim ? Double.POSITIVE_INFINITY : super.distSqr(to);
 	}
 
 	@Override
@@ -169,7 +169,7 @@ public class DimPos extends BlockPos {
 	 */
 	public boolean isLoaded() {
 		World world = this.world.get();
-		return world != null && world.isBlockPresent(this);
+		return world != null && world.isLoaded(this);
 	}
 
 	/**
@@ -177,7 +177,7 @@ public class DimPos extends BlockPos {
 	 */
 	public BlockState getBlock() {
 		World world = this.world.get();
-		return world == null ? Blocks.AIR.getDefaultState() : world.getBlockState(this);
+		return world == null ? Blocks.AIR.defaultBlockState() : world.getBlockState(this);
 	}
 
 	/**
@@ -187,7 +187,7 @@ public class DimPos extends BlockPos {
 	 */
 	public boolean setBlock(BlockState state) {
 		World world = this.world.get();
-		return world != null && world.setBlockState(this, state);
+		return world != null && world.setBlockAndUpdate(this, state);
 	}
 
 	/**
@@ -196,14 +196,14 @@ public class DimPos extends BlockPos {
 	 */
 	public TileEntity getTileEntity() {
 		World world = this.world.get();
-		return world == null || !world.isBlockPresent(this) ? null : world.getTileEntity(this);
+		return world == null || !world.isLoaded(this) ? null : world.getBlockEntity(this);
 	}
 
 	public CompoundNBT write(CompoundNBT nbt) {
 		nbt.putInt("x", getX());
 		nbt.putInt("y", getY());
 		nbt.putInt("z", getZ());
-		nbt.putString("d", dim.getLocation().toString());
+		nbt.putString("d", dim.location().toString());
 		return nbt;
 	}
 

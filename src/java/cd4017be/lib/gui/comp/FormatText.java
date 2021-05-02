@@ -68,11 +68,11 @@ public class FormatText extends GuiCompBase<GuiCompGroup> {
 		FontRenderer fr = parent.fontRenderer;
 		int y = this.y;
 		for (String s : lines.split("\n")) {
-			int x = this.x + (align == 0 ? 0 : (int)Math.round((float)(w - fr.getStringWidth(s)) * align));
-			fr.drawString(stack, s, x, y, tc);
-			y += fr.FONT_HEIGHT;
+			int x = this.x + (align == 0 ? 0 : (int)Math.round((float)(w - fr.width(s)) * align));
+			fr.draw(stack, s, x, y, tc);
+			y += fr.lineHeight;
 		}
-		GlStateManager.color4f(1F, 1F, 1F, 1F);
+		GlStateManager._color4f(1F, 1F, 1F, 1F);
 	}
 
 }

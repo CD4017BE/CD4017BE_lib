@@ -30,12 +30,12 @@ public class SlotItemType extends SlotItemHandler {
 	}
 
 	@Override
-	public boolean isItemValid(ItemStack item) {
+	public boolean mayPlace(ItemStack item) {
 		return !item.isEmpty() && allowed.applyAsInt(item) > 0;
 	}
 
 	@Override
-	public int getItemStackLimit(ItemStack item) {
+	public int getMaxStackSize(ItemStack item) {
 		return allowed.applyAsInt(item);
 	}
 

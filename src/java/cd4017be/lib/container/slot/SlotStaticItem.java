@@ -13,29 +13,29 @@ public class SlotStaticItem extends Slot {
 
 	public SlotStaticItem(int x, int y, ItemStack stack) {
 		super(new Inventory(1), 0, x, y);
-		this.inventory.setInventorySlotContents(0, stack);
+		this.container.setItem(0, stack);
 	}
 
 	@Override
-	public boolean isItemValid(ItemStack stack) {
+	public boolean mayPlace(ItemStack stack) {
 		return false;
 	}
 
 	@Override
-	public void putStack(ItemStack stack) {}
+	public void set(ItemStack stack) {}
 
 	@Override
-	public ItemStack decrStackSize(int amount) {
+	public ItemStack remove(int amount) {
 		return ItemStack.EMPTY;
 	}
 
 	@Override
-	public boolean canTakeStack(PlayerEntity playerIn) {
+	public boolean mayPickup(PlayerEntity playerIn) {
 		return false;
 	}
 
 	@Override
-	public int getSlotStackLimit() {
+	public int getMaxStackSize() {
 		return 0;
 	}
 
