@@ -36,6 +36,8 @@ import static cd4017be.lib.text.TooltipUtil.*;
 
 import java.util.ArrayList;
 
+import org.lwjgl.glfw.GLFW;
+
 import cd4017be.lib.container.AdvancedContainer;
 import cd4017be.lib.container.slot.IFluidSlot;
 import cd4017be.lib.container.slot.SlotHolo;
@@ -201,8 +203,14 @@ public class ModularGui<T extends AdvancedContainer> extends ContainerScreen<T> 
 
 	@Override
 	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-		return compGroup.keyIn((char)keyCode, keyCode, A_DOWN) //TODO other key events
+		return compGroup.keyIn((char)0, keyCode, A_DOWN) //TODO other key events
 			|| super.keyPressed(keyCode, scanCode, modifiers);
+	}
+
+	@Override
+	public boolean charTyped(char c, int modifiers) {
+		return compGroup.keyIn(c, GLFW.GLFW_KEY_UNKNOWN, A_DOWN)
+			|| super.charTyped(c, modifiers);
 	}
 
 	@Override

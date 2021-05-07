@@ -76,7 +76,7 @@ public class Lib {
 
 	public Lib() {
 		FMLJavaModLoadingContext.get().getModEventBus().register(this);
-		CFG_CLIENT.register("lib");
+		CFG_CLIENT.register(ID);
 		MinecraftForge.EVENT_BUS.addListener(this::shutdown);
 	}
 

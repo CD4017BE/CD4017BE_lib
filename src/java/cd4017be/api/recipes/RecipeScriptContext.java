@@ -1,22 +1,14 @@
 package cd4017be.api.recipes;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import org.apache.logging.log4j.Logger;
 
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fluids.FluidStack;
-import cd4017be.lib.config.Config;
 import cd4017be.lib.script.Context;
 import cd4017be.lib.script.Module;
 import cd4017be.lib.script.Parameters;
-import cd4017be.lib.script.Script;
-import cd4017be.lib.script.ScriptFiles;
 import cd4017be.lib.script.ScriptFiles.Version;
 import cd4017be.lib.script.obj.IOperand;
 import cd4017be.lib.script.obj.Nil;
@@ -24,7 +16,6 @@ import cd4017be.lib.script.obj.Number;
 import cd4017be.lib.script.obj.ObjWrapper;
 import cd4017be.lib.script.obj.Text;
 import cd4017be.lib.script.obj.Vector;
-import cd4017be.lib.util.FileUtil;
 
 /**
  * 
@@ -159,6 +150,7 @@ public class RecipeScriptContext extends Context {
 	}
 
 	public void setup() {
+		/*
 		RecipeAPI.addModModules(this);
 		
 		File dir = Config.CONFIG_DIR;
@@ -197,7 +189,7 @@ public class RecipeScriptContext extends Context {
 				scripts = ScriptFiles.loadPackage(comp, versions, false);
 			} catch (IOException e) { LOG.error("loading compiled config scripts failed!", e); }
 		}
-		//if (scripts != null) for (Script s : scripts) add(s);
+		if (scripts != null) for (Script s : scripts) add(s);*/
 	}
 
 	public void runAll(String p) {

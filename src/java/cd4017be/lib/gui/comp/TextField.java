@@ -136,10 +136,11 @@ public class TextField extends Tooltip {
 					text = "";
 					break;
 				}
-			default: if (cur < maxL && (allowFormat || c != '\u00a7')){
-					text = text.substring(0, cur).concat("" + c).concat(text.substring(cur, Math.min(text.length(), maxL - 1)));
-					cur++;
-				} else return false;
+			case GLFW_KEY_UNKNOWN:
+				if (c == 0 || cur >= maxL || !allowFormat && c == '\u00a7')
+					return false;
+				text = text.substring(0, cur).concat("" + c).concat(text.substring(cur, Math.min(text.length(), maxL - 1)));
+				cur++;
 			}
 		} catch (IndexOutOfBoundsException e) {
 			if (cur < 0) cur = 0;

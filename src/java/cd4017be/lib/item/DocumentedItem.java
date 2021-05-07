@@ -2,6 +2,8 @@ package cd4017be.lib.item;
 
 import javax.annotation.Nullable;
 
+import com.google.common.collect.ImmutableList;
+
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
@@ -9,9 +11,11 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 
 import static cd4017be.lib.text.TooltipUtil.*;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Supplier;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.text.*;
 
@@ -22,6 +26,7 @@ public class DocumentedItem extends Item {
 	public static final TranslationTextComponent EXT_TOOLTIP_HINT = new TranslationTextComponent("cd4017be_lib.ext");
 
 	private Supplier<Object[]> tooltipArgs;
+	protected ItemGroup extraTab;
 
 	public DocumentedItem(Properties p) {
 		super(p);
@@ -32,6 +37,11 @@ public class DocumentedItem extends Item {
 	 * @return this */
 	public DocumentedItem tooltipArgs(Supplier<Object[]> tooltipArgs) {
 		this.tooltipArgs = tooltipArgs;
+		return this;
+	}
+
+	public DocumentedItem tab(ItemGroup extraTab) {
+		this.extraTab = extraTab;
 		return this;
 	}
 
@@ -60,6 +70,12 @@ public class DocumentedItem extends Item {
 					tooltipArgs == null ? new Object[0] : tooltipArgs.get()
 				).setStyle(style));
 			else tooltip.add(EXT_TOOLTIP_HINT);
+	}
+
+	@Override
+	public Collection<ItemGroup> getCreativeTabs() {
+		if (extraTab == null) return super.getCreativeTabs();
+		return ImmutableList.of(category, extraTab);
 	}
 
 }

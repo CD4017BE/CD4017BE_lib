@@ -31,7 +31,6 @@ import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.fml.network.NetworkHooks;
 
 /**Passes most events and actions to interfaces implemented by the TileEntity.
@@ -215,16 +214,6 @@ public class BlockTE<T extends TileEntity> extends Block {
 	}
 
 	@Override
-	public void spawnAfterBreak(
-		BlockState state, ServerWorld world, BlockPos pos, ItemStack stack
-	) {
-		handleTE(
-			state, H_DROPS, world, pos, ITEDropItems.class,
-			te -> te.spawnExtraDrops(stack)
-		);
-	}
-
-	@Override
 	public INamedContainerProvider getMenuProvider(BlockState state, World world, BlockPos pos) {
 		if ((handlerFlags & H_GUI) == 0 || !hasTileEntity(state)) return null;
 		TileEntity te = world.getBlockEntity(pos);
@@ -304,7 +293,6 @@ public class BlockTE<T extends TileEntity> extends Block {
 		if(ITECollision.class.isAssignableFrom(c)) f |= H_COLLIDE;
 		if(ITERedstone.class.isAssignableFrom(c)) f |= H_REDSTONE;
 		if(ITEComparator.class.isAssignableFrom(c)) f |= H_COMPARATOR;
-		if(ITEDropItems.class.isAssignableFrom(c)) f |= H_DROPS;
 		if(INamedContainerProvider.class.isAssignableFrom(c)) f |= H_GUI;
 		if(ITEShape.class.isAssignableFrom(c)) f |= H_SHAPE;
 		if(ITEPickItem.class.isAssignableFrom(c)) f |= H_ITEMDATA;
@@ -360,11 +348,6 @@ public class BlockTE<T extends TileEntity> extends Block {
 
 		/** @return comparator signal */
 		int comparatorSignal();
-	}
-
-	public interface ITEDropItems {
-
-		void spawnExtraDrops(ItemStack tool);
 	}
 
 	public interface ISpecialContainerProvider extends Consumer<PacketBuffer>, IUnnamedContainerProvider {
