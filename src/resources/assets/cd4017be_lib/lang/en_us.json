@@ -1,5 +1,7 @@
 {
   "itemGroup.cd4017be_lib": "CD4017BE Lib",
+  "cd4017be_lib.info": "<§aSHIFT§7 for info>",
+  "cd4017be_lib.ext": "<§aCTRL§7 for stats>",
   "block.cd4017be_lib.energy_supp": "Creative Lab Power Supply",
   "block.cd4017be_lib.energy_supp.tip": "Infinite supply and sink for Forge Energy with power statistics and configurable I/O limits.",
   "block.cd4017be_lib.fluid_supp": "Creative Lab Fluid Supply",
@@ -14,5 +16,5 @@
   "gui.cd4017be.scroll": "Slots %.0f...",
   "gui.cd4017be.item_supp": "Item Supply",
   "gui.cd4017be.fluid_supp": "Fluid Supply",
-  "cd4017be.tankAmount": "%.4u / %.4u m�"
+  "cd4017be.tankAmount": "%.4u / %.4u m³"
 }

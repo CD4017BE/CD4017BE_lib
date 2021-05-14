@@ -3,7 +3,7 @@ package cd4017be.lib.config;
 import net.minecraftforge.common.ForgeConfigSpec.*;
 import net.minecraftforge.fml.config.ModConfig.Type;
 
-public class LibClient extends Config {
+public class LibClient extends ModConfig {
 
 	public final ConfigValue<String> tooltipEditPath;
 	public final BooleanValue tooltipEditEnable;

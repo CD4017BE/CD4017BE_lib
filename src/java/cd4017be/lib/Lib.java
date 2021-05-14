@@ -32,6 +32,8 @@ import net.minecraftforge.client.model.ModelLoaderRegistry;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.extensions.IForgeContainerType;
 import net.minecraftforge.event.RegistryEvent.Register;
+import net.minecraftforge.fml.ExtensionPoint;
+import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -152,8 +154,9 @@ public class Lib {
 		ScreenManager.register(C_ENERGY_SUPP, ContainerEnergySupply::setupGui);
 		ScreenManager.register(C_ITEM_SUPP, ContainerItemSupply::setupGui);
 		ScreenManager.register(C_FLUID_SUPP, ContainerFluidSupply::setupGui);
+		ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.CONFIGGUIFACTORY, CFG_CLIENT);
 	}
-	
+
 	@SubscribeEvent
 	@OnlyIn(Dist.CLIENT)
 	void registerModels(ModelRegistryEvent ev) {

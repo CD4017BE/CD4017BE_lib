@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import com.mojang.blaze3d.matrix.MatrixStack.Entry;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
+
 import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.model.*;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -82,6 +85,12 @@ public class JitBakedModel implements IBakedModel {
 	@Override
 	public ItemOverrideList getOverrides() {
 		return ItemOverrideList.EMPTY;
+	}
+
+	public void render(IVertexBuilder vb, Entry mat, int light, int overlayColor) {
+		for (ArrayList<BakedQuad> quads : this.quads)
+			for (BakedQuad quad : quads)
+				vb.addVertexData(mat, quad, 1, 1, 1, light, overlayColor, true);
 	}
 
 }

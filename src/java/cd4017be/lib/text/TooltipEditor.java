@@ -14,7 +14,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resources.Language;
-import net.minecraft.util.text.LanguageMap;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -57,11 +56,12 @@ public class TooltipEditor {
 	}
 
 	/**
-	 * @param s
+	 * @param key
 	 * @return
 	 */
-	public boolean hasEdited(String s) {
-		return s.equals(editingKey) || edited.containsKey(s);
+	public boolean hasEdited(String key) {
+		lastKeys[pos = pos+1 & 7] = key;
+		return key.equals(editingKey) || edited.containsKey(key);
 	}
 
 	/**
@@ -74,7 +74,7 @@ public class TooltipEditor {
 		if (key.equals(editingKey)) return textField();
 		String s = edited.get(key);
 		if (s != null) return s;
-		return LanguageMap.getInstance().getOrDefault(key);
+		return TooltipUtil.getUnhideIllegalFormat(key);
 	}
 
 	private String textField() {
@@ -303,7 +303,7 @@ public class TooltipEditor {
 		}
 		
 		for (Entry<String, String> e : edited.entrySet())
-			jo.addProperty(e.getKey(), e.getValue());
+			jo.addProperty(e.getKey(), TooltipUtil.hideIllegalFormat(e.getValue()));
 		
 		try (JsonWriter jw = new JsonWriter(new FileWriter(file, UTF_8))){
 			jw.setIndent("  ");

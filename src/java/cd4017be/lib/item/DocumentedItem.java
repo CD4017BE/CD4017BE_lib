@@ -8,6 +8,7 @@ import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
 
 import static cd4017be.lib.text.TooltipUtil.*;
 
@@ -33,11 +34,18 @@ public class DocumentedItem extends Item {
 	}
 
 	/**Supply format arguments for translated tooltip
-	 * @param tooltipArgs
+	 * @param tooltipArgs format argument supplier
 	 * @return this */
 	public DocumentedItem tooltipArgs(Supplier<Object[]> tooltipArgs) {
 		this.tooltipArgs = tooltipArgs;
 		return this;
+	}
+
+	/**Supply format arguments for translated tooltip
+	 * @param tooltipArgs config values
+	 * @return this */
+	public DocumentedItem tooltipArgs(ConfigValue<?>... tooltipArgs) {
+		return tooltipArgs(new ConfigArgs(tooltipArgs));
 	}
 
 	public DocumentedItem tab(ItemGroup extraTab) {
@@ -62,13 +70,15 @@ public class DocumentedItem extends Item {
 		String key1;
 		if (hasTranslation(key1 = key + ".tip"))
 			if (showShiftHint())
-				tooltip.add(cTranslate(key1).setStyle(style));
+				for (String s : translate(key1).split("\n"))
+					tooltip.add(convert(s).setStyle(style));
 			else tooltip.add(TOOLTIP_HINT);
 		if (hasTranslation(key1 = key + ".ext"))
 			if (showAltHint())
-				tooltip.add(cFormat(key1,
+				for (String s : format(key1,
 					tooltipArgs == null ? new Object[0] : tooltipArgs.get()
-				).setStyle(style));
+				).split("\n"))
+					tooltip.add(convert(s).setStyle(style));
 			else tooltip.add(EXT_TOOLTIP_HINT);
 	}
 
@@ -76,6 +86,24 @@ public class DocumentedItem extends Item {
 	public Collection<ItemGroup> getCreativeTabs() {
 		if (extraTab == null) return super.getCreativeTabs();
 		return ImmutableList.of(category, extraTab);
+	}
+
+
+	public static class ConfigArgs implements Supplier<Object[]> {
+
+		private final ConfigValue<?>[] cfg;
+
+		public ConfigArgs(ConfigValue<?>... cfg) {
+			this.cfg = cfg;
+		}
+
+		@Override
+		public Object[] get() {
+			Object[] args = new Object[cfg.length];
+			for (int i = 0; i < args.length; i++)
+				args[i] = cfg[i].get();
+			return args;
+		}
 	}
 
 }
