@@ -2,8 +2,6 @@ package cd4017be.lib.script.obj;
 
 import static cd4017be.lib.script.Parser.OP_NAMES;
 
-import java.util.Iterator;
-
 import javax.script.ScriptException;
 
 /**
@@ -104,13 +102,15 @@ public interface IOperand {
 	 * For iteration over IOperands in script loops.
 	 * @author cd4017be
 	 */
-	public interface OperandIterator extends Iterator<IOperand>, IOperand {
+	interface OperandIterator extends IOperand {
 
 		@Override
 		default boolean asBool() {
 			return hasNext();
 		}
 
+		boolean hasNext();
+		IOperand next();
 		/**
 		 * replaces the value last returned by {@link #next()} with the given value
 		 * @param obj new operand value

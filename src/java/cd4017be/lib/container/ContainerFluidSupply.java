@@ -3,6 +3,7 @@ package cd4017be.lib.container;
 import static cd4017be.lib.Lib.C_FLUID_SUPP;
 import static cd4017be.lib.tileentity.FluidSupply.MAX_SLOTS;
 
+import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.BitSet;
 import java.util.function.DoubleSupplier;
@@ -65,7 +66,7 @@ public class ContainerFluidSupply extends AdvancedContainer {
 	@OnlyIn(Dist.CLIENT)
 	public ModularGui<ContainerFluidSupply> setupGui(PlayerInventory inv, ITextComponent name) {
 		DoubleSupplier scroll = sync.floatGetter("scroll", true);
-		IntBuffer data = sync.buffer().clear().asIntBuffer();
+		IntBuffer data = ((ByteBuffer)sync.buffer().clear()).asIntBuffer();
 		
 		ModularGui<ContainerFluidSupply> gui = new ModularGui<>(this, inv, name);
 		GuiFrame frame = new GuiFrame(gui, 186, 186, 25)

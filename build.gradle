@@ -166,9 +166,9 @@ jar {
 		attributes([
 			"Specification-Title": "cd4017be_lib",
 			"Specification-Vendor": "cd4017be",
-			"Specification-Version": "1",
+			"Specification-Version": "${lib_version}",
 			"Implementation-Title": project.name,
-			"Implementation-Version": "${version}",
+			"Implementation-Version": "${lib_version}",
 			"Implementation-Vendor" :"cd4017be",
 			"Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
 		])

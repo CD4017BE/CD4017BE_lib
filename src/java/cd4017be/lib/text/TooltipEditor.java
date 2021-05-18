@@ -293,7 +293,7 @@ public class TooltipEditor {
 		file.mkdirs();
 		file = new File(file, lastLanguage.getCode() + ".json");
 		JsonObject jo;
-		try (JsonReader jr = new JsonReader(new FileReader(file, UTF_8))) {
+		try (JsonReader jr = new JsonReader(new InputStreamReader(new FileInputStream(file), UTF_8))) {
 			jo = Streams.parse(jr).getAsJsonObject();
 		} catch (FileNotFoundException e) {
 			jo = new JsonObject();
@@ -305,7 +305,7 @@ public class TooltipEditor {
 		for (Entry<String, String> e : edited.entrySet())
 			jo.addProperty(e.getKey(), TooltipUtil.hideIllegalFormat(e.getValue()));
 		
-		try (JsonWriter jw = new JsonWriter(new FileWriter(file, UTF_8))){
+		try (JsonWriter jw = new JsonWriter(new OutputStreamWriter(new FileOutputStream(file), UTF_8))) {
 			jw.setIndent("  ");
 			Streams.write(jo, jw);
 			Lib.LOG.info("TooltipEditor modified {} lang entries", edited.size());

@@ -34,7 +34,7 @@ public class Compiler {
 	public Compiler(String fileName, Parser parser) {
 		this.fileName = fileName;
 		this.code = parser.getTokens();
-		this.out = code.duplicate().clear().position(code.limit());
+		this.out = (ByteBuffer)code.duplicate().clear().position(code.limit());
 		int l = parser.nameCount();
 		this.names = new String[l];
 		this.nameIdx = new char[l];
@@ -100,7 +100,8 @@ public class Compiler {
 		}
 		lines.subList(lines.size() - l, lines.size()).clear();
 		byte[] data = new byte[out.position() - this.funStart];
-		out.get(this.funStart, data).position(this.funStart);
+		out.position(this.funStart).mark();
+		out.get(data).reset();
 		functions.add(new Function(param, this.maxStack, line, data, codeIndices, lineNumbers));
 		
 		//restore old frame

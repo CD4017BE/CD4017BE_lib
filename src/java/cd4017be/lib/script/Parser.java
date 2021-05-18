@@ -300,7 +300,7 @@ public class Parser {
 	 * or source line number ({@link #LINE})
 	 * or otherwise source column number */
 	public ByteBuffer getTokens() {
-		return tokens.flip();
+		return (ByteBuffer)tokens.flip();
 	}
 
 	public int nameCount() {
@@ -398,7 +398,7 @@ public class Parser {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		ByteBuffer buf = tokens.duplicate().flip();
+		ByteBuffer buf = (ByteBuffer)tokens.duplicate().flip();
 		while(buf.hasRemaining()) {
 			byte b = buf.get();
 			sb.append(OP_NAMES[b]);
