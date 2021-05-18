@@ -1,4 +1,4 @@
-package cd4017be.lib.container.test;
+package cd4017be.lib.container;
 
 import static cd4017be.lib.Lib.C_ENERGY_SUPP;
 import java.util.function.DoubleSupplier;
@@ -6,11 +6,10 @@ import java.util.function.IntSupplier;
 import java.util.function.LongSupplier;
 
 import cd4017be.lib.Lib;
-import cd4017be.lib.container.AdvancedContainer;
 import cd4017be.lib.gui.ModularGui;
 import cd4017be.lib.gui.comp.*;
 import cd4017be.lib.network.StateSyncAdv;
-import cd4017be.lib.tileentity.test.*;
+import cd4017be.lib.tileentity.EnergySupply;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.ResourceLocation;

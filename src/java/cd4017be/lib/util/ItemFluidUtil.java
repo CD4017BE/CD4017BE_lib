@@ -206,21 +206,6 @@ public class ItemFluidUtil {
 		return m;
 	}
 
-	@Deprecated
-	public static int drain(IItemHandler inv, OreDictStack ore, ArrayList<ItemStack> buffer) {
-		int n = ore.stacksize, m = 0;
-		for (int i = 0; i < inv.getSlots() && m < n; i++) 
-			if (ore.isEqual(inv.getStackInSlot(i))) {
-				ItemStack stack = inv.extractItem(i, n - m, false);
-				int x = stack.getCount();
-				if (x > 0) {
-					m += x;
-					addToList(buffer, stack);
-				}
-			}
-		return m;
-	}
-
 	public static void addToList(ArrayList<ItemStack> list, ItemStack item) {
 		for (ItemStack stack : list)
 			if (ItemHandlerHelper.canItemStacksStack(item, stack)) {

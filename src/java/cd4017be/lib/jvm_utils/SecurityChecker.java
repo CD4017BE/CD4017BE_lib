@@ -1,5 +1,7 @@
 package cd4017be.lib.jvm_utils;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -57,7 +59,7 @@ public class SecurityChecker {
 				if (tag == 1) {
 					byte[] arr = new byte[b.getShort()];
 					b.get(arr);
-					utf8s[i] = new String(arr, ClassUtils.UTF8);
+					utf8s[i] = new String(arr, UTF_8);
 				} else {
 					int l = getLength(tag);
 					if (l == 2) {

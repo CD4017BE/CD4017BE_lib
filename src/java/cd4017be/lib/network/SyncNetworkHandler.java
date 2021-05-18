@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
-import cd4017be.api.recipes.RecipeScriptContext.ConfigConstants;
 import cd4017be.lib.Lib;
 import cd4017be.lib.util.Utils;
 import io.netty.buffer.ByteBuf;
@@ -38,15 +37,15 @@ import net.minecraftforge.api.distmarker.OnlyIn;
  */
 public class SyncNetworkHandler extends NetworkHandler {
 
-	public static final int Y_TILEENTITY = 0, Y_ENTITY = -1, Y_ITEM = -2;
+	public static final int Y_TILEENTITY = 0, Y_ENTITY = -1, Y_ITEM = -2; //TODO set below y = -64 in 1.17
 	public static final int HEADERSIZE = 9;
 	private static int MAX_PACKSIZE;
 
 	/**the instance */
 	public static SyncNetworkHandler instance;
 
-	public static void register(ConfigConstants cfg) {
-		MAX_PACKSIZE = Math.min((int)cfg.getNumber("packet_chain_threshold", 255), 255) + HEADERSIZE;
+	public static void register() {
+		MAX_PACKSIZE = Lib.CFG_COMMON.packet_chain_threshold.get() + HEADERSIZE;
 		if (instance == null) instance = new SyncNetworkHandler(new ResourceLocation(Lib.ID, "sy"));
 	}
 
@@ -61,8 +60,9 @@ public class SyncNetworkHandler extends NetworkHandler {
 	@Override
 	@OnlyIn(Dist.CLIENT)
 	public void handleServerPacket(PacketBuffer pkt) throws Exception {
-		World world = Minecraft.getInstance().level;
-		ClientPlayerEntity player = Minecraft.getInstance().player;
+		Minecraft mc = Minecraft.getInstance();
+		World world = mc.level;
+		ClientPlayerEntity player = mc.player;
 		for (PacketBuffer buf : new PacketSplitter(pkt)) {
 			BlockPos target = buf.readBlockPos();
 			int y = target.getY();
@@ -146,7 +146,7 @@ public class SyncNetworkHandler extends NetworkHandler {
 	public static PacketBuffer preparePacket(BlockPos pos) {
 		PacketBuffer pkt = new PacketBuffer(Unpooled.buffer());
 		pkt.writeByte(0);
-		pkt.writeBlockPos(pos);//TODO improve format
+		pkt.writeLong(pos.asLong());
 		return pkt;
 	}
 

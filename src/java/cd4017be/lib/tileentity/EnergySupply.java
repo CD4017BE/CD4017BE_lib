@@ -1,11 +1,10 @@
-package cd4017be.lib.tileentity.test;
+package cd4017be.lib.tileentity;
 
 import cd4017be.lib.block.BlockTE.ITENeighborChange;
 import cd4017be.lib.capability.CachedCap;
+import cd4017be.lib.container.ContainerEnergySupply;
 import cd4017be.lib.container.IUnnamedContainerProvider;
-import cd4017be.lib.container.test.ContainerEnergySupply;
 import cd4017be.lib.network.*;
-import cd4017be.lib.tileentity.BaseTileEntity;
 import cd4017be.lib.tileentity.BaseTileEntity.ITickableServerOnly;
 import net.minecraft.entity.player.*;
 import net.minecraft.network.PacketBuffer;

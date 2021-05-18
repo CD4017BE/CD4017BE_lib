@@ -6,18 +6,19 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import cd4017be.lib.block.BlockTE;
 import cd4017be.lib.config.LibClient;
-import cd4017be.lib.container.test.ContainerEnergySupply;
-import cd4017be.lib.container.test.ContainerFluidSupply;
-import cd4017be.lib.container.test.ContainerItemSupply;
+import cd4017be.lib.config.LibCommon;
+import cd4017be.lib.container.ContainerEnergySupply;
+import cd4017be.lib.container.ContainerFluidSupply;
+import cd4017be.lib.container.ContainerItemSupply;
 import cd4017be.lib.item.*;
 import cd4017be.lib.network.GuiNetworkHandler;
 import cd4017be.lib.render.model.ScriptModel;
 import cd4017be.lib.render.model.TileEntityModel;
 import cd4017be.lib.text.TooltipEditor;
 import cd4017be.lib.text.TooltipUtil;
-import cd4017be.lib.tileentity.test.EnergySupply;
-import cd4017be.lib.tileentity.test.FluidSupply;
-import cd4017be.lib.tileentity.test.ItemSupply;
+import cd4017be.lib.tileentity.EnergySupply;
+import cd4017be.lib.tileentity.FluidSupply;
+import cd4017be.lib.tileentity.ItemSupply;
 import net.minecraft.block.AbstractBlock.Properties;
 import net.minecraft.block.Block;
 import net.minecraft.block.SoundType;
@@ -56,6 +57,7 @@ public class Lib {
 	public static final boolean DEV_DEBUG = !FMLLoader.isProduction();
 	public static final Logger LOG = LogManager.getLogger(ID);
 	public static final LibClient CFG_CLIENT = new LibClient();
+	public static final LibCommon CFG_COMMON = new LibCommon();
 
 	public static BlockTE<EnergySupply> ENERGY_SUPP;
 	public static BlockTE<FluidSupply> FLUID_SUPP;
@@ -79,6 +81,7 @@ public class Lib {
 	public Lib() {
 		FMLJavaModLoadingContext.get().getModEventBus().register(this);
 		CFG_CLIENT.register(ID);
+		CFG_COMMON.register(ID);
 		MinecraftForge.EVENT_BUS.addListener(this::shutdown);
 	}
 

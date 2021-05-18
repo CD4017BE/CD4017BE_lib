@@ -1,12 +1,12 @@
-package cd4017be.lib.tileentity.test;
+package cd4017be.lib.tileentity;
 
 import java.util.ArrayList;
 import java.util.function.Supplier;
+
+import cd4017be.lib.container.ContainerItemSupply;
 import cd4017be.lib.container.IUnnamedContainerProvider;
-import cd4017be.lib.container.test.ContainerItemSupply;
 import cd4017be.lib.network.IPlayerPacketReceiver;
 import cd4017be.lib.network.Sync;
-import cd4017be.lib.tileentity.BaseTileEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.entity.player.ServerPlayerEntity;

@@ -1,15 +1,14 @@
-package cd4017be.lib.tileentity.test;
+package cd4017be.lib.tileentity;
 
 import static cd4017be.lib.network.Sync.GUI;
 import static net.minecraftforge.fluids.capability.CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY;
 import java.util.ArrayList;
 import java.util.function.Supplier;
 import cd4017be.lib.capability.IMultiFluidHandler;
+import cd4017be.lib.container.ContainerFluidSupply;
 import cd4017be.lib.container.IUnnamedContainerProvider;
-import cd4017be.lib.container.test.ContainerFluidSupply;
 import cd4017be.lib.network.IPlayerPacketReceiver;
 import cd4017be.lib.network.Sync;
-import cd4017be.lib.tileentity.BaseTileEntity;
 import net.minecraft.nbt.INBT;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
