@@ -6,6 +6,7 @@ import java.util.function.Function;
 import javax.annotation.Nullable;
 
 import cd4017be.lib.container.IUnnamedContainerProvider;
+import cd4017be.lib.tileentity.BaseTileEntity;
 import cd4017be.lib.util.ItemFluidUtil;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -56,7 +57,11 @@ public class BlockTE<T extends TileEntity> extends Block {
 
 	@Override
 	public TileEntity createTileEntity(BlockState state, IBlockReader world) {
-		return hasTileEntity(state) ? tileType.create() : null;
+		if (!hasTileEntity(state)) return null;
+		TileEntity te = tileType.create();
+		if (te instanceof BaseTileEntity)
+			((BaseTileEntity)te).unloaded = false;
+		return te;
 	}
 
 	/**@param factory the TileEntity factory function

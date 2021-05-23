@@ -27,6 +27,15 @@ public class ItemFluidUtil {
 
 	public static final String Tag_ItemList = "Items", Tag_ItemIndex = "ItIdx", Tag_FluidList = "Fluids", Tag_FluidIndex = "FlIdx";
 
+	public static boolean canSlotStack(ItemStack slot, ItemStack stack) {
+		if (stack.isEmpty()) return false;
+		if (slot.isEmpty()) return true;
+		return slot.sameItem(stack) && (slot.hasTag()
+			? slot.getTag().equals(stack.getTag()) && slot.areCapsCompatible(stack)
+			: !stack.hasTag()
+		);
+	}
+
 	public static void loadInventory(ListNBT list, ItemStack[] inv) {
 		Arrays.fill(inv, ItemStack.EMPTY);
 		for (int i = 0; i < list.size(); i++) {

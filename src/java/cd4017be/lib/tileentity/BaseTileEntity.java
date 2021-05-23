@@ -3,7 +3,11 @@ package cd4017be.lib.tileentity;
 import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
+
+import cd4017be.lib.block.OrientedBlock;
 import cd4017be.lib.network.INBTSynchronized;
+import cd4017be.lib.util.Orientation;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.nbt.CompoundNBT;
@@ -26,7 +30,7 @@ import static cd4017be.lib.network.Sync.*;
 public class BaseTileEntity extends TileEntity implements INBTSynchronized {
 
 	private Chunk chunk;
-	protected boolean unloaded = true;
+	public boolean unloaded = true;
 	protected boolean redraw;
 
 	public BaseTileEntity(TileEntityType<?> type) {
@@ -115,6 +119,7 @@ public class BaseTileEntity extends TileEntity implements INBTSynchronized {
 	public void onLoad() {
 		if(level.isClientSide ? this instanceof ITickableServerOnly : this instanceof ITickableClientOnly)
 			level.tickableBlockEntities.remove(this);
+		if (!unloaded) clearCache();
 		unloaded = false;
 	}
 
@@ -141,6 +146,14 @@ public class BaseTileEntity extends TileEntity implements INBTSynchronized {
 	@OnlyIn(Dist.CLIENT)
 	public AxisAlignedBB getRenderBoundingBox() {
 		return new AxisAlignedBB(worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), worldPosition.getX() + 1, worldPosition.getY() + 1, worldPosition.getZ() + 1);
+	}
+
+	public Orientation orientation() {
+		BlockState state = getBlockState();
+		Block block = state.getBlock();
+		if (block instanceof OrientedBlock)
+			return state.getValue(((OrientedBlock<?>)block).orientProp);
+		return Orientation.S12;
 	}
 
 	public @Nullable Chunk getChunk(BlockPos pos, boolean loadChunks) {

@@ -20,6 +20,7 @@ import net.minecraft.world.*;
  */
 public class OrientedBlock<T extends TileEntity> extends BlockTE<T> {
 
+	private static PropertyOrientation TEMP;
 	public final PropertyOrientation orientProp;
 	VoxelShape[] shapes;
 
@@ -27,20 +28,24 @@ public class OrientedBlock<T extends TileEntity> extends BlockTE<T> {
 	 * @param prop orientation type
 	 */
 	public OrientedBlock(Properties p, int flags, PropertyOrientation prop) {
-		super(p, flags);
+		super(setTemp(p, prop), flags);
 		this.orientProp = prop;
+	}
+
+	private static Properties setTemp(Properties p, PropertyOrientation prop) {
+		TEMP = prop;
+		return p;
 	}
 
 	@Override
 	protected void createBlockStateDefinition(Builder<Block, BlockState> builder) {
 		super.createBlockStateDefinition(builder);
-		//FIXME field not initialized in time
-		builder.add(orientProp);
+		builder.add(TEMP);
 	}
 
 	@Override
 	public BlockState getStateForPlacement(BlockItemUseContext context) {
-		return defaultBlockState().setValue(orientProp, orientProp.getPlacementState(context, handlerFlags >> 24 & 3));
+		return defaultBlockState().setValue(orientProp, orientProp.getPlacementState(context));
 	}
 
 	@Override

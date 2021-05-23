@@ -85,9 +85,13 @@ public class ModularGui<T extends AdvancedContainer> extends ContainerScreen<T> 
 		this.imageWidth = compGroup.w;
 		this.imageHeight = compGroup.h;
 		super.init();
-		compGroup.init(width, height, 0, font);
-		compGroup.position(leftPos, topPos);
+		init(compGroup, leftPos, topPos);
 		//Keyboard.enableRepeatEvents(true);
+	}
+
+	public void init(GuiCompGroup comp, int x, int y) {
+		comp.init(width, height, 0, font);
+		comp.position(x, y);
 	}
 
 	@Override

@@ -276,6 +276,11 @@ public class StateSyncAdv extends StateSynchronizer {
 		return intGetter((int)i, (int)(i >>> 32), signed);
 	}
 
+	public IntSupplier intGetter(int i, boolean signed) {
+		int p = i == 0 ? 0 : rawIdx[i-1];
+		return intGetter(p, rawIdx[i] - p, signed);
+	}
+
 	public IntSupplier intGetter(int p, int l, boolean signed) {
 		ByteBuffer state = rawStates;
 		switch(l) {

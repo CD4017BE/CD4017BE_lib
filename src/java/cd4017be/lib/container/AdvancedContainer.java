@@ -217,6 +217,7 @@ implements IServerPacketReceiver, IPlayerPacketReceiver {
 			hardInvUpdate = false;
 		}
 		super.broadcastChanges();
+		if (inv.player.level.isClientSide) return;
 		detectChanges(sync.clear());
 		sync.detectChanges();
 		if(!sync.isEmpty()) {
