@@ -1,0 +1,4 @@
+{
+	"parent": "cd4017be_lib:part/port",
+	"textures": {"particle": "cd4017be_lib:part/obj_u"}
+}

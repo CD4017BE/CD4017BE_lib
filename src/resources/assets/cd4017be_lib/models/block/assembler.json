@@ -1,0 +1,12 @@
+{
+	"parent": "block/cube",
+	"textures": {
+		"down":  "minecraft:block/smooth_stone",
+		"up":    "cd4017be_lib:block/assembler_t",
+		"north": "cd4017be_lib:block/assembler_s",
+		"south": "cd4017be_lib:block/assembler_s",
+		"west":  "cd4017be_lib:block/assembler_s",
+		"east":  "cd4017be_lib:block/assembler_s",
+		"particle": "cd4017be_lib:block/assembler_s"
+	}
+}

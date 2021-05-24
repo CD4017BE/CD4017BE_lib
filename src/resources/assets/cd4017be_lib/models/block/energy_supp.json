@@ -1,6 +1,4 @@
 {
 	"parent": "block/cube_all",
-	"textures": {
-		"all": "cd4017be_lib:blocks/energy_supp"
-	}
+	"textures": { "all": "cd4017be_lib:block/energy_supp" }
 }

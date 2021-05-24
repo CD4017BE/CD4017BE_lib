@@ -1,6 +1,6 @@
 package cd4017be.lib.container;
 
-import static cd4017be.lib.Lib.C_FLUID_SUPP;
+import static cd4017be.lib.Content.fLUID_SUPP;
 import static cd4017be.lib.tileentity.FluidSupply.MAX_SLOTS;
 
 import java.nio.ByteBuffer;
@@ -23,8 +23,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 
-/**
- * @author CD4017BE */
+/**@author CD4017BE */
 public class ContainerFluidSupply extends AdvancedContainer {
 
 	private static final int[] indices = StateSyncAdv.array(8, 12);
@@ -38,7 +37,7 @@ public class ContainerFluidSupply extends AdvancedContainer {
 	}
 
 	private ContainerFluidSupply(int id, PlayerInventory pinv, IFluidHandler inv, boolean client, Object... ref) {
-		super(C_FLUID_SUPP, id, pinv, StateSyncAdv.of(client, indices, 12, ref), 12);
+		super(fLUID_SUPP, id, pinv, StateSyncAdv.of(client, indices, 12, ref), 12);
 		for(int j = 0; j < 4; j++)
 			for(int i = 0; i < 3; i++)
 				addSlot(new SlotFluidHandler(

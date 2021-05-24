@@ -1,0 +1,22 @@
+{
+	"parent": "minecraft:recipes/root",
+	"rewards": { "recipes": [
+		"cd4017be_lib:assembler"
+	]},
+	"criteria": {
+		"has_stonecutter": {
+			"trigger": "minecraft:inventory_changed",
+			"conditions": { "items": [
+				{ "item": "minecraft:stonecutter" }
+			]}
+		},
+		"has_the_recipe": {
+			"trigger": "minecraft:recipe_unlocked",
+			"conditions": { "recipe": "cd4017be_lib:assembler" }
+		}
+	},
+	"requirements": [[
+		"has_stonecutter",
+		"has_the_recipe"
+	]]
+}

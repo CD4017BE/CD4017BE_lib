@@ -1,6 +1,7 @@
 package cd4017be.lib.container;
 
-import static cd4017be.lib.Lib.C_ENERGY_SUPP;
+import static cd4017be.lib.Content.eNERGY_SUPP;
+
 import java.util.function.DoubleSupplier;
 import java.util.function.IntSupplier;
 import java.util.function.LongSupplier;
@@ -21,11 +22,11 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 public class ContainerEnergySupply extends AdvancedContainer {
 
 	public ContainerEnergySupply(int id, PlayerInventory inv, PacketBuffer pkt) {
-		super(C_ENERGY_SUPP, id, inv, StateSyncAdv.of(true, EnergySupply.class), 0);
+		super(eNERGY_SUPP, id, inv, StateSyncAdv.of(true, EnergySupply.class), 0);
 	}
 
 	public ContainerEnergySupply(int id, PlayerInventory inv, EnergySupply tile) {
-		super(C_ENERGY_SUPP, id, inv, StateSyncAdv.of(false, tile), 0);
+		super(eNERGY_SUPP, id, inv, StateSyncAdv.of(false, tile), 0);
 	}
 
 

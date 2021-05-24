@@ -1,0 +1,16 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"pattern": [
+		" S ",
+		"PTC",
+		"###"
+	],
+	"key": {
+		"#": { "item": "minecraft:smooth_stone_slab" },
+		"S": { "item": "minecraft:stonecutter" },
+		"P": { "item": "minecraft:piston" },
+		"T": { "item": "minecraft:crafting_table" },
+		"C": { "item": "minecraft:chest" }
+	},
+	"result": { "item": "cd4017be_lib:assembler" }
+}

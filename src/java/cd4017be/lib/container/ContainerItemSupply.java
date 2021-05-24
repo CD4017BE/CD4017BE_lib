@@ -1,6 +1,6 @@
 package cd4017be.lib.container;
 
-import static cd4017be.lib.Lib.C_ITEM_SUPP;
+import static cd4017be.lib.Content.iTEM_SUPP;
 import static cd4017be.lib.tileentity.ItemSupply.MAX_SLOTS;
 
 import java.nio.ByteBuffer;
@@ -24,6 +24,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.items.IItemHandler;
 
+/**@author CD4017BE */
 public class ContainerItemSupply extends AdvancedContainer {
 
 	private static final int[] indices = StateSyncAdv.array(8, 12);
@@ -37,7 +38,7 @@ public class ContainerItemSupply extends AdvancedContainer {
 	}
 
 	private ContainerItemSupply(int id, PlayerInventory pinv, IItemHandler inv, boolean client, Object... ref) {
-		super(C_ITEM_SUPP, id, pinv, StateSyncAdv.of(client, indices, 0, ref), 0);
+		super(iTEM_SUPP, id, pinv, StateSyncAdv.of(client, indices, 0, ref), 0);
 		for(int j = 0; j < 4; j++)
 			for(int i = 0; i < 3; i++)
 				addSlot(new SlotHolo(

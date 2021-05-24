@@ -1,0 +1,5 @@
+{
+	"parent": "block/block",
+	"textures": { "particle": "cd4017be_lib:block/grid" },
+	"loader": "cd4017be_lib:te"
+}
