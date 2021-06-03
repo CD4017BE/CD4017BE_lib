@@ -1,5 +1,7 @@
 package cd4017be.lib;
 
+import static net.minecraftforge.common.MinecraftForge.EVENT_BUS;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -8,14 +10,16 @@ import cd4017be.lib.config.LibClient;
 import cd4017be.lib.config.LibCommon;
 import cd4017be.lib.config.LibServer;
 import cd4017be.lib.network.GuiNetworkHandler;
+import cd4017be.lib.network.SyncNetworkHandler;
 import cd4017be.lib.text.TooltipUtil;
 import cd4017be.lib.tick.GateUpdater;
+import cd4017be.lib.tileentity.SyncTileEntity;
 import net.minecraft.item.*;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.config.ModConfig.ModConfigEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.event.server.FMLServerStoppingEvent;
+import net.minecraftforge.fml.event.server.FMLServerStoppedEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLLoader;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -45,16 +49,26 @@ public class Lib {
 		CFG_CLIENT.register(ID);
 		CFG_COMMON.register(ID);
 		CFG_SERVER.register(ID);
-		MinecraftForge.EVENT_BUS.addListener(this::shutdown);
-		MinecraftForge.EVENT_BUS.register(GateUpdater.class);
+		EVENT_BUS.addListener(this::shutdown);
+		EVENT_BUS.register(GateUpdater.class);
 	}
 
 	@SubscribeEvent
 	void setup(FMLCommonSetupEvent event) {
 		GuiNetworkHandler.register();
+		SyncNetworkHandler.register();
 	}
 
-	void shutdown(FMLServerStoppingEvent event) {
+	@SubscribeEvent
+	void onConfigLoad(ModConfigEvent event) {
+		if (!event.getConfig().getModId().equals(ID)) return;
+		double d = CFG_SERVER.clientSyncDst.get();
+		SyncTileEntity.CLIENT_RANGE = d * d;
+		d += CFG_SERVER.serverSyncDst.get();
+		SyncTileEntity.SERVER_RANGE = d * d;
+	}
+
+	void shutdown(FMLServerStoppedEvent event) {
 		Link.clear();
 		if (TooltipUtil.editor != null)
 			TooltipUtil.editor.save();

@@ -1,13 +1,13 @@
 package cd4017be.lib.container;
 
 import static cd4017be.lib.Content.fLUID_SUPP;
+import static cd4017be.lib.container.ContainerEnergySupply.TEX;
 import static cd4017be.lib.tileentity.FluidSupply.MAX_SLOTS;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.BitSet;
 import java.util.function.DoubleSupplier;
-import cd4017be.lib.Lib;
 import cd4017be.lib.capability.BasicTanks;
 import cd4017be.lib.container.slot.SlotFluidHandler;
 import cd4017be.lib.gui.ModularGui;
@@ -17,7 +17,6 @@ import cd4017be.lib.tileentity.FluidSupply;
 import cd4017be.lib.tileentity.FluidSupply.Slot;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -58,9 +57,6 @@ public class ContainerFluidSupply extends AdvancedContainer {
 			} else sync.setLong(i, 0);
 		}
 	}
-
-	@OnlyIn(Dist.CLIENT)
-	private static final ResourceLocation TEX = Lib.rl("textures/gui/supply.png");
 
 	@OnlyIn(Dist.CLIENT)
 	public ModularGui<ContainerFluidSupply> setupGui(PlayerInventory inv, ITextComponent name) {

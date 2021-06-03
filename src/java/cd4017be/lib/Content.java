@@ -12,6 +12,7 @@ import cd4017be.lib.item.TEModeledItem;
 import cd4017be.lib.render.GridModels;
 import cd4017be.lib.render.model.ScriptModel;
 import cd4017be.lib.render.model.TileEntityModel;
+import cd4017be.lib.render.te.GridTER;
 import cd4017be.lib.text.TooltipEditor;
 import cd4017be.lib.tileentity.*;
 import net.minecraft.block.Block;
@@ -34,6 +35,7 @@ import net.minecraftforge.event.RegistryEvent.Register;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ExtensionPoint;
 import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -129,6 +131,7 @@ public class Content {
 		ScreenManager.register(fLUID_SUPP, ContainerFluidSupply::setupGui);
 		ScreenManager.register(aSSEMBLER, ContainerAssembler::setupGui);
 		ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.CONFIGGUIFACTORY, Lib.CFG_CLIENT);
+		ClientRegistry.bindTileEntityRenderer(GRID.tileType, GridTER::new);
 	}
 
 	@SubscribeEvent

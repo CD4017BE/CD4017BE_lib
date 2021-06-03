@@ -36,6 +36,10 @@ public class ExtGridPorts implements INBTSerializable<LongArrayNBT> {
 		return (short)(ports[port] >> 32);
 	}
 
+	public boolean isLinked(int port) {
+		return ports[port] << 1 < 0;
+	}
+
 	public boolean isMaster(int channel) {
 		return ports[channel] < 0;
 	}
@@ -175,8 +179,7 @@ public class ExtGridPorts implements INBTSerializable<LongArrayNBT> {
 		long[] endPorts = ((IGridPortHolder)end.host).extPorts().ports;
 		long se = startPorts[start.channel], ee = endPorts[end.channel];
 		int id = (int)se;
-		if (id == 0) id = (int)ee;
-		if (id == 0) id = Link.newId();
+		if (id == 0 || id != (int)ee) id = Link.newId();
 		startPorts[start.channel] = se & 0xffff_ffff_0000_0000L | id & 0xffff_ffffL | 1L << 62;
 		  endPorts[  end.channel] = ee & 0xffff_ffff_0000_0000L | id & 0xffff_ffffL | 1L << 62;
 		Link.load(start.host, start.channel, id);

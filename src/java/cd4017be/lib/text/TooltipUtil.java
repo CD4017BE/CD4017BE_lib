@@ -331,7 +331,8 @@ public class TooltipUtil {
 	}
 
 	public static String getClipboardString() {
-		return glfwGetClipboardString(Minecraft.getInstance().getWindow().getWindow());
+		String s = glfwGetClipboardString(Minecraft.getInstance().getWindow().getWindow());
+		return s == null ? "" : s;
 	}
 
 	public static void setClipboardString(String s) {

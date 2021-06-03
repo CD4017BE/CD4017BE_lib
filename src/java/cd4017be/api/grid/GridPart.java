@@ -4,7 +4,6 @@ import static net.minecraftforge.registries.ForgeRegistries.ITEMS;
 
 import cd4017be.lib.network.INBTSynchronized;
 import cd4017be.lib.render.model.JitBakedModel;
-import cd4017be.lib.text.TooltipUtil;
 import cd4017be.lib.util.ItemFluidUtil;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
@@ -118,10 +117,12 @@ public abstract class GridPart implements IPortHolder, INBTSynchronized {
 	 * @param dir side of this grid */
 	public void onTEChange(World world, BlockPos pos, Direction dir) {}
 
-	@Override
-	public String toString() {
-		return TooltipUtil.translate("state.rs_ctr2.none");
-	}
+	/**When replicated or disassembled in a Microblock Workbench.
+	 * Parts should clear their contents here to prevent resource duplication.
+	 * @param world
+	 * @param pos for dropping items and such
+	 * @return whether data has changed */
+	public boolean dissassemble(World world, BlockPos pos) {return false;}
 
 	/**@param pos x & 0x03 | y & 0x0c | z & 0x30
 	 * @param dir side of the cell

@@ -29,9 +29,7 @@ public class ContainerEnergySupply extends AdvancedContainer {
 		super(eNERGY_SUPP, id, inv, StateSyncAdv.of(false, tile), 0);
 	}
 
-
-	@OnlyIn(Dist.CLIENT)
-	private static final ResourceLocation TEX = Lib.rl("textures/gui/supply.png");
+	public static final ResourceLocation TEX = Lib.rl("textures/gui/supply.png");
 
 	@OnlyIn(Dist.CLIENT)
 	public ModularGui<ContainerEnergySupply> setupGui(PlayerInventory inv, ITextComponent name) {

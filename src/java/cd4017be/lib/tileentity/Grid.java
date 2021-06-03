@@ -1,15 +1,13 @@
 package cd4017be.lib.tileentity;
 
-import static cd4017be.lib.network.Sync.SAVE;
+import static cd4017be.lib.network.Sync.*;
 import static cd4017be.lib.tick.GateUpdater.TICK;
 import static java.lang.Math.max;
 
 import java.util.ArrayList;
 import java.util.function.Predicate;
 
-import cd4017be.api.grid.ExtGridPorts;
-import cd4017be.api.grid.GridPart;
-import cd4017be.api.grid.IGridHost;
+import cd4017be.api.grid.*;
 import cd4017be.lib.Content;
 import cd4017be.lib.block.BlockTE;
 import cd4017be.lib.block.BlockTE.*;
@@ -23,10 +21,12 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.nbt.LongArrayNBT;
+import net.minecraft.network.PacketBuffer;
 import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.shapes.*;
@@ -39,14 +39,17 @@ import net.minecraftforge.client.model.data.ModelDataMap;
 import net.minecraftforge.common.util.Constants.NBT;
 
 /**@author CD4017BE */
-public class Grid extends BaseTileEntity
-implements IGridHost, ITEInteract, ITEShape, ITERedstone, ITEBlockUpdate, ITENeighborChange, ITEPickItem {
+public class Grid extends SyncTileEntity
+implements IGridHost, ITEInteract, ITEShape, ITERedstone,
+ITEBlockUpdate, ITENeighborChange, ITEPickItem {
 
 	private final VoxelShape4x4x4 bounds = new VoxelShape4x4x4();
 	private final ExtGridPorts extPorts = new ExtGridPorts(this);
 	private final ArrayList<GridPart> parts = new ArrayList<>();
-	private long opaque, inner;
+	public long opaque;
+	private long inner;
 	private int tLoad;
+	public IDynamicPart[] dynamicParts;
 
 	public Grid(TileEntityType<?> type) {
 		super(type);
@@ -120,7 +123,7 @@ implements IGridHost, ITEInteract, ITEShape, ITERedstone, ITEBlockUpdate, ITENei
 	public boolean addPart(GridPart part) {
 		if (part.host == this) return true;
 		byte l = part.getLayer();
-		if (((l >= 0 ? opaque : inner) & part.bounds) != 0) return false;
+		if ((((l >= 0 ? opaque : 0) | (l <= 0 ? inner : 0)) & part.bounds) != 0) return false;
 		bounds.grid |= part.bounds;
 		if (l >= 0) opaque |= part.bounds;
 		if (l <= 0) inner |= part.bounds;
@@ -181,12 +184,13 @@ implements IGridHost, ITEInteract, ITEShape, ITERedstone, ITEBlockUpdate, ITENei
 		ListNBT list = nbt.getList("parts", NBT.TAG_COMPOUND);
 		boolean empty = (mode & SAVE) != 0 || list.size() != parts.size();
 		if (empty) parts.clear();
+		boolean mod = empty;
 		for (int i = 0; i < list.size(); i++) {
 			GridPart part = empty ? null : parts.get(i);
 			part = GridPart.load(part, list.getCompound(i), mode);
 			if (part == null) continue;
 			if (empty) parts.add(part);
-			else parts.set(i, part);
+			else mod |= parts.set(i, part) != part;
 		}
 		updateBounds();
 		if ((mode & SAVE) != 0) {
@@ -196,6 +200,8 @@ implements IGridHost, ITEInteract, ITEShape, ITERedstone, ITEBlockUpdate, ITENei
 			if (!unloaded) onLoad();
 			else tLoad = TICK;
 		}
+		if (mod && (mode & (SYNC|CLIENT)) != 0)
+			updateTerParts();
 	}
 
 	@Override
@@ -296,11 +302,15 @@ implements IGridHost, ITEInteract, ITEShape, ITERedstone, ITEBlockUpdate, ITENei
 	@Override
 	public Port findPort(GridPart except, short port) {
 		long m = 0;
+		boolean noWire = except == null;
 		int port1 = port - 0x111;
-		if ((port & 0x888) == 0) m |= 1L << (port >> 1 & 3 | port >> 3 & 12 | port >> 5 & 48);
-		if ((port1 & 0x888) == 0) m |= 1L << (port1 >> 1 & 3 | port1 >> 3 & 12 | port1 >> 5 & 48);
+		if ((port & 0x888) != 0) noWire = false;
+		else m |= 1L << (port >> 1 & 3 | port >> 3 & 12 | port >> 5 & 48);
+		if ((port1 & 0x888) != 0) noWire = false;
+		else m |= 1L << (port1 >> 1 & 3 | port1 >> 3 & 12 | port1 >> 5 & 48);
 		for (GridPart part : parts) {
 			if ((part.bounds & m) == 0 || part == except) continue;
+			if (noWire && part instanceof IWire) continue;
 			int l = part.ports.length;
 			for (int i = 0; i < l; i++)
 				if (part.ports[i] == port)
@@ -332,6 +342,55 @@ implements IGridHost, ITEInteract, ITEShape, ITERedstone, ITEBlockUpdate, ITENei
 		storeState(nbt, SAVE);
 		nbt.remove("extIO");
 		return stack;
+	}
+
+	@Override
+	public long bounds() {
+		return bounds.grid;
+	}
+
+	private void updateTerParts() {
+		int n = 0;
+		long m = 0;
+		for (int l = Math.min(parts.size(), 64), i = 0; i < l; i++)
+			if (parts.get(i) instanceof IDynamicPart) {
+				m |= 1L << i;
+				n++;
+			}
+		IDynamicPart[] arr = n == 0 ? null
+			: dynamicParts != null && dynamicParts.length == n ? dynamicParts
+			: new IDynamicPart[n];
+		for (int j = 0, i = 0; i < n; i++, j++) {
+			while(m << ~j >= 0) j++;
+			arr[i] = (IDynamicPart)parts.get(j);
+		}
+		dynamicParts = arr;
+		update = false;
+	}
+
+	@Override
+	protected byte writeSync(PacketBuffer pkt, boolean init) {
+		byte i = 0;
+		for (GridPart part : parts)
+			if (part instanceof IDynamicPart) {
+				((IDynamicPart)part).writeSync(pkt, init);
+				i++;
+			}
+		return i;
+	}
+
+	@Override
+	protected void readSync(PacketBuffer pkt, byte n) {
+		if (dynamicParts != null && dynamicParts.length == n)
+			for (IDynamicPart m : dynamicParts)
+				m.readSync(pkt);
+	}
+
+	@Override
+	@OnlyIn(Dist.CLIENT)
+	public AxisAlignedBB getRenderBoundingBox() {
+		return dynamicParts == null ? DONT_RENDER : super.getRenderBoundingBox();
+		//reduces performance impact by factor 3
 	}
 
 }

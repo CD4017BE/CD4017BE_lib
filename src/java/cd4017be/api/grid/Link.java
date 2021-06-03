@@ -53,7 +53,7 @@ public class Link {
 
 			@Override
 			public String getModId() {
-				return "rs_ctr2";
+				return "cd4017be_lib";
 			}
 
 			@Override
@@ -74,7 +74,7 @@ public class Link {
 		});
 	}
 	/** recursion depth limits */
-	public static int REC_FLUID = 8, REC_ITEM = 8, REC_POWER = 2, REC_DATA = 4;
+	public static int REC_FLUID = 8, REC_ITEM = 8, REC_POWER = 2, REC_DATA = 4, REC_BLOCK = 4;
 
 	/**Clear all links for server shutdown. */
 	public static void clear() {

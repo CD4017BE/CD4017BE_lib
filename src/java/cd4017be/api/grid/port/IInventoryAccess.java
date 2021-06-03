@@ -11,7 +11,7 @@ import net.minecraftforge.items.ItemHandlerHelper;
  * It's essentially {@link IItemHandler} broken down to just inspecting inventory
  * contents and moving items from one inventory to another without a concept of slots.
  * @author CD4017BE */
-public interface IInventoryAccess extends UnaryOperator<ItemStack> {
+public interface IInventoryAccess extends ToIntFunction<ItemStack> {
 
 	/**@param inspector function called for each item
 	 * alongside its stack limit (don't modify given stack) */
@@ -29,40 +29,40 @@ public interface IInventoryAccess extends UnaryOperator<ItemStack> {
 	 * @param filter to restrict, what items to transfer
 	 * @param target destination inventory, see {@link #apply(ItemStack)}
 	 * @return amount actually transfered */
-	default int transfer(int amount, Predicate<ItemStack> filter, UnaryOperator<ItemStack> target) {
+	default int transfer(int amount, Predicate<ItemStack> filter, ToIntFunction<ItemStack> target) {
 		return transfer(amount, filter, target, Link.REC_ITEM);
 	}
 
 	/**Attempt to transfer items to another inventory
 	 * @param amount maximum amount to transfer
 	 * @param filter to restrict, what items to transfer
-	 * @param target destination inventory, see {@link #apply(ItemStack)}
-	 * @param rec
+	 * @param target destination inventory, see {@link #applyAsInt(ItemStack)}
+	 * @param rec recursion count-down
 	 * @return amount actually transfered */
-	int transfer(int amount, Predicate<ItemStack> filter, UnaryOperator<ItemStack> target, int rec);
+	int transfer(int amount, Predicate<ItemStack> filter, ToIntFunction<ItemStack> target, int rec);
 
 	/**Attempt to insert the given stack.
-	 * @param stack item to insert (don't modify)
-	 * @return remainder that could not be inserted */
+	 * @param stack item to insert, not to be modified (neither immediately nor in the future)
+	 * @return amount inserted */
 	@Override
-	default ItemStack apply(ItemStack stack) {
+	default int applyAsInt(ItemStack stack) {
 		return insert(stack, Link.REC_ITEM);
 	}
 
 	/**Attempt to insert the given stack.
-	 * @param stack item to insert (don't modify)
-	 * @param rec
+	 * @param stack item to insert, not to be modified (neither immediately nor in the future)
+	 * @param rec recursion count-down
 	 * @return remainder that could not be inserted */
-	ItemStack insert(ItemStack stack, int rec);
+	int insert(ItemStack stack, int rec);
 
 	/** does nothing */
 	IInventoryAccess NOP = new IInventoryAccess() {
 		@Override
 		public void getContent(ObjIntConsumer<ItemStack> inspector, int rec) {}
 		@Override
-		public int transfer(int amount, Predicate<ItemStack> filter, UnaryOperator<ItemStack> target, int rec) {return 0;}
+		public int transfer(int amount, Predicate<ItemStack> filter, ToIntFunction<ItemStack> target, int rec) {return 0;}
 		@Override
-		public ItemStack insert(ItemStack stack, int rec) {return stack;}
+		public int insert(ItemStack stack, int rec) {return 0;}
 	};
 
 	/** port type id */

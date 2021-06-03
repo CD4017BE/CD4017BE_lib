@@ -1,5 +1,7 @@
 package cd4017be.lib.tileentity;
 
+import static java.lang.Double.NaN;
+
 import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
@@ -31,7 +33,7 @@ public class BaseTileEntity extends TileEntity implements INBTSynchronized {
 
 	private Chunk chunk;
 	public boolean unloaded = true;
-	protected boolean redraw;
+	protected boolean redraw, sent;
 
 	public BaseTileEntity(TileEntityType<?> type) {
 		super(type);
@@ -50,6 +52,7 @@ public class BaseTileEntity extends TileEntity implements INBTSynchronized {
 
 	/** Tells the game that this TileEntity has changed state that needs saving to disk. */
 	public void saveDirty() {
+		if (unloaded) return;
 		Chunk c = getChunk();
 		if(c != null) c.markUnsaved();
 	}
@@ -58,6 +61,7 @@ public class BaseTileEntity extends TileEntity implements INBTSynchronized {
 	 * @param redraw whether client should do render update as well */
 	public void clientDirty(boolean redraw) {
 		if(unloaded) return;
+		if(sent) this.redraw = sent = false;
 		this.redraw |= redraw;
 		BlockState state = getBlockState();
 		level.sendBlockUpdated(worldPosition, state, state, 2);
@@ -88,8 +92,7 @@ public class BaseTileEntity extends TileEntity implements INBTSynchronized {
 
 	@Override
 	public void handleUpdateTag(BlockState state, CompoundNBT nbt) {
-		super.handleUpdateTag(state, nbt);
-		//cachedBlockState = state;
+		super.load(state, nbt);
 		loadState(nbt, CLIENT);
 	}
 
@@ -99,7 +102,7 @@ public class BaseTileEntity extends TileEntity implements INBTSynchronized {
 		int i = SYNC | (redraw ? REDRAW : 0);
 		storeState(nbt, i);
 		if(nbt.isEmpty()) return null;
-		redraw = false;
+		sent = true;
 		return new SUpdateTileEntityPacket(worldPosition, i, nbt);
 	}
 
@@ -142,10 +145,15 @@ public class BaseTileEntity extends TileEntity implements INBTSynchronized {
 		onUnload();
 	}
 
-	@Override // just skip all the ugly hard-coding in superclass
+	/**For {@link #getRenderBoundingBox()} to always fail the visibility check. */
+	public static final AxisAlignedBB DONT_RENDER
+	= new AxisAlignedBB(NaN, NaN, NaN, NaN, NaN, NaN);
+
+	@Override
 	@OnlyIn(Dist.CLIENT)
 	public AxisAlignedBB getRenderBoundingBox() {
-		return new AxisAlignedBB(worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), worldPosition.getX() + 1, worldPosition.getY() + 1, worldPosition.getZ() + 1);
+		// just skip all the ugly hard-coding in superclass
+		return new AxisAlignedBB(worldPosition);
 	}
 
 	public Orientation orientation() {

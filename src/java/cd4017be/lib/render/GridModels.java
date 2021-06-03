@@ -1,21 +1,20 @@
 package cd4017be.lib.render;
 
 import static cd4017be.lib.Lib.rl;
-import static cd4017be.lib.render.model.WrappedBlockModel.MODELS;
 import static cd4017be.math.Linalg.*;
 import static cd4017be.math.Orient.*;
 
 import java.util.*;
 
+import com.mojang.blaze3d.matrix.MatrixStack.Entry;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
+
 import cd4017be.api.grid.GridPart;
 import cd4017be.api.grid.IGridHost;
 import cd4017be.lib.render.model.JitBakedModel;
-import cd4017be.lib.render.model.TileEntityModel;
 import cd4017be.lib.util.Orientation;
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.client.renderer.model.IBakedModel;
-import net.minecraft.client.renderer.model.ModelResourceLocation;
-import net.minecraft.item.Item;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.model.*;
 import net.minecraft.util.Direction;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.model.data.EmptyModelData;
@@ -24,10 +23,10 @@ import net.minecraftforge.client.model.data.EmptyModelData;
  * @author CD4017BE */
 public class GridModels {
 
-	private static final HashMap<Object, BakedQuad[]> CUBE_MODELS = new HashMap<>();
+	private static final Random RAND = new Random();
+	public static final ModelManager MODELS = Minecraft.getInstance().getModelManager();
 	public static final ResourceLocation[] PORTS;
 	static {
-		TileEntityModel.registerCacheInvalidate(CUBE_MODELS::clear);
 		ResourceLocation obj_p = rl("part/obj_p"), obj_u = rl("part/obj_u");
 		PORTS = new ResourceLocation[] {
 			rl("part/data_in"), rl("part/data_out"),
@@ -56,25 +55,24 @@ public class GridModels {
 			p = q;
 			o |= 1;
 		}
-		BakedQuad face = CUBE_MODELS.computeIfAbsent(
-			PORTS[port >> 11 & 14 | (master ? 1:0)], GridModels::load
-		)[3];
-		if (face == null) return;
 		o = ORIENTS[o];
-		ArrayList<BakedQuad> quads = outer ? model.quads[orient(o, 3)] : model.inner();
 		float[] vec = dadd(3, sca(3, vec(p & 3, p >> 2 & 3, p >> 4 & 3), .25F), -.375F);
 		orient(inv(o), vec);
 		origin(o, dadd(3, vec, .375F), 0.5F, 0.5F, 0.5F);
-		quads.add(orient(o, face, vec));
+		addOriented(
+			outer ? model.quads[orient(o, 3)] : model.inner(),
+			MODELS.getModel(PORTS[port >> 11 & 14 | (master ? 1:0)]),
+			null, o, vec
+		);
 	}
 
-	public static void putCube(Object key, JitBakedModel model, long b, long opaque, int ofs, int orient) {
-		BakedQuad[] faces = CUBE_MODELS.computeIfAbsent(key, GridModels::load);
+	public static void putCube(ResourceLocation key, JitBakedModel model, long b, long opaque, int ofs, int orient) {
+		IBakedModel faces = MODELS.getModel(key);
 		float[] v = originOf(orient, ofs);
+		if ((b & ~opaque) != 0)
+			addOriented(model.inner(), faces, null, orient, v);
 		opaque = ~(opaque | b);
 		for (int i = 0; i < 6; i++) {
-			BakedQuad quad = faces[i];
-			if (quad == null) continue;
 			int j = orient(orient, i);
 			ArrayList<BakedQuad> quads;
 			if ((b & GridPart.FACES[j]) != 0) quads = model.quads[j];
@@ -83,30 +81,30 @@ public class GridModels {
 				if ((((j & 1) != 0 ? b << s : b >>> s) & opaque) == 0) continue;
 				quads = model.inner();
 			}
-			quads.add(orient(orient, quad, v));
+			addOriented(quads, faces, Direction.from3DDataValue(i), orient, v);
 		}
+	}
+
+	public static void addOriented(
+		ArrayList<BakedQuad> dest, IBakedModel model, Direction face, int o, float[] v
+	) {
+		for (BakedQuad quad : model.getQuads(null, face, RAND, EmptyModelData.INSTANCE))
+			dest.add(orient(o, quad, v));
 	}
 
 	private static float[] originOf(int orient, int ofs) {
 		return origin(orient, sca(3, vec(ofs & 3, ofs >> 2 & 3, ofs >> 4 & 3), .25F), .5F, .5F, .5F);
 	}
 
-	private static BakedQuad[] load(Object key) {
-		IBakedModel model = MODELS.getModelManager().getModel(
-			key instanceof ResourceLocation ? (ResourceLocation)key
-			: new ModelResourceLocation(((Item)key).getRegistryName(), "inventory")
-		);
-		BakedQuad[] quads = new BakedQuad[6];
-		Random rand = new Random(42);
-		//first take inner quads according to orientation
-		for (BakedQuad quad : model.getQuads(null, null, rand, EmptyModelData.INSTANCE))
-			quads[quad.getDirection().ordinal()] = quad;
-		//but if a side has a cull face quad, take that instead
-		for (int i = 0; i < 6; i++) {
-			List<BakedQuad> list = model.getQuads(null, Direction.from3DDataValue(i), rand, EmptyModelData.INSTANCE);
-			if (!list.isEmpty()) quads[i] = list.get(0);
-		}
-		return quads;
+	private static final float _255 = 1F/255F;
+
+	public static void draw(ResourceLocation key, Entry mat, IVertexBuilder vb, int color, int light, int overlay) {
+		float r = (color >> 16 & 0xff) * _255,
+		      g = (color >> 8  & 0xff) * _255,
+		      b = (color       & 0xff) * _255,
+		      a = (color >>> 24      ) * _255;
+		for (BakedQuad quad : MODELS.getModel(key).getQuads(null, null, RAND, EmptyModelData.INSTANCE))
+			vb.addVertexData(mat, quad, r, g, b, a, light, overlay);
 	}
 
 }

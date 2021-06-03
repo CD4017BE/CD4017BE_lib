@@ -1,10 +1,19 @@
 package cd4017be.lib.util;
 
+import static net.minecraftforge.fluids.FluidAttributes.BUCKET_VOLUME;
+
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
+
+import net.minecraft.block.*;
+import net.minecraft.block.material.Material;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.ItemEntity;
+import net.minecraft.fluid.Fluid;
+import net.minecraft.fluid.FluidState;
+import net.minecraft.fluid.Fluids;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
@@ -14,6 +23,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.Constants.NBT;
+import net.minecraftforge.fluids.FluidAttributes;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
@@ -354,6 +364,38 @@ public class ItemFluidUtil {
 
 	public static Item item(String id) {
 		return ForgeRegistries.ITEMS.getValue(new ResourceLocation(id));
+	}
+
+	public static FluidStack drainFluid(World world, BlockPos pos, Predicate<FluidStack> filter) {
+		BlockState state = world.getBlockState(pos);
+		Block block = state.getBlock();
+		if (!(block instanceof IBucketPickupHandler)) return FluidStack.EMPTY;
+		FluidState fstate = state.getFluidState();
+		if (!fstate.isSource() || !filter.test(new FluidStack(fstate.getType(), BUCKET_VOLUME)))
+			return FluidStack.EMPTY;
+		return new FluidStack(
+			((IBucketPickupHandler)block)
+			.takeLiquid(world, pos, state), BUCKET_VOLUME
+		);
+	}
+
+	public static boolean placeFluid(World world, BlockPos pos, FluidStack stack) {
+		Fluid fluid = stack.getFluid();
+		FluidAttributes attr = fluid.getAttributes();
+		if (fluid == Fluids.EMPTY || !attr.canBePlacedInWorld(world, pos, stack)) return false;
+		BlockState blockstate = world.getBlockState(pos);
+		Block block = blockstate.getBlock();
+		if (block instanceof ILiquidContainer)
+			return ((ILiquidContainer)block).placeLiquid(
+				world, pos, blockstate,
+				attr.getStateForPlacement(world, pos, stack)
+			);
+		if (!world.isEmptyBlock(pos)) {
+			Material material = blockstate.getMaterial();
+			if (material.isSolid() && !blockstate.canBeReplaced(fluid)) return false;
+			if (!material.isLiquid()) world.destroyBlock(pos, true);
+		}
+		return world.setBlock(pos, attr.getBlock(world, pos, fluid.defaultFluidState()), 11);
 	}
 
 /*

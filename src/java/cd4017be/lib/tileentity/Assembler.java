@@ -124,8 +124,13 @@ implements ITickableServerOnly, IItemHandler, IUnnamedContainerProvider, ITEBrea
 		int j0 = disassembly.size();
 		parts: for (int i = 0; i < list.size(); i++) {
 			GridPart part = GridPart.load(null, list.getCompound(i), SAVE);
-			if (part == null || (stack = part.asItemStack()).isEmpty())
-				continue parts;
+			if (part == null) continue;
+			if (part.dissassemble(level, worldPosition)) {
+				CompoundNBT nbt = new CompoundNBT();
+				part.storeState(nbt, SAVE);
+				list.set(i, nbt);
+			}
+			if ((stack = part.asItemStack()).isEmpty()) continue;
 			for (int j = j0, j1 = disassembly.size(); j < j1; j++) {
 				ItemStack stack1 = disassembly.get(j);
 				if (canItemStacksStack(stack, stack1)) {

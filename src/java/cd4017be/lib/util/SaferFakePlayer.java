@@ -1,6 +1,10 @@
 package cd4017be.lib.util;
 
+import static cd4017be.lib.Lib.CFG_SERVER;
+
 import com.mojang.authlib.GameProfile;
+
+import net.minecraft.advancements.PlayerAdvancements;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.util.FakePlayer;
 
@@ -11,14 +15,24 @@ import net.minecraftforge.common.util.FakePlayer;
  */
 public class SaferFakePlayer extends FakePlayer {
 
+	public final boolean hasAdvancements;
+
 	/**
 	 * @param world
 	 * @param name
 	 */
 	public SaferFakePlayer(ServerWorld world, GameProfile name) {
 		super(world, name);
+		this.inventory = new FullHotbarInventory(this);
+		this.hasAdvancements = CFG_SERVER.fakePlayerAdvancements.get();
 //		setNetHandler(this);
 	}
+
+	@Override
+	public PlayerAdvancements getAdvancements() {
+		return hasAdvancements ? super.getAdvancements() : null;
+	}
+
 /* TODO reimplement if needed
 	@Override public void displayGui(IInteractionObject guiOwner) {}
 	@Override public void displayGUIChest(IInventory chestInventory) {}

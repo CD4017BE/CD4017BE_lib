@@ -27,6 +27,8 @@ public interface IGridHost extends IGridPortHolder {
 	void updateBounds();
 	void removeIfEmpty();
 	void updateNeighbor(Direction d);
+	long bounds();
+	void updateDisplay();
 
 	@Override
 	default Object getHandler(int port) {

@@ -57,11 +57,15 @@ public class SlotHolo extends SlotItemHandler implements ISpecialSlot {
 		container.hardInvUpdate();
 		ItemStack curItem = player.inventory.getCarried();
 		if (ct == ClickType.QUICK_MOVE) {
-			if (!locked) set(curItem.copy());
+			if (!locked) {
+				curItem = curItem.copy();
+				if (!stack) curItem.setCount(1);
+				set(curItem);
+			}
 			return ItemStack.EMPTY;
 		}
-		if (curItem.getCount() > 0 && (item.isEmpty() || ItemHandlerHelper.canItemStacksStack(item, curItem))) {
-			int n = b == 0 ? curItem.getCount() : 1;
+		if (curItem.getCount() > 0 && (item.isEmpty() || stack && ItemHandlerHelper.canItemStacksStack(item, curItem))) {
+			int n = b == 0 && stack ? curItem.getCount() : 1;
 			insertItem(ItemHandlerHelper.copyStackWithSize(curItem, n), false);
 		} else if (item.getCount() > 0) {
 			int n = b == 0 ? 1 : 8;

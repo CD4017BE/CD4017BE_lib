@@ -152,11 +152,17 @@ task deobfJar(type: Jar) {
 	classifier = 'deobf'
 }
 
-tasks.build.dependsOn('deobfJar')
+task sourcesJar(type: Jar) {
+	from sourceSets.main.java
+	classifier = 'sources'
+}
+
+tasks.build.dependsOn('sourcesJar', 'deobfJar')
 tasks.publish.dependsOn('build')
 
 artifacts {
 	archives deobfJar
+	archives sourcesJar
 	archives jar
 }
 
@@ -187,6 +193,7 @@ publishing {
 			artifactId archivesBaseName
 			artifact jar
 			artifact deobfJar
+			artifact sourcesJar
 		}
 	}
 	repositories {

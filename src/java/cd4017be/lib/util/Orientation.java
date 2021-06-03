@@ -3,6 +3,8 @@ package cd4017be.lib.util;
 import net.minecraft.util.Direction;
 import net.minecraft.util.IStringSerializable;
 import net.minecraft.util.math.shapes.VoxelShape;
+import net.minecraft.util.math.vector.Matrix3f;
+import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.util.math.vector.Vector3i;
 
 import static net.minecraft.util.Direction.*;
@@ -38,6 +40,10 @@ public enum Orientation implements IStringSerializable {
 	public final Direction b;
 	/** {@link Orient} equivalent */
 	public final int o;
+	/** transformation matrix centered at (0.5, 0.5, 0.5) */
+	public final Matrix4f mat4;
+	/** rotation matrix */
+	public final Matrix3f mat3;
 
 	private Orientation(Direction u, Direction b) {
 		this.u = u;
@@ -48,6 +54,16 @@ public enum Orientation implements IStringSerializable {
 		| u.getAxis().ordinal() << 5 | u.ordinal() << 4 & 0x10
 		| b.getAxis().ordinal() << 9 | b.ordinal() << 8 & 0x100)
 		^ 0x111;
+		float [] m = {
+			r.getStepX(), u.getStepX(), b.getStepX(), -1,
+			r.getStepY(), u.getStepY(), b.getStepY(), -1,
+			r.getStepZ(), u.getStepZ(), b.getStepZ(), -1,
+			           0,            0,            0, 1
+		};
+		for (int i = 0; i < 12; i+=4)
+			m[i+3] = (m[i] + m[i+1] + m[i+2] + m[i+3]) * -0.5F;
+		this.mat4 = new Matrix4f(m);
+		this.mat3 = new Matrix3f(mat4);
 	}
 
 	public static Orientation byBack(Direction b) {

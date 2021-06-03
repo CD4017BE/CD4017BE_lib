@@ -3,13 +3,17 @@ package cd4017be.lib.part;
 import static cd4017be.lib.network.Sync.ALL;
 import static cd4017be.lib.network.Sync.Type.Enum;
 
+import com.mojang.blaze3d.matrix.MatrixStack;
+
 import cd4017be.api.grid.GridPart;
 import cd4017be.lib.network.Sync;
 import cd4017be.lib.render.GridModels;
 import cd4017be.lib.render.model.JitBakedModel;
 import cd4017be.lib.util.Orientation;
+import net.minecraft.client.renderer.model.ModelResourceLocation;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.Direction;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -51,16 +55,33 @@ public abstract class OrientedPart extends GridPart {
 		| (pos >> 4 & 3) << (o >> 8 & 6);
 	}
 
+	/**@return whether the part touches the front adjacent block */
+	protected boolean onEdge() {
+		return (bounds & FACES[orient.b.ordinal()^1]) != 0;
+	}
+
 	@Override
 	public void loadState(CompoundNBT nbt, int mode) {
 		super.loadState(nbt, mode);
 		set(pos, orient);
 	}
 
+	@OnlyIn(Dist.CLIENT)
+	protected ResourceLocation model() {
+		return new ModelResourceLocation(item().getRegistryName(), "inventory");
+	}
+
 	@Override
 	@OnlyIn(Dist.CLIENT)
 	public void fillModel(JitBakedModel model, long opaque) {
-		GridModels.putCube(item(), model, bounds, opaque, pos, orient.o);
+		GridModels.putCube(model(), model, bounds, opaque, pos, orient.o);
+	}
+
+	@OnlyIn(Dist.CLIENT)
+	protected void transform(MatrixStack ms) {
+		ms.last().pose().multiply(orient.mat4);
+		ms.last().normal().mul(orient.mat3);
+		ms.translate((pos & 3) * .25F, (pos >> 2 & 3) * .25F, (pos >> 4 & 3) * .25F);
 	}
 
 }

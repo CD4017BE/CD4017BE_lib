@@ -11,6 +11,7 @@ import cd4017be.lib.util.ItemFluidUtil;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.entity.projectile.ProjectileEntity;
@@ -279,13 +280,22 @@ public class BlockTE<T extends TileEntity> extends Block {
 		ItemFluidUtil.dropStack(stack, world, pos);
 	}
 
+	@Override
+	public void setPlacedBy(
+		World world, BlockPos pos, BlockState state,
+		LivingEntity entity, ItemStack stack
+	) {
+		handleTE(state, H_PLACE, world, pos, ITEPlace.class,
+			te -> te.onPlace(state, stack, entity));
+	}
+
 	public static final String TE_TAG = "BlockEntityTag";
 
 	/** TileEntity handler flags */
 	public static final int
 	H_BREAK = 1, H_NEIGHBOR = 2, H_UPDATE = 4, H_INTERACT = 8,
 	H_COLLIDE = 16, H_REDSTONE = 32, H_COMPARATOR = 64, H_DROPS = 128,
-	H_GUI = 256, H_SHAPE = 512, H_ITEMDATA = 1024;
+	H_GUI = 256, H_SHAPE = 512, H_ITEMDATA = 1024, H_PLACE = 2048;
 
 	/**@param c TileEntity class
 	 * @return handler flags based on implemented interfaces */
@@ -301,6 +311,7 @@ public class BlockTE<T extends TileEntity> extends Block {
 		if(INamedContainerProvider.class.isAssignableFrom(c)) f |= H_GUI;
 		if(ITEShape.class.isAssignableFrom(c)) f |= H_SHAPE;
 		if(ITEPickItem.class.isAssignableFrom(c)) f |= H_ITEMDATA;
+		if(ITEPlace.class.isAssignableFrom(c)) f |= H_PLACE;
 		return f;
 	}
 
@@ -372,6 +383,11 @@ public class BlockTE<T extends TileEntity> extends Block {
 
 		/**@return item for creative harvest and pick block. */
 		ItemStack getItem();
+	}
+
+	public interface ITEPlace {
+
+		void onPlace(BlockState state, ItemStack stack, LivingEntity entity);
 	}
 
 }
