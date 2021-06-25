@@ -26,5 +26,15 @@
   "gui.cd4017be.assembler": "Microblock Assembly",
   "cd4017be.tankAmount": "%s.4u / %s.4u m³",
   "gui.cd4017be.destroy_d": "§4dissassemble\n§7§mcut blocks§7 [feature disabled]",
-  "gui.cd4017be.replicate_d": "§2§mreplicate§7 [feature disabled]"
+  "gui.cd4017be.replicate_d": "§2§mreplicate§7 [feature disabled]",
+  "gui.cd4017be.grid_edit": "Structure",
+  "gui.cd4017be.shift0": "Shift down",
+  "gui.cd4017be.shift1": "Shift up",
+  "gui.cd4017be.shift2": "Shift north",
+  "gui.cd4017be.shift3": "Shift south",
+  "gui.cd4017be.shift4": "Shift west",
+  "gui.cd4017be.shift5": "Shift east",
+  "gui.cd4017be.rot_right": "Rotate right",
+  "gui.cd4017be.rot_left": "Rotate left",
+  "gui.cd4017be.merge": "§aMerge Structures"
 }

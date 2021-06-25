@@ -4,6 +4,7 @@ import static cd4017be.lib.network.Sync.*;
 import static cd4017be.lib.tick.GateUpdater.TICK;
 import static java.lang.Math.max;
 
+import java.io.*;
 import java.util.ArrayList;
 import java.util.function.Predicate;
 
@@ -13,6 +14,7 @@ import cd4017be.lib.block.BlockTE;
 import cd4017be.lib.block.BlockTE.*;
 import cd4017be.lib.render.model.JitBakedModel;
 import cd4017be.lib.render.model.TileEntityModel;
+import cd4017be.lib.util.HashOutputStream;
 import cd4017be.lib.util.Utils;
 import cd4017be.lib.util.VoxelShape4x4x4;
 import net.minecraft.block.Block;
@@ -43,13 +45,11 @@ public class Grid extends SyncTileEntity
 implements IGridHost, ITEInteract, ITEShape, ITERedstone,
 ITEBlockUpdate, ITENeighborChange, ITEPickItem {
 
-	private final VoxelShape4x4x4 bounds = new VoxelShape4x4x4();
 	private final ExtGridPorts extPorts = new ExtGridPorts(this);
 	private final ArrayList<GridPart> parts = new ArrayList<>();
-	public long opaque;
-	private long inner;
-	private int tLoad;
+	public long opaque, inner;
 	public IDynamicPart[] dynamicParts;
+	private int tLoad;
 
 	public Grid(TileEntityType<?> type) {
 		super(type);
@@ -57,7 +57,7 @@ ITEBlockUpdate, ITENeighborChange, ITEPickItem {
 
 	@Override
 	public VoxelShape getShape(ISelectionContext context) {
-		return new VoxelShapeCube(bounds);
+		return new VoxelShapeCube(new VoxelShape4x4x4(bounds()));
 	}
 
 	@Override
@@ -85,7 +85,6 @@ ITEBlockUpdate, ITENeighborChange, ITEPickItem {
 		}
 		inner = i;
 		opaque = o;
-		bounds.grid = i | o;
 	}
 
 	@Override
@@ -98,7 +97,7 @@ ITEBlockUpdate, ITENeighborChange, ITEPickItem {
 
 	@Override
 	public void removePart(GridPart part) {
-		if (!parts.remove(part)) return;
+		if (!parts.remove(part) || unloaded) return;
 		updateBounds();
 		for (int i = 0; i < part.ports.length; i++) {
 			short con = part.ports[i];
@@ -124,11 +123,9 @@ ITEBlockUpdate, ITENeighborChange, ITEPickItem {
 		if (part.host == this) return true;
 		byte l = part.getLayer();
 		if ((((l >= 0 ? opaque : 0) | (l <= 0 ? inner : 0)) & part.bounds) != 0) return false;
-		bounds.grid |= part.bounds;
 		if (l >= 0) opaque |= part.bounds;
 		if (l <= 0) inner |= part.bounds;
-		parts.add(part);
-		part.setHost(this);
+		parts.add(part = part.setHost(this));
 		connectPart(part);
 		updateRedstone(part);
 		clientDirty(true);
@@ -173,7 +170,10 @@ ITEBlockUpdate, ITENeighborChange, ITEPickItem {
 		}
 		nbt.put("parts", list);
 		if ((mode & SAVE) != 0) {
-			nbt.putInt("hash", list.hashCode());
+			try (HashOutputStream hos = new HashOutputStream()) {
+				list.write(new DataOutputStream(hos));
+				nbt.putInt("hash", hos.hashCode());
+			} catch(IOException e) {/* never happens */}
 			nbt.put("extIO", extPorts.serializeNBT());
 		}
 	}
@@ -207,10 +207,8 @@ ITEBlockUpdate, ITENeighborChange, ITEPickItem {
 	@Override
 	public void onLoad() {
 		if (!level.isClientSide) {
-			for (GridPart part : parts)
-				part.setHost(this);
-			for (GridPart part : parts)
-				connectPart(part);
+			parts.replaceAll(part -> part.setHost(this));
+			parts.forEach(this::connectPart);
 			extPorts.onLoad();
 			clientDirty(true);
 		}
@@ -337,6 +335,7 @@ ITEBlockUpdate, ITENeighborChange, ITEPickItem {
 
 	@Override
 	public ItemStack getItem() {
+		if (parts.isEmpty()) return ItemStack.EMPTY;
 		ItemStack stack = new ItemStack(Content.grid);
 		CompoundNBT nbt = stack.getOrCreateTagElement(BlockTE.TE_TAG);
 		storeState(nbt, SAVE);
@@ -346,7 +345,42 @@ ITEBlockUpdate, ITENeighborChange, ITEPickItem {
 
 	@Override
 	public long bounds() {
-		return bounds.grid;
+		return opaque | inner;
+	}
+
+	/**Merge the other grid into this. Both TEs are usually unloaded when called.
+	 * @param other
+	 * @return can & did merge */
+	public boolean merge(Grid other) {
+		if ((inner & other.inner | opaque & other.opaque) != 0) return false;
+		for (GridPart part : other.parts)
+			if (part.merge(this)) parts.add(part);
+		updateBounds();
+		return true;
+	}
+
+	public boolean rotate(int steps) {
+		for (GridPart part : parts)
+			if (!part.canRotate()) return false;
+		for (GridPart part : parts)
+			part.rotate(steps);
+		updateBounds();
+		return true;
+	}
+
+	public boolean shift(Direction d, int n, Grid other) {
+		if (other == null && (bounds() & GridPart.mask(d.ordinal(), n)) != 0)
+			return false;
+		for (GridPart part : parts)
+			if (!part.canMove(d, n)) return false;
+		for (int i = parts.size() - 1; i >= 0; i--) {
+			GridPart part = parts.get(i);
+			GridPart part1 = part.move(d, n);
+			if (part1 == part) parts.remove(i);
+			if (part1 != null && part1.merge(other))
+				other.parts.add(part1);
+		}
+		return true;
 	}
 
 	private void updateTerParts() {

@@ -22,6 +22,17 @@ public class TEModeledItem extends DocumentedBlockItem implements IModelDataItem
 		super(id, p);
 	}
 
+	/**@param <T> return cast type
+	 * @param stack
+	 * @return new TileEntity loaded from stack nbt */
+	@SuppressWarnings("unchecked")
+	public <T extends TileEntity> T tileEntity(ItemStack stack) {
+		BlockTE<T> block = (BlockTE<T>)getBlock();
+		T te = block.tileType.create();
+		te.load(block.defaultBlockState(), stack.getOrCreateTagElement(BlockTE.TE_TAG));
+		return te;
+	}
+
 	@Override
 	@OnlyIn(Dist.CLIENT)
 	public IModelData getModelData(
@@ -30,12 +41,7 @@ public class TEModeledItem extends DocumentedBlockItem implements IModelDataItem
 		CompoundNBT nbt = stack.getTagElement(BlockTE.TE_TAG);
 		if (nbt == null) return EmptyModelData.INSTANCE;
 		return ModelDataItemOverride.getCached(
-			nbt.getInt("hash"), ()-> {
-				BlockTE<?> block = (BlockTE<?>)getBlock();
-				TileEntity te = block.tileType.create();
-				te.load(block.defaultBlockState(), nbt);
-				return te.getModelData();
-			}
+			nbt.getInt("hash"), ()-> tileEntity(stack).getModelData()
 		);
 	}
 

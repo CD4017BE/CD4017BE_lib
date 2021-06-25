@@ -14,6 +14,11 @@ public final class VoxelShape4x4x4 extends VoxelShapePart {
 		super(4, 4, 4);
 	}
 
+	public VoxelShape4x4x4(long grid) {
+		this();
+		this.grid = grid;
+	}
+
 	private int index(int x, int y, int z) {
 		return x | y << 2 | z << 4;
 	}

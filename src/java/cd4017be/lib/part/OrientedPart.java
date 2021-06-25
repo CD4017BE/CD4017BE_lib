@@ -84,4 +84,37 @@ public abstract class OrientedPart extends GridPart {
 		ms.translate((pos & 3) * .25F, (pos >> 2 & 3) * .25F, (pos >> 4 & 3) * .25F);
 	}
 
+	@Override
+	public boolean canRotate() {
+		return true;
+	}
+
+	@Override
+	public void rotate(int steps) {
+		Orientation o;
+		switch(steps & 3) {
+		case 1: o = Orientation.W12; break;
+		case 2: o = Orientation.N12; break;
+		case 3: o = Orientation.E12; break;
+		default: return;
+		}
+		set(pos, o.apply(orient));
+	}
+
+	@Override
+	public boolean canMove(Direction d, int n) {
+		long m = mask(d.ordinal(), n);
+		return (bounds & m) == 0 || (bounds & ~m) == 0;
+	}
+
+	@Override
+	public GridPart move(Direction d, int n) {
+		d = orient.inv().apply(d);
+		int x = (pos      & 3) + d.getStepX() * n;
+		int y = (pos >> 2 & 3) + d.getStepY() * n;
+		int z = (pos >> 4 & 3) + d.getStepZ() * n;
+		set(x & 3 | (y & 3) << 2 | (z & 3) << 4 | pos & 0xc0, orient);
+		return ((x | y | z) & -4) == 0 ? null : this;
+	}
+
 }

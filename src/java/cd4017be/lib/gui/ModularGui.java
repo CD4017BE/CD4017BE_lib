@@ -117,7 +117,7 @@ public class ModularGui<T extends AdvancedContainer> extends ContainerScreen<T> 
 			info.add(stack != null ? stack.getDisplayName().getString() : translate("cd4017be.tankEmpty"));
 			info.add(format("cd4017be.tankAmount", stack != null ? (double)stack.getAmount() / 1000D : 0D, (double)fslot.getCapacity() / 1000D));
 			GuiUtils.drawHoveringText(matrixStack, convertText(info), x, y, width, height, -1, font);
-		} else if (hoveredSlot != null && !hoveredSlot.hasItem()) {
+		} else if (hoveredSlot != null && !(hoveredSlot.hasItem() && inventory.getCarried().isEmpty())) {
 			String s = slotTooltips.get(hoveredSlot.index);
 			if (s != null)
 				GuiUtils.drawHoveringText(matrixStack, convertText(translate(s)), x, y, width, height, -1, font);

@@ -5,6 +5,7 @@ import static net.minecraftforge.registries.ForgeRegistries.ITEMS;
 import cd4017be.lib.network.INBTSynchronized;
 import cd4017be.lib.render.model.JitBakedModel;
 import cd4017be.lib.util.ItemFluidUtil;
+import cd4017be.math.Orient;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
@@ -39,8 +40,12 @@ public abstract class GridPart implements IPortHolder, INBTSynchronized {
 		return new ItemStack(item());
 	}
 
-	public void setHost(IGridHost host) {
+	/**Called server side when adding, removing, loading or unloading a part.
+	 * @param host the new host when loaded/added or null when unloaded/removed
+	 * @return usually this, but may be different part replacing it */
+	public GridPart setHost(IGridHost host) {
 		this.host = host;
+		return this;
 	}
 
 	/**@param b new bounds (must not overlap with other parts) */
@@ -124,6 +129,64 @@ public abstract class GridPart implements IPortHolder, INBTSynchronized {
 	 * @return whether data has changed */
 	public boolean dissassemble(World world, BlockPos pos) {return false;}
 
+	/**When merging two grid blocks together
+	 * @param other grid to merge in
+	 * @return whether to add this part */
+	public boolean merge(IGridHost other) {
+		return true;
+	}
+
+	/**@return whether this part can rotate in the horizontal plane */
+	public boolean canRotate() { return false; }
+
+	/**@param steps rotation steps along north -> east -> south -> west */
+	public void rotate(int steps) {
+		long b = bounds, b1 = 0;
+		int i, idx, idz;
+		switch(steps & 3) {
+		case 1: i = 3; idx = 16; idz = -65; break;
+		case 2: i = 51; idx = -1; idz = -12; break;
+		case 3: i = 48; idx = -16; idz = 65; break;
+		default: return;
+		}
+		for (int z = 0; z < 4; z++, b >>>= 12, i += idz)
+			for (int x = 0; x < 4; x++, b >>>= 1, i += idx)
+				b1 |= (b & 0x1111) << i;
+		bounds = b1;
+	}
+
+	/**@param d direction
+	 * @param n grid steps 1...3
+	 * @return whether this part can be moved */
+	public boolean canMove(Direction d, int n) {return false;}
+
+	/**@param d direction
+	 * @param n grid steps 1...3
+	 * @return part moved to adjacent block: null = all in old block,
+	 * this = all in next block, new = split over two blocks */
+	public GridPart move(Direction d, int n) {
+		int id = d.ordinal(), s = step(id);
+		long b0 = bounds, b1 = b0 & mask(id, n); b0 &= ~b1;
+		if ((id & 1) == 0) {
+			b0 >>>= s * n;
+			b1 <<= s * (4 - n);
+		} else {
+			b0 <<= s * n;
+			b1 >>>= s * (4 - n);
+		}
+		if (b0 == 0) {
+			bounds = b1;
+			return this;
+		}
+		bounds = b0;
+		if (b1 == 0) return null;
+		return copy(b1);
+	}
+
+	protected GridPart copy(long bounds) {
+		return null;
+	}
+
 	/**@param pos x & 0x03 | y & 0x0c | z & 0x30
 	 * @param dir side of the cell
 	 * @param type type & 7 | master & 8
@@ -174,6 +237,44 @@ public abstract class GridPart implements IPortHolder, INBTSynchronized {
 	 * @return x->1, y->4, z->16 */
 	public static int step(int dir) {
 		return 0xb424 >>> dir * 3 & 0x15;
+	}
+
+	/**@param dir BTNSWE index
+	 * @param n steps
+	 * @return voxel mask */
+	public static long mask(int dir, int n) {
+		long m = FACES[dir];
+		if (n == 1) return m;
+		int s = step(dir);
+		if ((dir & 1) != 0) m >>>= s * (n - 1);
+		while(--n > 0) m |= m << s;
+		return m;
+	}
+
+	public static void rotate(short[] ports, int steps) {
+		int o = Orient.rot(1, steps), sign = (o & 0x111) * 15;
+		for (int i = 0; i < ports.length; i++) {
+			int p = ports[i];
+			p = (p ^ sign) - (sign & 0x777);
+			ports[i] = (short)(p & 0xf000
+				| (p      & 15) << (o << 1 & 12)
+				| (p >> 4 & 15) << (o >> 3 & 12)
+				| (p >> 8 & 15) << (o >> 7 & 12)
+			);
+		}
+	}
+
+	public static void move(short[] ports, Direction d, int n, boolean newBlock) {
+		if (ports.length == 0) return;
+		int ofs = (
+			  d.getStepX() * n + 4 << 1
+			| d.getStepY() * n + 4 << 5
+			| d.getStepZ() * n + 4 << 9
+		) & 0x777;
+		int m = (d.ordinal() & 1 ^ (newBlock ? 0 : 1))
+			<< d.getAxis().ordinal() * 4 + 3;
+		for (int i = 0; i < ports.length; i++)
+			ports[i] = (short)(ports[i] + ofs ^ m);
 	}
 
 	/**@param part optional old part to reuse

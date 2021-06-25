@@ -6,9 +6,7 @@ import static cd4017be.lib.block.BlockTE.flags;
 import cd4017be.api.grid.GridPart;
 import cd4017be.lib.block.BlockTE;
 import cd4017be.lib.container.*;
-import cd4017be.lib.item.DocumentedBlockItem;
-import cd4017be.lib.item.MicroBlockItem;
-import cd4017be.lib.item.TEModeledItem;
+import cd4017be.lib.item.*;
 import cd4017be.lib.render.GridModels;
 import cd4017be.lib.render.model.ScriptModel;
 import cd4017be.lib.render.model.TileEntityModel;
@@ -60,13 +58,14 @@ public class Content {
 	public static final BlockTE<Grid> GRID = null;
 
 	public static final Item energy_supp = null, item_supp = null, fluid_supp = null, assembler = null;
-	public static final TEModeledItem grid = null;
+	public static final GridHostItem grid = null;
 	public static final MicroBlockItem microblock = null;
 
 	public static final ContainerType<ContainerEnergySupply> eNERGY_SUPP = null;
 	public static final ContainerType<ContainerItemSupply> iTEM_SUPP = null;
 	public static final ContainerType<ContainerFluidSupply> fLUID_SUPP = null;
 	public static final ContainerType<ContainerAssembler> aSSEMBLER = null;
+	public static final ContainerType<ContainerGrid> gRID = null;
 
 	@SubscribeEvent
 	public static void registerBlocks(Register<Block> ev) {
@@ -95,7 +94,7 @@ public class Content {
 			new DocumentedBlockItem(FLUID_SUPP, pc),
 			new DocumentedBlockItem(ITEM_SUPP, pc),
 			new DocumentedBlockItem(ASSEMBLER, p),
-			new TEModeledItem(GRID, p),
+			new GridHostItem(GRID, p),
 			new MicroBlockItem(p).setRegistryName(rl("microblock"))
 		);
 	}
@@ -118,7 +117,8 @@ public class Content {
 			IForgeContainerType.create(ContainerEnergySupply::new).setRegistryName(rl("energy_supp")),
 			IForgeContainerType.create(ContainerItemSupply::new).setRegistryName(rl("item_supp")),
 			IForgeContainerType.create(ContainerFluidSupply::new).setRegistryName(rl("fluid_supp")),
-			IForgeContainerType.create(ContainerAssembler::new).setRegistryName(rl("assembler"))
+			IForgeContainerType.create(ContainerAssembler::new).setRegistryName(rl("assembler")),
+			IForgeContainerType.create(ContainerGrid::new).setRegistryName(rl("grid"))
 		);
 	}
 
@@ -130,6 +130,7 @@ public class Content {
 		ScreenManager.register(iTEM_SUPP, ContainerItemSupply::setupGui);
 		ScreenManager.register(fLUID_SUPP, ContainerFluidSupply::setupGui);
 		ScreenManager.register(aSSEMBLER, ContainerAssembler::setupGui);
+		ScreenManager.register(gRID, ContainerGrid::setupGui);
 		ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.CONFIGGUIFACTORY, Lib.CFG_CLIENT);
 		ClientRegistry.bindTileEntityRenderer(GRID.tileType, GridTER::new);
 	}

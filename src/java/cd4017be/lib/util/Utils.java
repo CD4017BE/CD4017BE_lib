@@ -1,5 +1,7 @@
 package cd4017be.lib.util;
 
+import static java.lang.Math.min;
+
 import java.nio.charset.Charset;
 import java.util.function.IntFunction;
 import java.util.function.ObjIntConsumer;
@@ -372,6 +374,27 @@ public class Utils {
 		for (int i = 0; i < l; i++)
 			arr[i] = list.getString(i);
 		return arr;
+	}
+
+	public static byte[] putShortArray(short[] arr) {
+		byte[] buf = new byte[arr.length << 1];
+		for (int i = 0; i < arr.length; i++) {
+			short v = arr[i];
+			buf[i << 1] = (byte)v;
+			buf[i << 1 | 1] = (byte)(v >> 8);
+		}
+		return buf;
+	}
+
+	public static short[] getShortArray(byte[] nbt) {
+		short[] arr = new short[nbt.length >> 1];
+		getShortArray(nbt, arr);
+		return arr;
+	}
+
+	public static void getShortArray(byte[] nbt, short[] arr) {
+		for (int l = min(arr.length, nbt.length >> 1), i = 0; i < l; i++)
+			arr[i] = (short)(nbt[i << 1] & 0xff | nbt[i << 1 | 1] << 8);
 	}
 
 	public static INBT readTag(ByteBuf data, byte tagId) {

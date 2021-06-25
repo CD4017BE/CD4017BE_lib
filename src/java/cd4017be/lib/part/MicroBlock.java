@@ -1,10 +1,7 @@
 package cd4017be.lib.part;
 
 import static cd4017be.lib.Content.microblock;
-
-import cd4017be.api.grid.GridPart;
-import cd4017be.api.grid.IGridHost;
-import cd4017be.api.grid.IGridItem;
+import cd4017be.api.grid.*;
 import cd4017be.lib.network.Sync;
 import cd4017be.lib.render.MicroBlockFace;
 import cd4017be.lib.render.model.JitBakedModel;
@@ -15,9 +12,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Direction;
-import net.minecraft.util.Hand;
+import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.world.EmptyBlockReader;
@@ -127,6 +122,38 @@ public class MicroBlock extends GridPart {
 	@OnlyIn(Dist.CLIENT)
 	public void fillModel(JitBakedModel model, long opaque) {
 		MicroBlockFace.drawVoxels(model, block, bounds, opaque);
+	}
+
+	@Override
+	public boolean merge(IGridHost host) {
+		MicroBlock part = (MicroBlock)host.findPart(
+			p -> p instanceof MicroBlock && ((MicroBlock)p).block == block
+		);
+		if (part == null) return true;
+		part.bounds |= bounds;
+		return false;
+	}
+
+	@Override
+	public boolean canMove(Direction d, int n) {
+		return true;
+	}
+
+	@Override
+	protected GridPart copy(long bounds) {
+		return new MicroBlock(block, tag, bounds);
+	}
+
+	@Override
+	public boolean canRotate() {
+		return true;
+	}
+
+	@Override
+	@SuppressWarnings("deprecation")
+	public void rotate(int steps) {
+		block = block.rotate(Rotation.values()[steps]);
+		super.rotate(steps);
 	}
 
 }

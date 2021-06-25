@@ -56,8 +56,11 @@ public class ItemContainer extends AdvancedContainer {
 	@Override
 	public void addPlayerInventory(int x, int y, boolean armor) {
 		super.addPlayerInventory(x, y, armor);
-		if (armor || slot < 36)
-			((HidableSlot)getSlot(slot + playerInvStart())).lock();
+		int s = slot;
+		if (armor || s < 36) {
+			s = (s < 9 ? s + 27 : s - 9) + playerInvStart();
+			((HidableSlot)getSlot(s)).lock();
+		}
 	}
 
 }

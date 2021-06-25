@@ -77,7 +77,7 @@ implements IServerPacketReceiver, IPlayerPacketReceiver {
 	public void addPlayerInventory(int x, int y, boolean armor) {
 		playerInvS = this.slots.size();
 		playerInvE = playerInvS + (armor ? 41 : 36);
-		for (int i = 0; i < 3; i++) 
+		for (int i = 0; i < 3; i++)
 			for (int j = 0; j < 9; j++)
 				this.addSlot(new HidableSlot(inv, i * 9 + j + 9, x + j * 18, y + i * 18));
 		for (int i = 0; i < 9; i++)
