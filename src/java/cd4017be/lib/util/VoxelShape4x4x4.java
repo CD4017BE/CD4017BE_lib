@@ -1,6 +1,8 @@
 package cd4017be.lib.util;
 
 import net.minecraft.util.Direction.Axis;
+import net.minecraft.util.math.shapes.VoxelShape;
+import net.minecraft.util.math.shapes.VoxelShapeCube;
 import net.minecraft.util.math.shapes.VoxelShapePart;
 
 /**I was working with the bounding boxes as 4x4x4 bit packed long anyway
@@ -17,6 +19,10 @@ public final class VoxelShape4x4x4 extends VoxelShapePart {
 	public VoxelShape4x4x4(long grid) {
 		this();
 		this.grid = grid;
+	}
+
+	public VoxelShape shape() {
+		return new VoxelShapeCube(this);
 	}
 
 	private int index(int x, int y, int z) {

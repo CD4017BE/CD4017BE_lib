@@ -1,5 +1,6 @@
 package cd4017be.lib.render;
 
+import static cd4017be.api.grid.GridPart.vec;
 import static cd4017be.lib.Lib.rl;
 import static cd4017be.math.Linalg.*;
 import static cd4017be.math.Orient.*;
@@ -56,7 +57,7 @@ public class GridModels {
 			o |= 1;
 		}
 		o = ORIENTS[o];
-		float[] vec = dadd(3, sca(3, vec(p & 3, p >> 2 & 3, p >> 4 & 3), .25F), -.375F);
+		float[] vec = dadd(3, sca(3, vec(p), .25F), -.375F);
 		orient(inv(o), vec);
 		origin(o, dadd(3, vec, .375F), 0.5F, 0.5F, 0.5F);
 		addOriented(
@@ -93,7 +94,7 @@ public class GridModels {
 	}
 
 	private static float[] originOf(int orient, int ofs) {
-		return origin(orient, sca(3, vec(ofs & 3, ofs >> 2 & 3, ofs >> 4 & 3), .25F), .5F, .5F, .5F);
+		return origin(orient, sca(3, vec(ofs), .25F), .5F, .5F, .5F);
 	}
 
 	private static final float _255 = 1F/255F;

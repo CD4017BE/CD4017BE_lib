@@ -19,7 +19,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 /**A TileEntity with special fast synchronisation to nearby players.
  * @author CD4017BE */
 public abstract class SyncTileEntity extends BaseTileEntity
-implements IGate, IServerPacketReceiver, IPlayerPacketReceiver {
+implements IServerPacketReceiver, IPlayerPacketReceiver {
 
 	public static double CLIENT_RANGE, SERVER_RANGE;
 
@@ -40,7 +40,7 @@ implements IGate, IServerPacketReceiver, IPlayerPacketReceiver {
 	public void updateDisplay() {
 		if (!update && !watching.isEmpty()) {
 			update = true;
-			GATE_UPDATER.add(this);
+			GATE_UPDATER.add((IGate)this::sendSync);
 		}
 		this.saveDirty();
 	}
@@ -78,8 +78,7 @@ implements IGate, IServerPacketReceiver, IPlayerPacketReceiver {
 		else readSync(pkt, n);
 	}
 
-	@Override
-	public boolean evaluate() {
+	private boolean sendSync() {
 		update = false;
 		for (int i = watching.size() - 1; i >= 0; i--) {
 			ServerPlayerEntity player = watching.get(i);

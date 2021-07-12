@@ -4,6 +4,7 @@ import static cd4017be.lib.Lib.CREATIVE_TAB;
 import static cd4017be.lib.Lib.rl;
 import static cd4017be.lib.block.BlockTE.flags;
 import cd4017be.api.grid.GridPart;
+import cd4017be.lib.block.BlockGrid;
 import cd4017be.lib.block.BlockTE;
 import cd4017be.lib.container.*;
 import cd4017be.lib.item.*;
@@ -55,11 +56,14 @@ public class Content {
 	public static final BlockTE<FluidSupply> FLUID_SUPP = null;
 	public static final BlockTE<ItemSupply> ITEM_SUPP = null;
 	public static final BlockTE<Assembler> ASSEMBLER = null;
-	public static final BlockTE<Grid> GRID = null;
+	public static final BlockGrid GRID = null, GRID1 = null;
 
 	public static final Item energy_supp = null, item_supp = null, fluid_supp = null, assembler = null;
 	public static final GridHostItem grid = null;
 	public static final MicroBlockItem microblock = null;
+
+	/** alternate TileEntityType for Grid to enable dynamic rendering */
+	public static final TileEntityType<Grid> GRID_TER = null;
 
 	public static final ContainerType<ContainerEnergySupply> eNERGY_SUPP = null;
 	public static final ContainerType<ContainerItemSupply> iTEM_SUPP = null;
@@ -78,10 +82,12 @@ public class Content {
 			new BlockTE<>(pc, flags(FluidSupply.class)).setRegistryName(rl("fluid_supp")),
 			new BlockTE<>(pc, flags(ItemSupply.class)).setRegistryName(rl("item_supp")),
 			new BlockTE<>(p, flags(Assembler.class)).setRegistryName(rl("assembler")),
-			new BlockTE<>(
-				Properties.of(Material.STONE).strength(1.5F).noOcclusion().dynamicShape(),
-				flags(Grid.class)
-			).setRegistryName(rl("grid"))
+			new BlockGrid(
+				Properties.of(Material.STONE).strength(1.25F).noOcclusion().dynamicShape()
+			).setRegistryName(rl("grid")),
+			new BlockGrid(
+				Properties.of(Material.STONE).strength(1.5F).dynamicShape()
+			).setRegistryName(rl("grid1"))
 		);
 	}
 
@@ -106,7 +112,9 @@ public class Content {
 			FLUID_SUPP.makeTEType(FluidSupply::new),
 			ITEM_SUPP.makeTEType(ItemSupply::new),
 			ASSEMBLER.makeTEType(Assembler::new),
-			GRID.makeTEType(Grid::new)
+			BlockTE.makeTEType(Grid::new, GRID, GRID1),
+			TileEntityType.Builder.of(() -> new Grid(GRID_TER), GRID, GRID1)
+				.build(null).setRegistryName(rl("grid_ter"))
 		);
 		GridPart.GRID_HOST_BLOCK = GRID.defaultBlockState();
 	}
@@ -132,7 +140,7 @@ public class Content {
 		ScreenManager.register(aSSEMBLER, ContainerAssembler::setupGui);
 		ScreenManager.register(gRID, ContainerGrid::setupGui);
 		ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.CONFIGGUIFACTORY, Lib.CFG_CLIENT);
-		ClientRegistry.bindTileEntityRenderer(GRID.tileType, GridTER::new);
+		ClientRegistry.bindTileEntityRenderer(GRID_TER, GridTER::new);
 	}
 
 	@SubscribeEvent

@@ -6,6 +6,7 @@ import static cd4017be.lib.network.Sync.SAVE;
 import static cd4017be.lib.network.Sync.Type.*;
 import static cd4017be.lib.util.ItemFluidUtil.*;
 import static java.lang.Math.min;
+import static net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY;
 import static net.minecraftforge.items.ItemHandlerHelper.*;
 
 import java.util.ArrayList;
@@ -31,14 +32,20 @@ import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.tileentity.TileEntityType;
+import net.minecraft.util.Direction;
+import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.Constants.NBT;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.IItemHandlerModifiable;
+import net.minecraftforge.items.wrapper.RangedWrapper;
 
 /**@author CD4017BE */
 public class Assembler extends BaseTileEntity
-implements ITickableServerOnly, IItemHandler, IUnnamedContainerProvider, ITEBreak {
+implements ITickableServerOnly, IItemHandlerModifiable, IUnnamedContainerProvider, ITEBreak {
 
 	final ArrayList<ItemStack> disassembly = new ArrayList<>();
+	/** 0: disassemble, 1: replicate, 2...22: parts */
 	final ItemStack[] inventory = new ItemStack[23];
 	ItemStack[] assembly;
 	short[] counts;
@@ -51,6 +58,7 @@ implements ITickableServerOnly, IItemHandler, IUnnamedContainerProvider, ITEBrea
 	@Sync(type = I8)
 	public int idxDA, t;
 	boolean canDA = true, updateASS = true;
+	LazyOptional<IItemHandler> inv_main, inv_out, inv_top;
 
 	public Assembler(TileEntityType<?> type) {
 		super(type);
@@ -277,6 +285,11 @@ implements ITickableServerOnly, IItemHandler, IUnnamedContainerProvider, ITEBrea
 	}
 
 	@Override
+	public void setStackInSlot(int slot, ItemStack stack) {
+		inventory[slot] = stack;
+	}
+
+	@Override
 	public void storeState(CompoundNBT nbt, int mode) {
 		super.storeState(nbt, mode);
 		if ((mode & SAVE) != 0) {
@@ -347,6 +360,102 @@ implements ITickableServerOnly, IItemHandler, IUnnamedContainerProvider, ITEBrea
 			ItemFluidUtil.dropStack(stack, level, worldPosition);
 		for (ItemStack stack : disassembly)
 			ItemFluidUtil.dropStack(stack, level, worldPosition);
+	}
+
+	@Override
+	public void onLoad() {
+		inv_top = LazyOptional.of(()-> new RangedWrapper(this, 1, 2));
+		inv_main = LazyOptional.of(InvMain::new);
+		inv_out = LazyOptional.of(InvOut::new);
+		super.onLoad();
+	}
+
+	@Override
+	protected void invalidateCaps() {
+		inv_top.invalidate();
+		inv_main.invalidate();
+		inv_out.invalidate();
+		super.invalidateCaps();
+	}
+
+	@Override
+	public <T> LazyOptional<T> getCapability(Capability<T> cap, Direction side) {
+		if (cap != ITEM_HANDLER_CAPABILITY) return super.getCapability(cap, side);
+		switch(side) {
+		case UP: return inv_top.cast();
+		case DOWN: return inv_out.cast();
+		default: return inv_main.cast();
+		}
+	}
+
+
+	private class InvOut implements IItemHandler {
+
+		@Override
+		public int getSlots() {
+			return 22;
+		}
+
+		@Override
+		public ItemStack getStackInSlot(int slot) {
+			return Assembler.this.getStackInSlot(slot + 1);
+		}
+
+		@Override
+		public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
+			return stack;
+		}
+
+		@Override
+		public ItemStack extractItem(int slot, int amount, boolean simulate) {
+			if (slot == 0 && (amount = Math.min(amount, inventory[1].getCount() - 1)) <= 0)
+				return ItemStack.EMPTY;
+			return Assembler.this.extractItem(slot + 1, amount, simulate);
+		}
+
+		@Override
+		public int getSlotLimit(int slot) {
+			return Assembler.this.getSlotLimit(slot + 1);
+		}
+
+		@Override
+		public boolean isItemValid(int slot, ItemStack stack) {
+			return false;
+		}
+	}
+
+
+	private class InvMain implements IItemHandler {
+
+		@Override
+		public int getSlots() {
+			return 22;
+		}
+
+		@Override
+		public ItemStack getStackInSlot(int slot) {
+			return Assembler.this.getStackInSlot(slot == 0 ? 0 : slot + 1);
+		}
+
+		@Override
+		public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
+			return Assembler.this.insertItem(slot == 0 ? 0 : slot + 1, stack, simulate);
+		}
+
+		@Override
+		public ItemStack extractItem(int slot, int amount, boolean simulate) {
+			return Assembler.this.extractItem(slot == 0 ? 0 : slot + 1, amount, simulate);
+		}
+
+		@Override
+		public int getSlotLimit(int slot) {
+			return Assembler.this.getSlotLimit(slot == 0 ? 0 : slot + 1);
+		}
+
+		@Override
+		public boolean isItemValid(int slot, ItemStack stack) {
+			return Assembler.this.isItemValid(slot == 0 ? 0 : slot + 1, stack);
+		}
 	}
 
 }

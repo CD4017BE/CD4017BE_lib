@@ -1,0 +1,5 @@
+{
+	"variants": {
+		"": { "model": "cd4017be_lib:block/grid" }
+	}
+}

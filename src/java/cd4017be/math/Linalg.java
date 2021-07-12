@@ -1,6 +1,7 @@
 package cd4017be.math;
 
-import static java.lang.Math.abs;
+import static java.lang.Float.floatToRawIntBits;
+import static java.lang.Float.intBitsToFloat;
 
 /**Performs linear algebra algorithms on N-dimensional vectors that are represented via arrays.
  * <br> Methods take the vector length as explicit argument, so the JIT is more likely to in-line calls and unroll loops.
@@ -121,6 +122,18 @@ public class Linalg {
 		return out;
 	}
 
+	/**vector in-place element-wise absolute value
+	 * @return i < n : a[i] = |a[i]| */
+	public static float[] abs(int n, float[] a) {return abs(n, a, a);}
+
+	/**vector element-wise absolute value
+	 * @return i < n : out[i] = |a[i]| */
+	public static float[] abs(int n, float[] out, float[] a) {
+		for (int i = 0; i < n; i++)
+			out[i] = intBitsToFloat(floatToRawIntBits(a[i]) & 0x7fffffff);
+		return out;
+	}
+
 	/**3D-vector in-place cross product
 	 * @return a = a x b */
 	public static float[] cross(float[] a, float[] b) {return cross(a, a, b);}
@@ -185,7 +198,7 @@ public class Linalg {
 			int k = i;
 			for(int j = i + 1; j < m; j++) {
 				float y = mat[j][i];
-				if (abs(y) > abs(x)) {
+				if (Math.abs(y) > Math.abs(x)) {
 					x = y;
 					k = j;
 				}

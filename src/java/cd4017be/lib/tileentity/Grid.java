@@ -1,6 +1,9 @@
 package cd4017be.lib.tileentity;
 
+import static cd4017be.lib.Content.GRID;
+import static cd4017be.lib.Content.GRID1;
 import static cd4017be.lib.network.Sync.*;
+import static cd4017be.lib.tick.GateUpdater.GATE_UPDATER;
 import static cd4017be.lib.tick.GateUpdater.TICK;
 import static java.lang.Math.max;
 
@@ -14,6 +17,7 @@ import cd4017be.lib.block.BlockTE;
 import cd4017be.lib.block.BlockTE.*;
 import cd4017be.lib.render.model.JitBakedModel;
 import cd4017be.lib.render.model.TileEntityModel;
+import cd4017be.lib.tick.IGate;
 import cd4017be.lib.util.HashOutputStream;
 import cd4017be.lib.util.Utils;
 import cd4017be.lib.util.VoxelShape4x4x4;
@@ -28,7 +32,6 @@ import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
-import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.shapes.*;
@@ -43,13 +46,14 @@ import net.minecraftforge.common.util.Constants.NBT;
 /**@author CD4017BE */
 public class Grid extends SyncTileEntity
 implements IGridHost, ITEInteract, ITEShape, ITERedstone,
-ITEBlockUpdate, ITENeighborChange, ITEPickItem {
+ITEBlockUpdate, ITENeighborChange, ITEPickItem, IGate {
 
 	private final ExtGridPorts extPorts = new ExtGridPorts(this);
 	private final ArrayList<GridPart> parts = new ArrayList<>();
 	public long opaque, inner;
 	public IDynamicPart[] dynamicParts;
 	private int tLoad;
+	private boolean occlude, updateOccl;
 
 	public Grid(TileEntityType<?> type) {
 		super(type);
@@ -57,7 +61,7 @@ ITEBlockUpdate, ITENeighborChange, ITEPickItem {
 
 	@Override
 	public VoxelShape getShape(ISelectionContext context) {
-		return new VoxelShapeCube(new VoxelShape4x4x4(bounds()));
+		return new VoxelShape4x4x4(bounds()).shape();
 	}
 
 	@Override
@@ -84,7 +88,11 @@ ITEBlockUpdate, ITENeighborChange, ITEPickItem {
 			if (l <= 0) i |= part.bounds;
 		}
 		inner = i;
-		opaque = o;
+		if (opaque != (opaque = o) && !updateOccl) {
+			updateOccl = true;
+			if (level != null && !level.isClientSide)
+				GATE_UPDATER.add(this);
+		}
 	}
 
 	@Override
@@ -421,10 +429,32 @@ ITEBlockUpdate, ITENeighborChange, ITEPickItem {
 	}
 
 	@Override
-	@OnlyIn(Dist.CLIENT)
-	public AxisAlignedBB getRenderBoundingBox() {
-		return dynamicParts == null ? DONT_RENDER : super.getRenderBoundingBox();
-		//reduces performance impact by factor 3
+	public TileEntityType<?> getType() {
+		return level != null && level.isClientSide && dynamicParts != null
+			? Content.GRID_TER : super.getType();
+	}
+
+	@Override
+	public boolean evaluate() {
+		updateOccl = false;
+		if (unloaded) return false;
+		long o = ~opaque;
+		return occlude != (occlude =
+			(o & 0xf99f_9009_9009_f99fL) == 0 &&
+			((o & 0x0000_0660_0660_0000L) == 0 || isSealed(o))
+		);
+	}
+
+	private static boolean isSealed(long bounds) {
+		for (long f : GridPart.FACES)
+			if ((GridPart.floodFill(bounds, bounds & f) & ~(f | 0x0000_0660_0660_0000L)) != 0)
+				return false;
+		return true;
+	}
+
+	@Override
+	public void latchOut() {
+		level.setBlock(worldPosition, (occlude ? GRID1 : GRID).defaultBlockState(), 2);
 	}
 
 }

@@ -3,7 +3,12 @@ name: Java CI
 on:
   push:
     branches:
+      - master*
       - release*
+    tags:
+      - v*
+    paths:
+      - gradle.properties
 
 jobs:
   build:
@@ -16,9 +21,7 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 1.8
-    - name: Setup Forge Gradle
-      run: ./gradlew setupCiWorkspace
-    - name: Release Package
+    - name: Build and Release
       run: ./gradlew publish
       env:
         USERNAME: CD4017BE

@@ -68,9 +68,21 @@ public class BlockTE<T extends TileEntity> extends Block {
 	/**@param factory the TileEntity factory function
 	 * @return the TileEntityType created for this block */
 	public TileEntityType<T> makeTEType(Function<TileEntityType<T>, T> factory) {
-		tileType = Builder.of(() -> factory.apply(tileType), this).build(null);
-		tileType.setRegistryName(getRegistryName());
-		return tileType;
+		return makeTEType(factory, this);
+	}
+
+	/**@param factory the TileEntity factory function
+	 * @param blocks the assigned blocks
+	 * @return the TileEntityType created for the given blocks */
+	@SafeVarargs
+	public static <T extends TileEntity> TileEntityType<T> makeTEType(
+		Function<TileEntityType<T>, T> factory, BlockTE<T>... blocks
+	) {
+		BlockTE<T> block = blocks[0];
+		TileEntityType<T> type = Builder.of(() -> factory.apply(block.tileType), blocks).build(null);
+		type.setRegistryName(block.getRegistryName());
+		for (BlockTE<T> b : blocks) b.tileType = type;
+		return type;
 	}
 
 	private final <I> void handleTE(

@@ -6,6 +6,7 @@ import cd4017be.lib.network.INBTSynchronized;
 import cd4017be.lib.render.model.JitBakedModel;
 import cd4017be.lib.util.ItemFluidUtil;
 import cd4017be.math.Orient;
+import it.unimi.dsi.fastutil.shorts.ShortArrays;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
@@ -29,7 +30,7 @@ public abstract class GridPart implements IPortHolder, INBTSynchronized {
 	public short[] ports;
 
 	public GridPart(int ports) {
-		this.ports = new short[ports];
+		this.ports = ports == 0 ? ShortArrays.EMPTY_ARRAY : new short[ports];
 	}
 
 	/**@return the {@link IGridItem} that creates this part. */
@@ -249,6 +250,10 @@ public abstract class GridPart implements IPortHolder, INBTSynchronized {
 		if ((dir & 1) != 0) m >>>= s * (n - 1);
 		while(--n > 0) m |= m << s;
 		return m;
+	}
+
+	public static float[] vec(int pos) {
+		return new float[] {pos & 3, pos >> 2 & 3, pos >> 4 & 3};
 	}
 
 	public static void rotate(short[] ports, int steps) {

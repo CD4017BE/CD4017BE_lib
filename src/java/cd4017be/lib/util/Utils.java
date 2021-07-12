@@ -163,6 +163,7 @@ public class Utils {
 			: X < 0 ? Direction.WEST : Direction.EAST;
 	}
 
+	@Deprecated
 	public static RayTraceResult getHit(PlayerEntity player, BlockState block, BlockPos pos) {
 		throw new UnsupportedOperationException();
 		/* TODO implement
@@ -170,6 +171,7 @@ public class Utils {
 		return block.collisionRayTrace(player.world, pos, p, p.add(player.getLook(1).scale(16)));*/
 	}
 
+	@Deprecated
 	public static FluidStack getFluid(World world, BlockPos pos, boolean sourceOnly) {
 		throw new UnsupportedOperationException();
 		/* TODO implement
@@ -243,6 +245,7 @@ public class Utils {
 		}
 	}
 
+	@Deprecated
 	public static void updateRedstoneOnSide(TileEntity te, int value, Direction side) {
 		throw new UnsupportedOperationException();
 		/* TODO implement
@@ -251,6 +254,7 @@ public class Utils {
 		else te.getWorld().neighborChanged(te.getPos().offset(side), te.getBlockType(), te.getPos());*/
 	}
 
+	@Deprecated
 	public static <T extends TileEntity & ITERedstone> void updateRedstoneOnSide(T te, Direction side) {
 		throw new UnsupportedOperationException();
 		/* TODO implement
@@ -265,6 +269,7 @@ public class Utils {
 	 * @param te the TileEntity that changed
 	 * @param side the side on which a neighbor should be notified or null to notify on all sides.
 	 */
+	@Deprecated
 	public static void notifyNeighborTile(TileEntity te, Direction side) {
 		throw new UnsupportedOperationException();
 		/* TODO implement
@@ -469,12 +474,12 @@ public class Utils {
 			for (int v : arr)
 				data.writeInt(v);
 		}	return;
-		/*case NBT.TAG_LONG_ARRAY: {
-			long[] arr = ((LongArrayNBT)tag).getLongArray();
+		case NBT.TAG_LONG_ARRAY: {
+			long[] arr = ((LongArrayNBT)tag).getAsLongArray();
 			data.writeInt(arr.length);
 			for (long v : arr)
 				data.writeLong(v);
-		}	return;*/
+		}	return;
 		case NBT.TAG_STRING: {
 			byte[] arr = ((StringNBT)tag).getAsString().getBytes(UTF8);
 			data.writeShort(arr.length);

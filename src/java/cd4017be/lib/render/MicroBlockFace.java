@@ -2,6 +2,7 @@ package cd4017be.lib.render;
 
 import static cd4017be.api.grid.GridPart.FACES;
 import static cd4017be.api.grid.GridPart.step;
+import static cd4017be.api.grid.GridPart.vec;
 import static cd4017be.lib.render.model.WrappedBlockModel.MODELS;
 import static cd4017be.math.Linalg.*;
 import static cd4017be.math.MCConv.intBitsToVec;
@@ -111,10 +112,6 @@ public class MicroBlockFace {
 			data, quad.getTintIndex(), quad.getDirection(),
 			quad.getSprite(), quad.isShade()
 		);
-	}
-
-	public static float[] vec(int pos) {
-		return new float[] {pos & 3, pos >> 2 & 3, pos >> 4 & 3};
 	}
 
 	private static final HashMap<Object, MicroBlockFace[]> MODEL_CACHE = new HashMap<>();

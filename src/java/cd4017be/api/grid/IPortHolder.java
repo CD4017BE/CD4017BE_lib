@@ -55,6 +55,11 @@ public interface IPortHolder {
 			else other.setHandler(getHandler());
 			return true;
 		}
+
+		@Override
+		public String toString() {
+			return host + "[" + channel + "]";
+		}
 	}
 
 }

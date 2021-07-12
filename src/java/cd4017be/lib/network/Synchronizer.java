@@ -209,6 +209,7 @@ public class Synchronizer<T> {
 			pkt.writeBytes(rawState);
 		}
 		rawState.clear().position(p0 + rawSize());
+		i1--;
 		for (int i = changes.nextSetBit(i1); i >= 0; i = changes.nextSetBit(i + 1)) {
 			int j = i - i1;
 			encoders[j].encode(objState[j0 + j], pkt);
@@ -237,6 +238,7 @@ public class Synchronizer<T> {
 			pkt.readBytes(rawState);
 		}
 		rawState.clear().position(p0 + rawSize());
+		i1--;
 		for (int i = changes.nextSetBit(i1); i >= 0; i = changes.nextSetBit(i + 1)) {
 			int j = i - i1, k = j + j0;
 			objState[k] = encoders[j].decode(objState[k], pkt);

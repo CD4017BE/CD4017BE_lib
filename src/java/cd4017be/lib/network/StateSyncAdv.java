@@ -204,11 +204,12 @@ public class StateSyncAdv extends StateSynchronizer {
 	public int objIndex(Class<?> c, String name) {
 		for (int i = 0; i < synchronizers.length; i++) {
 			Synchronizer<?> s = synchronizers[i];
-			if (s.clazz == c) {
+			if (c == null || s.clazz == c) {
 				int j = s.varIndex(name);
-				if (j < 0)
+				if (j >= 0)
+					return objIdx[i] + j;
+				else if (c != null)
 					throw new IllegalArgumentException("variable '" + name + "' is not defined!");
-				return objIdx[i] + j;
 			}
 		}
 		throw new IllegalArgumentException("class '" + c + "' is not listed!");
