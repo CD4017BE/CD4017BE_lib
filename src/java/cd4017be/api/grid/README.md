@@ -1,7 +1,7 @@
 # Microblock API
-This api is used to implement small parts that share the same block location. And it allows them to interact with each other and with the surrounding world.
+This API is used to implement small parts that share the same block location. And it allows them to interact with each other and with the surrounding world. The mod [RedstoneControl2](https://github.com/CD4017BE/RedstoneControl2) heavily relies on this API and serves as a good example on how it can be used.
 
-These parts must extend the `GridPart` class are stored and managed by a TileEntity that implements `IGridHost`.
+Microblock parts must extend the `GridPart` class are stored and managed by a TileEntity that implements `IGridHost`.
 That TileEntity can be accessed via `GridPart.host` if the part is added to a Block that is loaded and is on a server side world, otherwise the field is set to `null`. The state is changed by the Host TileEntity calling `GridPart.setHost( )` on its parts.
 
 **CD4017BE_lib** provides an implementation of `IGridHost` with `cd4017be.lib.tileentity.Grid`.  

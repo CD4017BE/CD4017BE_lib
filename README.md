@@ -8,7 +8,7 @@ The CD4017BE_lib is a Minecraft mod that serves as java library for my other mod
 - `cd4017be.math.*`: linear algebra with float[] vectors, complex numbers and other math utilities.
 - several template implementations for Block, Item, TileEntity, Container, GridPart, IItemHandler, IFluidHandler and more.
 - `cd4017be.api.*`: mod APIs used to let my mods interact with each other and with other mods.
-- `cd4017be.api.grid.*`: my own 4x4x4 sub-grid microblock API and a connection system for interaction between GridParts.
+- `cd4017be.api.grid.*`: my own 4x4x4 sub-grid [Microblock API](src/java/cd4017be/api/grid/README.md) and a connection system for interaction between GridParts.
 
 Despite named a Library, it also adds a few Blocks and Items to the game:
 - **Creative Lab Item/Fluid/Energy Supply**: Spawns or consumes resources and offers counting statistics. Very useful for testing stuff, only obtainable in creative mode.
@@ -19,7 +19,7 @@ Despite named a Library, it also adds a few Blocks and Items to the game:
 *Note: This is as of MC 1.16.5, features greatly vary between releases for different Minecraft versions as new features get added over time and no longer functioning / obsolete content got removed during porting.*
 
 **Mods using it in MC 1.16.5:**
-- Redstone Control 2
+- Redstone Control 2 [GitHub](https://github.com/CD4017BE/RedstoneControl2)
 
 **Mods using older versions:**
 - Redstone Control [GitHub](https://github.com/CD4017BE/RedstoneControl) [Curse Forge](https://www.curseforge.com/minecraft/mc-mods/redstone-control) *MC 1.11 - 1.12*
@@ -33,7 +33,7 @@ Despite named a Library, it also adds a few Blocks and Items to the game:
 Simply put the downloaded `.jar` file of the mod in your `mods` folder. Requires Forge Modloader to be installed in your Minecraft instance.
 
 Latest development downloads can be found in [packages](https://github.com/CD4017BE/CD4017BE_lib/packages/71046).
-Stable, more thoroughly tested downloads available on [Curse Forge](http://minecraft.curseforge.com/projects/cd4017be-library).
+Stable, more thoroughly tested downloads available on [Curse Forge](https://www.curseforge.com/minecraft/mc-mods/cd4017be-library/files).
 
 Mods depending on CD4017BE_lib may require specific versions.
 
@@ -62,10 +62,8 @@ dependencies {
 ```
 You can define `mc_version=1.16.5` and `lib_version=...` in your `gradle.properties`.
 
-Note: GitHub packages requires credentials to download files. You can set them as environment variables when running gradle with  
-`env USERNAME=user PASSWORD=key gradlew ...` under Unix or  
-`set "USERNAME=user" & set "PASSWORD=key" & gradlew ...` under Windows.  
-`user` is your Github account name and `key` should be an [access token](https://docs.github.com/en/github/authenticating-to-github/keeping-your-account-and-data-secure/creating-a-personal-access-token) created for that account with read access to GitHub packages.
+Note: GitHub packages requires credentials to download files. You can set them either as environment variables for running gradle or supply them as project variable arguments to the gradle command: `gradlew -Pgpr.user=USER -Pgpr.key=KEY ...`  
+`USER` is your Github account name and `KEY` should be an [access token](https://docs.github.com/en/github/authenticating-to-github/keeping-your-account-and-data-secure/creating-a-personal-access-token) created for that account with read access to GitHub packages.
 
 ## Project setup for MC 1.16.5
 For tinkering with the library code itself.
