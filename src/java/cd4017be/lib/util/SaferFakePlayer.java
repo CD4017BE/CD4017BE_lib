@@ -2,6 +2,8 @@ package cd4017be.lib.util;
 
 import static cd4017be.lib.Lib.CFG_SERVER;
 
+import java.util.UUID;
+
 import com.mojang.authlib.GameProfile;
 
 import net.minecraft.advancements.PlayerAdvancements;
@@ -14,6 +16,9 @@ import net.minecraftforge.common.util.FakePlayer;
  * @author CD4017BE
  */
 public class SaferFakePlayer extends FakePlayer {
+
+	public static final GameProfile DEFAULT_PROFILE
+	= new GameProfile(new UUID(0, 0), "FakePlayer");
 
 	public final boolean hasAdvancements;
 

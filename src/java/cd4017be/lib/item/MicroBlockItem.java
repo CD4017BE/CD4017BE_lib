@@ -89,9 +89,9 @@ public class MicroBlockItem extends GridItem implements IModelDataItem {
 		return ActionResultType.SUCCESS;
 	}
 
-	public ItemStack convert(ItemStack stack, World world, BlockPos pos) {
+	public ItemStack convert(ItemStack stack, World world, PlayerEntity player, BlockPos pos) {
 		BlockState state = getBlock(new BlockItemUseContext(
-			world, null, Hand.MAIN_HAND, stack,
+			world, player, Hand.MAIN_HAND, stack,
 			new BlockRayTraceResult(
 				upFromBottomCenterOf(pos, 1),
 				Direction.UP, pos, false

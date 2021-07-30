@@ -23,6 +23,7 @@ import cd4017be.lib.container.IUnnamedContainerProvider;
 import cd4017be.lib.network.Sync;
 import cd4017be.lib.tileentity.BaseTileEntity.ITickableServerOnly;
 import cd4017be.lib.util.ItemFluidUtil;
+import cd4017be.lib.util.SaferFakePlayer;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
@@ -33,6 +34,7 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.Direction;
+import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.Constants.NBT;
 import net.minecraftforge.common.util.LazyOptional;
@@ -59,6 +61,7 @@ implements ITickableServerOnly, IItemHandlerModifiable, IUnnamedContainerProvide
 	public int idxDA, t;
 	boolean canDA = true, updateASS = true;
 	LazyOptional<IItemHandler> inv_main, inv_out, inv_top;
+	SaferFakePlayer player;
 
 	public Assembler(TileEntityType<?> type) {
 		super(type);
@@ -117,12 +120,19 @@ implements ITickableServerOnly, IItemHandlerModifiable, IUnnamedContainerProvide
 		updateASS = true;
 	}
 
+	private PlayerEntity fakePlayer() {
+		if (player != null) return player;
+		player = new SaferFakePlayer((ServerWorld)level, SaferFakePlayer.DEFAULT_PROFILE);
+		player.setPosAndOldPos(worldPosition.getX() + 0.5, worldPosition.getY() + 1.5, worldPosition.getZ() + 0.5);
+		return player;
+	}
+
 	private boolean disassemble(ItemStack stack) {
 		Item item = stack.getItem();
 		if (item == Items.AIR) return false;
 		if (item != Content.grid) {
 			if (!CFG_SERVER.canCutBlocks.get()) return false;
-			stack = Content.microblock.convert(stack, level, worldPosition);
+			stack = Content.microblock.convert(stack, level, fakePlayer(), worldPosition);
 			if (stack.isEmpty()) return false;
 			disassembly.add(stack);
 			return true;
