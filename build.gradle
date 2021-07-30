@@ -4,7 +4,7 @@ buildscript {
 		mavenCentral()
 	}
 	dependencies {
-		classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '4.1.+', changing: true
+		classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
 	}
 }
 apply plugin: 'net.minecraftforge.gradle'
@@ -16,7 +16,8 @@ version = "${mc_version}-${lib_version}"
 group = "com.cd4017be.lib" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "cd4017be_lib"
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(8) // Mojang ships Java 8 to end users, so your mod should target Java 8.
+// Mojang ships Java 16 to end users in 1.17+ instead of Java 8 in 1.16 or lower, so your mod should target Java 16.
+java.toolchain.languageVersion = JavaLanguageVersion.of(16)
 compileJava.options.encoding = 'UTF-8'
 
 println('Java: ' + System.getProperty('java.version') + ' JVM: ' + System.getProperty('java.vm.version') + '(' + System.getProperty('java.vendor') + ') Arch: ' + System.getProperty('os.arch'))
@@ -141,9 +142,9 @@ dependencies {
 	minecraft "net.minecraftforge:forge:${mc_version}-${forge_version}"
 	
 	// compile against the JEI API but do not include it at runtime
-	compileOnly fg.deobf("mezz.jei:jei-${jei_version}:api")
+	//compileOnly fg.deobf("mezz.jei:jei-${jei_version}:api")
 	// at runtime, use the full JEI jar
-	runtimeOnly fg.deobf("mezz.jei:jei-${jei_version}")
+	//runtimeOnly fg.deobf("mezz.jei:jei-${jei_version}")
 	
 }
 
