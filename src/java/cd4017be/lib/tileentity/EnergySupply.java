@@ -1,16 +1,21 @@
 package cd4017be.lib.tileentity;
 
-import cd4017be.lib.block.BlockTE.ITENeighborChange;
+import net.minecraft.world.level.block.state.BlockState;
+import cd4017be.lib.block.BlockTE.ITEBlockUpdate;
 import cd4017be.lib.capability.CachedCap;
 import cd4017be.lib.container.ContainerEnergySupply;
 import cd4017be.lib.container.IUnnamedContainerProvider;
 import cd4017be.lib.network.*;
-import cd4017be.lib.tileentity.BaseTileEntity.ITickableServerOnly;
-import net.minecraft.entity.player.*;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.tileentity.TileEntityType;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
+import cd4017be.lib.tileentity.BaseTileEntity.TickableServer;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.core.Direction;
+import net.minecraft.core.BlockPos;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.energy.IEnergyStorage;
@@ -20,7 +25,7 @@ import static cd4017be.lib.network.Sync.*;
 
 /** @author CD4017BE */
 public class EnergySupply extends BaseTileEntity
-implements IEnergyStorage, ITickableServerOnly, ITENeighborChange, IUnnamedContainerProvider, IPlayerPacketReceiver {
+implements IEnergyStorage, TickableServer, ITEBlockUpdate, IUnnamedContainerProvider, IPlayerPacketReceiver {
 
 	final LazyOptional<IEnergyStorage> handler = LazyOptional.of(()->this);
 	@SuppressWarnings("unchecked")
@@ -34,12 +39,12 @@ implements IEnergyStorage, ITickableServerOnly, ITENeighborChange, IUnnamedConta
 	@Sync(to=GUI) public long t() {return level.getGameTime() - t0 - 1;}
 	boolean updateCaps;
 
-	public EnergySupply(TileEntityType<EnergySupply> type) {
-		super(type);
+	public EnergySupply(BlockEntityType<EnergySupply> type, BlockPos pos, BlockState state) {
+		super(type, pos, state);
 	}
 
 	@Override
-	public void tick() {
+	public void tickServer(Level world, BlockPos pos, BlockState state) {
 		lastI = flowI;
 		lastO = flowO;
 		flowI = 0;
@@ -67,7 +72,7 @@ implements IEnergyStorage, ITickableServerOnly, ITENeighborChange, IUnnamedConta
 	}
 
 	@Override
-	public void onNeighborTEChange(BlockPos from) {
+	public void onNeighborBlockChange(BlockPos from, Block block, boolean moving) {
 		updateCaps = true;
 	}
 
@@ -123,12 +128,12 @@ implements IEnergyStorage, ITickableServerOnly, ITENeighborChange, IUnnamedConta
 	}
 
 	@Override
-	public ContainerEnergySupply createMenu(int windowId, PlayerInventory playerInv, PlayerEntity player) {
+	public ContainerEnergySupply createMenu(int windowId, Inventory playerInv, Player player) {
 		return new ContainerEnergySupply(windowId, playerInv, this);
 	}
 
 	@Override
-	public void handlePlayerPacket(PacketBuffer pkt, ServerPlayerEntity sender) throws Exception {
+	public void handlePlayerPacket(FriendlyByteBuf pkt, ServerPlayer sender) throws Exception {
 		switch(pkt.readByte()) {
 		case 0:
 			if((limI = pkt.readInt()) < 0) limI = 0;

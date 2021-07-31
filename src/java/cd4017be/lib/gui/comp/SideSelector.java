@@ -10,9 +10,8 @@ import javax.annotation.Nullable;
 import cd4017be.lib.gui.ModularGui;
 import cd4017be.lib.text.TooltipUtil;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.platform.GlStateManager;
-import net.minecraft.util.Direction;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.core.Direction;
 
 /**
  * A button used to select a block face (for side configuration of machines). Shows the block preview on the side of the screen when hovered.
@@ -24,7 +23,7 @@ public class SideSelector extends GuiCompBase<GuiCompGroup> {
 	private final Supplier<Direction> get;
 	private final Predicate<Direction> filter;
 	private final Consumer<Direction> set;
-	private final ModularGui gui;
+	private final ModularGui<?> gui;
 	public int type = 3, tx = 0, ty = Integer.MIN_VALUE;
 	public String tooltip;
 
@@ -39,7 +38,7 @@ public class SideSelector extends GuiCompBase<GuiCompGroup> {
 	 * @param filter optional filter function to restrict the set of allowed sides.
 	 * @param set side state consumer function
 	 */
-	public SideSelector(GuiCompGroup parent, ModularGui gui, int w, int h, int x, int y, @Nonnull Supplier<Direction> get, @Nullable Predicate<Direction> filter, @Nullable Consumer<Direction> set) {
+	public SideSelector(GuiCompGroup parent, ModularGui<?> gui, int w, int h, int x, int y, @Nonnull Supplier<Direction> get, @Nullable Predicate<Direction> filter, @Nullable Consumer<Direction> set) {
 		super(parent, w, h, x, y);
 		this.gui = gui;
 		this.get = get;
@@ -80,7 +79,7 @@ public class SideSelector extends GuiCompBase<GuiCompGroup> {
 	}
 
 	@Override
-	public void drawOverlay(MatrixStack stack, int mx, int my) {
+	public void drawOverlay(PoseStack stack, int mx, int my) {
 		Direction side = get.get();
 		String s = tooltip;
 		if (s != null) {
@@ -88,14 +87,14 @@ public class SideSelector extends GuiCompBase<GuiCompGroup> {
 				s = s.substring(0, s.length()-1) + (side == null ? "0" : "1");
 			parent.drawTooltip(stack, TooltipUtil.format(s, TooltipUtil.translate("enumfacing." + side)), mx, my);
 		}
-		GlStateManager._pushMatrix();
-		GlStateManager._translatef(gui.getGuiLeft(), gui.getGuiTop(), 0);
+		stack.pushPose();
+		stack.translate(gui.getGuiLeft(), gui.getGuiTop(), 0);
 		gui.drawSideConfig(stack, side, type);
-		GlStateManager._popMatrix();
+		stack.popPose();
 	}
 
 	@Override
-	public void drawBackground(MatrixStack stack, int mx, int my, float t) {
+	public void drawBackground(PoseStack stack, int mx, int my, float t) {
 		if (ty == Integer.MIN_VALUE) return;
 		Direction s = get.get();
 		parent.drawRect(stack, x, y, tx, ty + (s == null ? -1 : s.ordinal()) * h, w, h);

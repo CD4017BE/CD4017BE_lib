@@ -1,6 +1,6 @@
 package cd4017be.lib.util;
 
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * Used for efficient shaped recipe lookup in HashMaps

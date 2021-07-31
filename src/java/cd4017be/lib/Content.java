@@ -14,16 +14,17 @@ import cd4017be.lib.render.model.TileEntityModel;
 import cd4017be.lib.render.te.GridTER;
 import cd4017be.lib.text.TooltipEditor;
 import cd4017be.lib.tileentity.*;
-import net.minecraft.block.Block;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.AbstractBlock.Properties;
-import net.minecraft.block.material.Material;
-import net.minecraft.client.gui.ScreenManager;
-import net.minecraft.inventory.container.ContainerType;
-import net.minecraft.item.Item;
-import net.minecraft.item.Rarity;
-import net.minecraft.tileentity.TileEntityType;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockBehaviour.Properties;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Rarity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.ModelRegistryEvent;
@@ -32,9 +33,6 @@ import net.minecraftforge.client.model.ModelLoaderRegistry;
 import net.minecraftforge.common.extensions.IForgeContainerType;
 import net.minecraftforge.event.RegistryEvent.Register;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.ExtensionPoint;
-import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -46,7 +44,7 @@ import net.minecraftforge.registries.ObjectHolder;
  * Block -> ALL_UPPERCASE<br>
  * Item -> all_lowercase<br>
  * TileEntity -> stored in {@link BlockTE#tileType}<br>
- * ContainerType -> fIRST_LOWERCASE_REMAINING_UPPERCASE
+ * MenuType -> fIRST_LOWERCASE_REMAINING_UPPERCASE
  * @author CD4017BE */
 @EventBusSubscriber(modid = Lib.ID, bus = Bus.MOD)
 @ObjectHolder(value = Lib.ID)
@@ -62,14 +60,14 @@ public class Content {
 	public static final GridHostItem grid = null;
 	public static final MicroBlockItem microblock = null;
 
-	/** alternate TileEntityType for Grid to enable dynamic rendering */
-	public static final TileEntityType<Grid> GRID_TER = null;
+	/** alternate BlockEntityType for Grid to enable dynamic rendering */
+	public static final BlockEntityType<Grid> GRID_TER = null;
 
-	public static final ContainerType<ContainerEnergySupply> eNERGY_SUPP = null;
-	public static final ContainerType<ContainerItemSupply> iTEM_SUPP = null;
-	public static final ContainerType<ContainerFluidSupply> fLUID_SUPP = null;
-	public static final ContainerType<ContainerAssembler> aSSEMBLER = null;
-	public static final ContainerType<ContainerGrid> gRID = null;
+	public static final MenuType<ContainerEnergySupply> eNERGY_SUPP = null;
+	public static final MenuType<ContainerItemSupply> iTEM_SUPP = null;
+	public static final MenuType<ContainerFluidSupply> fLUID_SUPP = null;
+	public static final MenuType<ContainerAssembler> aSSEMBLER = null;
+	public static final MenuType<ContainerGrid> gRID = null;
 
 	@SubscribeEvent
 	public static void registerBlocks(Register<Block> ev) {
@@ -106,21 +104,21 @@ public class Content {
 	}
 
 	@SubscribeEvent
-	public static void registerTileEntities(Register<TileEntityType<?>> ev) {
+	public static void registerTileEntities(Register<BlockEntityType<?>> ev) {
 		ev.getRegistry().registerAll(
 			ENERGY_SUPP.makeTEType(EnergySupply::new),
 			FLUID_SUPP.makeTEType(FluidSupply::new),
 			ITEM_SUPP.makeTEType(ItemSupply::new),
 			ASSEMBLER.makeTEType(Assembler::new),
 			BlockTE.makeTEType(Grid::new, GRID, GRID1),
-			TileEntityType.Builder.of(() -> new Grid(GRID_TER), GRID, GRID1)
+			BlockEntityType.Builder.of((pos, state) -> new Grid(GRID_TER, pos, state), GRID, GRID1)
 				.build(null).setRegistryName(rl("grid_ter"))
 		);
 		GridPart.GRID_HOST_BLOCK = GRID.defaultBlockState();
 	}
 
 	@SubscribeEvent
-	public static void registerContainers(Register<ContainerType<?>> ev) {
+	public static void registerContainers(Register<MenuType<?>> ev) {
 		ev.getRegistry().registerAll(
 			IForgeContainerType.create(ContainerEnergySupply::new).setRegistryName(rl("energy_supp")),
 			IForgeContainerType.create(ContainerItemSupply::new).setRegistryName(rl("item_supp")),
@@ -134,13 +132,13 @@ public class Content {
 	@OnlyIn(Dist.CLIENT)
 	public static void setupClient(FMLClientSetupEvent ev) {
 		TooltipEditor.init();
-		ScreenManager.register(eNERGY_SUPP, ContainerEnergySupply::setupGui);
-		ScreenManager.register(iTEM_SUPP, ContainerItemSupply::setupGui);
-		ScreenManager.register(fLUID_SUPP, ContainerFluidSupply::setupGui);
-		ScreenManager.register(aSSEMBLER, ContainerAssembler::setupGui);
-		ScreenManager.register(gRID, ContainerGrid::setupGui);
-		ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.CONFIGGUIFACTORY, Lib.CFG_CLIENT);
-		ClientRegistry.bindTileEntityRenderer(GRID_TER, GridTER::new);
+		MenuScreens.register(eNERGY_SUPP, ContainerEnergySupply::setupGui);
+		MenuScreens.register(iTEM_SUPP, ContainerItemSupply::setupGui);
+		MenuScreens.register(fLUID_SUPP, ContainerFluidSupply::setupGui);
+		MenuScreens.register(aSSEMBLER, ContainerAssembler::setupGui);
+		MenuScreens.register(gRID, ContainerGrid::setupGui);
+		//ModLoadingContext.get().registerExtensionPoint(IExtensionPoint.CONFIGGUIFACTORY, Lib.CFG_CLIENT);
+		BlockEntityRenderers.register(GRID_TER, GridTER::new);
 	}
 
 	@SubscribeEvent

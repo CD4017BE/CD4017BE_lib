@@ -5,13 +5,13 @@ import java.util.function.Predicate;
 import cd4017be.lib.capability.IFluidHandlerModifiable;
 import cd4017be.lib.capability.IMultiFluidHandler;
 import cd4017be.lib.container.AdvancedContainer;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.inventory.container.ClickType;
-import net.minecraft.inventory.container.Slot;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.NonNullList;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.Container;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.NonNullList;
 import net.minecraftforge.fluids.FluidActionResult;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidUtil;
@@ -23,7 +23,7 @@ import net.minecraftforge.items.SlotItemHandler;
  * @author CD4017BE */
 public class SlotFluidHandler extends Slot implements IFluidSlot, ISpecialSlot {
 
-	private static final IInventory emptyInventory = new Inventory(0);
+	private static final Container emptyInventory = new SimpleContainer(0);
 	private final IFluidHandler fluidHandler;
 
 	public SlotFluidHandler(IFluidHandler fluidHandler, int index, int xPosition, int yPosition) {
@@ -57,7 +57,7 @@ public class SlotFluidHandler extends Slot implements IFluidSlot, ISpecialSlot {
 	}
 
 	@Override
-	public boolean mayPickup(PlayerEntity playerIn) {
+	public boolean mayPickup(Player playerIn) {
 		return false;
 	}
 
@@ -84,25 +84,25 @@ public class SlotFluidHandler extends Slot implements IFluidSlot, ISpecialSlot {
 	}
 
 	@Override
-	public ItemStack onClick(int b, ClickType ct, PlayerEntity player, AdvancedContainer advancedContainer) {
-		ItemStack curItem = player.inventory.getCarried();
+	public ItemStack onClick(int b, ClickType ct, Player player, AdvancedContainer cont) {
+		ItemStack curItem = cont.getCarried();
 		if (ct == ClickType.CLONE) {
 			if (!curItem.isEmpty()) return ItemStack.EMPTY;
 			FluidStack stack = getFluid();
 			Predicate<FluidStack> filter = f ->
 				stack.isEmpty() ? fluidHandler.isFluidValid(getSlotIndex(), f)
 					: f.isEmpty() || f.isFluidEqual(stack);
-			NonNullList<ItemStack> inv =  player.inventory.items;
+			NonNullList<ItemStack> inv =  player.getInventory().items;
 			for (int i = 0; i < inv.size(); i++) {
 				ItemStack item = inv.get(i);
 				if (FluidUtil.getFluidContained(item).filter(filter).isPresent()) {
-					player.inventory.setCarried(item);
+					cont.setCarried(item);
 					inv.set(i, curItem);
 					break;
 				}
 			}
 			if (player.isCreative() && !stack.isEmpty())
-				player.inventory.setCarried(FluidUtil.getFilledBucket(stack));
+				cont.setCarried(FluidUtil.getFilledBucket(stack));
 		} else if (ct == ClickType.PICKUP || ct == ClickType.PICKUP_ALL || ct == ClickType.QUICK_MOVE) {
 			IFluidHandler inv = fluidHandler;
 			if (inv instanceof IMultiFluidHandler)
@@ -112,7 +112,7 @@ public class SlotFluidHandler extends Slot implements IFluidSlot, ISpecialSlot {
 			if (b == 0)
 				r = FluidUtil.tryEmptyContainerAndStow(curItem, inv, null, limit, player, true);
 			else r = FluidUtil.tryFillContainerAndStow(curItem, inv, null, limit, player, true);
-			if (r.success) player.inventory.setCarried(r.result);
+			if (r.success) cont.setCarried(r.result);
 		}
 		return ItemStack.EMPTY;
 	}

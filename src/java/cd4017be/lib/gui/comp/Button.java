@@ -5,7 +5,7 @@ import java.util.function.IntSupplier;
 
 import javax.annotation.Nullable;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 
 import cd4017be.lib.text.TooltipUtil;
 
@@ -63,7 +63,7 @@ public class Button extends GuiCompBase<GuiCompGroup> {
 	}
 
 	@Override
-	public void drawOverlay(MatrixStack stack, int mx, int my) {
+	public void drawOverlay(PoseStack stack, int mx, int my) {
 		if (tooltip == null) return;
 		String s = tooltip;
 		if (get != null && s.endsWith("#"))
@@ -72,7 +72,7 @@ public class Button extends GuiCompBase<GuiCompGroup> {
 	}
 
 	@Override
-	public void drawBackground(MatrixStack stack, int mx, int my, float t) {
+	public void drawBackground(PoseStack stack, int mx, int my, float t) {
 		if (ty == Integer.MIN_VALUE) return;
 		int s = get == null ? 0 : get.getAsInt();
 		parent.drawRect(stack, x, y, tx, ty + s * h, w, h);

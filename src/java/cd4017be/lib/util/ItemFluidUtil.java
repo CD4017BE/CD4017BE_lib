@@ -7,21 +7,25 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
 
-import net.minecraft.block.*;
-import net.minecraft.block.material.Material;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.item.ItemEntity;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.fluid.FluidState;
-import net.minecraft.fluid.Fluids;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.world.level.block.LiquidBlockContainer;
+import net.minecraft.world.level.block.BucketPickup;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.item.BucketItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.common.util.Constants.NBT;
 import net.minecraftforge.fluids.FluidAttributes;
 import net.minecraftforge.fluids.FluidStack;
@@ -46,20 +50,20 @@ public class ItemFluidUtil {
 		);
 	}
 
-	public static void loadInventory(ListNBT list, ItemStack[] inv) {
+	public static void loadInventory(ListTag list, ItemStack[] inv) {
 		Arrays.fill(inv, ItemStack.EMPTY);
 		for (int i = 0; i < list.size(); i++) {
-			CompoundNBT tag = list.getCompound(i);
+			CompoundTag tag = list.getCompound(i);
 			int s = tag.getByte("slot") & 0xff;
 			if (s < inv.length) inv[s] = ItemStack.of(tag);
 		}
 	}
 
-	public static ListNBT saveInventory(ItemStack[] inv) {
-		ListNBT list = new ListNBT();
+	public static ListTag saveInventory(ItemStack[] inv) {
+		ListTag list = new ListTag();
 		for (int i = 0; i < inv.length; i++)
 			if (!inv[i].isEmpty()) {
-				CompoundNBT tag = new CompoundNBT();
+				CompoundTag tag = new CompoundTag();
 				inv[i].save(tag);
 				tag.putByte("slot", (byte)i);
 				list.add(tag);
@@ -67,25 +71,25 @@ public class ItemFluidUtil {
 		return list;
 	}
 
-	public static ItemStack[] loadItems(ListNBT list) {
+	public static ItemStack[] loadItems(ListTag list) {
 		ItemStack[] items = new ItemStack[list.size()];
 		for (int i = 0; i < items.length; i++)
 			items[i] = ItemStack.of(list.getCompound(i));
 		return items;
 	}
 
-	public static void loadItems(ListNBT list, ItemStack[] items) {
+	public static void loadItems(ListTag list, ItemStack[] items) {
 		int m = Math.min(items.length, list.size());
 		for (int i = 0; i < m; i++)
 			items[i] = ItemStack.of(list.getCompound(i));
 		Arrays.fill(items, m, items.length, ItemStack.EMPTY);
 	}
 
-	public static ListNBT saveItems(ItemStack[] items) {
-		ListNBT list = new ListNBT();
+	public static ListTag saveItems(ItemStack[] items) {
+		ListTag list = new ListTag();
 		for (ItemStack item : items)
 			if (!item.isEmpty()) {
-				CompoundNBT tag = new CompoundNBT();
+				CompoundTag tag = new CompoundTag();
 				item.save(tag);
 				list.add(tag);
 			}
@@ -97,8 +101,8 @@ public class ItemFluidUtil {
 	 * @param item
 	 * @return
 	 */
-	public static CompoundNBT saveItemHighRes(ItemStack item) {
-		CompoundNBT nbt = new CompoundNBT();
+	public static CompoundTag saveItemHighRes(ItemStack item) {
+		CompoundTag nbt = new CompoundTag();
 		item.save(nbt);
 		nbt.remove("Count");
 		nbt.putInt("Num", item.getCount());
@@ -110,17 +114,17 @@ public class ItemFluidUtil {
 	 * @param nbt
 	 * @return
 	 */
-	public static ItemStack loadItemHighRes(CompoundNBT nbt) {
+	public static ItemStack loadItemHighRes(CompoundTag nbt) {
 		ItemStack item = ItemStack.of(nbt);
 		item.setCount(nbt.getInt("Num"));
 		return item;
 	}
 
-	/**Like {@link PacketBuffer#writeItemStack(ItemStack)} but stores
+	/**Like {@link FriendlyByteBuf#writeItemStack(ItemStack)} but stores
 	 * stacksize with 32-bit precision instead of just 8-bit.
 	 * @param buf packet to write
 	 * @param stack ItemStack to serialize */
-	public static void writeItemHighRes(PacketBuffer buf, ItemStack stack) {
+	public static void writeItemHighRes(FriendlyByteBuf buf, ItemStack stack) {
 		if (stack.isEmpty()) buf.writeBoolean(false);
 		else {
 			buf.writeBoolean(true);
@@ -134,12 +138,12 @@ public class ItemFluidUtil {
 		}
 	}
 
-	/**Like {@link PacketBuffer#readItemStack()} but loads
+	/**Like {@link FriendlyByteBuf#readItemStack()} but loads
 	 * stacksize with 32-bit precision instead of just 8-bit.
 	 * @param buf packet to write
 	 * @return deserialized ItemStack
 	 * @throws IOException */
-	public static ItemStack readItemHighRes(PacketBuffer buf) throws IOException {
+	public static ItemStack readItemHighRes(FriendlyByteBuf buf) throws IOException {
 		if (!buf.readBoolean()) return ItemStack.EMPTY;
 		int i = buf.readVarInt();
 		int j = buf.readVarInt();
@@ -148,18 +152,18 @@ public class ItemFluidUtil {
 		return itemstack;
 	}
 
-	public static ListNBT saveFluids(FluidStack[] fluids) {
-		ListNBT list = new ListNBT();
+	public static ListTag saveFluids(FluidStack[] fluids) {
+		ListTag list = new ListTag();
 		for (FluidStack fluid : fluids)
 			if (fluid != null) {
-				CompoundNBT tag = new CompoundNBT();
+				CompoundTag tag = new CompoundTag();
 				fluid.writeToNBT(tag);
 				list.add(tag);
 			}
 		return list;
 	}
 
-	public static FluidStack[] loadFluids(ListNBT list) {
+	public static FluidStack[] loadFluids(ListTag list) {
 		FluidStack[] fluids = new FluidStack[list.size()];
 		for (int i = 0; i < fluids.length; i++)
 			fluids[i] = FluidStack.loadFluidStackFromNBT(list.getCompound(i));
@@ -334,30 +338,30 @@ public class ItemFluidUtil {
 	 * @param world the world
 	 * @param pos position to drop at
 	 */
-	public static void dropStack(ItemStack stack, World world, BlockPos pos) {
+	public static void dropStack(ItemStack stack, Level world, BlockPos pos) {
 		if (stack.isEmpty()) return;
 		ItemEntity ei = new ItemEntity(world, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, stack);
 		ei.setDefaultPickUpDelay();
 		world.addFreshEntity(ei);
 	}
 
-	public static void writeFluidStack(PacketBuffer buf, FluidStack stack) {
+	public static void writeFluidStack(FriendlyByteBuf buf, FluidStack stack) {
 		buf.writeFluidStack(stack);
 	}
 
-	public static FluidStack readFluidStack(PacketBuffer buf) throws IOException {
+	public static FluidStack readFluidStack(FriendlyByteBuf buf) throws IOException {
 		return buf.readFluidStack();
 	}
 
-	public static CompoundNBT createTag(ItemStack stack) {
-		CompoundNBT nbt = stack.getTag();
-		if (nbt == null) stack.setTag(nbt = new CompoundNBT());
+	public static CompoundTag createTag(ItemStack stack) {
+		CompoundTag nbt = stack.getTag();
+		if (nbt == null) stack.setTag(nbt = new CompoundTag());
 		return nbt;
 	}
 
-	public static CompoundNBT createTag(CompoundNBT nbt, String key) {
+	public static CompoundTag createTag(CompoundTag nbt, String key) {
 		if (nbt.contains(key, NBT.TAG_COMPOUND)) return nbt.getCompound(key);
-		CompoundNBT tag = new CompoundNBT();
+		CompoundTag tag = new CompoundTag();
 		nbt.put(key, tag);
 		return tag;
 	}
@@ -366,27 +370,28 @@ public class ItemFluidUtil {
 		return ForgeRegistries.ITEMS.getValue(new ResourceLocation(id));
 	}
 
-	public static FluidStack drainFluid(World world, BlockPos pos, Predicate<FluidStack> filter) {
+	public static FluidStack drainFluid(Level world, BlockPos pos, Predicate<FluidStack> filter) {
 		BlockState state = world.getBlockState(pos);
 		Block block = state.getBlock();
-		if (!(block instanceof IBucketPickupHandler)) return FluidStack.EMPTY;
+		if (!(block instanceof BucketPickup)) return FluidStack.EMPTY;
 		FluidState fstate = state.getFluidState();
 		if (!fstate.isSource() || !filter.test(new FluidStack(fstate.getType(), BUCKET_VOLUME)))
 			return FluidStack.EMPTY;
-		return new FluidStack(
-			((IBucketPickupHandler)block)
-			.takeLiquid(world, pos, state), BUCKET_VOLUME
-		);
+		ItemStack stack = ((BucketPickup)block).pickupBlock(world, pos, state);
+		Item item = stack.getItem();
+		return !stack.isEmpty() && item instanceof BucketItem ?
+			new FluidStack(((BucketItem)item).getFluid(), BUCKET_VOLUME)
+			: FluidStack.EMPTY;
 	}
 
-	public static boolean placeFluid(World world, BlockPos pos, FluidStack stack) {
+	public static boolean placeFluid(Level world, BlockPos pos, FluidStack stack) {
 		Fluid fluid = stack.getFluid();
 		FluidAttributes attr = fluid.getAttributes();
 		if (fluid == Fluids.EMPTY || !attr.canBePlacedInWorld(world, pos, stack)) return false;
 		BlockState blockstate = world.getBlockState(pos);
 		Block block = blockstate.getBlock();
-		if (block instanceof ILiquidContainer)
-			return ((ILiquidContainer)block).placeLiquid(
+		if (block instanceof LiquidBlockContainer)
+			return ((LiquidBlockContainer)block).placeLiquid(
 				world, pos, blockstate,
 				attr.getStateForPlacement(world, pos, stack)
 			);

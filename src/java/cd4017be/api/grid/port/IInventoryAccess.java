@@ -3,7 +3,7 @@ package cd4017be.api.grid.port;
 import java.util.function.*;
 
 import cd4017be.api.grid.Link;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
 

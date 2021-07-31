@@ -5,7 +5,7 @@ import java.util.function.DoubleSupplier;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 
 /**
  * A slider that can be dragged either horizontally or vertically.
@@ -73,7 +73,7 @@ public class Slider extends Tooltip {
 	}
 
 	@Override
-	public void drawBackground(MatrixStack stack, int mx, int my, float t) {
+	public void drawBackground(PoseStack stack, int mx, int my, float t) {
 		int n = (int)Math.round((get.getAsDouble() - min) / (max - min) * (double)l);
 		if (hor) parent.drawRect(stack, x + n, y, tx, ty, tw, th);
 		else parent.drawRect(stack, x, y + n, tx, ty, tw, th);

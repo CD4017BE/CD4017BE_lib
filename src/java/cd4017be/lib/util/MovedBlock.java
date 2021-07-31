@@ -3,11 +3,11 @@ package cd4017be.lib.util;
 import java.util.ConcurrentModificationException;
 import java.util.Map;
 import javax.annotation.Nullable;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.block.Blocks;
-import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.nbt.CompoundTag;
 
 /**
  *
@@ -18,10 +18,10 @@ public class MovedBlock {
 
 	public static final MovedBlock AIR = new MovedBlock(Blocks.AIR.defaultBlockState(), null);
 
-	public final CompoundNBT nbt;
+	public final CompoundTag nbt;
 	public final BlockState block;
 
-	public MovedBlock(BlockState block, CompoundNBT tile) {
+	public MovedBlock(BlockState block, CompoundTag tile) {
 		this.block = block;
 		this.nbt = tile;
 	}
@@ -35,12 +35,12 @@ public class MovedBlock {
 	 * @return captured block data to {@link #paste} somewhere else
 	 * @throws ConcurrentModificationException if called during TileEntity update ticks!
 	 */
-	public static MovedBlock cut(DimPos pos, @Nullable Map<DimPos, CompoundNBT> addedTileEntities) {
+	public static MovedBlock cut(DimPos pos, @Nullable Map<DimPos, CompoundTag> addedTileEntities) {
 		throw new UnsupportedOperationException();
 		/* TODO implement
 		World world = pos.getServerWorld();//force load dimension
 		Chunk chunk = world.getChunkFromBlockCoords(pos);//force load chunk
-		CompoundNBT nbt;
+		CompoundTag nbt;
 		TileEntity te = chunk.getTileEntityMap().remove(pos);
 		if (te == null)
 			nbt = addedTileEntities != null ? addedTileEntities.remove(pos) : null;
@@ -62,7 +62,7 @@ public class MovedBlock {
 	 * So they can be added all in one go later on.
 	 * @return whether the paste was successful (only fails for invalid coordinates or chunk data problems)
 	 */
-	public boolean paste(DimPos pos, @Nullable Map<DimPos, CompoundNBT> addedTileEntities) {
+	public boolean paste(DimPos pos, @Nullable Map<DimPos, CompoundTag> addedTileEntities) {
 		throw new UnsupportedOperationException();
 		/* TODO implement
 		World world = pos.getWorld();
@@ -132,12 +132,12 @@ public class MovedBlock {
 		return true;*/
 	}
 
-	public static void addTileEntities(Map<DimPos, CompoundNBT> addedTileEntities) {
+	public static void addTileEntities(Map<DimPos, CompoundTag> addedTileEntities) {
 		throw new UnsupportedOperationException();
 		/* TODO implement
-		for (Entry<DimPos, CompoundNBT> e : addedTileEntities.entrySet()) {
+		for (Entry<DimPos, CompoundTag> e : addedTileEntities.entrySet()) {
 			DimPos pos = e.getKey();
-			CompoundNBT nbt = e.getValue();
+			CompoundTag nbt = e.getValue();
 			nbt.putInt("x", pos.getX());
 			nbt.putInt("y", pos.getY());
 			nbt.putInt("z", pos.getZ());
@@ -160,8 +160,8 @@ public class MovedBlock {
 		/* TODO implement
 		if (entity.isDead || entity.isRiding()) return;
 		if (dim == entity.dimension) {
-			if (entity instanceof ServerPlayerEntity)
-				((ServerPlayerEntity)entity).setPositionAndUpdate(x, y, z);
+			if (entity instanceof ServerPlayer)
+				((ServerPlayer)entity).setPositionAndUpdate(x, y, z);
 			else
 				entity.setLocationAndAngles(x, y, z, entity.rotationYaw, entity.rotationPitch);
 			return;
@@ -172,8 +172,8 @@ public class MovedBlock {
 			moveEntity(e, dim, x, y, z);
 		}
 		
-		if (entity instanceof ServerPlayerEntity)
-			entity = transferPlayer((ServerPlayerEntity)entity, dim, x, y, z);
+		if (entity instanceof ServerPlayer)
+			entity = transferPlayer((ServerPlayer)entity, dim, x, y, z);
 		else
 			entity = transferEntity(entity, dim, x, y, z);
 		
@@ -189,7 +189,7 @@ public class MovedBlock {
 	 * @param z new z position
 	 * @return the resulting moved player
 	 */
-	public static ServerPlayerEntity transferPlayer(ServerPlayerEntity player, int dimN, double x, double y, double z) {
+	public static ServerPlayer transferPlayer(ServerPlayer player, int dimN, double x, double y, double z) {
 		throw new UnsupportedOperationException();
 		/* TODO implement
 		ServerWorld worldO = (ServerWorld)player.world;
@@ -249,7 +249,7 @@ public class MovedBlock {
 		ServerWorld worldN = server.getWorld(dimN);
 		Entity entityN = EntityList.newEntity(entityO.getClass(), worldN);
 		if (entityN != null) {
-			CompoundNBT nbttagcompound = entityO.writeToNBT(new CompoundNBT());
+			CompoundTag nbttagcompound = entityO.writeToNBT(new CompoundTag());
 			nbttagcompound.remove("Dimension");
 			entityN.readFromNBT(nbttagcompound);
 			

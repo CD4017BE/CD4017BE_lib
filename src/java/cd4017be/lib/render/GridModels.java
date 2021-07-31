@@ -7,17 +7,19 @@ import static cd4017be.math.Orient.*;
 
 import java.util.*;
 
-import com.mojang.blaze3d.matrix.MatrixStack.Entry;
-import com.mojang.blaze3d.vertex.IVertexBuilder;
+import com.mojang.blaze3d.vertex.PoseStack.Pose;
+import com.mojang.blaze3d.vertex.BufferBuilder;
 
 import cd4017be.api.grid.GridPart;
 import cd4017be.api.grid.IGridHost;
 import cd4017be.lib.render.model.JitBakedModel;
 import cd4017be.lib.util.Orientation;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.model.*;
-import net.minecraft.util.Direction;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.resources.model.ModelManager;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.client.model.data.EmptyModelData;
 
 /**
@@ -68,7 +70,7 @@ public class GridModels {
 	}
 
 	public static void putCube(ResourceLocation key, JitBakedModel model, long b, long opaque, int ofs, int orient) {
-		IBakedModel faces = MODELS.getModel(key);
+		BakedModel faces = MODELS.getModel(key);
 		float[] v = originOf(orient, ofs);
 		if ((b & ~opaque) != 0)
 			addOriented(model.inner(), faces, null, orient, v);
@@ -87,7 +89,7 @@ public class GridModels {
 	}
 
 	public static void addOriented(
-		ArrayList<BakedQuad> dest, IBakedModel model, Direction face, int o, float[] v
+		ArrayList<BakedQuad> dest, BakedModel model, Direction face, int o, float[] v
 	) {
 		for (BakedQuad quad : model.getQuads(null, face, RAND, EmptyModelData.INSTANCE))
 			dest.add(orient(o, quad, v));
@@ -99,13 +101,13 @@ public class GridModels {
 
 	private static final float _255 = 1F/255F;
 
-	public static void draw(ResourceLocation key, Entry mat, IVertexBuilder vb, int color, int light, int overlay) {
+	public static void draw(ResourceLocation key, Pose mat, BufferBuilder vb, int color, int light, int overlay) {
 		float r = (color >> 16 & 0xff) * _255,
 		      g = (color >> 8  & 0xff) * _255,
 		      b = (color       & 0xff) * _255,
 		      a = (color >>> 24      ) * _255;
 		for (BakedQuad quad : MODELS.getModel(key).getQuads(null, null, RAND, EmptyModelData.INSTANCE))
-			vb.addVertexData(mat, quad, r, g, b, a, light, overlay);
+			vb.putBulkData(mat, quad, r, g, b, a, light, overlay);
 	}
 
 }

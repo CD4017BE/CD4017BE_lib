@@ -13,14 +13,21 @@ import com.google.common.collect.Sets;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.renderer.model.*;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.client.resources.model.UnbakedModel;
+import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.block.model.ItemOverrides;
+import net.minecraft.client.resources.model.ModelState;
+import net.minecraft.client.resources.model.Material;
+import net.minecraft.client.resources.model.ModelBakery;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.resources.IResourceManager;
-import net.minecraft.util.Direction;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockDisplayReader;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.model.IModelConfiguration;
@@ -58,13 +65,13 @@ public class TileEntityModel implements IModelGeometry<TileEntityModel> {
 	}
 
 	@Override
-	public IBakedModel bake(
+	public BakedModel bake(
 		IModelConfiguration owner, ModelBakery bakery,
-		Function<RenderMaterial, TextureAtlasSprite> spriteGetter,
-		IModelTransform modelTransform, ItemOverrideList overrides,
+		Function<Material, TextureAtlasSprite> spriteGetter,
+		ModelState modelTransform, ItemOverrides overrides,
 		ResourceLocation modelLocation
 	) {
-		HashMap<String, IBakedModel> map = new HashMap<>(partModels.size());
+		HashMap<String, BakedModel> map = new HashMap<>(partModels.size());
 		for (Pair<String, IModelGeometry<?>> e : partModels)
 			map.put(e.getLeft(), e.getRight().bake(
 				owner, bakery, spriteGetter,
@@ -77,11 +84,11 @@ public class TileEntityModel implements IModelGeometry<TileEntityModel> {
 	}
 
 	@Override
-	public Collection<RenderMaterial> getTextures(
-		IModelConfiguration owner, Function<ResourceLocation, IUnbakedModel> modelGetter,
+	public Collection<Material> getTextures(
+		IModelConfiguration owner, Function<ResourceLocation, UnbakedModel> modelGetter,
 		Set<com.mojang.datafixers.util.Pair<String, String>> missingTextureErrors
 	) {
-		Set<RenderMaterial> set = Sets.newHashSet();
+		Set<Material> set = Sets.newHashSet();
 		set.add(resolveTex("particle", owner, missingTextureErrors));
 		for (Pair<String, IModelGeometry<?>> e : partModels)
 			set.addAll(e.getRight().getTextures(owner, modelGetter, missingTextureErrors));
@@ -92,15 +99,15 @@ public class TileEntityModel implements IModelGeometry<TileEntityModel> {
 	@OnlyIn(Dist.CLIENT)
 	public static class Baked implements IDynamicBakedModel {
 
-		final Map<String, IBakedModel> partMap;
+		final Map<String, BakedModel> partMap;
 		final TextureAtlasSprite particle;
-		final ItemCameraTransforms transforms;
+		final ItemTransforms transforms;
 		final boolean sideLit, gui3d, smoothLight;
 
 		public Baked(
-			Map<String, IBakedModel> partMap, boolean sideLit, boolean gui3d,
+			Map<String, BakedModel> partMap, boolean sideLit, boolean gui3d,
 			boolean smoothLight, TextureAtlasSprite particle,
-			ItemCameraTransforms transforms
+			ItemTransforms transforms
 		) {
 			this.partMap = partMap;
 			this.particle = particle;
@@ -115,13 +122,13 @@ public class TileEntityModel implements IModelGeometry<TileEntityModel> {
 		public List<BakedQuad>
 		getQuads(BlockState state, Direction side, Random rand, IModelData data) {
 			List<PartModel> parts = data.getData(PartModel.PART_MODELS);
-			IBakedModel jitModel = data.getData(JIT_BAKED_MODEL);
+			BakedModel jitModel = data.getData(JIT_BAKED_MODEL);
 			if (parts == null)
 				return jitModel == null ? Collections.emptyList()
 					: jitModel.getQuads(state, side, rand);
 			ArrayList<BakedQuad> quads = new ArrayList<>();
 			for (PartModel part : parts) {
-				IBakedModel m = partMap.get(part.name);
+				BakedModel m = partMap.get(part.name);
 				if (m == null) continue;
 				List<BakedQuad> list = m.getQuads(state, part.getSource(side), rand, data);
 				if (!part.hasTransform())
@@ -136,9 +143,9 @@ public class TileEntityModel implements IModelGeometry<TileEntityModel> {
 
 		@Override
 		public IModelData getModelData(
-			IBlockDisplayReader world, BlockPos pos, BlockState state, IModelData tileData
+			BlockAndTintGetter world, BlockPos pos, BlockState state, IModelData tileData
 		) {
-			IBakedModel model = tileData.getData(JIT_BAKED_MODEL);
+			BakedModel model = tileData.getData(JIT_BAKED_MODEL);
 			if (model != null)
 				model.getModelData(world, pos, state, tileData);
 			return tileData;
@@ -171,8 +178,8 @@ public class TileEntityModel implements IModelGeometry<TileEntityModel> {
 
 		@Override
 		@SuppressWarnings("deprecation")
-		public TextureAtlasSprite getParticleTexture(IModelData data) {
-			IBakedModel model = data.getData(JIT_BAKED_MODEL);
+		public TextureAtlasSprite getParticleIcon(IModelData data) {
+			BakedModel model = data.getData(JIT_BAKED_MODEL);
 			if (model != null) {
 				TextureAtlasSprite tex = model.getParticleIcon();
 				if (tex != null) return tex;
@@ -181,12 +188,12 @@ public class TileEntityModel implements IModelGeometry<TileEntityModel> {
 		}
 
 		@Override
-		public ItemOverrideList getOverrides() {
+		public ItemOverrides getOverrides() {
 			return ModelDataItemOverride.INSTANCE;
 		}
 
 		@Override
-		public ItemCameraTransforms getTransforms() {
+		public ItemTransforms getTransforms() {
 			return transforms;
 		}
 
@@ -200,7 +207,7 @@ public class TileEntityModel implements IModelGeometry<TileEntityModel> {
 		private ArrayList<Runnable> invalidateCaches = new ArrayList<>();
 
 		@Override
-		public void onResourceManagerReload(IResourceManager resourceManager) {
+		public void onResourceManagerReload(ResourceManager resourceManager) {
 			for (Runnable r : invalidateCaches) r.run();
 		}
 

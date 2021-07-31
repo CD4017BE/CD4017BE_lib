@@ -2,14 +2,12 @@ package cd4017be.lib.block;
 
 import cd4017be.lib.tileentity.Grid;
 import cd4017be.lib.util.VoxelShape4x4x4;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.util.math.shapes.VoxelShapeCube;
-import net.minecraft.util.math.shapes.VoxelShapes;
-import net.minecraft.world.IBlockReader;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.level.BlockGetter;
 
 /**
  * @author CD4017BE */
@@ -20,17 +18,12 @@ public class BlockGrid extends BlockTE<Grid> {
 	}
 
 	@Override
-	public boolean is(Block block) {
-		return block instanceof BlockGrid;
-	}
-
-	@Override
-	public VoxelShape getOcclusionShape(BlockState state, IBlockReader world, BlockPos pos) {
-		if (state.canOcclude()) return VoxelShapes.block();
-		TileEntity te = world.getBlockEntity(pos);
+	public VoxelShape getOcclusionShape(BlockState state, BlockGetter world, BlockPos pos) {
+		if (state.canOcclude()) return Shapes.block();
+		BlockEntity te = world.getBlockEntity(pos);
 		if (te instanceof Grid)
-			return new VoxelShapeCube(new VoxelShape4x4x4(((Grid)te).opaque));
-		return VoxelShapes.empty();
+			return new VoxelShape4x4x4(((Grid)te).opaque).shape();
+		return Shapes.empty();
 	}
 
 }

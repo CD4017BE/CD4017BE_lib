@@ -4,29 +4,29 @@ import cd4017be.lib.script.Parameters;
 import cd4017be.lib.script.obj.IOperand;
 import cd4017be.lib.script.obj.Text;
 import cd4017be.lib.script.obj.Number;
-import net.minecraft.client.renderer.model.IModelTransform;
-import net.minecraft.client.renderer.model.ModelRotation;
+import net.minecraft.client.resources.model.ModelState;
+import net.minecraft.client.resources.model.BlockModelRotation;
 
 /**
  * 
  * @author cd4017be
  */
-public class ParamertisedVariant implements IModelTransform {
+public class ParamertisedVariant implements ModelState {
 
 	public static final ParamertisedVariant BASE = new ParamertisedVariant("model", null);
 
-	public final ModelRotation orient;
+	public final BlockModelRotation orient;
 	public String subModel;
 	public final Parameters params;
 
-	public ParamertisedVariant(ModelRotation orient, String name, Parameters param) {
+	public ParamertisedVariant(BlockModelRotation orient, String name, Parameters param) {
 		this.orient = orient;
 		this.subModel = name;
 		this.params = param;
 	}
 
-	public ParamertisedVariant(String name, Parameters param) {this(ModelRotation.X0_Y0, name, param);}
-	public ParamertisedVariant(ModelRotation orient) {this(orient, "model", null);}
+	public ParamertisedVariant(String name, Parameters param) {this(BlockModelRotation.X0_Y0, name, param);}
+	public ParamertisedVariant(BlockModelRotation orient) {this(orient, "model", null);}
 
 	public String splitPath() {
 		String[] parts = subModel.split("\\.");
@@ -38,10 +38,10 @@ public class ParamertisedVariant implements IModelTransform {
 	}
 
 	public boolean isBase() {
-		return this == BASE || params == null && orient == ModelRotation.X0_Y0 && subModel.equals(BASE.subModel);
+		return this == BASE || params == null && orient == BlockModelRotation.X0_Y0 && subModel.equals(BASE.subModel);
 	}
 
-	public static ParamertisedVariant parse(String name, ModelRotation orient) {
+	public static ParamertisedVariant parse(String name, BlockModelRotation orient) {
 		int i = name.indexOf('(');
 		Parameters params;
 		if (i < 0) params = null;
@@ -66,11 +66,11 @@ public class ParamertisedVariant implements IModelTransform {
 
 	public static ParamertisedVariant parse(String name) {
 		int i = name.indexOf('#');
-		ModelRotation orient;
-		if (i < 0) orient = ModelRotation.X0_Y0;
+		BlockModelRotation orient;
+		if (i < 0) orient = BlockModelRotation.X0_Y0;
 		else {
-			orient = ModelRotation.valueOf(name.substring(i+1).toUpperCase());
-			if (orient == null) orient = ModelRotation.X0_Y0;
+			orient = BlockModelRotation.valueOf(name.substring(i+1).toUpperCase());
+			if (orient == null) orient = BlockModelRotation.X0_Y0;
 			name = name.substring(0, i);
 		}
 		return parse(name, orient);

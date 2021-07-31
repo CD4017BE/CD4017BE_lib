@@ -2,14 +2,16 @@ package cd4017be.lib.render.model;
 
 import java.util.*;
 
-import net.minecraft.block.BlockState;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BlockModelShapes;
-import net.minecraft.client.renderer.model.*;
+import net.minecraft.client.renderer.block.BlockModelShaper;
+import net.minecraft.client.renderer.block.model.ItemOverrides;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockDisplayReader;
+import net.minecraft.core.Direction;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.model.data.EmptyModelData;
@@ -18,16 +20,16 @@ import net.minecraftforge.client.model.data.IModelData;
 /**
  * @author CD4017BE */
 @OnlyIn(Dist.CLIENT)
-public class WrappedBlockModel implements IBakedModel {
+public class WrappedBlockModel implements BakedModel {
 
-	public static final BlockModelShapes MODELS
+	public static final BlockModelShaper MODELS
 	= Minecraft.getInstance().getBlockRenderer().getBlockModelShaper();
 
-	public final IBakedModel model;
+	public final BakedModel model;
 	public final BlockState state;
 	public IModelData data = EmptyModelData.INSTANCE;
 
-	public WrappedBlockModel(IBakedModel model, BlockState state) {
+	public WrappedBlockModel(BakedModel model, BlockState state) {
 		this.model = model;
 		this.state = state;
 	}
@@ -40,7 +42,7 @@ public class WrappedBlockModel implements IBakedModel {
 		return model.getQuads(state, side, rand, data);
 	}
 
-	public void updateData(IBlockDisplayReader world, BlockPos pos) {
+	public void updateData(BlockAndTintGetter world, BlockPos pos) {
 		data = model.getModelData(world, pos, state, data);
 	}
 
@@ -71,17 +73,17 @@ public class WrappedBlockModel implements IBakedModel {
 
 	@Override
 	public TextureAtlasSprite getParticleIcon() {
-		return model.getParticleTexture(data);
+		return model.getParticleIcon(data);
 	}
 
 	@Override
-	public ItemOverrideList getOverrides() {
+	public ItemOverrides getOverrides() {
 		return model.getOverrides();
 	}
 
 	@Override
 	public IModelData getModelData(
-		IBlockDisplayReader world, BlockPos pos, BlockState state, IModelData tileData
+		BlockAndTintGetter world, BlockPos pos, BlockState state, IModelData tileData
 	) {
 		this.data = model.getModelData(world, pos, this.state, this.data);
 		return tileData;

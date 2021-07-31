@@ -4,9 +4,9 @@ import java.util.HashMap;
 
 import com.mojang.authlib.GameProfile;
 
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
 
 /**
  * Caches the results of another IProtectionHandler (that potentially involves complex computation) and arranges them on a chunk grid
@@ -32,12 +32,12 @@ public class CachedChunkWrapper implements IProtectionHandler {
 	}
 
 	@Override
-	public boolean canEdit(World world, BlockPos pos, GameProfile player) {
+	public boolean canEdit(Level world, BlockPos pos, GameProfile player) {
 		return canEdit(new Key(pos.getX() >> 4, pos.getZ() >> 4, world.dimension().getRegistryName(), player), world);
 	}
 
 	@Override
-	public boolean canEdit(World world, BlockPos p0, BlockPos p1, GameProfile player) {
+	public boolean canEdit(Level world, BlockPos p0, BlockPos p1, GameProfile player) {
 		ResourceLocation dim = world.dimension().getRegistryName();
 		int x0 = p0.getX() >> 4, x1 = p1.getX() >> 4;
 		if (x0 > x1) {int x = x0; x0 = x1; x1 = x;}
@@ -50,7 +50,7 @@ public class CachedChunkWrapper implements IProtectionHandler {
 		return true;
 	}
 
-	boolean canEdit(Key key, World world) {
+	boolean canEdit(Key key, Level world) {
 		Boolean perm = cache.get(key);
 		if (perm == null) {
 			perm = parent.canEdit(world, new BlockPos(key.cx << 4, 0, key.cz << 4), new BlockPos(key.cx << 4 | 15, 255, key.cz << 4 | 15), key.player);

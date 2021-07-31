@@ -8,7 +8,7 @@ import static cd4017be.lib.network.StateSyncAdv.array;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.BitSet;
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 
 import cd4017be.api.grid.IGridItem;
 import cd4017be.lib.Lib;
@@ -18,10 +18,10 @@ import cd4017be.lib.gui.ModularGui;
 import cd4017be.lib.gui.comp.*;
 import cd4017be.lib.network.StateSyncAdv;
 import cd4017be.lib.tileentity.Assembler;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.items.IItemHandler;
@@ -31,11 +31,11 @@ public class ContainerAssembler extends AdvancedContainer {
 
 	final Assembler tile;
 
-	public ContainerAssembler(int id, PlayerInventory inv, PacketBuffer buf) {
+	public ContainerAssembler(int id, Inventory inv, FriendlyByteBuf buf) {
 		this(id, inv, null, Assembler.class);
 	}
 
-	public ContainerAssembler(int id, PlayerInventory inv, Assembler tile, Object... toSync) {
+	public ContainerAssembler(int id, Inventory inv, Assembler tile, Object... toSync) {
 		super(aSSEMBLER, id, inv, StateSyncAdv.of(
 			tile == null, array(2, 21), 0, toSync
 		), 0);
@@ -64,7 +64,7 @@ public class ContainerAssembler extends AdvancedContainer {
 	private static final ResourceLocation TEX = Lib.rl("textures/gui/assembler.png");
 
 	@OnlyIn(Dist.CLIENT)
-	public ModularGui<ContainerAssembler> setupGui(PlayerInventory inv, ITextComponent name) {
+	public ModularGui<ContainerAssembler> setupGui(Inventory inv, Component name) {
 		ModularGui<ContainerAssembler> gui
 		= new ModularGui<ContainerAssembler>(this, inv, name);
 		GuiFrame frame = new GuiFrame(gui, 176, 168, 3)
@@ -95,7 +95,7 @@ public class ContainerAssembler extends AdvancedContainer {
 		}
 
 		@Override
-		public void drawBackground(MatrixStack stack, int mx, int my, float t) {
+		public void drawBackground(PoseStack stack, int mx, int my, float t) {
 			buf.rewind();
 			int x0 = x + 17, y0 = y + 11;
 			for (int y = 0; y < h; y += 18)
@@ -106,7 +106,7 @@ public class ContainerAssembler extends AdvancedContainer {
 				}
 		}
 
-		private void drawNumber(MatrixStack stack, int x, int y, int n) {
+		private void drawNumber(PoseStack stack, int x, int y, int n) {
 			char[] symbols = Integer.toString(n).toCharArray();
 			x -= symbols.length << 2;
 			for (char c : symbols) {

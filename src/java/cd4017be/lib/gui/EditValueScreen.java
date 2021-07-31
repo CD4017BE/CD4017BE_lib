@@ -1,14 +1,14 @@
 package cd4017be.lib.gui;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 
-import net.minecraft.client.gui.DialogTexts;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.util.IReorderingProcessor;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
 import net.minecraftforge.common.ForgeConfigSpec.ValueSpec;
 
@@ -18,17 +18,17 @@ public class EditValueScreen<T> extends Screen {
 	final Screen parent;
 	final ConfigValue<T> value;
 	final Class<T> type;
-	final ITextComponent info;
-	TextFieldWidget edit;
+	final Component info;
+	EditBox edit;
 
 	@SuppressWarnings("unchecked")
 	protected EditValueScreen(Screen parent, ValueSpec vspec, ConfigValue<T> value, String name) {
-		super(new StringTextComponent(name));
+		super(new TextComponent(name));
 		this.parent = parent;
 		this.value = value;
 		this.type = (Class<T>)vspec.getClazz();
 		String info = vspec.getComment();
-		this.info = info == null ? null : new StringTextComponent(info);
+		this.info = info == null ? null : new TextComponent(info);
 	}
 
 	@Override
@@ -59,22 +59,22 @@ public class EditValueScreen<T> extends Screen {
 
 	@Override
 	protected void init() {
-		edit = addButton(new TextFieldWidget(font, width / 2 - 108, height / 2, 216, 20, title));
+		edit = addRenderableWidget(new EditBox(font, width / 2 - 108, height / 2, 216, 20, title));
 		edit.setValue(value.get().toString());
-		addButton(new Button(
-			width / 2 - 108, height / 2 + 40, 100, 20, DialogTexts.GUI_CANCEL, b -> onClose()
+		addRenderableWidget(new Button(
+			width / 2 - 108, height / 2 + 40, 100, 20, CommonComponents.GUI_CANCEL, b -> onClose()
 		));
-		addButton(new Button(
-			width / 2  + 8, height / 2 + 40, 100, 20, DialogTexts.GUI_DONE, b -> setValue()
+		addRenderableWidget(new Button(
+			width / 2  + 8, height / 2 + 40, 100, 20, CommonComponents.GUI_DONE, b -> setValue()
 		));
 	}
 
 	@Override
-	public void render(MatrixStack ms, int mx, int my, float t) {
+	public void render(PoseStack ms, int mx, int my, float t) {
 		renderBackground(ms);
 		font.draw(ms, title, (width - font.width(title)) / 2, 10, -1);
 		int x = width / 2 - 120, y = 30;
-		for (IReorderingProcessor rop : font.split(info, 240))
+		for (FormattedCharSequence rop : font.split(info, 240))
 			font.draw(ms, rop, x, y += font.lineHeight, 0xffc0c0c0);
 		super.render(ms, mx, my, t);
 	}

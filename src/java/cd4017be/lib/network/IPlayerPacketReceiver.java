@@ -1,8 +1,8 @@
 package cd4017be.lib.network;
 
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.network.FriendlyByteBuf;
 
 /**
  * implemented by TileEntities, Containers or other game objects to receive data packets send by a players client
@@ -16,7 +16,7 @@ public interface IPlayerPacketReceiver {
 	 * @param sender the player who sent this
 	 * @throws Exception potential decoding errors
 	 */
-	public void handlePlayerPacket(PacketBuffer pkt, ServerPlayerEntity sender) throws Exception;
+	public void handlePlayerPacket(FriendlyByteBuf pkt, ServerPlayer sender) throws Exception;
 
 	/**
 	 * special version for Items
@@ -31,7 +31,7 @@ public interface IPlayerPacketReceiver {
 		 * @param sender the player holding the item
 		 * @throws Exception potential decoding errors
 		 */
-		void handlePlayerPacket(ItemStack stack, int slot, PacketBuffer pkt, ServerPlayerEntity sender) throws Exception;
+		void handlePlayerPacket(ItemStack stack, int slot, FriendlyByteBuf pkt, ServerPlayer sender) throws Exception;
 	}
 
 }

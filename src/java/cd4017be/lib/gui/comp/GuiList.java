@@ -1,7 +1,7 @@
 package cd4017be.lib.gui.comp;
 
-import net.minecraft.client.gui.FontRenderer;
-import net.minecraftforge.fml.client.gui.GuiUtils;
+import net.minecraft.client.gui.Font;
+import net.minecraftforge.fmlclient.gui.GuiUtils;
 
 import java.util.function.DoubleConsumer;
 import java.util.function.DoubleSupplier;
@@ -9,7 +9,7 @@ import java.util.function.ObjIntConsumer;
 import org.apache.commons.lang3.ArrayUtils;
 import static org.lwjgl.glfw.GLFW.*;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 
 /** Lets the user select from a list of Strings. The list becomes scrollable if
  * it contains more elements than can be displayed at once.
@@ -83,8 +83,8 @@ implements DoubleSupplier, DoubleConsumer {
 	}
 
 	@Override
-	public void drawBackground(MatrixStack stack, int mx, int my, float t) {
-		FontRenderer fr = parent.fontRenderer;
+	public void drawBackground(PoseStack stack, int mx, int my, float t) {
+		Font fr = parent.fontRenderer;
 		int y = this.y, dy = h / n;
 		for(int l = Math.min(n + scroll, elements.length), i = scroll; i < l; i++, y += dy) {
 			String s = elements[i];

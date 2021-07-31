@@ -2,7 +2,7 @@ package cd4017be.lib.gui.comp;
 
 import java.util.ArrayList;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 
 import cd4017be.lib.text.TooltipUtil;
 
@@ -46,7 +46,7 @@ public class InfoTab extends GuiCompBase<GuiCompGroup> {
 	}
 
 	@Override
-	public void drawOverlay(MatrixStack stack, int mx, int my) {
+	public void drawOverlay(PoseStack stack, int mx, int my) {
 		if (TooltipUtil.editor != null) {
 			String[] s = TooltipUtil.translate(tooltip).split("\n");
 			System.arraycopy(s, 0, headers, 0, Math.min(s.length, headers.length));

@@ -8,9 +8,9 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import cd4017be.lib.Lib;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.platform.GlStateManager;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.resources.ResourceLocation;
 
 /** A sub Frame that lets the user choose a file.
  * Triggers an event when the "select File" button is clicked.
@@ -45,7 +45,7 @@ implements ObjIntConsumer<GuiList>, Supplier<String>, Consumer<String> {
 	}
 
 	@Override
-	public void drawBackground(MatrixStack stack, int mx, int my, float t) {
+	public void drawBackground(PoseStack stack, int mx, int my, float t) {
 		GlStateManager._disableDepthTest();
 		super.drawBackground(stack, mx, my, t);
 		String path = dir.getPath() + "/";

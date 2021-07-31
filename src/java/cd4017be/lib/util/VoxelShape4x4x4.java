@@ -1,14 +1,14 @@
 package cd4017be.lib.util;
 
-import net.minecraft.util.Direction.Axis;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.util.math.shapes.VoxelShapeCube;
-import net.minecraft.util.math.shapes.VoxelShapePart;
+import net.minecraft.core.Direction.Axis;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.phys.shapes.CubeVoxelShape;
+import net.minecraft.world.phys.shapes.DiscreteVoxelShape;
 
 /**I was working with the bounding boxes as 4x4x4 bit packed long anyway
  * so this saves unnecessary and inefficient conversion steps.
  * @author CD4017BE */
-public final class VoxelShape4x4x4 extends VoxelShapePart {
+public final class VoxelShape4x4x4 extends DiscreteVoxelShape {
 
 	public long grid;
 
@@ -22,7 +22,7 @@ public final class VoxelShape4x4x4 extends VoxelShapePart {
 	}
 
 	public VoxelShape shape() {
-		return new VoxelShapeCube(this);
+		return new CubeVoxelShape(this);
 	}
 
 	private int index(int x, int y, int z) {
@@ -40,10 +40,8 @@ public final class VoxelShape4x4x4 extends VoxelShapePart {
 	}
 
 	@Override
-	public void setFull(int x, int y, int z, boolean expandBounds, boolean filled) {
-		long mask = 1L << index(x, y, z);
-		if (filled) grid |= mask;
-		else grid &= ~mask;
+	public void fill(int x, int y, int z) {
+		grid |= 1L << index(x, y, z);
 	}
 
 	@Override

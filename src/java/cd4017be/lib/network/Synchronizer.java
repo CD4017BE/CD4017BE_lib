@@ -16,8 +16,9 @@ import org.apache.commons.lang3.tuple.Triple;
 import cd4017be.lib.Lib;
 import cd4017be.lib.network.Encoders.BinObjEnc;
 import cd4017be.lib.network.Sync.Type;
-import net.minecraft.nbt.*;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 
 /** 
  * @author CD4017BE */
@@ -113,21 +114,21 @@ public class Synchronizer<T> {
 		else return (o, pkt)-> enc.update(get.apply(o), pkt);
 	}
 
-	/**write all {@link Sync} annotated fields and getter methods in <b>o</b> to the given CompoundNBT.
+	/**write all {@link Sync} annotated fields and getter methods in <b>o</b> to the given CompoundTag.
 	 * @param o object to encode
 	 * @param nbt data tag to store in
 	 * @param mode synchronization event bit-mask for {@link Sync#to()} */
-	public void writeNBT(Object o, CompoundNBT nbt, int mode) {
+	public void writeNBT(Object o, CompoundTag nbt, int mode) {
 		T obj = clazz.cast(o);
 		for (Encoder<T> enc : variables)
 			enc.writeNBT(obj, nbt, mode);
 	}
 
-	/**read all {@link Sync} annotated fields and setter methods in <b>o</b> from the given CompoundNBT.
+	/**read all {@link Sync} annotated fields and setter methods in <b>o</b> from the given CompoundTag.
 	 * @param o object to decode
 	 * @param nbt data tag load from
 	 * @param mode synchronization event bit-mask for {@link Sync#to()} */
-	public void readNBT(Object o, CompoundNBT nbt, int mode) {
+	public void readNBT(Object o, CompoundTag nbt, int mode) {
 		T obj = clazz.cast(o);
 		for (Encoder<T> enc : variables)
 			enc.readNBT(obj, nbt, mode);
@@ -197,7 +198,7 @@ public class Synchronizer<T> {
 	 * @param i0 index of the first element in <b>changes</b> */
 	@SuppressWarnings("unchecked")
 	public void writeChanged(
-		PacketBuffer pkt, ByteBuffer rawState,
+		FriendlyByteBuf pkt, ByteBuffer rawState,
 		Object[] objState, int j0,
 		BitSet changes, int i0
 	) {
@@ -226,7 +227,7 @@ public class Synchronizer<T> {
 	 * @param i0 index of the first element in <b>changes</b> */
 	@SuppressWarnings("unchecked")
 	public void readChanges(
-		PacketBuffer pkt, ByteBuffer rawState,
+		FriendlyByteBuf pkt, ByteBuffer rawState,
 		Object[] objState, int j0,
 		BitSet changes, int i0
 	) throws IOException {
@@ -246,7 +247,7 @@ public class Synchronizer<T> {
 	}
 
 	public void updateChanges(
-		Object o, PacketBuffer pkt, BitSet changes, int i0
+		Object o, FriendlyByteBuf pkt, BitSet changes, int i0
 	) throws IOException {
 		T obj = clazz.cast(o);
 		int i1 = i0 + syncVariables();
@@ -264,29 +265,29 @@ public class Synchronizer<T> {
 			this.tag = tag;
 		}
 
-		public abstract void writeNBT(T o, CompoundNBT nbt, int mode);
-		public abstract void readNBT(T o, CompoundNBT nbt, int mode);
+		public abstract void writeNBT(T o, CompoundTag nbt, int mode);
+		public abstract void readNBT(T o, CompoundTag nbt, int mode);
 	}
 
 	public static class EncoderNBT<T> extends Encoder<T> {
-		final Function<T, INBT> encoder;
-		final BiConsumer<T, INBT> decoder;
+		final Function<T, Tag> encoder;
+		final BiConsumer<T, Tag> decoder;
 
-		public EncoderNBT(int flags, int index, String tag, Pair<Function<T, INBT>, BiConsumer<T, INBT>> enc_dec) {
+		public EncoderNBT(int flags, int index, String tag, Pair<Function<T, Tag>, BiConsumer<T, Tag>> enc_dec) {
 			super(flags, index, tag);
 			this.encoder = enc_dec.getLeft();
 			this.decoder = enc_dec.getRight();
 		}
 
 		@Override
-		public void writeNBT(T o, CompoundNBT nbt, int mode) {
+		public void writeNBT(T o, CompoundTag nbt, int mode) {
 			if ((flags & mode) == 0) return;
-			INBT nb = encoder.apply(o);
+			Tag nb = encoder.apply(o);
 			if (nb != null) nbt.put(tag, nb);
 		}
 
 		@Override
-		public void readNBT(T o, CompoundNBT nbt, int mode) {
+		public void readNBT(T o, CompoundTag nbt, int mode) {
 			if ((flags & mode) == 0) return;
 			decoder.accept(o, nbt.get(tag));
 		}
@@ -304,15 +305,15 @@ public class Synchronizer<T> {
 		}
 
 		@Override
-		public void writeNBT(T o, CompoundNBT nbt, int mode) {
+		public void writeNBT(T o, CompoundTag nbt, int mode) {
 			if ((flags & mode) == 0) return;
-			CompoundNBT sub = new CompoundNBT();
+			CompoundTag sub = new CompoundTag();
 			sync.writeNBT(getter.apply(o), sub, mode);
 			nbt.put(tag, sub);
 		}
 
 		@Override
-		public void readNBT(T o, CompoundNBT nbt, int mode) {
+		public void readNBT(T o, CompoundTag nbt, int mode) {
 			if ((flags & mode) == 0) return;
 			sync.readNBT(getter.apply(o), nbt.getCompound(tag), mode);
 		}
@@ -325,7 +326,7 @@ public class Synchronizer<T> {
 
 	@FunctionalInterface
 	public interface ObjReader<T> {
-		void read(T o, PacketBuffer pkt) throws IOException;
+		void read(T o, FriendlyByteBuf pkt) throws IOException;
 	}
 
 	private static class StateVariable<T> implements Comparable<StateVariable<T>> {
@@ -379,7 +380,7 @@ public class Synchronizer<T> {
 		> l) {
 			int mask = annotation.to(), index = -1;
 			Type t = annotation.type().actual(type);
-			Pair<Function<T, INBT>, BiConsumer<T, INBT>> enc_dec;
+			Pair<Function<T, Tag>, BiConsumer<T, Tag>> enc_dec;
 			getter = explicitCastArguments(getter, methodType(t.inType, Object.class));
 			if (setter != null) 
 				setter = explicitCastArguments(setter, methodType(Void.class, Object.class, t.inType));

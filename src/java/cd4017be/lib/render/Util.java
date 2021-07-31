@@ -9,15 +9,15 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 
 import cd4017be.lib.util.Orientation;
-import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.model.ModelRotation;
+import net.minecraft.client.gui.Font;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import net.minecraft.client.resources.model.BlockModelRotation;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.vector.Vector2f;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.util.math.vector.Vector3i;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.core.Direction;
+import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.core.Vec3i;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.event.TickEvent;
@@ -34,7 +34,7 @@ public class Util {
 	public static final FloatBuffer[] matrices = new FloatBuffer[16];
 
 	static {
-		Vector3i x1, y1, z1;
+		Vec3i x1, y1, z1;
 		FloatBuffer buff;
 		for (Orientation o : Orientation.values()) {
 			x1 = o.r.getNormal();
@@ -66,7 +66,7 @@ public class Util {
 	}
 
 	@Deprecated
-	public static void luminate(TileEntity te, Direction side, int b) {
+	public static void luminate(BlockEntity te, Direction side, int b) {
 		throw new UnsupportedOperationException();
 		/* TODO implement
 		BlockPos pos = side == null ? te.getPos() : te.getPos().offset(side);
@@ -76,7 +76,7 @@ public class Util {
 		OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, l & 0xffff, l >> 16);*/
 	}
 
-	public static int rotateNormal(int n, ModelRotation rot) {
+	public static int rotateNormal(int n, BlockModelRotation rot) {
 		switch (rot) {
 		//horizontal
 		default:       return n;
@@ -101,7 +101,7 @@ public class Util {
 		}
 	}
 
-	public static void rotate(int[] data, int px, ModelRotation rot) {
+	public static void rotate(int[] data, int px, BlockModelRotation rot) {
 		int py = px + 1, pz = px + 2, i;
 		switch (rot) {
 		//horizontal
@@ -217,7 +217,7 @@ public class Util {
 		};
 	}
 
-	public static int[] texturedRect(Vector3d p, Vector3d w, Vector3d h, Vector2f t0, Vector2f t1, int color, int light) {
+	public static int[] texturedRect(Vec3 p, Vec3 w, Vec3 h, Vec2 t0, Vec2 t1, int color, int light) {
 		return new int[] {
 			floatToIntBits((float)(p.x            )), floatToIntBits((float)(p.y            )), floatToIntBits((float)(p.z            )), color, floatToIntBits(t0.x), floatToIntBits(t0.y), light,
 			floatToIntBits((float)(p.x + w.x      )), floatToIntBits((float)(p.y + w.y      )), floatToIntBits((float)(p.z + w.z      )), color, floatToIntBits(t1.x), floatToIntBits(t0.y), light,
@@ -232,8 +232,8 @@ public class Util {
 	 * @param v
 	 * @return interpolated uv
 	 */
-	public static Vector2f getUV(TextureAtlasSprite tex, float u, float v) {
-		return new Vector2f(tex.getU(u), tex.getV(v));
+	public static Vec2 getUV(TextureAtlasSprite tex, float u, float v) {
+		return new Vec2(tex.getU(u), tex.getV(v));
 	}
 
 	/**
@@ -258,7 +258,7 @@ public class Util {
 
 	/**
 	 * render a tool-tip frame that is visible through blocks
-	 * @param fr the FontRenderer to use
+	 * @param fr the Font to use
 	 * @param x right offset (in text pixels)
 	 * @param y down offset (in text pixels)
 	 * @param tc text color
@@ -266,7 +266,7 @@ public class Util {
 	 * @param lines text lines to draw
 	 */
 	@Deprecated
-	public static void renderToolTip(FontRenderer fr, int x, int y, int tc, int bc, String... lines) {
+	public static void renderToolTip(Font fr, int x, int y, int tc, int bc, String... lines) {
 		throw new UnsupportedOperationException();
 		/* TODO implement
 		GlStateManager.disableLighting();
@@ -287,7 +287,7 @@ public class Util {
 		GlStateManager.depthFunc(GL11.GL_ALWAYS);
 		BufferBuilder buff = Tessellator.getInstance().getBuffer();
 		buff.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
-		buff.addVertexData(new int[]{ //background frame
+		buff.putBulkData(new int[]{ //background frame
 				  x1, y2, z0, c1,  x2, y2, z0, c1,  x2, y1, z0, c1,  x1, y1, z0, c1, //center
 				  x1, y1, z0, c1,  x2, y1, z0, c1,  x3, y0, z0, c0,  x0, y0, z0, c0, //up fade out
 				  x2, y1, z0, c1,  x2, y2, z0, c1,  x3, y3, z0, c0,  x3, y0, z0, c0, //right fade out

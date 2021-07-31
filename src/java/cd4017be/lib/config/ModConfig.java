@@ -5,8 +5,8 @@ import java.util.function.Supplier;
 
 import cd4017be.lib.gui.ConfigGui;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.ForgeConfigSpec;
@@ -42,7 +42,7 @@ public class ModConfig implements Supplier<BiFunction<Minecraft, Screen, Screen>
 	@OnlyIn(Dist.CLIENT)
 	public Screen openGui(Minecraft mc, Screen parent) {
 		if (!spec.isLoaded()) return parent;
-		return new ConfigGui(parent, new StringTextComponent(cfgType.name()), spec);
+		return new ConfigGui(parent, new TextComponent(cfgType.name()), spec);
 	}
 
 }

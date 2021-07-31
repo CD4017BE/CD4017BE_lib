@@ -1,11 +1,11 @@
 package cd4017be.api.grid;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.world.storage.IServerConfiguration;
-import net.minecraft.world.storage.SaveFormat.LevelSave;
-import net.minecraftforge.fml.WorldPersistenceHooks;
-import net.minecraftforge.fml.WorldPersistenceHooks.WorldPersistenceHook;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.storage.WorldData;
+import net.minecraft.world.level.storage.LevelStorageSource.LevelStorageAccess;
+import net.minecraftforge.fmllegacy.WorldPersistenceHooks;
+import net.minecraftforge.fmllegacy.WorldPersistenceHooks.WorldPersistenceHook;
 
 /**Utility for connecting ports from {@link IPortHolder}s via unique Link-IDs.
  * @see #load(IPortHolder, int, int)
@@ -57,17 +57,17 @@ public class Link {
 			}
 
 			@Override
-			public CompoundNBT getDataForWriting(
-				LevelSave levelSave, IServerConfiguration serverInfo
+			public CompoundTag getDataForWriting(
+				LevelStorageAccess levelSave, WorldData serverInfo
 			) {
-				CompoundNBT nbt = new CompoundNBT();
+				CompoundTag nbt = new CompoundTag();
 				nbt.putInt("nextLink", NEXT_ID);
 				return nbt;
 			}
 
 			@Override
 			public void readData(
-				LevelSave levelSave, IServerConfiguration serverInfo, CompoundNBT tag
+				LevelStorageAccess levelSave, WorldData serverInfo, CompoundTag tag
 			) {
 				NEXT_ID = tag.getInt("nextLink");
 			}

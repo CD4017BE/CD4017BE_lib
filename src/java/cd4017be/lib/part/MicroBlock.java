@@ -6,16 +6,19 @@ import cd4017be.lib.network.Sync;
 import cd4017be.lib.render.MicroBlockFace;
 import cd4017be.lib.render.model.JitBakedModel;
 import cd4017be.lib.util.ItemFluidUtil;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.*;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.world.EmptyBlockReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.core.Direction;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.level.EmptyBlockGetter;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -23,13 +26,13 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 public class MicroBlock extends GridPart {
 
 	public BlockState block;
-	private CompoundNBT tag;
+	private CompoundTag tag;
 
 	public MicroBlock() {
 		super(0);
 	}
 
-	public MicroBlock(BlockState block, CompoundNBT tag, long bounds) {
+	public MicroBlock(BlockState block, CompoundTag tag, long bounds) {
 		this();
 		this.block = block;
 		this.tag = tag;
@@ -37,7 +40,7 @@ public class MicroBlock extends GridPart {
 	}
 
 	@Override
-	public void storeState(CompoundNBT nbt, int mode) {
+	public void storeState(CompoundTag nbt, int mode) {
 		super.storeState(nbt, mode);
 		nbt.putLong("m", bounds);
 		nbt.putInt("s", Block.getId(block));
@@ -46,7 +49,7 @@ public class MicroBlock extends GridPart {
 	}
 
 	@Override
-	public void loadState(CompoundNBT nbt, int mode) {
+	public void loadState(CompoundTag nbt, int mode) {
 		super.loadState(nbt, mode);
 		bounds = nbt.getLong("m");
 		block = Block.stateById(nbt.getInt("s"));
@@ -83,9 +86,9 @@ public class MicroBlock extends GridPart {
 	}
 
 	@Override
-	public ActionResultType
-	onInteract(PlayerEntity player, Hand hand, BlockRayTraceResult hit, int pos) {
-		if (hand != null) return ActionResultType.PASS;
+	public InteractionResult
+	onInteract(Player player, InteractionHand hand, BlockHitResult hit, int pos) {
+		if (hand != null) return InteractionResult.PASS;
 		if (!player.level.isClientSide && player.getMainHandItem().getItem() instanceof IGridItem) {
 			long b = bounds & ~(1L << pos);
 			if (b == 0) {
@@ -99,7 +102,7 @@ public class MicroBlock extends GridPart {
 				ItemFluidUtil.dropStack(stack, player);
 			}
 		}
-		return ActionResultType.CONSUME;
+		return InteractionResult.CONSUME;
 	}
 
 	public boolean addVoxel(int pos) {
@@ -110,12 +113,7 @@ public class MicroBlock extends GridPart {
 
 	@Override
 	public int analogOutput(Direction side) {
-		return block.getSignal(EmptyBlockReader.INSTANCE, BlockPos.ZERO, side);
-	}
-
-	@Override
-	public boolean connectRedstone(Direction side) {
-		return block.canConnectRedstone(EmptyBlockReader.INSTANCE, BlockPos.ZERO, side);
+		return block.getSignal(EmptyBlockGetter.INSTANCE, BlockPos.ZERO, side);
 	}
 
 	@Override

@@ -4,7 +4,7 @@ import java.util.UUID;
 
 import com.mojang.authlib.GameProfile;
 
-import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.CompoundTag;
 
 /**
  * 
@@ -18,13 +18,13 @@ public class PermissionUtil {
 	/**the currently active handler to be used by devices */
 	public static IProtectionHandler handler = IProtectionHandler.DEFAULT;
 
-	public static void writeOwner(CompoundNBT nbt, GameProfile owner) {
+	public static void writeOwner(CompoundTag nbt, GameProfile owner) {
 		nbt.putString("ownerName", owner.getName());
 		nbt.putLong("ownerID0", owner.getId().getMostSignificantBits());
 		nbt.putLong("ownerID1", owner.getId().getLeastSignificantBits());
 	}
 
-	public static GameProfile readOwner(CompoundNBT nbt) {
+	public static GameProfile readOwner(CompoundTag nbt) {
 		try {
 			return new GameProfile(new UUID(nbt.getLong("ownerID0"), nbt.getLong("ownerID1")), nbt.getString("ownerName"));
 		} catch (Exception e) {

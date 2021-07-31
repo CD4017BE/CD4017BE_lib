@@ -1,9 +1,9 @@
 package cd4017be.lib.container.slot;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.inventory.container.Slot;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * 
@@ -12,7 +12,7 @@ import net.minecraft.item.ItemStack;
 public class SlotStaticItem extends Slot {
 
 	public SlotStaticItem(int x, int y, ItemStack stack) {
-		super(new Inventory(1), 0, x, y);
+		super(new SimpleContainer(1), 0, x, y);
 		this.container.setItem(0, stack);
 	}
 
@@ -30,7 +30,7 @@ public class SlotStaticItem extends Slot {
 	}
 
 	@Override
-	public boolean mayPickup(PlayerEntity playerIn) {
+	public boolean mayPickup(Player playerIn) {
 		return false;
 	}
 

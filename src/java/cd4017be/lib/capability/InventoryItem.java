@@ -1,8 +1,8 @@
 package cd4017be.lib.capability;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * 
@@ -10,12 +10,12 @@ import net.minecraft.item.ItemStack;
  */
 public class InventoryItem extends AbstractInventory {
 
-	private final PlayerInventory ref;
+	private final Inventory ref;
 	private final IItemInventory inv;
 	private final ItemStack[] cache;
 
-	public InventoryItem(PlayerEntity player) {
-		this.ref = player.inventory;
+	public InventoryItem(Player player) {
+		this.ref = player.getInventory();
 		ItemStack item = ref.items.get(ref.selected);
 		if (!(item.getItem() instanceof IItemInventory)) throw new IllegalArgumentException("Held item not InventoryItem compatible!");
 		this.inv = (IItemInventory)item.getItem();
@@ -49,8 +49,8 @@ public class InventoryItem extends AbstractInventory {
 	}
 
 	public interface IItemInventory {
-		public ItemStack[] loadInventory(ItemStack inv, PlayerEntity player);
-		public void saveInventory(ItemStack inv, PlayerEntity player, ItemStack[] items);
+		public ItemStack[] loadInventory(ItemStack inv, Player player);
+		public void saveInventory(ItemStack inv, Player player, ItemStack[] items);
 	}
 
 }

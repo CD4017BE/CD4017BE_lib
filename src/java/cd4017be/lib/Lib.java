@@ -14,12 +14,13 @@ import cd4017be.lib.network.SyncNetworkHandler;
 import cd4017be.lib.text.TooltipUtil;
 import cd4017be.lib.tick.GateUpdater;
 import cd4017be.lib.tileentity.SyncTileEntity;
-import net.minecraft.item.*;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.config.ModConfig.ModConfigEvent;
+import net.minecraftforge.fml.event.config.ModConfigEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.event.server.FMLServerStoppedEvent;
+import net.minecraftforge.fmlserverevents.FMLServerStoppedEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLLoader;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -37,7 +38,7 @@ public class Lib {
 	public static final LibCommon CFG_COMMON = new LibCommon();
 	public static final LibServer CFG_SERVER = new LibServer();
 
-	public static final ItemGroup CREATIVE_TAB = new ItemGroup(ID) {
+	public static final CreativeModeTab CREATIVE_TAB = new CreativeModeTab(ID) {
 		@Override
 		public ItemStack makeIcon() {
 			return new ItemStack(Content.assembler);

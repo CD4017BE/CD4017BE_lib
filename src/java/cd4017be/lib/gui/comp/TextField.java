@@ -7,11 +7,11 @@ import java.util.function.Supplier;
 
 import javax.annotation.Nonnull;
 
-import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraftforge.fml.client.gui.GuiUtils;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraftforge.fmlclient.gui.GuiUtils;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 import cd4017be.lib.text.TooltipUtil;
 
 /**
@@ -69,9 +69,9 @@ public class TextField extends Tooltip {
 	}
 
 	@Override
-	public void drawBackground(MatrixStack stack, int mx, int my, float ft) {
+	public void drawBackground(PoseStack stack, int mx, int my, float ft) {
 		parent.bindTexture(null);
-		FontRenderer fr = parent.fontRenderer;
+		Font fr = parent.fontRenderer;
 		boolean focused = focused();
 		if (!focused) {
 			text = get.get();

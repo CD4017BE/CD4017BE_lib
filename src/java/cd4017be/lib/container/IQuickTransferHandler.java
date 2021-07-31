@@ -1,6 +1,6 @@
 package cd4017be.lib.container;
 
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
 
 @FunctionalInterface
 public interface IQuickTransferHandler {

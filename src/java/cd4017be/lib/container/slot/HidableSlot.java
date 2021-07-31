@@ -1,9 +1,9 @@
 package cd4017be.lib.container.slot;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.container.Slot;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.Container;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -22,7 +22,7 @@ public class HidableSlot extends Slot {
 	 * @param xPosition
 	 * @param yPosition
 	 */
-	public HidableSlot(IInventory inventoryIn, int index, int xPosition, int yPosition) {
+	public HidableSlot(Container inventoryIn, int index, int xPosition, int yPosition) {
 		super(inventoryIn, index, xPosition, yPosition);
 	}
 
@@ -30,7 +30,7 @@ public class HidableSlot extends Slot {
 	public boolean mayPlace(ItemStack stack) {return !locked;}
 
 	@Override
-	public boolean mayPickup(PlayerEntity playerIn) {return !locked;}
+	public boolean mayPickup(Player playerIn) {return !locked;}
 
 	@Override
 	@OnlyIn(Dist.CLIENT)

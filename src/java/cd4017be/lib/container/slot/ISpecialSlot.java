@@ -1,10 +1,10 @@
 package cd4017be.lib.container.slot;
 
 import cd4017be.lib.container.AdvancedContainer;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.container.ClickType;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.ItemHandlerHelper;
 
 /**Allows Slots to have special interaction behavior
@@ -41,21 +41,21 @@ public interface ISpecialSlot {
 	 * @param advancedContainer
 	 * @return transaction reference item
 	 */
-	ItemStack onClick(int b, ClickType ct, PlayerEntity player, cd4017be.lib.container.AdvancedContainer advancedContainer);
+	ItemStack onClick(int b, ClickType ct, Player player, AdvancedContainer advancedContainer);
 
 	/**
 	 * lets the player quick select a specific item onto cursor
 	 * @param player
 	 * @param item the item type to quick select
 	 */
-	public static void quickSelect(PlayerEntity player, ItemStack item) {
-		ItemStack stack = player.inventory.getCarried();
+	public static void quickSelect(Player player, ItemStack item, AdvancedContainer cont) {
+		ItemStack stack = cont.getCarried();
 		if (!stack.isEmpty() && !ItemHandlerHelper.canItemStacksStack(item, stack)) return;
 		item = ItemHandlerHelper.copyStackWithSize(item, item.getMaxStackSize() - stack.getCount());
 		if (item.isEmpty()) return;
-		int n = stack.getCount() + getFromPlayerInv(item, player.inventory);
+		int n = stack.getCount() + getFromPlayerInv(item, player.getInventory());
 		stack = ItemHandlerHelper.copyStackWithSize(item, player.isCreative() ? item.getMaxStackSize() : n);
-		player.inventory.setCarried(stack);
+		cont.setCarried(stack);
 	}
 
 	/**
@@ -64,7 +64,7 @@ public interface ISpecialSlot {
 	 * @param inv player inventory
 	 * @return amount left over
 	 */
-	public static int putInPlayerInv(ItemStack item, PlayerInventory inv) {
+	public static int putInPlayerInv(ItemStack item, Inventory inv) {
 		int x = item.getCount();
 		int m = item.getMaxStackSize();
 		int es = inv.items.size();
@@ -101,7 +101,7 @@ public interface ISpecialSlot {
 	 * @param inv player inventory
 	 * @return amount taken
 	 */
-	public static int getFromPlayerInv(ItemStack item, PlayerInventory inv) {
+	public static int getFromPlayerInv(ItemStack item, Inventory inv) {
 		int n = 0;
 		for (int i = 0; i < inv.items.size(); i++) {
 			ItemStack stack = inv.items.get(i);

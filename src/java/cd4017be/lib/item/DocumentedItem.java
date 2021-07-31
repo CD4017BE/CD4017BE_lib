@@ -4,8 +4,8 @@ import javax.annotation.Nullable;
 
 import com.google.common.collect.ImmutableList;
 
-import net.minecraft.client.util.ITooltipFlag;
-import net.minecraft.world.World;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
@@ -15,19 +15,22 @@ import static cd4017be.lib.text.TooltipUtil.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Supplier;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemGroup;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.text.*;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TranslatableComponent;
 
 /**Item that shows extra description in tooltip.
  * @author CD4017BE */
 public class DocumentedItem extends Item {
 
-	public static final TranslationTextComponent EXT_TOOLTIP_HINT = new TranslationTextComponent("cd4017be_lib.ext");
+	public static final TranslatableComponent EXT_TOOLTIP_HINT = new TranslatableComponent("cd4017be_lib.ext");
 
 	private Supplier<Object[]> tooltipArgs;
-	protected ItemGroup extraTab;
+	protected CreativeModeTab extraTab;
 
 	public DocumentedItem(Properties p) {
 		super(p);
@@ -48,25 +51,25 @@ public class DocumentedItem extends Item {
 		return tooltipArgs(new ConfigArgs(tooltipArgs));
 	}
 
-	public DocumentedItem tab(ItemGroup extraTab) {
+	public DocumentedItem tab(CreativeModeTab extraTab) {
 		this.extraTab = extraTab;
 		return this;
 	}
 
 	@Override
 	@OnlyIn(Dist.CLIENT)
-	public void appendHoverText(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
+	public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag flag) {
 		addInformation(getDescriptionId(), tooltipArgs, tooltip);
 		super.appendHoverText(stack, world, tooltip, flag);
 	}
 
 	@Override
-	public ITextComponent getName(ItemStack stack) {
+	public Component getName(ItemStack stack) {
 		return cTranslate(getDescriptionId(stack));
 	}
 
-	public static void addInformation(String key, Supplier<Object[]> tooltipArgs, List<ITextComponent> tooltip) {
-		Style style = Style.EMPTY.withColor(TextFormatting.GRAY);
+	public static void addInformation(String key, Supplier<Object[]> tooltipArgs, List<Component> tooltip) {
+		Style style = Style.EMPTY.withColor(ChatFormatting.GRAY);
 		String key1;
 		if (hasTranslation(key1 = key + ".tip"))
 			if (showShiftHint())
@@ -83,7 +86,7 @@ public class DocumentedItem extends Item {
 	}
 
 	@Override
-	public Collection<ItemGroup> getCreativeTabs() {
+	public Collection<CreativeModeTab> getCreativeTabs() {
 		if (extraTab == null) return super.getCreativeTabs();
 		return ImmutableList.of(category, extraTab);
 	}

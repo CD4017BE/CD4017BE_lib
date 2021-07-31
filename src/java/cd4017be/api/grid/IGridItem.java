@@ -2,15 +2,18 @@ package cd4017be.api.grid;
 
 import javax.annotation.Nullable;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.*;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.Level;
 
 /**Implemented by {@link Item}s that create or interact with {@link GridPart}s.
  * @author CD4017BE */
@@ -22,30 +25,30 @@ public interface IGridItem {
 	 * @param hand used hand or null if left click
 	 * @param hit original ray trace hit
 	 * @return action result */
-	ActionResultType onInteract(
-		IGridHost grid, ItemStack stack, PlayerEntity player,
-		Hand hand, BlockRayTraceResult hit
+	InteractionResult onInteract(
+		IGridHost grid, ItemStack stack, Player player,
+		InteractionHand hand, BlockHitResult hit
 	);
 
-	default ActionResultType placeAndInteract(ItemUseContext itemContext) {
-		BlockItemUseContext context = new BlockItemUseContext(itemContext);
+	default InteractionResult placeAndInteract(UseOnContext itemContext) {
+		BlockPlaceContext context = new BlockPlaceContext(itemContext);
 		BlockPos pos = new BlockPos(context.getClickLocation().add(
-			Vector3d.atLowerCornerOf(context.getClickedFace().getNormal()).scale(0.125)
+			Vec3.atLowerCornerOf(context.getClickedFace().getNormal()).scale(0.125)
 		));
-		World world = context.getLevel();
-		TileEntity te = world.getBlockEntity(pos);
+		Level world = context.getLevel();
+		BlockEntity te = world.getBlockEntity(pos);
 		if (!(te instanceof IGridHost)) {
 			if (!context.canPlace())
-				return ActionResultType.FAIL;
+				return InteractionResult.FAIL;
 			if (!world.setBlock(pos, GridPart.GRID_HOST_BLOCK, 11))
-				return ActionResultType.FAIL;
+				return InteractionResult.FAIL;
 			te = world.getBlockEntity(pos);
 			if (!(te instanceof IGridHost))
-				return ActionResultType.FAIL;
+				return InteractionResult.FAIL;
 		}
 		return onInteract(
 			(IGridHost)te, context.getItemInHand(), context.getPlayer(), context.getHand(),
-			new BlockRayTraceResult(context.getClickLocation(), context.getClickedFace(), pos, false)
+			new BlockHitResult(context.getClickLocation(), context.getClickedFace(), pos, false)
 		);
 	}
 

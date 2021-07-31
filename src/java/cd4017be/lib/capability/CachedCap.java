@@ -4,24 +4,24 @@ import static cd4017be.lib.util.Utils.getTileAt;
 
 import java.util.function.Supplier;
 
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.core.Direction;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.common.util.NonNullConsumer;
 
 public class CachedCap<T> implements NonNullConsumer<LazyOptional<T>>, Supplier<T> {
 
-	protected final World world;
+	protected final Level world;
 	protected final BlockPos pos;
 	protected final Direction side;
 	protected final Capability<T> cap;
 	protected final T fallback;
 	protected T value;
 
-	public CachedCap(World world, BlockPos pos, Direction side, Capability<T> cap, T fallback) {
+	public CachedCap(Level world, BlockPos pos, Direction side, Capability<T> cap, T fallback) {
 		this.fallback = fallback;
 		this.cap = cap;
 		this.world = world;
@@ -37,7 +37,7 @@ public class CachedCap<T> implements NonNullConsumer<LazyOptional<T>>, Supplier<
 
 	@Override
 	public void accept(LazyOptional<T> t) {
-		TileEntity te = getTileAt(world, pos);
+		BlockEntity te = getTileAt(world, pos);
 		if (te != null) {
 			LazyOptional<T> lo = te.getCapability(cap, side);
 			value = lo.orElse(fallback);

@@ -3,8 +3,8 @@ package cd4017be.lib.render;
 import java.util.HashMap;
 
 import cd4017be.lib.render.model.IntArrayModel;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.fluid.Fluid;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.material.Fluid;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -90,14 +90,14 @@ public class FluidRenderer {
 	/**
 	 * Render a fluid box
 	 * @param stack FluidStack to render
-	 * @param te the TileEntity rendering it
+	 * @param te the BlockEntity rendering it
 	 * @param x render coord X
 	 * @param y render coord Y
 	 * @param z render coord Z
 	 * @param dxz horizontal size
 	 * @param dy vertical size
 	 */
-	public void render(FluidStack stack, TileEntity te, double x, double y, double z, double dxz, double dy) {
+	public void render(FluidStack stack, BlockEntity te, double x, double y, double z, double dxz, double dy) {
 		throw new UnsupportedOperationException();
 		/* TODO implement
 		Fluid fluid = stack.getFluid();

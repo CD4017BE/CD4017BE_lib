@@ -5,10 +5,9 @@ import javax.annotation.Nonnull;
 import cd4017be.lib.gui.ModularGui;
 import cd4017be.lib.text.TooltipUtil;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.platform.GlStateManager;
-import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.fml.client.gui.GuiUtils;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.fmlclient.gui.GuiUtils;
 
 /**
  * A component group to be managed by a {@link ModularGui}. Optionally includes a texture context for rendering other components, a background icon (for window frames) and a title text.
@@ -87,12 +86,12 @@ public class GuiFrame extends GuiCompGroup {
 	}
 
 	@Override
-	public void drawBackground(MatrixStack stack, int mx, int my, float t) {
+	public void drawBackground(PoseStack stack, int mx, int my, float t) {
 		if (parent != null) parent.drawNow();
 		if (bgTexture != null) {
 			bound = false;
 			bindTexture(bgTexture);
-			GlStateManager._color4f(1F, 1F, 1F, 1F);
+			//GlStateManager._color4f(1F, 1F, 1F, 1F);
 			GuiUtils.drawTexturedModalRect(stack, x, y, bgX, bgY, w, h, zLevel);
 		}
 		if (title != null)

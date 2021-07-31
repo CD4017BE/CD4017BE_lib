@@ -1,7 +1,7 @@
 package cd4017be.lib.item;
 
 import static cd4017be.api.grid.GridPart.L_OUTER;
-import static net.minecraft.util.math.vector.Vector3d.upFromBottomCenterOf;
+import static net.minecraft.world.phys.Vec3.upFromBottomCenterOf;
 
 import java.util.ArrayList;
 
@@ -11,21 +11,27 @@ import cd4017be.lib.part.MicroBlock;
 import cd4017be.lib.render.MicroBlockFace;
 import cd4017be.lib.render.model.*;
 import cd4017be.lib.text.TooltipUtil;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.*;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.*;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.world.EmptyBlockReader;
-import net.minecraft.world.World;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.NonNullList;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.core.Direction;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.level.EmptyBlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.model.data.ModelDataMap;
@@ -47,7 +53,7 @@ public class MicroBlockItem extends GridItem implements IModelDataItem {
 	}
 
 	@Override
-	public void fillItemCategory(ItemGroup group, NonNullList<ItemStack> items) {
+	public void fillItemCategory(CreativeModeTab group, NonNullList<ItemStack> items) {
 		if (this.allowdedIn(group)) {
 			items.add(of(Blocks.STONE));
 			items.add(of(Blocks.OAK_PLANKS));
@@ -56,43 +62,43 @@ public class MicroBlockItem extends GridItem implements IModelDataItem {
 	}
 
 	@Override
-	public ITextComponent getName(ItemStack stack) {
+	public Component getName(ItemStack stack) {
 		ItemStack cont = ItemStack.of(stack.getOrCreateTag());
 		return TooltipUtil.cFormat(getDescriptionId(), cont.getHoverName().getString());
 	}
 
 	@Override
-	public ActionResultType onInteract(
-		IGridHost grid, ItemStack stack, PlayerEntity player,
-		Hand hand, BlockRayTraceResult hit
+	public InteractionResult onInteract(
+		IGridHost grid, ItemStack stack, Player player,
+		InteractionHand hand, BlockHitResult hit
 	) {
-		if (hand == null) return ActionResultType.PASS;
+		if (hand == null) return InteractionResult.PASS;
 		int pos = IGridHost.target(hit, false);
 		if (pos < 0 || grid.getPart(pos, L_OUTER) != null)
 			pos = IGridHost.target(hit, true);
-		if (pos < 0) return ActionResultType.PASS;
-		if (player.level.isClientSide) return ActionResultType.CONSUME;
+		if (pos < 0) return InteractionResult.PASS;
+		if (player.level.isClientSide) return InteractionResult.CONSUME;
 		
-		CompoundNBT tag = stack.getOrCreateTag();
-		BlockState block = getBlock(new BlockItemUseContext(
+		CompoundTag tag = stack.getOrCreateTag();
+		BlockState block = getBlock(new BlockPlaceContext(
 			player, hand, ItemStack.of(tag), hit
 		));
-		if (block == null) return ActionResultType.FAIL;
+		if (block == null) return InteractionResult.FAIL;
 		MicroBlock part = (MicroBlock)grid.findPart(
 			p -> p instanceof MicroBlock && ((MicroBlock)p).block == block
 		);
 		if (!(
 			part != null ? part.addVoxel(pos)
 			: grid.addPart(new MicroBlock(block, tag, 1L << pos))
-		)) return ActionResultType.FAIL;
+		)) return InteractionResult.FAIL;
 		if (!player.isCreative()) stack.shrink(1);
-		return ActionResultType.SUCCESS;
+		return InteractionResult.SUCCESS;
 	}
 
-	public ItemStack convert(ItemStack stack, World world, BlockPos pos) {
-		BlockState state = getBlock(new BlockItemUseContext(
-			world, null, Hand.MAIN_HAND, stack,
-			new BlockRayTraceResult(
+	public ItemStack convert(ItemStack stack, Level world, BlockPos pos) {
+		BlockState state = getBlock(new BlockPlaceContext(
+			world, null, InteractionHand.MAIN_HAND, stack,
+			new BlockHitResult(
 				upFromBottomCenterOf(pos, 1),
 				Direction.UP, pos, false
 			)
@@ -100,18 +106,18 @@ public class MicroBlockItem extends GridItem implements IModelDataItem {
 		return state != null ? wrap(stack, state, 64) : ItemStack.EMPTY;
 	}
 
-	public static BlockState getBlock(BlockItemUseContext context) {
+	public static BlockState getBlock(BlockPlaceContext context) {
 		ItemStack stack = context.getItemInHand();
 		if (!(stack.getItem() instanceof BlockItem)) return null;
 		Block block = ((BlockItem)stack.getItem()).getBlock();
 		BlockState state = block.getStateForPlacement(context);
-		return state.isCollisionShapeFullBlock(EmptyBlockReader.INSTANCE, BlockPos.ZERO)
+		return state.isCollisionShapeFullBlock(EmptyBlockGetter.INSTANCE, BlockPos.ZERO)
 			? state : null;
 	}
 
 	public ItemStack wrap(ItemStack stack, BlockState state, int n) {
 		ItemStack ret = new ItemStack(this, n);
-		CompoundNBT nbt = stack.save(ret.getOrCreateTag());
+		CompoundTag nbt = stack.save(ret.getOrCreateTag());
 		nbt.putByte("Count", (byte)1);
 		nbt.putInt("state", Block.getId(state));
 		return ret;
@@ -119,7 +125,7 @@ public class MicroBlockItem extends GridItem implements IModelDataItem {
 
 	@Override
 	@OnlyIn(Dist.CLIENT)
-	public ModelDataMap getModelData(ItemStack stack, ClientWorld world, LivingEntity entity) {
+	public ModelDataMap getModelData(ItemStack stack, ClientLevel world, LivingEntity entity) {
 		BlockState state = Block.stateById(stack.getOrCreateTag().getInt("state"));
 		if (state.getBlock() == Blocks.AIR) //so the item is not invisible in recipes
 			state = Blocks.STONE.defaultBlockState();

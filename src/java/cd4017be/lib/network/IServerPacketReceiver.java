@@ -1,8 +1,8 @@
 package cd4017be.lib.network;
 
-import net.minecraft.client.entity.player.ClientPlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -18,7 +18,7 @@ public interface IServerPacketReceiver {
 	 * @throws Exception potential decoding errors
 	 */
 	@OnlyIn(Dist.CLIENT)
-	void handleServerPacket(PacketBuffer pkt) throws Exception;
+	void handleServerPacket(FriendlyByteBuf pkt) throws Exception;
 
 	/**
 	 * special version for Items
@@ -33,7 +33,7 @@ public interface IServerPacketReceiver {
 		 * @param pkt packet payload
 		 */
 		@OnlyIn(Dist.CLIENT)
-		void handleServerPacket(ItemStack stack, ClientPlayerEntity player, int slot, PacketBuffer pkt) throws Exception;
+		void handleServerPacket(ItemStack stack, AbstractClientPlayer player, int slot, FriendlyByteBuf pkt) throws Exception;
 	}
 
 }

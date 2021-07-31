@@ -1,26 +1,25 @@
 package cd4017be.lib.gui.comp;
 
 import static cd4017be.lib.text.TooltipUtil.convertText;
-import static net.minecraftforge.fml.client.gui.GuiUtils.drawHoveringText;
+import static net.minecraftforge.fmlclient.gui.GuiUtils.drawHoveringText;
 
 import java.util.List;
 
 import javax.annotation.Nullable;
 
-import org.lwjgl.opengl.GL11;
-
 import cd4017be.lib.util.IndexedSet;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.gui.Font;
+import com.mojang.blaze3d.vertex.BufferBuilder;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.platform.GlStateManager;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.vector.Matrix4f;
-import net.minecraftforge.fml.client.gui.GuiUtils;
+import com.mojang.blaze3d.vertex.Tesselator;
+import com.mojang.blaze3d.vertex.VertexFormat.Mode;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import net.minecraft.resources.ResourceLocation;
+import com.mojang.math.Matrix4f;
+import net.minecraftforge.fmlclient.gui.GuiUtils;
 
 /**
  * {@link IGuiComp} implementation that holds other gui-components inside it.
@@ -36,8 +35,8 @@ public class GuiCompGroup extends IndexedSet<IGuiComp> implements IGuiComp {
 	
 	public int screenWidth, screenHeight, texW, texH;
 	public float zLevel;
-	public FontRenderer fontRenderer;
-	public Tessellator tessellator;
+	public Font fontRenderer;
+	public Tesselator tessellator;
 	public ResourceLocation mainTex;
 	protected boolean bound, drawing;
 
@@ -71,7 +70,7 @@ public class GuiCompGroup extends IndexedSet<IGuiComp> implements IGuiComp {
 	 * @param sh total height of underlying screen
 	 * @param fr font renderer to draw text
 	 */
-	public void init(int sw, int sh, float z, FontRenderer fr) {
+	public void init(int sw, int sh, float z, Font fr) {
 		this.screenWidth = sw;
 		this.screenHeight = sh;
 		this.zLevel = z;
@@ -140,7 +139,7 @@ public class GuiCompGroup extends IndexedSet<IGuiComp> implements IGuiComp {
 	}
 
 	@Override
-	public void drawOverlay(MatrixStack stack, int mx, int my) {
+	public void drawOverlay(PoseStack stack, int mx, int my) {
 		IGuiComp c;
 		for(int i = count - 1; i >= 0; i--)
 			if ((c = array[i]).enabled() && c.isInside(mx, my)) {
@@ -150,7 +149,7 @@ public class GuiCompGroup extends IndexedSet<IGuiComp> implements IGuiComp {
 	}
 
 	@Override
-	public void drawBackground(MatrixStack stack, int mx, int my, float t) {
+	public void drawBackground(PoseStack stack, int mx, int my, float t) {
 		if (!inheritRender) {
 			if (parent != null) parent.bound = false;
 			bound = false;
@@ -242,7 +241,7 @@ public class GuiCompGroup extends IndexedSet<IGuiComp> implements IGuiComp {
 		if (tex != mainTex) bound = false;
 		else if (bound) return;
 		else bound = true;
-		if (tex != null) Minecraft.getInstance().textureManager.bind(tex);
+		if (tex != null) Minecraft.getInstance().textureManager.bindForSetup(tex);
 	}
 
 	/**
@@ -254,10 +253,10 @@ public class GuiCompGroup extends IndexedSet<IGuiComp> implements IGuiComp {
 			tessellator = parent.tessellator;
 			return b;
 		}
-		if (tessellator == null) tessellator = new Tessellator(256 * 5);
+		if (tessellator == null) tessellator = new Tesselator(256 * 5);
 		BufferBuilder b = tessellator.getBuilder();
 		if (!drawing) {
-			b.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+			b.begin(Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
 			drawing = true;
 		}
 		return b;
@@ -269,7 +268,7 @@ public class GuiCompGroup extends IndexedSet<IGuiComp> implements IGuiComp {
 	public void drawNow() {
 		if (inheritRender) parent.drawNow();
 		else if (drawing) {
-			GlStateManager._color4f(1F, 1F, 1F, 1F);
+			//GlStateManager._color4f(1F, 1F, 1F, 1F);
 			GlStateManager._enableBlend();
 			bindTexture(mainTex);
 			tessellator.end();
@@ -286,7 +285,7 @@ public class GuiCompGroup extends IndexedSet<IGuiComp> implements IGuiComp {
 	 * @param w width in pixels
 	 * @param h height in pixels
 	 */
-	public void drawRect(MatrixStack stack, int x, int y, int tx, int ty, int w, int h) {
+	public void drawRect(PoseStack stack, int x, int y, int tx, int ty, int w, int h) {
 		Matrix4f mat = stack.last().pose();
 		BufferBuilder b = getDraw();
 		int X = x + w, Y = y + h;
@@ -304,9 +303,9 @@ public class GuiCompGroup extends IndexedSet<IGuiComp> implements IGuiComp {
 	 * @param text text lines
 	 * @param mx mouse X position
 	 * @param my mouse Y position
-	 * @see GuiUtils#drawHoveringText(List, int, int, int, int, int, FontRenderer)
+	 * @see GuiUtils#drawHoveringText(List, int, int, int, int, int, Font)
 	 */
-	public void drawTooltip(MatrixStack stack, List<String> text, int mx, int my) {
+	public void drawTooltip(PoseStack stack, List<String> text, int mx, int my) {
 		drawHoveringText(stack, convertText(text), mx, my, screenWidth, screenHeight, -1, fontRenderer);
 	}
 
@@ -315,9 +314,9 @@ public class GuiCompGroup extends IndexedSet<IGuiComp> implements IGuiComp {
 	 * @param text text, where lines are separated by the '\n' character
 	 * @param mx mouse X position
 	 * @param my mouse Y position
-	 * @see GuiUtils#drawHoveringText(List, int, int, int, int, int, FontRenderer)
+	 * @see GuiUtils#drawHoveringText(List, int, int, int, int, int, Font)
 	 */
-	public void drawTooltip(MatrixStack stack, String text, int mx, int my) {
+	public void drawTooltip(PoseStack stack, String text, int mx, int my) {
 		drawHoveringText(stack, convertText(text), mx, my, screenWidth, screenHeight, -1, fontRenderer);
 	}
 

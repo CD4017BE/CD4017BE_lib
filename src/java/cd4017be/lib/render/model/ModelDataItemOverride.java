@@ -7,14 +7,17 @@ import java.util.Random;
 import java.util.function.Supplier;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.renderer.model.*;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.block.model.ItemOverrides;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Direction;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.Direction;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.model.data.EmptyModelData;
@@ -23,7 +26,7 @@ import net.minecraftforge.client.model.data.IModelData;
 /**Allows feeding custom {@link IModelData} to a model for item rendering.
  * @author CD4017BE */
 @OnlyIn(Dist.CLIENT)
-public class ModelDataItemOverride extends ItemOverrideList {
+public class ModelDataItemOverride extends ItemOverrides {
 
 	public static final ModelDataItemOverride INSTANCE = new ModelDataItemOverride();
 	private static final Int2ObjectLinkedOpenHashMap<IModelData> MODEL_CACHE
@@ -47,8 +50,8 @@ public class ModelDataItemOverride extends ItemOverrideList {
 	}
 
 	@Override
-	public IBakedModel resolve(
-		IBakedModel model, ItemStack stack, ClientWorld world, LivingEntity livingEntity
+	public BakedModel resolve(
+		BakedModel model, ItemStack stack, ClientLevel world, LivingEntity livingEntity, int i
 	) {
 		Item item = stack.getItem();
 		if (!(item instanceof IModelDataItem)) return model;
@@ -58,12 +61,12 @@ public class ModelDataItemOverride extends ItemOverrideList {
 	}
 
 
-	public static class BakedModelDataWrapper implements IBakedModel {
+	public static class BakedModelDataWrapper implements BakedModel {
 
-		protected final IBakedModel parent;
+		protected final BakedModel parent;
 		protected final IModelData data;
 
-		public BakedModelDataWrapper(IBakedModel parent, IModelData data) {
+		public BakedModelDataWrapper(BakedModel parent, IModelData data) {
 			this.parent = parent;
 			this.data = data;
 		}
@@ -95,17 +98,17 @@ public class ModelDataItemOverride extends ItemOverrideList {
 
 		@Override
 		public TextureAtlasSprite getParticleIcon() {
-			return parent.getParticleTexture(data);
+			return parent.getParticleIcon(data);
 		}
 
 		@Override
-		public ItemOverrideList getOverrides() {
+		public ItemOverrides getOverrides() {
 			return parent.getOverrides();
 		}
 
 		@Override
 		@SuppressWarnings("deprecation")
-		public ItemCameraTransforms getTransforms() {
+		public ItemTransforms getTransforms() {
 			return parent.getTransforms();
 		}
 

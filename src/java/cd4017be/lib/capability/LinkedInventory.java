@@ -1,6 +1,6 @@
 package cd4017be.lib.capability;
 
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
 import java.util.function.ObjIntConsumer;
 import java.util.function.IntFunction;
 

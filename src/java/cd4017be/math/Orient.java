@@ -2,8 +2,8 @@ package cd4017be.math;
 
 import static java.lang.Float.*;
 
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.util.Direction;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.core.Direction;
 
 /**Utility for performing axis aligned rotations and reflections.
  * <p> Re-orientations are represented as integers in the following binary format:<br>

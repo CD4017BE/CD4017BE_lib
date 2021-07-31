@@ -4,13 +4,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import com.mojang.blaze3d.matrix.MatrixStack.Entry;
-import com.mojang.blaze3d.vertex.IVertexBuilder;
+import com.mojang.blaze3d.vertex.PoseStack.Pose;
+import com.mojang.blaze3d.vertex.BufferBuilder;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.client.renderer.model.*;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.client.renderer.block.model.ItemOverrides;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.util.Direction;
+import net.minecraft.core.Direction;
 import net.minecraftforge.client.model.data.IModelData;
 import net.minecraftforge.client.model.data.ModelProperty;
 
@@ -18,9 +20,9 @@ import net.minecraftforge.client.model.data.ModelProperty;
  * a TileEntity to render special static graphics.
  * @see TileEntityModel
  * @author CD4017BE */
-public class JitBakedModel implements IBakedModel {
+public class JitBakedModel implements BakedModel {
 
-	public static final ModelProperty<IBakedModel> JIT_BAKED_MODEL = new ModelProperty<>();
+	public static final ModelProperty<BakedModel> JIT_BAKED_MODEL = new ModelProperty<>();
 	public static final int INNER = 6, AOC = 1, GUI3D = 2, LIT = 3;
 
 	public static JitBakedModel make(IModelData data) {
@@ -83,14 +85,14 @@ public class JitBakedModel implements IBakedModel {
 	}
 
 	@Override
-	public ItemOverrideList getOverrides() {
-		return ItemOverrideList.EMPTY;
+	public ItemOverrides getOverrides() {
+		return ItemOverrides.EMPTY;
 	}
 
-	public void render(IVertexBuilder vb, Entry mat, int light, int overlayColor) {
+	public void render(BufferBuilder vb, Pose mat, int light, int overlayColor) {
 		for (ArrayList<BakedQuad> quads : this.quads)
 			for (BakedQuad quad : quads)
-				vb.addVertexData(mat, quad, 1, 1, 1, light, overlayColor, true);
+				vb.putBulkData(mat, quad, 1, 1, 1, light, overlayColor, true);
 	}
 
 }

@@ -2,12 +2,12 @@ package cd4017be.lib.container;
 
 import cd4017be.lib.container.slot.HidableSlot;
 import cd4017be.lib.network.StateSyncAdv;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.container.ContainerType;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
 
 /**Container template for hand-held item GUIs.
  * @author CD4017BE */
@@ -24,8 +24,8 @@ public class ItemContainer extends AdvancedContainer {
 	 * @param sync server -> client data synchronization handler
 	 * @param idxCount object indices available for slot synchronization */
 	public ItemContainer(
-		ContainerType<?> type, int id,
-		PlayerInventory inv, int slot, Item item,
+		MenuType<?> type, int id,
+		Inventory inv, int slot, Item item,
 		StateSyncAdv sync, int idxCount
 	) {
 		super(type, id, inv, sync, idxCount);
@@ -40,16 +40,16 @@ public class ItemContainer extends AdvancedContainer {
 
 	/**@return the Compound tag of the stack (gets created if needed)
 	 * @see #getStack() */
-	protected CompoundNBT getNBT(PlayerEntity player) {
+	protected CompoundTag getNBT(Player player) {
 		ItemStack stack = getStack();
-		if (stack.getItem() != item) return new CompoundNBT();
-		CompoundNBT nbt = stack.getTag();
-		if (nbt == null) stack.setTag(nbt = new CompoundNBT());
+		if (stack.getItem() != item) return new CompoundTag();
+		CompoundTag nbt = stack.getTag();
+		if (nbt == null) stack.setTag(nbt = new CompoundTag());
 		return nbt;
 	}
 
 	@Override
-	public boolean stillValid(PlayerEntity player) {
+	public boolean stillValid(Player player) {
 		return player.isAlive() && getStack().getItem() == item;
 	}
 

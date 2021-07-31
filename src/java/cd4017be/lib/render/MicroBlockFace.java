@@ -15,11 +15,11 @@ import java.util.Random;
 
 import cd4017be.lib.render.model.JitBakedModel;
 import cd4017be.lib.render.model.TileEntityModel;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.client.renderer.model.IBakedModel;
-import net.minecraft.util.Direction;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.model.data.EmptyModelData;
@@ -128,7 +128,7 @@ public class MicroBlockFace {
 	private static MicroBlockFace[] create(Object key) {
 		Random rand = new Random();
 		BlockState block = key instanceof BlockState ? (BlockState)key : null;
-		IBakedModel model = block != null ? MODELS.getBlockModel(block)
+		BakedModel model = block != null ? MODELS.getBlockModel(block)
 			: MODELS.getModelManager().getModel((ResourceLocation)key);
 		MicroBlockFace[] faces = new MicroBlockFace[6];
 		for (Direction d : Direction.values()) {

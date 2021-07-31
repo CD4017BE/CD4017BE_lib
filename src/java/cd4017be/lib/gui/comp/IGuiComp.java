@@ -1,6 +1,6 @@
 package cd4017be.lib.gui.comp;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 
 import cd4017be.lib.util.IndexedSet.IndexedElement;
 
@@ -45,7 +45,7 @@ public interface IGuiComp extends IndexedElement {
 	 * @param my cursor Y
 	 * @param t frame time
 	 */
-	default void drawOverlay(MatrixStack stack, int mx, int my) {}
+	default void drawOverlay(PoseStack stack, int mx, int my) {}
 
 	/**
 	 * render background
@@ -53,7 +53,7 @@ public interface IGuiComp extends IndexedElement {
 	 * @param my cursor Y
 	 * @param t frame time
 	 */
-	default void drawBackground(MatrixStack stack, int mx, int my, float t) {}
+	default void drawBackground(PoseStack stack, int mx, int my, float t) {}
 
 	/**
 	 * @param c char typed

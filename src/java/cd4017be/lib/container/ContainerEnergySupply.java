@@ -11,28 +11,28 @@ import cd4017be.lib.gui.ModularGui;
 import cd4017be.lib.gui.comp.*;
 import cd4017be.lib.network.StateSyncAdv;
 import cd4017be.lib.tileentity.EnergySupply;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 /** @author CD4017BE */
 public class ContainerEnergySupply extends AdvancedContainer {
 
-	public ContainerEnergySupply(int id, PlayerInventory inv, PacketBuffer pkt) {
+	public ContainerEnergySupply(int id, Inventory inv, FriendlyByteBuf pkt) {
 		super(eNERGY_SUPP, id, inv, StateSyncAdv.of(true, EnergySupply.class), 0);
 	}
 
-	public ContainerEnergySupply(int id, PlayerInventory inv, EnergySupply tile) {
+	public ContainerEnergySupply(int id, Inventory inv, EnergySupply tile) {
 		super(eNERGY_SUPP, id, inv, StateSyncAdv.of(false, tile), 0);
 	}
 
 	public static final ResourceLocation TEX = Lib.rl("textures/gui/supply.png");
 
 	@OnlyIn(Dist.CLIENT)
-	public ModularGui<ContainerEnergySupply> setupGui(PlayerInventory inv, ITextComponent name) {
+	public ModularGui<ContainerEnergySupply> setupGui(Inventory inv, Component name) {
 		IntSupplier limO = sync.intGetter("limO", false);
 		IntSupplier limI = sync.intGetter("limI", false);
 		IntSupplier flowO = sync.intGetter("lastO", false);

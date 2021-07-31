@@ -4,8 +4,8 @@ import java.util.Arrays;
 import cd4017be.lib.util.Orientation;
 import static cd4017be.lib.util.Orientation.*;
 
-import net.minecraft.item.BlockItemUseContext;
-import net.minecraft.state.EnumProperty;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 
 /**
  * 
@@ -17,14 +17,14 @@ public abstract class PropertyOrientation extends EnumProperty<Orientation> {
 		super(name, Orientation.class, Arrays.asList(allowedValues));
 	}
 
-	public abstract Orientation getPlacementState(BlockItemUseContext context);
+	public abstract Orientation getPlacementState(BlockPlaceContext context);
 
 	public static final PropertyOrientation XY_12_ROT = new PropertyOrientation(
 		"orient", S12, W12, N12, E12, UN, UE, US, UW, DS, DE, DN, DW
 	) {
 
 		@Override
-		public Orientation getPlacementState(BlockItemUseContext context) {
+		public Orientation getPlacementState(BlockPlaceContext context) {
 			throw new UnsupportedOperationException();
 			/*TODO implement
 			if (sneak) {
@@ -62,7 +62,7 @@ public abstract class PropertyOrientation extends EnumProperty<Orientation> {
 	) {
 
 		@Override
-		public Orientation getPlacementState(BlockItemUseContext context) {
+		public Orientation getPlacementState(BlockPlaceContext context) {
 			throw new UnsupportedOperationException();
 			/*TODO implement
 			if (sneak) return Orientation.fromFacing(f.getOpposite());
@@ -91,7 +91,7 @@ public abstract class PropertyOrientation extends EnumProperty<Orientation> {
 	) {
 
 		@Override
-		public Orientation getPlacementState(BlockItemUseContext context) {
+		public Orientation getPlacementState(BlockPlaceContext context) {
 			return Orientation.byBack(context.getHorizontalDirection());
 		}
 

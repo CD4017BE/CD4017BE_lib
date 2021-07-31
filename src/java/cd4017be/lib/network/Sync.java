@@ -9,7 +9,14 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.nio.ByteBuffer;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.nbt.*;
+import net.minecraft.nbt.NumericTag;
+import net.minecraft.nbt.ShortTag;
+import net.minecraft.nbt.LongTag;
+import net.minecraft.nbt.IntTag;
+import net.minecraft.nbt.FloatTag;
+import net.minecraft.nbt.DoubleTag;
+import net.minecraft.nbt.ByteTag;
+import net.minecraft.nbt.Tag;
 
 /**This is a marker for public fields that should get automatic state synchronization / persistence with NBT data.
  * For use in classes implementing {@link INBTSynchronized}.
@@ -83,7 +90,7 @@ public @interface Sync {
 			try {
 				if (inType.isPrimitive()) {
 					Lookup l = MethodHandles.lookup();
-					this.read = l.unreflect(Type.class.getDeclaredMethod("read" + name(), INBT.class));
+					this.read = l.unreflect(Type.class.getDeclaredMethod("read" + name(), Tag.class));
 					this.write = l.unreflect(Type.class.getDeclaredMethod("write" + name(), inType));
 					this.comp = l.unreflect(Type.class.getDeclaredMethod("check" + name(), inType, ByteBuffer.class));
 					String name = inType.getName();
@@ -92,7 +99,7 @@ public @interface Sync {
 					));
 				} else if (inType == Enum.class) {
 					Lookup l = MethodHandles.lookup();
-					this.read = l.unreflect(Type.class.getDeclaredMethod("read" + name(), INBT.class, Enum[].class));
+					this.read = l.unreflect(Type.class.getDeclaredMethod("read" + name(), Tag.class, Enum[].class));
 					this.write = l.unreflect(Type.class.getDeclaredMethod("write" + name(), inType));
 					this.comp = l.unreflect(Type.class.getDeclaredMethod("check" + name(), inType, ByteBuffer.class));
 					this.update = l.unreflect(Type.class.getDeclaredMethod("read" + name(), ByteBuf.class, Enum[].class));
@@ -130,14 +137,14 @@ public @interface Sync {
 				: MethodHandles.insertArguments(update, 1, (Object)enums);
 		}
 
-		static boolean readI1(INBT nbt) {return nbt instanceof NumberNBT && ((NumberNBT)nbt).getAsByte() != 0;}
-		static byte readI8(INBT nbt) {return nbt instanceof NumberNBT ? ((NumberNBT)nbt).getAsByte() : 0;}
-		static short readI16(INBT nbt) {return nbt instanceof NumberNBT ? ((NumberNBT)nbt).getAsShort() : 0;}
-		static int readI32(INBT nbt) {return nbt instanceof NumberNBT ? ((NumberNBT)nbt).getAsInt() : 0;}
-		static long readI64(INBT nbt) {return nbt instanceof NumberNBT ? ((NumberNBT)nbt).getAsLong() : 0L;}
-		static float readF32(INBT nbt) {return nbt instanceof NumberNBT ? ((NumberNBT)nbt).getAsFloat() : 0F;}
-		static double readF64(INBT nbt) {return nbt instanceof NumberNBT ? ((NumberNBT)nbt).getAsDouble() : 0D;}
-		static <E extends Enum<E>> E readEnum(INBT nbt, E[] values) {
+		static boolean readI1(Tag nbt) {return nbt instanceof NumericTag && ((NumericTag)nbt).getAsByte() != 0;}
+		static byte readI8(Tag nbt) {return nbt instanceof NumericTag ? ((NumericTag)nbt).getAsByte() : 0;}
+		static short readI16(Tag nbt) {return nbt instanceof NumericTag ? ((NumericTag)nbt).getAsShort() : 0;}
+		static int readI32(Tag nbt) {return nbt instanceof NumericTag ? ((NumericTag)nbt).getAsInt() : 0;}
+		static long readI64(Tag nbt) {return nbt instanceof NumericTag ? ((NumericTag)nbt).getAsLong() : 0L;}
+		static float readF32(Tag nbt) {return nbt instanceof NumericTag ? ((NumericTag)nbt).getAsFloat() : 0F;}
+		static double readF64(Tag nbt) {return nbt instanceof NumericTag ? ((NumericTag)nbt).getAsDouble() : 0D;}
+		static <E extends Enum<E>> E readEnum(Tag nbt, E[] values) {
 			int i = readI8(nbt) & 0xff;
 			return i < values.length ? values[i] : null;
 		}
@@ -145,21 +152,21 @@ public @interface Sync {
 			int i = buf.readUnsignedByte();
 			return i < values.length ? values[i] : null;
 		}
-		static <E extends Enum<E>> E readEnum0(INBT nbt, E[] values) {
+		static <E extends Enum<E>> E readEnum0(Tag nbt, E[] values) {
 			return values[Math.min(readI8(nbt) & 0xff, values.length - 1)];
 		}
 		static <E extends Enum<E>> E readEnum0(ByteBuf buf, E[] values) {
 			return values[Math.min(buf.readUnsignedByte(), values.length - 1)];
 		}
-		static INBT writeI1(boolean val) {return ByteNBT.valueOf(val);}
-		static INBT writeI8(byte val) {return ByteNBT.valueOf(val);}
-		static INBT writeI16(short val) {return ShortNBT.valueOf(val);}
-		static INBT writeI32(int val) {return IntNBT.valueOf(val);}
-		static INBT writeI64(long val) {return LongNBT.valueOf(val);}
-		static INBT writeF32(float val) {return FloatNBT.valueOf(val);}
-		static INBT writeF64(double val) {return DoubleNBT.valueOf(val);}
-		static INBT writeEnum(Enum<?> val) {return writeI8((byte)val.ordinal());}
-		static INBT writeEnum0(Enum<?> val) {return writeI8((byte)(val == null ? -1 : val.ordinal()));}
+		static Tag writeI1(boolean val) {return ByteTag.valueOf(val);}
+		static Tag writeI8(byte val) {return ByteTag.valueOf(val);}
+		static Tag writeI16(short val) {return ShortTag.valueOf(val);}
+		static Tag writeI32(int val) {return IntTag.valueOf(val);}
+		static Tag writeI64(long val) {return LongTag.valueOf(val);}
+		static Tag writeF32(float val) {return FloatTag.valueOf(val);}
+		static Tag writeF64(double val) {return DoubleTag.valueOf(val);}
+		static Tag writeEnum(Enum<?> val) {return writeI8((byte)val.ordinal());}
+		static Tag writeEnum0(Enum<?> val) {return writeI8((byte)(val == null ? -1 : val.ordinal()));}
 		static boolean checkI1(boolean val, ByteBuffer state) {
 			if (state.get() == 0 ^ val) return false;
 			state.put(state.position() - 1, (byte)(val ? 1 : 0));

@@ -9,27 +9,27 @@ import javax.annotation.Nullable;
 
 import cd4017be.lib.block.BlockTE.ITERedstone;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.INBT;
-import net.minecraft.nbt.ByteNBT;
-import net.minecraft.nbt.ByteArrayNBT;
-import net.minecraft.nbt.DoubleNBT;
-import net.minecraft.nbt.FloatNBT;
-import net.minecraft.nbt.IntNBT;
-import net.minecraft.nbt.IntArrayNBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.nbt.LongNBT;
-import net.minecraft.nbt.LongArrayNBT;
-import net.minecraft.nbt.ShortNBT;
-import net.minecraft.nbt.StringNBT;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.Direction;
-import net.minecraft.util.Direction.Axis;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.world.World;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.ByteTag;
+import net.minecraft.nbt.ByteArrayTag;
+import net.minecraft.nbt.DoubleTag;
+import net.minecraft.nbt.FloatTag;
+import net.minecraft.nbt.IntTag;
+import net.minecraft.nbt.IntArrayTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.LongTag;
+import net.minecraft.nbt.LongArrayTag;
+import net.minecraft.nbt.ShortTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Direction.Axis;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.Constants.NBT;
 import net.minecraftforge.fluids.FluidStack;
@@ -82,24 +82,24 @@ public class Utils {
 	}
 
 	/**
-	 * Chunk-flushing save way to get a neighboring TileEntity
+	 * Chunk-flushing save way to get a neighboring BlockEntity
 	 * @param tile source tile
 	 * @param side side of source tile to get neighbor for
-	 * @return neighbor TileEntity or null if not existing or chunk not loaded
+	 * @return neighbor BlockEntity or null if not existing or chunk not loaded
 	 */
-	public static @Nullable TileEntity neighborTile(TileEntity tile, Direction side) {
-		World world = tile.getLevel();
+	public static @Nullable BlockEntity neighborTile(BlockEntity tile, Direction side) {
+		Level world = tile.getLevel();
 		BlockPos pos = tile.getBlockPos().relative(side);
 		return world.isLoaded(pos) ? world.getBlockEntity(pos) : null;
 	}
 
 	/**
-	 * Chunk-flushing save way to get a TileEntity for given position
-	 * @param world World
+	 * Chunk-flushing save way to get a BlockEntity for given position
+	 * @param world Level
 	 * @param pos tile position
-	 * @return the TileEntity or null if not existing or chunk not loaded
+	 * @return the BlockEntity or null if not existing or chunk not loaded
 	 */
-	public static @Nullable TileEntity getTileAt(World world, BlockPos pos) {
+	public static @Nullable BlockEntity getTileAt(Level world, BlockPos pos) {
 		return world.isLoaded(pos) ? world.getBlockEntity(pos) : null;
 	}
 
@@ -108,38 +108,38 @@ public class Utils {
 	 * @param tile source tile
 	 * @param side side of source tile to get neighboring capability for
 	 * @param cap the capability type
-	 * @return capability instance or null if chunk not loaded, no TileEntity or capability not available
+	 * @return capability instance or null if chunk not loaded, no BlockEntity or capability not available
 	 */
 	@Deprecated
-	public static @Nullable <T> T neighborCapability(TileEntity tile, Direction side, Capability<T> cap) {
-		World world = tile.getLevel();
+	public static @Nullable <T> T neighborCapability(BlockEntity tile, Direction side, Capability<T> cap) {
+		Level world = tile.getLevel();
 		BlockPos pos = tile.getBlockPos().relative(side);
 		if (!world.isLoaded(pos)) return null;
-		TileEntity te = world.getBlockEntity(pos);
+		BlockEntity te = world.getBlockEntity(pos);
 		return te != null ? te.getCapability(cap, side.getOpposite()).orElse(null) : null;
 	}
 
 	/**
 	 * Chunk-flushing save way to get a capability for given position and side
-	 * @param world World
+	 * @param world Level
 	 * @param pos tile position
 	 * @param side side to access
 	 * @param cap the capability type
-	 * @return capability instance or null if chunk not loaded, no TileEntity or capability not available
+	 * @return capability instance or null if chunk not loaded, no BlockEntity or capability not available
 	 */
 	@Deprecated
-	public static @Nullable <T> T getCapabilityAt(World world, BlockPos pos, @Nullable Direction side, Capability<T> cap) {
+	public static @Nullable <T> T getCapabilityAt(Level world, BlockPos pos, @Nullable Direction side, Capability<T> cap) {
 		if (!world.isLoaded(pos)) return null;
-		TileEntity te = world.getBlockEntity(pos);
+		BlockEntity te = world.getBlockEntity(pos);
 		return te != null ? te.getCapability(cap, side).orElse(null) : null;
 	}
 
 	/**
-	 * @param world World
+	 * @param world Level
 	 * @param pos starting position (assumed to be loaded)
 	 * @return whether neighbouring blocks are loaded too
 	 */
-	public static boolean neighboursLoaded(World world, BlockPos pos) {
+	public static boolean neighboursLoaded(Level world, BlockPos pos) {
 		int x = pos.getX() & 15, z = pos.getZ() & 15;
 		return (x == 0 ? world.isLoaded(pos.offset(-1, 0, 0)) : x == 15 ? world.isLoaded(pos.offset(1, 0, 0)) : true)
 			&& (z == 0 ? world.isLoaded(pos.offset(0, 0, -1)) : z == 15 ? world.isLoaded(pos.offset(0, 0, 1)) : true);
@@ -164,7 +164,7 @@ public class Utils {
 	}
 
 	@Deprecated
-	public static RayTraceResult getHit(PlayerEntity player, BlockState block, BlockPos pos) {
+	public static HitResult getHit(Player player, BlockState block, BlockPos pos) {
 		throw new UnsupportedOperationException();
 		/* TODO implement
 		Vector3d p = player.getPositionEyes(1);
@@ -172,7 +172,7 @@ public class Utils {
 	}
 
 	@Deprecated
-	public static FluidStack getFluid(World world, BlockPos pos, boolean sourceOnly) {
+	public static FluidStack getFluid(Level world, BlockPos pos, boolean sourceOnly) {
 		throw new UnsupportedOperationException();
 		/* TODO implement
 		BlockState state = world.getBlockState(pos);
@@ -190,14 +190,14 @@ public class Utils {
 	}
 
 	public static Direction getLookDirStrict(Entity entity) {
-		if (entity.xRot < -45.0F) return Direction.DOWN;
-		if (entity.xRot > 45.0F) return Direction.UP;
+		if (entity.getXRot() < -45.0F) return Direction.DOWN;
+		if (entity.getXRot() > 45.0F) return Direction.UP;
 		return entity.getDirection();
 	}
 
 	public static Direction getLookDirPlacement(Entity entity) {
-		if (entity.xRot < -35.0F) return Direction.DOWN;
-		if (entity.xRot > 40.0F) return Direction.UP;
+		if (entity.getXRot() < -35.0F) return Direction.DOWN;
+		if (entity.getXRot() > 40.0F) return Direction.UP;
 		return entity.getDirection();
 	}
 
@@ -246,7 +246,7 @@ public class Utils {
 	}
 
 	@Deprecated
-	public static void updateRedstoneOnSide(TileEntity te, int value, Direction side) {
+	public static void updateRedstoneOnSide(BlockEntity te, int value, Direction side) {
 		throw new UnsupportedOperationException();
 		/* TODO implement
 		ICapabilityProvider cp = neighborTile(te, side);
@@ -255,7 +255,7 @@ public class Utils {
 	}
 
 	@Deprecated
-	public static <T extends TileEntity & ITERedstone> void updateRedstoneOnSide(T te, Direction side) {
+	public static <T extends BlockEntity & ITERedstone> void updateRedstoneOnSide(T te, Direction side) {
 		throw new UnsupportedOperationException();
 		/* TODO implement
 		ICapabilityProvider cp = neighborTile(te, side);
@@ -265,17 +265,17 @@ public class Utils {
 	}
 
 	/**
-	 * Notify neighboring block(s) of TileEntity change
-	 * @param te the TileEntity that changed
+	 * Notify neighboring block(s) of BlockEntity change
+	 * @param te the BlockEntity that changed
 	 * @param side the side on which a neighbor should be notified or null to notify on all sides.
 	 */
 	@Deprecated
-	public static void notifyNeighborTile(TileEntity te, Direction side) {
+	public static void notifyNeighborTile(BlockEntity te, Direction side) {
 		throw new UnsupportedOperationException();
 		/* TODO implement
 		if (side != null) {
 			BlockPos pos = te.getPos().offset(side);
-			World world = te.getWorld();
+			Level world = te.getWorld();
 			if (world == null) return;
 			if (world.isBlockLoaded(pos)) {
 				BlockState state = world.getBlockState(pos);
@@ -361,10 +361,10 @@ public class Utils {
 	 * @param arr array of Strings
 	 * @return list tag containing the serialized NBT data of each element
 	 */
-	public static ListNBT writeStringArray(String[] arr) {
-		ListNBT list = new ListNBT();
+	public static ListTag writeStringArray(String[] arr) {
+		ListTag list = new ListTag();
 		for (String s : arr)
-			list.add(StringNBT.valueOf(s));
+			list.add(StringTag.valueOf(s));
 		return list;
 	}
 
@@ -373,7 +373,7 @@ public class Utils {
 	 * @param arr optional pre-initialized array
 	 * @return String array from given NBT data
 	 */
-	public static String[] readStringArray(ListNBT list, String[] arr) {
+	public static String[] readStringArray(ListTag list, String[] arr) {
 		int l = list.size();
 		if (arr == null || arr.length < l) arr = new String[l];
 		for (int i = 0; i < l; i++)
@@ -402,21 +402,21 @@ public class Utils {
 			arr[i] = (short)(nbt[i << 1] & 0xff | nbt[i << 1 | 1] << 8);
 	}
 
-	public static INBT readTag(ByteBuf data, byte tagId) {
+	public static Tag readTag(ByteBuf data, byte tagId) {
 		switch(tagId) {
-		case NBT.TAG_BYTE: return ByteNBT.valueOf(data.readByte());
-		case NBT.TAG_SHORT: return ShortNBT.valueOf(data.readShort());
-		case NBT.TAG_INT: return IntNBT.valueOf(data.readInt());
-		case NBT.TAG_LONG: return LongNBT.valueOf(data.readLong());
-		case NBT.TAG_FLOAT: return FloatNBT.valueOf(data.readFloat());
-		case NBT.TAG_DOUBLE: return DoubleNBT.valueOf(data.readDouble());
+		case NBT.TAG_BYTE: return ByteTag.valueOf(data.readByte());
+		case NBT.TAG_SHORT: return ShortTag.valueOf(data.readShort());
+		case NBT.TAG_INT: return IntTag.valueOf(data.readInt());
+		case NBT.TAG_LONG: return LongTag.valueOf(data.readLong());
+		case NBT.TAG_FLOAT: return FloatTag.valueOf(data.readFloat());
+		case NBT.TAG_DOUBLE: return DoubleTag.valueOf(data.readDouble());
 		case NBT.TAG_BYTE_ARRAY: {
 			int l = data.readInt();
 			if (l > data.readableBytes())
 				throw new IndexOutOfBoundsException(l + " > " + data.readableBytes());
 			byte[] arr = new byte[l];
 			data.readBytes(arr);
-			return new ByteArrayNBT(arr);
+			return new ByteArrayTag(arr);
 		}
 		case NBT.TAG_INT_ARRAY: {
 			int l = data.readInt();
@@ -425,7 +425,7 @@ public class Utils {
 			int[] arr = new int[l];
 			for (int i = 0; i < l; i++)
 				arr[i] = data.readInt();
-			return new IntArrayNBT(arr);
+			return new IntArrayTag(arr);
 		}
 		case NBT.TAG_LONG_ARRAY: {
 			int l = data.readInt();
@@ -434,7 +434,7 @@ public class Utils {
 			long[] arr = new long[l];
 			for (int i = 0; i < l; i++)
 				arr[i] = data.readLong();
-			return new LongArrayNBT(arr);
+			return new LongArrayTag(arr);
 		}
 		case NBT.TAG_STRING: {
 			int l = data.readUnsignedShort();
@@ -442,10 +442,10 @@ public class Utils {
 				throw new IndexOutOfBoundsException((l*2) + " > " + data.readableBytes());
 			byte[] arr = new byte[l];
 			data.readBytes(arr);
-			return StringNBT.valueOf(new String(arr, UTF8));
+			return StringTag.valueOf(new String(arr, UTF8));
 		}
 		case NBT.TAG_LIST: {
-			ListNBT list = new ListNBT();
+			ListTag list = new ListTag();
 			tagId = data.readByte();
 			for (int l = data.readInt(); l > 0; l--)
 				list.add(readTag(data, tagId));
@@ -455,41 +455,41 @@ public class Utils {
 		}
 	}
 
-	public static void writeTag(ByteBuf data, INBT tag) {
+	public static void writeTag(ByteBuf data, Tag tag) {
 		switch(tag.getId()) {
-		case NBT.TAG_BYTE: data.writeByte(((ByteNBT)tag).getAsByte()); return;
-		case NBT.TAG_SHORT: data.writeShort(((ShortNBT)tag).getAsShort()); return;
-		case NBT.TAG_INT: data.writeInt(((IntNBT)tag).getAsInt()); return;
-		case NBT.TAG_LONG: data.writeLong(((LongNBT)tag).getAsLong()); return;
-		case NBT.TAG_FLOAT: data.writeFloat(((FloatNBT)tag).getAsFloat()); return;
-		case NBT.TAG_DOUBLE: data.writeDouble(((DoubleNBT)tag).getAsDouble()); return;
+		case NBT.TAG_BYTE: data.writeByte(((ByteTag)tag).getAsByte()); return;
+		case NBT.TAG_SHORT: data.writeShort(((ShortTag)tag).getAsShort()); return;
+		case NBT.TAG_INT: data.writeInt(((IntTag)tag).getAsInt()); return;
+		case NBT.TAG_LONG: data.writeLong(((LongTag)tag).getAsLong()); return;
+		case NBT.TAG_FLOAT: data.writeFloat(((FloatTag)tag).getAsFloat()); return;
+		case NBT.TAG_DOUBLE: data.writeDouble(((DoubleTag)tag).getAsDouble()); return;
 		case NBT.TAG_BYTE_ARRAY: {
-			byte[] arr = ((ByteArrayNBT)tag).getAsByteArray();
+			byte[] arr = ((ByteArrayTag)tag).getAsByteArray();
 			data.writeInt(arr.length);
 			data.writeBytes(arr);
 		}	return;
 		case NBT.TAG_INT_ARRAY: {
-			int[] arr = ((IntArrayNBT)tag).getAsIntArray();
+			int[] arr = ((IntArrayTag)tag).getAsIntArray();
 			data.writeInt(arr.length);
 			for (int v : arr)
 				data.writeInt(v);
 		}	return;
 		case NBT.TAG_LONG_ARRAY: {
-			long[] arr = ((LongArrayNBT)tag).getAsLongArray();
+			long[] arr = ((LongArrayTag)tag).getAsLongArray();
 			data.writeInt(arr.length);
 			for (long v : arr)
 				data.writeLong(v);
 		}	return;
 		case NBT.TAG_STRING: {
-			byte[] arr = ((StringNBT)tag).getAsString().getBytes(UTF8);
+			byte[] arr = ((StringTag)tag).getAsString().getBytes(UTF8);
 			data.writeShort(arr.length);
 			data.writeBytes(arr);
 		}	return;
 		case NBT.TAG_LIST: {
-			ListNBT list = (ListNBT)tag;
+			ListTag list = (ListTag)tag;
 			data.writeByte(list.getElementType());
 			data.writeInt(list.size());
-			for (INBT stag : list)
+			for (Tag stag : list)
 				writeTag(data, stag);
 		}	return;
 		}

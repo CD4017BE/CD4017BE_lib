@@ -1,7 +1,7 @@
 package cd4017be.lib.render.model;
 
 import static java.lang.Float.floatToRawIntBits;
-import static net.minecraft.util.math.MathHelper.clamp;
+import static net.minecraft.util.Mth.clamp;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,10 +14,15 @@ import cd4017be.lib.script.Script;
 import cd4017be.lib.script.obj.IOperand;
 import cd4017be.lib.script.obj.Nil;
 import cd4017be.lib.script.obj.Vector;
-import net.minecraft.client.renderer.model.*;
+import net.minecraft.client.resources.model.SimpleBakedModel;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.vector.*;
+import net.minecraft.core.Direction;
+import com.mojang.math.Vector4f;
+import com.mojang.math.Vector3f;
+import com.mojang.math.Quaternion;
+import com.mojang.math.Transformation;
+import com.mojang.math.Matrix4f;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -239,7 +244,7 @@ public class ScriptModelBuilder implements IOperand {
 		}
 
 		public void bake(
-			SimpleBakedModel.Builder b, TransformationMatrix transf,
+			SimpleBakedModel.Builder b, Transformation transf,
 			Function<String, TextureAtlasSprite> resolver
 		) {
 			TextureAtlasSprite sprite = resolver.apply(tex);

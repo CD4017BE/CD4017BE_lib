@@ -11,9 +11,9 @@ import com.google.gson.stream.JsonWriter;
 
 import cd4017be.lib.Lib;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.resources.Language;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.resources.language.LanguageInfo;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -39,7 +39,7 @@ public class TooltipEditor {
 	String[] lastKeys = new String[8];
 	int pos, ofs;
 	private int cursor, cursor2;
-	private Language lastLanguage;
+	private LanguageInfo lastLanguage;
 	private boolean specialCombo;
 
 	@OnlyIn(Dist.CLIENT)
@@ -95,7 +95,7 @@ public class TooltipEditor {
 			specialCombo = true;
 			save();
 		} else if (k == GLFW_KEY_F4) {
-			Language l = Minecraft.getInstance().getLanguageManager().getSelected();
+			LanguageInfo l = Minecraft.getInstance().getLanguageManager().getSelected();
 			if (!l.equals(lastLanguage)) {
 				save();
 				lastLanguage = l;
@@ -144,7 +144,7 @@ public class TooltipEditor {
 		if (editingKey == null) return;
 		Screen gui = e.getGui();
 		@SuppressWarnings("resource")
-		FontRenderer fr = gui.getMinecraft().font;
+		Font fr = gui.getMinecraft().font;
 		for (int i = 0; i < 8; i++) {
 			String s = i == ofs ? editingKey : lastKeys[pos-i & 7];
 			if (s == null) continue;

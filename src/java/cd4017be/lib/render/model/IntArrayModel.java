@@ -4,9 +4,9 @@ import java.util.Arrays;
 
 import cd4017be.lib.util.Orientation;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.util.Direction.Axis;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import net.minecraft.core.Direction.Axis;
 
 /**
  * 
@@ -14,7 +14,7 @@ import net.minecraft.util.Direction.Axis;
  */
 public class IntArrayModel {
 
-	public static final VertexFormat FORMAT = DefaultVertexFormats.BLOCK;
+	public static final VertexFormat FORMAT = DefaultVertexFormat.BLOCK;
 	private static final float EPSILON = 0.001F;
 	public final int[] vertexData;
 	private float ofsX = 0, ofsY = 0, ofsZ = 0;

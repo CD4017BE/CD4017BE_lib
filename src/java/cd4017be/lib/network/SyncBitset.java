@@ -2,7 +2,7 @@ package cd4017be.lib.network;
 
 import java.util.BitSet;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
 
 /** 
  * {@link BitSet}
@@ -50,7 +50,7 @@ public class SyncBitset {
 
 	/**
 	 * encode a data packet containing the resolved changes.
-	 * @return the synchronization packet to be send to {@link StateSyncClient#decodePacket(PacketBuffer)} or null if there are no changes to send
+	 * @return the synchronization packet to be send to {@link StateSyncClient#decodePacket(FriendlyByteBuf)} or null if there are no changes to send
 	 */
 	public boolean write(ByteBuf buf) {
 		BitSet chng = set;

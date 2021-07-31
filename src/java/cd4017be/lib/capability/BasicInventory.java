@@ -3,10 +3,10 @@ package cd4017be.lib.capability;
 import java.util.Arrays;
 import java.util.function.ObjIntConsumer;
 
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.INBT;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 
 /**
  * 
@@ -52,22 +52,22 @@ public class BasicInventory extends AbstractInventory {
 		return Math.min(64, item.getMaxStackSize());
 	}
 
-	public void read(ListNBT list) {
+	public void read(ListTag list) {
 		Arrays.fill(items, ItemStack.EMPTY);
-		for (INBT nbt : list) {
-			CompoundNBT tag = (CompoundNBT)nbt;
+		for (Tag nbt : list) {
+			CompoundTag tag = (CompoundTag)nbt;
 			int slot = tag.getByte("Slot") & 0xff;
 			if (slot < items.length)
 				items[slot] = ItemStack.of(tag);
 		}
 	}
 
-	public ListNBT write() {
-		ListNBT list = new ListNBT();
+	public ListTag write() {
+		ListTag list = new ListTag();
 		for (int i = 0; i < items.length; i++) {
 			ItemStack item = items[i];
 			if (item.isEmpty()) continue;
-			CompoundNBT tag = item.save(new CompoundNBT());
+			CompoundTag tag = item.save(new CompoundTag());
 			tag.putByte("Slot", (byte)i);
 			list.add(tag);
 		}

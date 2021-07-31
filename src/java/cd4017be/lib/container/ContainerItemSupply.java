@@ -16,9 +16,9 @@ import cd4017be.lib.gui.comp.*;
 import cd4017be.lib.network.StateSyncAdv;
 import cd4017be.lib.tileentity.ItemSupply;
 import cd4017be.lib.tileentity.ItemSupply.Slot;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.items.IItemHandler;
@@ -28,15 +28,15 @@ public class ContainerItemSupply extends AdvancedContainer {
 
 	private static final int[] indices = StateSyncAdv.array(8, 12);
 
-	public ContainerItemSupply(int id, PlayerInventory inv, PacketBuffer pkt) {
+	public ContainerItemSupply(int id, Inventory inv, FriendlyByteBuf pkt) {
 		this(id, inv, new BasicInventory(12), true, ItemSupply.class);
 	}
 
-	public ContainerItemSupply(int id, PlayerInventory inv, ItemSupply tile) {
+	public ContainerItemSupply(int id, Inventory inv, ItemSupply tile) {
 		this(id, inv, new LinkedInventory(12, 127, tile::getSlot, tile::setSlot), false, tile);
 	}
 
-	private ContainerItemSupply(int id, PlayerInventory pinv, IItemHandler inv, boolean client, Object... ref) {
+	private ContainerItemSupply(int id, Inventory pinv, IItemHandler inv, boolean client, Object... ref) {
 		super(iTEM_SUPP, id, pinv, StateSyncAdv.of(client, indices, 0, ref), 0);
 		for(int j = 0; j < 4; j++)
 			for(int i = 0; i < 3; i++)
@@ -60,7 +60,7 @@ public class ContainerItemSupply extends AdvancedContainer {
 	}
 
 	@OnlyIn(Dist.CLIENT)
-	public ModularGui<ContainerItemSupply> setupGui(PlayerInventory inv, ITextComponent name) {
+	public ModularGui<ContainerItemSupply> setupGui(Inventory inv, Component name) {
 		DoubleSupplier scroll = sync.floatGetter("scroll", true);
 		IntBuffer data = ((ByteBuffer)sync.buffer().clear()).asIntBuffer();
 		

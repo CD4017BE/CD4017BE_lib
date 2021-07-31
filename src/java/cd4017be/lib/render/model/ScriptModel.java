@@ -14,14 +14,19 @@ import cd4017be.lib.script.ScriptLoader;
 import cd4017be.lib.script.obj.IOperand;
 import cd4017be.lib.script.obj.Nil;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.model.*;
-import net.minecraft.client.renderer.model.SimpleBakedModel.Builder;
-import net.minecraft.client.renderer.texture.MissingTextureSprite;
+import net.minecraft.client.resources.model.UnbakedModel;
+import net.minecraft.client.renderer.block.model.ItemOverrides;
+import net.minecraft.client.resources.model.ModelState;
+import net.minecraft.client.resources.model.Material;
+import net.minecraft.client.resources.model.ModelBakery;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.SimpleBakedModel.Builder;
+import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.resources.IResource;
-import net.minecraft.resources.IResourceManager;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.vector.TransformationMatrix;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.resources.ResourceLocation;
+import com.mojang.math.Transformation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.model.IModelConfiguration;
@@ -56,13 +61,13 @@ public class ScriptModel implements IModelGeometry<ScriptModel> {
 	}
 
 	@Override
-	public IBakedModel bake(
+	public BakedModel bake(
 		IModelConfiguration owner, ModelBakery bakery,
-		Function<RenderMaterial, TextureAtlasSprite> spriteGetter,
-		IModelTransform modelTransform, ItemOverrideList overrides,
+		Function<Material, TextureAtlasSprite> spriteGetter,
+		ModelState modelTransform, ItemOverrides overrides,
 		ResourceLocation modelLocation
 	) {
-		TransformationMatrix transf = modelTransform.getRotation();
+		Transformation transf = modelTransform.getRotation();
 		Function<String, TextureAtlasSprite> resolver
 		= spriteGetter.compose(owner::resolveTexture);
 		
@@ -72,22 +77,22 @@ public class ScriptModel implements IModelGeometry<ScriptModel> {
 	}
 
 	@Override
-	public Collection<RenderMaterial> getTextures(
-		IModelConfiguration owner, Function<ResourceLocation, IUnbakedModel> modelGetter,
+	public Collection<Material> getTextures(
+		IModelConfiguration owner, Function<ResourceLocation, UnbakedModel> modelGetter,
 		Set<Pair<String, String>> missingTextureErrors
 	) {
 		HashSet<String> names = new HashSet<>();
 		for (Quad q : quads) names.add(q.tex);
 		names.add("particle");
-		ArrayList<RenderMaterial> list = new ArrayList<>(names.size());
+		ArrayList<Material> list = new ArrayList<>(names.size());
 		for (String n : names)
 			list.add(resolveTex(n, owner, missingTextureErrors));
 		return list;
 	}
 
-	public static RenderMaterial resolveTex(String name, IModelConfiguration owner, Set<Pair<String, String>> missingTextureErrors) {
-		RenderMaterial rm = owner.resolveTexture(name);
-		if (rm.texture().equals(MissingTextureSprite.getLocation()))
+	public static Material resolveTex(String name, IModelConfiguration owner, Set<Pair<String, String>> missingTextureErrors) {
+		Material rm = owner.resolveTexture(name);
+		if (rm.texture().equals(MissingTextureAtlasSprite.getLocation()))
 			missingTextureErrors.add(Pair.of(name, owner.getModelName()));
 		return rm;
 	}
@@ -97,11 +102,11 @@ public class ScriptModel implements IModelGeometry<ScriptModel> {
 	public static class Loader extends ScriptLoader implements IModelLoader<ScriptModel> {
 
 		public static final Loader INSTANCE = new Loader();
-		private IResourceManager manager = Minecraft.getInstance().getResourceManager();
+		private ResourceManager manager = Minecraft.getInstance().getResourceManager();
 		private ScriptModelBuilder builder = new ScriptModelBuilder();
 
 		@Override
-		public void onResourceManagerReload(IResourceManager resourceManager) {
+		public void onResourceManagerReload(ResourceManager resourceManager) {
 			manager = resourceManager;
 			scripts.clear();
 		}
@@ -128,7 +133,7 @@ public class ScriptModel implements IModelGeometry<ScriptModel> {
 		protected IOperand load(String name) {
 			ResourceLocation rl = new ResourceLocation(name);
 			rl = new ResourceLocation(rl.getNamespace(), "models/" + rl.getPath() + ".rcp");
-			try(IResource r = manager.getResource(rl)) {
+			try(Resource r = manager.getResource(rl)) {
 				return compile(name, new InputStreamReader(r.getInputStream()));
 			} catch(IOException | ScriptException e) {
 				Lib.LOG.error("Failed to load model script " + rl, e);

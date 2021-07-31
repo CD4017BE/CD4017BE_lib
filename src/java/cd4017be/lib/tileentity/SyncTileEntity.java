@@ -1,5 +1,7 @@
 package cd4017be.lib.tileentity;
 
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.core.BlockPos;
 import static cd4017be.lib.tick.GateUpdater.GATE_UPDATER;
 
 import java.util.ArrayList;
@@ -9,10 +11,10 @@ import cd4017be.lib.network.IServerPacketReceiver;
 import cd4017be.lib.network.SyncNetworkHandler;
 import cd4017be.lib.tick.IGate;
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.tileentity.TileEntityType;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -23,11 +25,11 @@ implements IServerPacketReceiver, IPlayerPacketReceiver {
 
 	public static double CLIENT_RANGE, SERVER_RANGE;
 
-	private final ArrayList<ServerPlayerEntity> watching = new ArrayList<>();
+	private final ArrayList<ServerPlayer> watching = new ArrayList<>();
 	protected boolean update;
 
-	public SyncTileEntity(TileEntityType<?> type) {
-		super(type);
+	public SyncTileEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
+		super(type, pos, state);
 	}
 
 	@Override
@@ -45,12 +47,11 @@ implements IServerPacketReceiver, IPlayerPacketReceiver {
 		this.saveDirty();
 	}
 
-	@Override
 	@OnlyIn(Dist.CLIENT)
-	public double getViewDistance() {
+	public void onVisible() {
 		if (!update) {
 			@SuppressWarnings("resource")
-			PlayerEntity player = Minecraft.getInstance().player;
+			Player player = Minecraft.getInstance().player;
 			if (worldPosition.distSqr(
 				player.getX(), player.getY(), player.getZ(), true
 			) < CLIENT_RANGE) {
@@ -60,11 +61,10 @@ implements IServerPacketReceiver, IPlayerPacketReceiver {
 				);
 			}
 		}
-		return super.getViewDistance();
 	}
 
 	@Override
-	public void handlePlayerPacket(PacketBuffer pkt, ServerPlayerEntity sender) {
+	public void handlePlayerPacket(FriendlyByteBuf pkt, ServerPlayer sender) {
 		if (!sender.isAlive() || watching.contains(sender)) return;
 		watching.add(sender);
 		SyncNetworkHandler.instance.sendToPlayer(makeSyncPacket(true), sender);
@@ -72,7 +72,7 @@ implements IServerPacketReceiver, IPlayerPacketReceiver {
 
 	@Override
 	@OnlyIn(Dist.CLIENT)
-	public void handleServerPacket(PacketBuffer pkt) throws Exception {
+	public void handleServerPacket(FriendlyByteBuf pkt) throws Exception {
 		byte n = pkt.readByte();
 		if (n == 0) update = false;
 		else readSync(pkt, n);
@@ -81,12 +81,12 @@ implements IServerPacketReceiver, IPlayerPacketReceiver {
 	private boolean sendSync() {
 		update = false;
 		for (int i = watching.size() - 1; i >= 0; i--) {
-			ServerPlayerEntity player = watching.get(i);
+			ServerPlayer player = watching.get(i);
 			if (player.isAlive() && worldPosition.distSqr(
 				player.getX(), player.getY(), player.getZ(), true
 			) < SERVER_RANGE) continue;
 			watching.remove(i);
-			PacketBuffer pkt = SyncNetworkHandler.preparePacket(this);
+			FriendlyByteBuf pkt = SyncNetworkHandler.preparePacket(this);
 			pkt.writeByte(0);
 			SyncNetworkHandler.instance.sendToPlayer(pkt, player);
 		}
@@ -95,8 +95,8 @@ implements IServerPacketReceiver, IPlayerPacketReceiver {
 		return false;
 	}
 
-	private PacketBuffer makeSyncPacket(boolean full) {
-		PacketBuffer pkt = SyncNetworkHandler.preparePacket(this);
+	private FriendlyByteBuf makeSyncPacket(boolean full) {
+		FriendlyByteBuf pkt = SyncNetworkHandler.preparePacket(this);
 		int p = pkt.writerIndex();
 		pkt.writeByte(0);
 		pkt.setByte(p, writeSync(pkt, full));
@@ -106,10 +106,10 @@ implements IServerPacketReceiver, IPlayerPacketReceiver {
 	/**@param pkt packet to write
 	 * @param init whether this is the initial transmission
 	 * @return first byte != 0 */
-	protected abstract byte writeSync(PacketBuffer pkt, boolean init);
+	protected abstract byte writeSync(FriendlyByteBuf pkt, boolean init);
 
 	/**@param pkt packet to read
 	 * @param n first byte != 0 */
-	protected abstract void readSync(PacketBuffer pkt, byte n);
+	protected abstract void readSync(FriendlyByteBuf pkt, byte n);
 
 }

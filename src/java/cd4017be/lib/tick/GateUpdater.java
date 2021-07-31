@@ -8,14 +8,14 @@ import java.util.function.Consumer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import net.minecraft.profiler.IProfiler;
+import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent.Phase;
 import net.minecraftforge.event.TickEvent.ServerTickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.event.server.FMLServerAboutToStartEvent;
-import net.minecraftforge.fml.event.server.FMLServerStoppingEvent;
+import net.minecraftforge.fmlserverevents.FMLServerAboutToStartEvent;
+import net.minecraftforge.fmlserverevents.FMLServerStoppingEvent;
 
 /**Updates arbitrary objects in two possible ways:
  * {@link #GATE_UPDATER}.{@link #add(IGate)} for a single two stage update and
@@ -64,7 +64,7 @@ public final class GateUpdater implements Consumer<ServerTickEvent> {
 	@Override
 	public void accept(ServerTickEvent event) {
 		if (event.phase != Phase.END) return;
-		IProfiler profiler = server.getProfiler();
+		ProfilerFiller profiler = server.getProfiler();
 		profiler.push("GateUpdater");
 		TICK++;
 		if (start != end) tickGates(profiler);
@@ -72,7 +72,7 @@ public final class GateUpdater implements Consumer<ServerTickEvent> {
 		profiler.pop();
 	}
 
-	private void tickGates(IProfiler profiler) {
+	private void tickGates(ProfilerFiller profiler) {
 		profiler.push("evaluate");
 		evaluating = true;
 		IGate[] queue = updateQueue;
@@ -97,7 +97,7 @@ public final class GateUpdater implements Consumer<ServerTickEvent> {
 		profiler.pop();
 	}
 
-	private void tickSlow(IProfiler profiler) {
+	private void tickSlow(ProfilerFiller profiler) {
 		profiler.push("tick8");
 		for (int i = TICK & 7; i < slowCount; i+=8) {
 			if (slowTicks[i].tick8()) continue;

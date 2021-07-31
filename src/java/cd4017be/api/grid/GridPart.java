@@ -7,15 +7,18 @@ import cd4017be.lib.render.model.JitBakedModel;
 import cd4017be.lib.util.ItemFluidUtil;
 import cd4017be.math.Orient;
 import it.unimi.dsi.fastutil.shorts.ShortArrays;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.*;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.world.World;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.core.Direction;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -72,7 +75,7 @@ public abstract class GridPart implements IPortHolder, INBTSynchronized {
 	}
 
 	@Override
-	public void storeState(CompoundNBT nbt, int mode) {
+	public void storeState(CompoundTag nbt, int mode) {
 		INBTSynchronized.super.storeState(nbt, mode);
 		nbt.putString("id", item().getRegistryName().toString());
 	}
@@ -82,8 +85,8 @@ public abstract class GridPart implements IPortHolder, INBTSynchronized {
 	 * @param hit original ray trace hit
 	 * @param pos hit voxel pos
 	 * @return action result */
-	public ActionResultType onInteract(PlayerEntity player, Hand hand, BlockRayTraceResult hit, int pos) {
-		if (hand != null) return ActionResultType.PASS;
+	public InteractionResult onInteract(Player player, InteractionHand hand, BlockHitResult hit, int pos) {
+		if (hand != null) return InteractionResult.PASS;
 		if (!player.level.isClientSide && player.getMainHandItem().getItem() instanceof IGridItem) {
 			IGridHost host = this.host;
 			host.removePart(this);
@@ -91,7 +94,7 @@ public abstract class GridPart implements IPortHolder, INBTSynchronized {
 			if (!player.isCreative())
 				ItemFluidUtil.dropStack(asItemStack(), player);
 		}
-		return ActionResultType.CONSUME;
+		return InteractionResult.CONSUME;
 	}
 
 	/**@param model used to render the grid block
@@ -105,30 +108,24 @@ public abstract class GridPart implements IPortHolder, INBTSynchronized {
 		return 0;
 	}
 
-	/**@param side relative to neighbor block
-	 * @return whether redstone should connect to this */
-	public boolean connectRedstone(Direction side) {
-		return false;
-	}
-
 	/**when an adjacent block changes
 	 * @param world
 	 * @param pos changed block's postion
 	 * @param dir side of this grid */
-	public void onBlockChange(World world, BlockPos pos, Direction dir) {}
+	public void onBlockChange(Level world, BlockPos pos, Direction dir) {}
 
 	/**when an adjacent TileEntity changes
 	 * @param world
 	 * @param pos changed TE's postion
 	 * @param dir side of this grid */
-	public void onTEChange(World world, BlockPos pos, Direction dir) {}
+	public void onTEChange(Level world, BlockPos pos, Direction dir) {}
 
 	/**When replicated or disassembled in a Microblock Workbench.
 	 * Parts should clear their contents here to prevent resource duplication.
 	 * @param world
 	 * @param pos for dropping items and such
 	 * @return whether data has changed */
-	public boolean dissassemble(World world, BlockPos pos) {return false;}
+	public boolean dissassemble(Level world, BlockPos pos) {return false;}
 
 	/**When merging two grid blocks together
 	 * @param other grid to merge in
@@ -286,7 +283,7 @@ public abstract class GridPart implements IPortHolder, INBTSynchronized {
 	 * @param nbt data
 	 * @param mode sync mode
 	 * @return loaded part */
-	public static GridPart load(GridPart part, CompoundNBT nbt, int mode) {
+	public static GridPart load(GridPart part, CompoundTag nbt, int mode) {
 		Item item = ITEMS.getValue(new ResourceLocation(nbt.getString("id")));
 		if (part == null || part.item() != item)
 			part = item instanceof IGridItem ? ((IGridItem)item).createPart() : null;

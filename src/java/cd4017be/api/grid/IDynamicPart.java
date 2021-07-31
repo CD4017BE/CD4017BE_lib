@@ -1,9 +1,9 @@
 package cd4017be.api.grid;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 
-import net.minecraft.client.renderer.IRenderTypeBuffer;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -19,15 +19,15 @@ public interface IDynamicPart {
 	 * @param t partial tick
 	 * @param opaque voxels for visibility tests */
 	@OnlyIn(Dist.CLIENT)
-	void render(MatrixStack ms, IRenderTypeBuffer rtb, int light, int overlay, float t, long opaque);
+	void render(PoseStack ms, MultiBufferSource rtb, int light, int overlay, float t, long opaque);
 
 	/**
 	 * @param pkt */
-	void readSync(PacketBuffer pkt);
+	void readSync(FriendlyByteBuf pkt);
 
 	/**
 	 * @param pkt 
 	 * @param init */
-	void writeSync(PacketBuffer pkt, boolean init);
+	void writeSync(FriendlyByteBuf pkt, boolean init);
 
 }

@@ -1,13 +1,13 @@
 package cd4017be.lib.util;
 
-import net.minecraft.util.Direction;
-import net.minecraft.util.IStringSerializable;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.util.math.vector.Matrix3f;
-import net.minecraft.util.math.vector.Matrix4f;
-import net.minecraft.util.math.vector.Vector3i;
+import net.minecraft.core.Direction;
+import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import com.mojang.math.Matrix3f;
+import com.mojang.math.Matrix4f;
+import net.minecraft.core.Vec3i;
 
-import static net.minecraft.util.Direction.*;
+import static net.minecraft.core.Direction.*;
 
 import cd4017be.math.Orient;
 
@@ -15,7 +15,7 @@ import cd4017be.math.Orient;
  * 
  * @author CD4017BE
  */
-public enum Orientation implements IStringSerializable {
+public enum Orientation implements StringRepresentable {
 	S12(UP, SOUTH), S9(EAST, SOUTH), S6(DOWN, SOUTH), S3(WEST, SOUTH),
 	W12(UP, WEST), W9(SOUTH, WEST), W6(DOWN, WEST), W3(NORTH, WEST),
 	N12(UP, NORTH), N9(WEST, NORTH), N6(DOWN, NORTH), N3(EAST, NORTH),
@@ -48,7 +48,7 @@ public enum Orientation implements IStringSerializable {
 	private Orientation(Direction u, Direction b) {
 		this.u = u;
 		this.b = b;
-		Vector3i vec = u.getNormal().cross(b.getNormal());
+		Vec3i vec = u.getNormal().cross(b.getNormal());
 		this.r = Direction.fromNormal(vec.getX(), vec.getY(), vec.getZ());
 		this.o = (r.getAxis().ordinal() << 1 | r.ordinal() & 1
 		| u.getAxis().ordinal() << 5 | u.ordinal() << 4 & 0x10

@@ -1,6 +1,6 @@
 package cd4017be.lib.gui.comp;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 
 import cd4017be.lib.text.TooltipUtil;
 
@@ -22,7 +22,7 @@ public class FrameGrip extends GuiCompBase<GuiCompGroup> {
 	}
 
 	@Override
-	public void drawOverlay(MatrixStack stack, int mx, int my) {
+	public void drawOverlay(PoseStack stack, int mx, int my) {
 		parent.drawTooltip(stack, TooltipUtil.translate("gui.cd4017be.move"), mx, my);
 	}
 

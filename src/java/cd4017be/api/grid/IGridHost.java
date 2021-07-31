@@ -8,12 +8,12 @@ import static cd4017be.math.MCConv.dirVecF;
 
 import java.util.function.Predicate;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Direction;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.core.Direction;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.phys.BlockHitResult;
 
 /**Implemented by the TileEntity that is hosting {@link GridPart}s.
  * @author CD4017BE */
@@ -49,8 +49,8 @@ public interface IGridHost extends IGridPortHolder {
 		);
 	}
 
-	default ActionResultType onInteract(
-		PlayerEntity player, Hand hand, BlockRayTraceResult hit
+	default InteractionResult onInteract(
+		Player player, InteractionHand hand, BlockHitResult hit
 	) {
 		partInteract: {
 			int pos = target(hit, false);
@@ -58,16 +58,16 @@ public interface IGridHost extends IGridPortHolder {
 			GridPart part = getPart(pos, L_OUTER);
 			if (part == null) part = getPart(pos, L_INNER);
 			if (part == null) break partInteract;
-			ActionResultType res = part.onInteract(player, hand, hit, pos);
+			InteractionResult res = part.onInteract(player, hand, hit, pos);
 			if (res.consumesAction()) return res;
 		}
-		ItemStack stack = player.getItemInHand(hand == null ? Hand.MAIN_HAND : hand);
+		ItemStack stack = player.getItemInHand(hand == null ? InteractionHand.MAIN_HAND : hand);
 		return stack.getItem() instanceof IGridItem
 			? ((IGridItem)stack.getItem()).onInteract(this, stack, player, hand, hit)
-			: ActionResultType.PASS;
+			: InteractionResult.PASS;
 	}
 
-	static int target(BlockRayTraceResult hit, boolean adjacent) {
+	static int target(BlockHitResult hit, boolean adjacent) {
 		float[] vec = sca(3, blockRelVecF(hit.getLocation(), hit.getBlockPos()), 4F);
 		add(3, vec, dirVecF(hit.getDirection(), adjacent ? .5F : -.5F));
 		if (!allInRange(3, vec, 0F, 4F)) return -1;

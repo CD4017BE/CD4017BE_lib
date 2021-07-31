@@ -4,8 +4,8 @@ import static cd4017be.lib.Lib.CFG_SERVER;
 
 import com.mojang.authlib.GameProfile;
 
-import net.minecraft.advancements.PlayerAdvancements;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.server.PlayerAdvancements;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraftforge.common.util.FakePlayer;
 
 
@@ -21,7 +21,7 @@ public class SaferFakePlayer extends FakePlayer {
 	 * @param world
 	 * @param name
 	 */
-	public SaferFakePlayer(ServerWorld world, GameProfile name) {
+	public SaferFakePlayer(ServerLevel world, GameProfile name) {
 		super(world, name);
 		this.inventory = new FullHotbarInventory(this);
 		this.hasAdvancements = CFG_SERVER.fakePlayerAdvancements.get();

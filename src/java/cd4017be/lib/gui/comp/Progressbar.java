@@ -4,7 +4,7 @@ import java.util.function.DoubleSupplier;
 
 import javax.annotation.Nonnull;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 
 /**
  * A progress bar that may either fill or slide in horizontally or vertically or fill pixel by pixel.
@@ -56,7 +56,7 @@ public class Progressbar extends Tooltip {
 	}
 
 	@Override
-	public void drawBackground(MatrixStack stack, int mx, int my, float t) {
+	public void drawBackground(PoseStack stack, int mx, int my, float t) {
 		double f = scale * (get.getAsDouble() - f0);
 		if (!(f > 0)) return;
 		int n = (int)f;

@@ -5,35 +5,35 @@ import static cd4017be.lib.network.GuiNetworkHandler.preparePacket;
 
 import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.List;
-
 import cd4017be.lib.Lib;
 import cd4017be.lib.container.slot.*;
 import cd4017be.lib.network.*;
 import cd4017be.lib.util.ItemFluidUtil;
 import cd4017be.lib.util.Utils;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.inventory.EquipmentSlotType;
-import net.minecraft.inventory.container.*;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.inventory.ContainerListener;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.core.BlockPos;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.items.ItemHandlerHelper;
 
-/**A Container that offers improved data synchronization features
+/**A AbstractContainerMenu that offers improved data synchronization features
  * and support for {@link ISpecialSlot}s and {@link IFluidSlot}s.
  * @author CD4017BE */
-public class AdvancedContainer extends Container
+public class AdvancedContainer extends AbstractContainerMenu
 implements IServerPacketReceiver, IPlayerPacketReceiver {
 
 	protected final StateSyncAdv sync;
-	public final PlayerInventory inv;
+	public final Inventory inv;
 	protected final int idxCount;
 	private int playerInvS;
 	private int playerInvE;
@@ -47,7 +47,7 @@ implements IServerPacketReceiver, IPlayerPacketReceiver {
 	 * @param sync server -> client data synchronization handler
 	 * @param idxCount object indices available for slot synchronization */
 	public AdvancedContainer(
-		ContainerType<?> type, int id, PlayerInventory inv,
+		MenuType<?> type, int id, Inventory inv,
 		StateSyncAdv sync, int idxCount
 	) {
 		super(type, id);
@@ -57,8 +57,8 @@ implements IServerPacketReceiver, IPlayerPacketReceiver {
 	}
 
 	@Override
-	public void addSlotListener(IContainerListener listener) {
-		if (listener instanceof ServerPlayerEntity)
+	public void addSlotListener(ContainerListener listener) {
+		if (listener instanceof ServerPlayer)
 			sync.set.set(0);
 		super.addSlotListener(listener);
 	}
@@ -84,8 +84,8 @@ implements IServerPacketReceiver, IPlayerPacketReceiver {
 			this.addSlot(new HidableSlot(inv, i, x + i * 18, y + 58));
 		if (armor) {
 			for (int i = 0; i < 4; i++)
-				this.addSlot(new SlotArmor(inv, i + 36, x - 18, y - i * 18 + 36, EquipmentSlotType.values()[i + 2]));
-			this.addSlot(new SlotArmor(inv, 40, x - 18, y + 58, EquipmentSlotType.OFFHAND));
+				this.addSlot(new SlotArmor(inv, i + 36, x - 18, y - i * 18 + 36, EquipmentSlot.values()[i + 2]));
+			this.addSlot(new SlotArmor(inv, 40, x - 18, y + 58, EquipmentSlot.OFFHAND));
 		}
 	}
 
@@ -185,7 +185,7 @@ implements IServerPacketReceiver, IPlayerPacketReceiver {
 	}
 
 	@Override
-	public ItemStack quickMoveStack(PlayerEntity player, int id) {
+	public ItemStack quickMoveStack(Player player, int id) {
 		Slot slot = slots.get(id);
 		if (slot == null || !slot.hasItem()) return ItemStack.EMPTY;
 		ItemStack stack = slot.getItem();
@@ -202,18 +202,18 @@ implements IServerPacketReceiver, IPlayerPacketReceiver {
 	}
 
 	@Override
-	public ItemStack clicked(int s, int b, ClickType m, PlayerEntity player) {
+	public void clicked(int s, int b, ClickType m, Player player) {
 		Slot slot = s >= 0 && s < slots.size() ? slots.get(s) : null;
 		if (slot instanceof ISpecialSlot) {
 			ISpecialSlot ss = (ISpecialSlot)slot;
-			return ss.onClick(b, m, player, this);
-		} else return super.clicked(s, b, m, player);
+			ss.onClick(b, m, player, this);
+		} else super.clicked(s, b, m, player);
 	}
 
 	@Override
 	public void broadcastChanges() {
-		if (hardInvUpdate && inv.player instanceof ServerPlayerEntity) {
-			((ServerPlayerEntity)inv.player).ignoreSlotUpdateHack = false;
+		if (hardInvUpdate && inv.player instanceof ServerPlayer) {
+			//((ServerPlayer)inv.player).ignoreSlotUpdateHack = false;
 			hardInvUpdate = false;
 		}
 		super.broadcastChanges();
@@ -221,11 +221,11 @@ implements IServerPacketReceiver, IPlayerPacketReceiver {
 		detectChanges(sync.clear());
 		sync.detectChanges();
 		if(!sync.isEmpty()) {
-			PacketBuffer pkt = preparePacket(this);
+			FriendlyByteBuf pkt = preparePacket(this);
 			sync.write(pkt);
 			writeChanges(sync.set, pkt);
 			sync.writeChanges(pkt);
-			GNH_INSTANCE.sendToPlayer(pkt, (ServerPlayerEntity)inv.player);
+			GNH_INSTANCE.sendToPlayer(pkt, (ServerPlayer)inv.player);
 		}
 	}
 
@@ -247,7 +247,7 @@ implements IServerPacketReceiver, IPlayerPacketReceiver {
 		}
 	}
 
-	protected void writeChanges(BitSet chng, PacketBuffer pkt) {
+	protected void writeChanges(BitSet chng, FriendlyByteBuf pkt) {
 		int i0 = sync.objIdxOfs();
 		for (int i = chng.nextSetBit(i0); i > 0 && i - i0 < idxCount; i = chng.nextSetBit(i + 1)) {
 			Object o = sync.get(i - i0);
@@ -258,7 +258,7 @@ implements IServerPacketReceiver, IPlayerPacketReceiver {
 		}
 	}
 
-	protected void readChanges(BitSet chng, PacketBuffer pkt) throws Exception {
+	protected void readChanges(BitSet chng, FriendlyByteBuf pkt) throws Exception {
 		BitSet slots = syncSlots;
 		for (int i = slots.nextSetBit(0), j = sync.objIdxOfs(); i >= 0; i = slots.nextSetBit(i + 1), j++)
 			if (chng.get(j)) {
@@ -270,27 +270,19 @@ implements IServerPacketReceiver, IPlayerPacketReceiver {
 	}
 
 	@Override
-	public void setItem(int slotID, ItemStack stack) {
+	public void setRemoteSlotNoCopy(int slotID, ItemStack stack) {
 		if (syncSlots.get(slotID)) return;
-		getSlot(slotID).set(stack);
+		super.setRemoteSlot(slotID, stack);
 	}
 
 	@Override
-	@OnlyIn(Dist.CLIENT)
-	public void setAll(List<ItemStack> items) {
-		int m = Math.min(items.size(), slots.size());
-		for (int i = 0; i < m; ++i)
-			setItem(i, items.get(i));
-	}
-
-	@Override
-	public void handleServerPacket(PacketBuffer pkt) throws Exception {
+	public void handleServerPacket(FriendlyByteBuf pkt) throws Exception {
 		readChanges(sync.read(pkt), pkt);
 		sync.readChanges(pkt);
 	}
 
 	@Override
-	public void handlePlayerPacket(PacketBuffer pkt, ServerPlayerEntity sender)
+	public void handlePlayerPacket(FriendlyByteBuf pkt, ServerPlayer sender)
 	throws Exception {
 		for(Object e : sync.holders)
 			if(e instanceof IPlayerPacketReceiver) {
@@ -300,10 +292,10 @@ implements IServerPacketReceiver, IPlayerPacketReceiver {
 	}
 
 	@Override
-	public boolean stillValid(PlayerEntity playerIn) {
+	public boolean stillValid(Player playerIn) {
 		for(Object e : sync.holders)
-			if(e instanceof TileEntity) {
-				TileEntity te = (TileEntity)e;
+			if(e instanceof BlockEntity) {
+				BlockEntity te = (BlockEntity)e;
 				if(te.isRemoved() || te.getLevel() != playerIn.level) return false;
 				if(!te.getBlockPos().closerThan(playerIn.position(), 8)) return false;
 			}
@@ -312,8 +304,8 @@ implements IServerPacketReceiver, IPlayerPacketReceiver {
 
 	public BlockPos getPos() {
 		for(Object e : sync.holders)
-			if(e instanceof TileEntity)
-				return ((TileEntity)e).getBlockPos();
+			if(e instanceof BlockEntity)
+				return ((BlockEntity)e).getBlockPos();
 		return Utils.NOWHERE;
 	}
 

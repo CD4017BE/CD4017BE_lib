@@ -1,8 +1,8 @@
 package cd4017be.lib.capability;
 
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.fluid.Fluid;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.material.Fluid;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.templates.FluidHandlerItemStack;
 
@@ -29,8 +29,8 @@ public class SingleFluidItemHandler extends FluidHandlerItemStack {
 	@Override
 	protected void setFluid(FluidStack fluid) {
 		int n = fluid == null ? 0 : fluid.getAmount();
-		CompoundNBT nbt = container.getTag();
-		if (nbt == null) container.setTag(nbt = new CompoundNBT());
+		CompoundTag nbt = container.getTag();
+		if (nbt == null) container.setTag(nbt = new CompoundTag());
 		nbt.putInt(tag, n);
 	}
 

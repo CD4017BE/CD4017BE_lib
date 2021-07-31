@@ -4,23 +4,25 @@ import static cd4017be.lib.Content.*;
 
 import java.util.function.*;
 
+import cd4017be.api.grid.GridPart;
 import cd4017be.lib.Lib;
 import cd4017be.lib.container.slot.HidableSlot;
 import cd4017be.lib.gui.ModularGui;
 import cd4017be.lib.gui.comp.*;
 import cd4017be.lib.network.StateSyncAdv;
 import cd4017be.lib.tileentity.Grid;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.inventory.container.ClickType;
-import net.minecraft.inventory.container.Slot;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.Direction;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -28,14 +30,14 @@ import net.minecraftforge.api.distmarker.OnlyIn;
  * @author CD4017BE */
 public class ContainerGrid extends ItemContainer {
 
-	private final Inventory sideInv = new Inventory(6);
+	private final SimpleContainer sideInv = new SimpleContainer(6);
 	private Grid cache;
 
-	public ContainerGrid(int id, PlayerInventory inv, PacketBuffer pkt) {
+	public ContainerGrid(int id, Inventory inv, FriendlyByteBuf pkt) {
 		this(id, inv, pkt.readUnsignedByte());
 	}
 
-	public ContainerGrid(int id, PlayerInventory inv, int slot) {
+	public ContainerGrid(int id, Inventory inv, int slot) {
 		super(
 			gRID, id, inv, slot, grid,
 			StateSyncAdv.of(inv.player.level.isClientSide), 0
@@ -51,8 +53,8 @@ public class ContainerGrid extends ItemContainer {
 	}
 
 	@Override
-	public void removed(PlayerEntity player) {
-		clearContainer(player, player.level, sideInv);
+	public void removed(Player player) {
+		clearContainer(player, sideInv);
 		super.removed(player);
 	}
 
@@ -75,21 +77,24 @@ public class ContainerGrid extends ItemContainer {
 	}
 
 	@Override
-	public ItemStack clicked(int s, int b, ClickType m, PlayerEntity player) {
-		if (s != 0) return super.clicked(s, b, m, player);
-		if (player.level.isClientSide) return ItemStack.EMPTY;
-		ItemStack stack = getStack(), stack1 = player.inventory.getCarried();
+	public void clicked(int s, int b, ClickType m, Player player) {
+		if (s != 0) {
+			super.clicked(s, b, m, player);
+			return;
+		}
+		if (player.level.isClientSide) return;
+		ItemStack stack = getStack(), stack1 = getCarried();
 		int n = stack.getCount();
 		if (stack1.getCount() < n || stack1.getItem() != stack.getItem())
-			return ItemStack.EMPTY;
+			return;
 		Grid grid = grid();
-		if (!grid.merge(grid(stack1))) return ItemStack.EMPTY;
+		if (!grid.merge(grid(stack1))) return;
 		stack1.shrink(n);
-		return set(s, grid, n);
+		set(s, grid, n);
 	}
 
 	@Override
-	public void handlePlayerPacket(PacketBuffer pkt, ServerPlayerEntity sender)
+	public void handlePlayerPacket(FriendlyByteBuf pkt, ServerPlayer sender)
 	throws Exception {
 		byte cmd = pkt.readByte();
 		int i = cmd & 0x7f, n = cmd < 0 ? 2 : 1;
@@ -106,7 +111,7 @@ public class ContainerGrid extends ItemContainer {
 			Grid gridX = grid(stack2);
 			if (gridX == null) {
 				if (!stack2.isEmpty()) return;
-				gridX = GRID.tileType.create();
+				gridX = GRID.tileType.create(BlockPos.ZERO, GridPart.GRID_HOST_BLOCK);
 			} else if (!gridX.shift(d, n, null)) return;
 			//shift grid 1 -> grid 2
 			Grid grid = grid();
@@ -131,7 +136,7 @@ public class ContainerGrid extends ItemContainer {
 	public static final ResourceLocation TEX = Lib.rl("textures/gui/grid_edit.png");
 
 	@OnlyIn(Dist.CLIENT)
-	public ModularGui<ContainerGrid> setupGui(PlayerInventory inv, ITextComponent name) {
+	public ModularGui<ContainerGrid> setupGui(Inventory inv, Component name) {
 		ModularGui<ContainerGrid> gui = new ModularGui<>(this, inv, name);
 		GuiFrame frame = new GuiFrame(gui, 252, 98, 8)
 		.background(TEX, 0, 0).title("gui.cd4017be.grid_edit", 0.9F);

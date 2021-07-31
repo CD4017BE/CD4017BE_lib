@@ -4,7 +4,7 @@ import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 
 import cd4017be.lib.text.TooltipUtil;
 
@@ -44,7 +44,7 @@ public class Tooltip extends GuiCompBase<GuiCompGroup> {
 	}
 
 	@Override
-	public void drawOverlay(MatrixStack stack, int mx, int my) {
+	public void drawOverlay(PoseStack stack, int mx, int my) {
 		if (tooltip == null) return;
 		parent.drawTooltip(stack, params == null ?
 				TooltipUtil.translate(tooltip) :

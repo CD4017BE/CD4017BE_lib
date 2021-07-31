@@ -1,9 +1,9 @@
 package cd4017be.lib.container.slot;
 
 import cd4017be.lib.container.AdvancedContainer;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.container.ClickType;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.*;
 
 /**
@@ -47,7 +47,7 @@ public class GlitchSaveSlot extends SlotItemHandler implements ISpecialSlot {
 	}
 
 	@Override
-	public boolean mayPickup(PlayerEntity playerIn) {
+	public boolean mayPickup(Player playerIn) {
 		return false;
 	}
 
@@ -64,10 +64,10 @@ public class GlitchSaveSlot extends SlotItemHandler implements ISpecialSlot {
 	}
 
 	@Override
-	public ItemStack onClick(int b, ClickType ct, PlayerEntity player, AdvancedContainer container) {
+	public ItemStack onClick(int b, ClickType ct, Player player, AdvancedContainer container) {
 		ItemStack item = getItem();
 		if (ct == ClickType.CLONE) {
-			ISpecialSlot.quickSelect(player, item);
+			ISpecialSlot.quickSelect(player, item, container);
 			return ItemStack.EMPTY;
 		} else if (ct != ClickType.PICKUP && ct != ClickType.QUICK_MOVE)
 			return ItemStack.EMPTY;
@@ -77,7 +77,7 @@ public class GlitchSaveSlot extends SlotItemHandler implements ISpecialSlot {
 			container.hardInvUpdate();
 		}
 		boolean boost = ct == ClickType.QUICK_MOVE;
-		ItemStack curItem = player.inventory.getCarried();
+		ItemStack curItem = container.getCarried();
 		if (curItem.getCount() > 0 && (item.isEmpty() || ItemHandlerHelper.canItemStacksStack(item, curItem))) {
 			if (boost) {
 				ItemStack rem = insertItem(ItemHandlerHelper.copyStackWithSize(curItem, 65536), true);
@@ -87,17 +87,17 @@ public class GlitchSaveSlot extends SlotItemHandler implements ISpecialSlot {
 					if (n < curItem.getCount()) curItem.shrink(n1 = n);
 					else {
 						n1 = curItem.getCount();
-						player.inventory.setCarried(ItemStack.EMPTY);
+						container.setCarried(ItemStack.EMPTY);
 					}
 				}
 				if (n1 < n)
-					n1 += ISpecialSlot.getFromPlayerInv(ItemHandlerHelper.copyStackWithSize(curItem, n - n1), player.inventory);
+					n1 += ISpecialSlot.getFromPlayerInv(ItemHandlerHelper.copyStackWithSize(curItem, n - n1), player.getInventory());
 				insertItem(ItemHandlerHelper.copyStackWithSize(curItem, n1), false);
 			} else {
 				int n = b == 0 ? curItem.getCount() : 1;
 				ItemStack rem = insertItem(ItemHandlerHelper.copyStackWithSize(curItem, n), false);
 				curItem.shrink(n - rem.getCount());
-				if (curItem.getCount() <= 0) player.inventory.setCarried(ItemStack.EMPTY);
+				if (curItem.getCount() <= 0) container.setCarried(ItemStack.EMPTY);
 			}
 		} else if (item.getCount() > 0) {
 			int n = boost ? (b == 0 ? item.getMaxStackSize() : 65536) : (b == 0 ? 1 : 8);
@@ -109,7 +109,7 @@ public class GlitchSaveSlot extends SlotItemHandler implements ISpecialSlot {
 					if (container.moveItemStackTo(item1, Math.min(ss, se), Math.max(ss, se), ss > se))
 						break;
 				}
-			int rem = item1.getCount() <= 0 ? 0 : ISpecialSlot.putInPlayerInv(item1, player.inventory);
+			int rem = item1.getCount() <= 0 ? 0 : ISpecialSlot.putInPlayerInv(item1, player.getInventory());
 			extractItem(item.getCount() - rem, false);
 		}
 		return ItemStack.EMPTY;

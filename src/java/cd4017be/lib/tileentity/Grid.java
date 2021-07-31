@@ -1,5 +1,6 @@
 package cd4017be.lib.tileentity;
 
+import net.minecraft.world.level.block.state.BlockState;
 import static cd4017be.lib.Content.GRID;
 import static cd4017be.lib.Content.GRID1;
 import static cd4017be.lib.network.Sync.*;
@@ -21,22 +22,23 @@ import cd4017be.lib.tick.IGate;
 import cd4017be.lib.util.HashOutputStream;
 import cd4017be.lib.util.Utils;
 import cd4017be.lib.util.VoxelShape4x4x4;
-import net.minecraft.block.Block;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.nbt.LongArrayNBT;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.tileentity.TileEntityType;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Direction;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.shapes.*;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.World;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.LongArrayTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.core.Direction;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.model.data.IModelData;
@@ -46,7 +48,7 @@ import net.minecraftforge.common.util.Constants.NBT;
 /**@author CD4017BE */
 public class Grid extends SyncTileEntity
 implements IGridHost, ITEInteract, ITEShape, ITERedstone,
-ITEBlockUpdate, ITENeighborChange, ITEPickItem, IGate {
+ITEBlockUpdate, ITEPickItem, IGate {
 
 	private final ExtGridPorts extPorts = new ExtGridPorts(this);
 	private final ArrayList<GridPart> parts = new ArrayList<>();
@@ -55,27 +57,27 @@ ITEBlockUpdate, ITENeighborChange, ITEPickItem, IGate {
 	private int tLoad;
 	private boolean occlude, updateOccl;
 
-	public Grid(TileEntityType<?> type) {
-		super(type);
+	public Grid(BlockEntityType<?> type, BlockPos pos, BlockState state) {
+		super(type, pos, state);
 	}
 
 	@Override
-	public VoxelShape getShape(ISelectionContext context) {
+	public VoxelShape getShape(CollisionContext context) {
 		return new VoxelShape4x4x4(bounds()).shape();
 	}
 
 	@Override
-	public ActionResultType onActivated(
-		PlayerEntity player, Hand hand, BlockRayTraceResult hit
+	public InteractionResult onActivated(
+		Player player, InteractionHand hand, BlockHitResult hit
 	) {
 		return onInteract(player, hand, hit);
 	}
 
 	@Override
-	public void onClicked(PlayerEntity player) {
-		Vector3d from = player.getEyePosition(0);
-		Vector3d to = from.add(player.getViewVector(0).scale(5));
-		BlockRayTraceResult hit = getShape(null).clip(from, to, worldPosition);
+	public void onClicked(Player player) {
+		Vec3 from = player.getEyePosition(0);
+		Vec3 to = from.add(player.getViewVector(0).scale(5));
+		BlockHitResult hit = getShape(null).clip(from, to, worldPosition);
 		if (hit != null) onInteract(player, null, hit);
 	}
 
@@ -168,11 +170,11 @@ ITEBlockUpdate, ITENeighborChange, ITEPickItem, IGate {
 	}
 
 	@Override
-	public void storeState(CompoundNBT nbt, int mode) {
+	public void storeState(CompoundTag nbt, int mode) {
 		super.storeState(nbt, mode);
-		ListNBT list = new ListNBT();
+		ListTag list = new ListTag();
 		for (GridPart part : parts) {
-			CompoundNBT tag = new CompoundNBT();
+			CompoundTag tag = new CompoundTag();
 			part.storeState(tag, mode);
 			list.add(tag);
 		}
@@ -187,9 +189,9 @@ ITEBlockUpdate, ITENeighborChange, ITEPickItem, IGate {
 	}
 
 	@Override
-	public void loadState(CompoundNBT nbt, int mode) {
+	public void loadState(CompoundTag nbt, int mode) {
 		super.loadState(nbt, mode);
-		ListNBT list = nbt.getList("parts", NBT.TAG_COMPOUND);
+		ListTag list = nbt.getList("parts", NBT.TAG_COMPOUND);
 		boolean empty = (mode & SAVE) != 0 || list.size() != parts.size();
 		if (empty) parts.clear();
 		boolean mod = empty;
@@ -203,7 +205,7 @@ ITEBlockUpdate, ITENeighborChange, ITEPickItem, IGate {
 		updateBounds();
 		if ((mode & SAVE) != 0) {
 			if (nbt.contains("extIO", NBT.TAG_LONG_ARRAY))
-				extPorts.deserializeNBT((LongArrayNBT)nbt.get("extIO"));
+				extPorts.deserializeNBT((LongArrayTag)nbt.get("extIO"));
 			//state loaded from item after placement:
 			if (!unloaded) onLoad();
 			else tLoad = TICK;
@@ -267,16 +269,6 @@ ITEBlockUpdate, ITENeighborChange, ITEPickItem, IGate {
 	}
 
 	@Override
-	public boolean redstoneConnection(Direction side) {
-		if (side == null) return false;
-		long b = GridPart.FACES[side.ordinal()^1];
-		for (GridPart part : parts)
-			if ((part.bounds & b) != 0 && part.connectRedstone(side))
-				return true;
-		return false;
-	}
-
-	@Override
 	public void onNeighborBlockChange(BlockPos from, Block block, boolean moving) {
 		Direction dir = Utils.getSide(from, worldPosition);
 		if (dir == null) return;
@@ -284,16 +276,6 @@ ITEBlockUpdate, ITENeighborChange, ITEPickItem, IGate {
 		for (GridPart part : parts)
 			if ((part.bounds & b) != 0)
 				part.onBlockChange(level, from, dir);
-	}
-
-	@Override
-	public void onNeighborTEChange(BlockPos from) {
-		Direction dir = Utils.getSide(from, worldPosition);
-		if (dir == null) return;
-		long b = GridPart.FACES[dir.ordinal()];
-		for (GridPart part : parts)
-			if ((part.bounds & b) != 0)
-				part.onTEChange(level, from, dir);
 	}
 
 	@Override
@@ -327,7 +309,7 @@ ITEBlockUpdate, ITENeighborChange, ITEPickItem, IGate {
 	}
 
 	@Override
-	public World world() {
+	public Level world() {
 		return level;
 	}
 
@@ -345,7 +327,7 @@ ITEBlockUpdate, ITENeighborChange, ITEPickItem, IGate {
 	public ItemStack getItem() {
 		if (parts.isEmpty()) return ItemStack.EMPTY;
 		ItemStack stack = new ItemStack(Content.grid);
-		CompoundNBT nbt = stack.getOrCreateTagElement(BlockTE.TE_TAG);
+		CompoundTag nbt = stack.getOrCreateTagElement(BlockTE.TE_TAG);
 		storeState(nbt, SAVE);
 		nbt.remove("extIO");
 		return stack;
@@ -411,7 +393,7 @@ ITEBlockUpdate, ITENeighborChange, ITEPickItem, IGate {
 	}
 
 	@Override
-	protected byte writeSync(PacketBuffer pkt, boolean init) {
+	protected byte writeSync(FriendlyByteBuf pkt, boolean init) {
 		byte i = 0;
 		for (GridPart part : parts)
 			if (part instanceof IDynamicPart) {
@@ -422,14 +404,14 @@ ITEBlockUpdate, ITENeighborChange, ITEPickItem, IGate {
 	}
 
 	@Override
-	protected void readSync(PacketBuffer pkt, byte n) {
+	protected void readSync(FriendlyByteBuf pkt, byte n) {
 		if (dynamicParts != null && dynamicParts.length == n)
 			for (IDynamicPart m : dynamicParts)
 				m.readSync(pkt);
 	}
 
 	@Override
-	public TileEntityType<?> getType() {
+	public BlockEntityType<?> getType() {
 		return level != null && level.isClientSide && dynamicParts != null
 			? Content.GRID_TER : super.getType();
 	}

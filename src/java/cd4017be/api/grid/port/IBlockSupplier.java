@@ -3,8 +3,8 @@ package cd4017be.api.grid.port;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import cd4017be.api.grid.Link;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 
 /**Grid port handler for remote block interaction.
  * @author CD4017BE */
@@ -13,9 +13,9 @@ public interface IBlockSupplier {
 
 	/**@param rec recursion depth
 	 * @return the block position and dimension */
-	ImmutablePair<BlockPos, ServerWorld> getBlock(int rec);
+	ImmutablePair<BlockPos, ServerLevel> getBlock(int rec);
 
-	default ImmutablePair<BlockPos, ServerWorld> getBlock() {
+	default ImmutablePair<BlockPos, ServerLevel> getBlock() {
 		return getBlock(Link.REC_BLOCK);
 	}
 
@@ -33,7 +33,7 @@ public interface IBlockSupplier {
 	}
 
 	static String toString(IBlockSupplier handler) {
-		ImmutablePair<BlockPos, ServerWorld> dest = handler.getBlock();
+		ImmutablePair<BlockPos, ServerLevel> dest = handler.getBlock();
 		if (dest == null) return "cd4017be.unloaded";
 		return String.format(
 			"\\(%d,%d,%d)%s", dest.left.getX(),

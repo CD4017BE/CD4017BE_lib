@@ -3,8 +3,8 @@ package cd4017be.lib.render.model;
 import java.util.List;
 
 import cd4017be.math.Orient;
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.util.Direction;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.core.Direction;
 import net.minecraftforge.client.model.data.ModelProperty;
 
 /**ModelProperty for {@link TileEntityModel} to render a part model.

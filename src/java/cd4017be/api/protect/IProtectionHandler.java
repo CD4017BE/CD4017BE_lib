@@ -2,8 +2,8 @@ package cd4017be.api.protect;
 
 import com.mojang.authlib.GameProfile;
 
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
 
 /**
  * A handler that defines restrictions for editing blocks in the world.<br>
@@ -19,7 +19,7 @@ public interface IProtectionHandler {
 	 * @param player name & UUID of the player
 	 * @return whether the operation is allowed
 	 */
-	boolean canEdit(World world, BlockPos pos, GameProfile player);
+	boolean canEdit(Level world, BlockPos pos, GameProfile player);
 
 	/**
 	 * requests permission for a player to break or place blocks within an area.
@@ -29,16 +29,16 @@ public interface IProtectionHandler {
 	 * @param player name & UUID of the player
 	 * @return whether the operation is allowed for all blocks inside the area
 	 */
-	boolean canEdit(World world, BlockPos p0, BlockPos p1, GameProfile player);
+	boolean canEdit(Level world, BlockPos p0, BlockPos p1, GameProfile player);
 
 	/**
 	 * Fallback implementation that provides no restrictions at all
 	 */
 	public static final IProtectionHandler DEFAULT = new IProtectionHandler() {
 		@Override
-		public boolean canEdit(World world, BlockPos p0, BlockPos p1, GameProfile player) { return true; }
+		public boolean canEdit(Level world, BlockPos p0, BlockPos p1, GameProfile player) { return true; }
 		@Override
-		public boolean canEdit(World world, BlockPos pos, GameProfile player) { return true; }
+		public boolean canEdit(Level world, BlockPos pos, GameProfile player) { return true; }
 	};
 
 }

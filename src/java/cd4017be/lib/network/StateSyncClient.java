@@ -4,9 +4,9 @@ import java.io.IOException;
 import java.util.BitSet;
 import java.util.UUID;
 import cd4017be.lib.util.ItemFluidUtil;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.core.BlockPos;
 import net.minecraftforge.fluids.FluidStack;
 
 /**
@@ -16,7 +16,7 @@ import net.minecraftforge.fluids.FluidStack;
 public class StateSyncClient extends StateSynchronizer {
 
 	/**Contains the raw element data after decoding the change set. Use {@link #next()} or the different {@code get()} methods to read them out. */
-	public PacketBuffer buffer;
+	public FriendlyByteBuf buffer;
 	private final int fixCount;
 	private int elIdx;
 
@@ -35,7 +35,7 @@ public class StateSyncClient extends StateSynchronizer {
 	 * @param buf packet data
 	 * @return this
 	 */
-	public StateSyncClient decodePacket(PacketBuffer buf) {
+	public StateSyncClient decodePacket(FriendlyByteBuf buf) {
 		read(buf);
 		this.buffer = buf;
 		this.elIdx = 0;
@@ -105,7 +105,7 @@ public class StateSyncClient extends StateSynchronizer {
 		if (i < fixCount) {
 			int[] sizes = this.objIdx;
 			BitSet chng = set;
-			PacketBuffer buf = buffer;
+			FriendlyByteBuf buf = buffer;
 			for (int l = old.length, j = 0; j < l; i++) {
 				int n = sizes[i];
 				if (chng.get(i + 1))
@@ -128,7 +128,7 @@ public class StateSyncClient extends StateSynchronizer {
 		if (i < fixCount) {
 			int[] sizes = this.objIdx;
 			BitSet chng = set;
-			PacketBuffer buf = buffer;
+			FriendlyByteBuf buf = buffer;
 			for (int l = old.length, j = 0; j < l; i++) {
 				int n = sizes[i];
 				if ((n & 3) != 0) throw new IllegalStateException("int array element size is " + n + " but must be multiple of 4!");

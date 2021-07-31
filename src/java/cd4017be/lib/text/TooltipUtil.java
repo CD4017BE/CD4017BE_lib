@@ -9,9 +9,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.util.Direction;
-import net.minecraft.util.text.*;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.core.Direction;
+import net.minecraft.locale.Language;
+import net.minecraft.network.chat.*;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.loading.FMLLoader;
@@ -23,9 +24,9 @@ import cd4017be.lib.Lib;
  */
 public class TooltipUtil {
 
-	public static final TranslationTextComponent EXT_TOOLTIP_HINT = new TranslationTextComponent("cd4017be_lib.ext");
-	public static final TranslationTextComponent TOOLTIP_HINT = new TranslationTextComponent("cd4017be_lib.info");
-	public static final StringTextComponent EMPTY = new StringTextComponent("");
+	public static final TranslatableComponent EXT_TOOLTIP_HINT = new TranslatableComponent("cd4017be_lib.ext");
+	public static final TranslatableComponent TOOLTIP_HINT = new TranslatableComponent("cd4017be_lib.info");
+	public static final TextComponent EMPTY = new TextComponent("");
 
 	/*
 	public static String getShiftHint() {
@@ -140,13 +141,13 @@ public class TooltipUtil {
 /*	public static String getConfigFormat(String s) {
 		if (s.equals(lastKey) && editor == null) return lastValue; //speed up tooltip rendering performance
 		lastKey = s;
-		String t = editor != null ? editor.getTranslation(s) : LanguageMap.getInstance().func_230503_a_(s);
+		String t = editor != null ? editor.getTranslation(s) : Language.getInstance().func_230503_a_(s);
 		if (t.equals(s)) {
 			Matcher m = variantReplacement.matcher(s);
 			if (!m.find()) return lastValue = s;
 			String n = m.group(1);
 			String s1 = s.substring(0, m.start(1)) + "i" + s.substring(m.end(1));
-			t = editor != null ? editor.getTranslation(s1) : LanguageMap.getInstance().func_230503_a_(s1);
+			t = editor != null ? editor.getTranslation(s1) : Language.getInstance().func_230503_a_(s1);
 			if (t.equals(s1)) return lastValue = s;
 			t = t.replace("\\i", n);
 		}
@@ -216,7 +217,7 @@ public class TooltipUtil {
 	}
 
 	static String getUnhideIllegalFormat(String key) {
-		return LanguageMap.getInstance().getOrDefault(key).replaceAll("%s", "%");
+		return Language.getInstance().getOrDefault(key).replaceAll("%s", "%");
 	}
 
 	static String hideIllegalFormat(String s) {
@@ -224,7 +225,7 @@ public class TooltipUtil {
 	}
 
 	public static boolean hasTranslation(String s) {
-		return LanguageMap.getInstance().has(s) || editor != null && editor.hasEdited(s);
+		return Language.getInstance().has(s) || editor != null && editor.hasEdited(s);
 	}
 
 	private static final String[] DecScale =   {"a"  , "f"  , "p"  , "n" , "µ" , "m" , "" , "k", "M", "G", "T" , "P" , "E" };
@@ -303,30 +304,30 @@ public class TooltipUtil {
 		return tex;
 	}
 
-	public static List<IFormattableTextComponent> convertText(String text) {
+	public static List<Component> convertText(String text) {
 		String[] lines = text.split("\n");
-		ArrayList<IFormattableTextComponent> list = new ArrayList<>(lines.length);
+		ArrayList<Component> list = new ArrayList<>(lines.length);
 		for (String s : lines)
 			list.add(convert(s));
 		return list;
 	}
 
-	public static List<IFormattableTextComponent> convertText(List<String> text) {
-		ArrayList<IFormattableTextComponent> list = new ArrayList<>(text.size());
+	public static List<Component> convertText(List<String> text) {
+		ArrayList<Component> list = new ArrayList<>(text.size());
 		for (String s : text)
 			list.add(convert(s));
 		return list;
 	}
 
-	public static IFormattableTextComponent convert(String s) {
-		return new StringTextComponent(s);
+	public static MutableComponent convert(String s) {
+		return new TextComponent(s);
 	}
 
-	public static IFormattableTextComponent cTranslate(String s) {
+	public static MutableComponent cTranslate(String s) {
 		return convert(translate(s));
 	}
 
-	public static IFormattableTextComponent cFormat(String s, Object... args) {
+	public static MutableComponent cFormat(String s, Object... args) {
 		return convert(format(s, args));
 	}
 

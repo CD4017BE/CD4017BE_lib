@@ -1,15 +1,15 @@
 package cd4017be.lib.capability;
 
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.tileentity.TileEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
 import static net.minecraftforge.fluids.capability.CapabilityFluidHandler.FLUID_HANDLER_ITEM_CAPABILITY;
 import static net.minecraftforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE;
 import static net.minecraftforge.fluids.capability.IFluidHandler.FluidAction.SIMULATE;
 
-import net.minecraft.fluid.Fluid;
-import net.minecraft.fluid.Fluids;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.fluids.FluidStack;
 
 /**
@@ -18,7 +18,7 @@ import net.minecraftforge.fluids.FluidStack;
  */
 public class AdvancedTank extends AbstractInventory implements IFluidHandlerModifiable {
 	/**owner */
-	public final TileEntity tile;
+	public final BlockEntity tile;
 	/**stored fluid */
 	public FluidStack fluid;
 	/**internal fluid container slot */
@@ -39,7 +39,7 @@ public class AdvancedTank extends AbstractInventory implements IFluidHandlerModi
 	 * @param cap capacity
 	 * @param out whether this is considered as output tank
 	 */
-	public AdvancedTank(TileEntity tile, int cap, boolean out) {
+	public AdvancedTank(BlockEntity tile, int cap, boolean out) {
 		this(tile, cap, out, null);
 	}
 
@@ -49,7 +49,7 @@ public class AdvancedTank extends AbstractInventory implements IFluidHandlerModi
 	 * @param out whether this is considered as output tank
 	 * @param type fluid type to lock to
 	 */
-	public AdvancedTank(TileEntity tile, int cap, boolean out, Fluid type) {
+	public AdvancedTank(BlockEntity tile, int cap, boolean out, Fluid type) {
 		this.tile = tile;
 		this.cap = cap;
 		this.output = out;
@@ -250,7 +250,7 @@ public class AdvancedTank extends AbstractInventory implements IFluidHandlerModi
 		return output ? need <= cap : need >= 0;
 	}
 
-	public void readNBT(CompoundNBT nbt) {
+	public void readNBT(CompoundTag nbt) {
 		if (fixed) fluid.setAmount(nbt.getInt("Amount"));
 		else {
 			fluid = FluidStack.loadFluidStackFromNBT(nbt);
@@ -260,7 +260,7 @@ public class AdvancedTank extends AbstractInventory implements IFluidHandlerModi
 		if (cont.getCount() > 0) need = output ? 0 : cap;
 	}
 
-	public CompoundNBT writeNBT(CompoundNBT nbt) {
+	public CompoundTag writeNBT(CompoundTag nbt) {
 		if (fluid.getRawFluid() != Fluids.EMPTY) fluid.writeToNBT(nbt);
 		else nbt.remove("FluidName");
 		if (!cont.isEmpty()) cont.save(nbt);

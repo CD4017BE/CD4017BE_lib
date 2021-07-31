@@ -4,11 +4,9 @@ import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 
-import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.gui.Font;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.platform.GlStateManager;
-
+import com.mojang.blaze3d.vertex.PoseStack;
 import cd4017be.lib.text.TooltipUtil;
 
 /**
@@ -60,19 +58,19 @@ public class FormatText extends GuiCompBase<GuiCompGroup> {
 	}
 
 	@Override
-	public void drawBackground(MatrixStack stack, int mx, int my, float t) {
+	public void drawBackground(PoseStack stack, int mx, int my, float t) {
 		Object[] obj = params == null ? new Object[0] : params.get();
 		String lines = TooltipUtil.format(text, obj);
 		parent.bindTexture(null);
 		parent.drawNow();
-		FontRenderer fr = parent.fontRenderer;
+		Font fr = parent.fontRenderer;
 		int y = this.y;
 		for (String s : lines.split("\n")) {
 			int x = this.x + (align == 0 ? 0 : (int)Math.round((float)(w - fr.width(s)) * align));
 			fr.draw(stack, s, x, y, tc);
 			y += fr.lineHeight;
 		}
-		GlStateManager._color4f(1F, 1F, 1F, 1F);
+		//GlStateManager._color4f(1F, 1F, 1F, 1F);
 	}
 
 }

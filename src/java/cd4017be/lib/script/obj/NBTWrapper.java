@@ -1,7 +1,7 @@
 package cd4017be.lib.script.obj;
 
 import java.util.Iterator;
-import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.CompoundTag;
 
 /**
  * @author CD4017BE
@@ -10,13 +10,13 @@ import net.minecraft.nbt.CompoundNBT;
 public class NBTWrapper implements IOperand {
 
 	private boolean copied;
-	public final CompoundNBT nbt;
+	public final CompoundTag nbt;
 
 	public NBTWrapper() {
-		this.nbt = new CompoundNBT();
+		this.nbt = new CompoundTag();
 	}
 
-	public NBTWrapper(CompoundNBT nbt) {
+	public NBTWrapper(CompoundTag nbt) {
 		this.nbt = nbt;
 	}
 
@@ -63,7 +63,7 @@ public class NBTWrapper implements IOperand {
 
 	private IOperand expand(INBT tag) {
 		switch(tag.getId()) {
-		case NBT.TAG_COMPOUND: return new NBTWrapper((CompoundNBT)tag);
+		case NBT.TAG_COMPOUND: return new NBTWrapper((CompoundTag)tag);
 		case NBT.TAG_LIST: {
 			ListNBT list = (ListNBT)tag;
 			Array a = new Array(list.size());

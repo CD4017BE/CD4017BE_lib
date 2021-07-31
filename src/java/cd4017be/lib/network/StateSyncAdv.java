@@ -6,7 +6,7 @@ import java.nio.ByteOrder;
 import java.util.BitSet;
 import java.util.function.*;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
 
 /**Utility class for annotation based automatic object
  * serialization and deserialization over GUI packets.
@@ -103,7 +103,7 @@ public class StateSyncAdv extends StateSynchronizer {
 		rawStates.rewind();
 	}
 
-	public void writeChanges(PacketBuffer pkt) {
+	public void writeChanges(FriendlyByteBuf pkt) {
 		final int i1 = rawIdx.length + 1;
 		for (int i = 1, j; i <= i1 && (j = set.nextSetBit(i)) > 0 && j < i1; i++) {
 			if ((i = set.nextClearBit(j + 1)) > i1) i = i1;
@@ -118,7 +118,7 @@ public class StateSyncAdv extends StateSynchronizer {
 			synchronizers[i].writeChanged(pkt, rawStates, objStates, objIdx[i], set, indices[i]);
 	}
 
-	public void readChanges(PacketBuffer pkt) throws IOException {
+	public void readChanges(FriendlyByteBuf pkt) throws IOException {
 		final int i1 = rawIdx.length + 1;
 		for (int i = 1, j; i <= i1 && (j = set.nextSetBit(i)) > 0 && j < i1; i++) {
 			if ((i = set.nextClearBit(j + 1)) > i1) i = i1;

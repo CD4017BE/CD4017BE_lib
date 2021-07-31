@@ -6,11 +6,11 @@ import java.util.BitSet;
 import java.util.UUID;
 import cd4017be.lib.util.ItemFluidUtil;
 import io.netty.buffer.Unpooled;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.core.BlockPos;
 import net.minecraftforge.fluids.FluidStack;
 
 /**
@@ -28,7 +28,7 @@ public class StateSyncServer extends StateSynchronizer {
 
 	public byte[] header;
 	/**helper buffer instance */
-	public final PacketBuffer buffer;
+	public final FriendlyByteBuf buffer;
 	private final int fixCount;
 	private int elIdx = -1;
 	public boolean sendAll = true;
@@ -42,7 +42,7 @@ public class StateSyncServer extends StateSynchronizer {
 		if (sizes.length > count)
 			throw new IllegalArgumentException("can't have more fixed sized elements than total elements!");
 		this.fixCount = sizes.length;
-		this.buffer = new PacketBuffer(Unpooled.buffer());
+		this.buffer = new FriendlyByteBuf(Unpooled.buffer());
 	}
 
 	/**
@@ -109,14 +109,14 @@ public class StateSyncServer extends StateSynchronizer {
 
 	/**
 	 * encode a data packet containing the resolved changes.
-	 * @return the synchronization packet to be send to {@link StateSyncClient#decodePacket(PacketBuffer)} or null if there are no changes to send
+	 * @return the synchronization packet to be send to {@link StateSyncClient#decodePacket(FriendlyByteBuf)} or null if there are no changes to send
 	 */
-	public PacketBuffer encodePacket() {
+	public FriendlyByteBuf encodePacket() {
 		if (elIdx < 0 && buffer.readableBytes() > 0) endFixed();
 		BitSet chng = set;
 		int cc = chng.cardinality();
 		if (cc == 0) return null;
-		PacketBuffer buf = buffer;
+		FriendlyByteBuf buf = buffer;
 		buf.clear();
 		if (header != null) buf.writeBytes(header);
 		boolean all = sendAll || cc >= count;
@@ -138,7 +138,7 @@ public class StateSyncServer extends StateSynchronizer {
 		}
 		elIdx = -1;
 		sendAll = false;
-		return new PacketBuffer(buf.copy());
+		return new FriendlyByteBuf(buf.copy());
 	}
 
 	/**
@@ -213,7 +213,7 @@ public class StateSyncServer extends StateSynchronizer {
 	 * @return this
 	 */
 	public StateSyncServer writeIntArray(int[] data) {
-		PacketBuffer buf = buffer;
+		FriendlyByteBuf buf = buffer;
 		for (int v : data) buf.writeInt(v);
 		return this;
 	}
@@ -280,8 +280,8 @@ public class StateSyncServer extends StateSynchronizer {
 			buffer.writeUtf((String)v);
 		else if (v instanceof UUID)
 			check(i, 16).buffer.writeUUID((UUID)v);
-		else if (v instanceof CompoundNBT)
-			buffer.writeNbt((CompoundNBT)v);
+		else if (v instanceof CompoundTag)
+			buffer.writeNbt((CompoundTag)v);
 		else if (v instanceof ItemStack) {
 			ItemStack stack = (ItemStack)v;
 			if (stack.isEmpty()) buffer.writeShort(-1);
@@ -290,7 +290,7 @@ public class StateSyncServer extends StateSynchronizer {
 				buffer.writeShort(Item.getId(item));
 				buffer.writeInt(stack.getCount());
 				buffer.writeShort(stack.getDamageValue());
-				CompoundNBT nbt = null;
+				CompoundTag nbt = null;
 				if (item.canBeDepleted())
 					nbt = item.getShareTag(stack);
 				buffer.writeNbt(nbt);

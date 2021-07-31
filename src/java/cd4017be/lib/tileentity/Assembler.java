@@ -1,5 +1,6 @@
 package cd4017be.lib.tileentity;
 
+import net.minecraft.core.BlockPos;
 import static cd4017be.lib.Lib.CFG_SERVER;
 import static cd4017be.lib.network.Sync.GUI;
 import static cd4017be.lib.network.Sync.SAVE;
@@ -21,18 +22,19 @@ import cd4017be.lib.block.BlockTE.ITEBreak;
 import cd4017be.lib.container.ContainerAssembler;
 import cd4017be.lib.container.IUnnamedContainerProvider;
 import cd4017be.lib.network.Sync;
-import cd4017be.lib.tileentity.BaseTileEntity.ITickableServerOnly;
+import cd4017be.lib.tileentity.BaseTileEntity.TickableServer;
 import cd4017be.lib.util.ItemFluidUtil;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.tileentity.TileEntityType;
-import net.minecraft.util.Direction;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.core.Direction;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.Constants.NBT;
 import net.minecraftforge.common.util.LazyOptional;
@@ -42,7 +44,7 @@ import net.minecraftforge.items.wrapper.RangedWrapper;
 
 /**@author CD4017BE */
 public class Assembler extends BaseTileEntity
-implements ITickableServerOnly, IItemHandlerModifiable, IUnnamedContainerProvider, ITEBreak {
+implements TickableServer, IItemHandlerModifiable, IUnnamedContainerProvider, ITEBreak {
 
 	final ArrayList<ItemStack> disassembly = new ArrayList<>();
 	/** 0: disassemble, 1: replicate, 2...22: parts */
@@ -60,13 +62,13 @@ implements ITickableServerOnly, IItemHandlerModifiable, IUnnamedContainerProvide
 	boolean canDA = true, updateASS = true;
 	LazyOptional<IItemHandler> inv_main, inv_out, inv_top;
 
-	public Assembler(TileEntityType<?> type) {
-		super(type);
+	public Assembler(BlockEntityType<?> type, BlockPos pos, BlockState state) {
+		super(type, pos, state);
 		Arrays.fill(inventory, ItemStack.EMPTY);
 	}
 
 	@Override
-	public void tick() {
+	public void tickServer(Level world, BlockPos pos, BlockState state) {
 		if (--t > 0) return;
 		t = 5;
 		ItemStack stack;
@@ -127,14 +129,14 @@ implements ITickableServerOnly, IItemHandlerModifiable, IUnnamedContainerProvide
 			disassembly.add(stack);
 			return true;
 		}
-		ListNBT list = stack.getOrCreateTagElement(BlockTE.TE_TAG)
+		ListTag list = stack.getOrCreateTagElement(BlockTE.TE_TAG)
 			.getList("parts", NBT.TAG_COMPOUND);
 		int j0 = disassembly.size();
 		parts: for (int i = 0; i < list.size(); i++) {
 			GridPart part = GridPart.load(null, list.getCompound(i), SAVE);
 			if (part == null) continue;
 			if (part.dissassemble(level, worldPosition)) {
-				CompoundNBT nbt = new CompoundNBT();
+				CompoundTag nbt = new CompoundTag();
 				part.storeState(nbt, SAVE);
 				list.set(i, nbt);
 			}
@@ -290,18 +292,18 @@ implements ITickableServerOnly, IItemHandlerModifiable, IUnnamedContainerProvide
 	}
 
 	@Override
-	public void storeState(CompoundNBT nbt, int mode) {
+	public void storeState(CompoundTag nbt, int mode) {
 		super.storeState(nbt, mode);
 		if ((mode & SAVE) != 0) {
 			nbt.put("inv", saveInventory(inventory));
-			ListNBT list = new ListNBT();
+			ListTag list = new ListTag();
 			for (ItemStack stack : disassembly)
 				list.add(saveItemHighRes(stack));
 			nbt.put("disass", list);
 			if (assembly != null) {
-				list = new ListNBT();
+				list = new ListTag();
 				for (int i = 0; i < assembly.length; i++) {
-					CompoundNBT tag = saveItemHighRes(assembly[i]);
+					CompoundTag tag = saveItemHighRes(assembly[i]);
 					tag.putShort("fill", counts[i]);
 					list.add(tag);
 				}
@@ -311,11 +313,11 @@ implements ITickableServerOnly, IItemHandlerModifiable, IUnnamedContainerProvide
 	}
 
 	@Override
-	public void loadState(CompoundNBT nbt, int mode) {
+	public void loadState(CompoundTag nbt, int mode) {
 		super.loadState(nbt, mode);
 		if ((mode & SAVE) != 0) {
 			loadInventory(nbt.getList("inv", NBT.TAG_COMPOUND), inventory);
-			ListNBT list = nbt.getList("disass", NBT.TAG_COMPOUND);
+			ListTag list = nbt.getList("disass", NBT.TAG_COMPOUND);
 			disassembly.clear();
 			for (int i = 0; i < list.size(); i++)
 				disassembly.add(loadItemHighRes(list.getCompound(i)));
@@ -325,7 +327,7 @@ implements ITickableServerOnly, IItemHandlerModifiable, IUnnamedContainerProvide
 				assembly = new ItemStack[l];
 				counts = new short[l];
 				for (int i = 0; i < l; i++) {
-					CompoundNBT tag = list.getCompound(i);
+					CompoundTag tag = list.getCompound(i);
 					counts[i] = tag.getShort("fill");
 					assembly[i] = loadItemHighRes(tag);
 				}
@@ -334,7 +336,7 @@ implements ITickableServerOnly, IItemHandlerModifiable, IUnnamedContainerProvide
 	}
 
 	@Override
-	public ContainerAssembler createMenu(int id, PlayerInventory inv, PlayerEntity player) {
+	public ContainerAssembler createMenu(int id, Inventory inv, Player player) {
 		return new ContainerAssembler(id, inv, this, this);
 	}
 

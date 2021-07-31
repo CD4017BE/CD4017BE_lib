@@ -1,12 +1,12 @@
 package cd4017be.math;
 
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.core.Direction;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
 
 public class MCConv {
 
-	public static float[] blockRelVecF(Vector3d vec, BlockPos pos) {
+	public static float[] blockRelVecF(Vec3 vec, BlockPos pos) {
 		return new float[] {
 			(float)(vec.x - pos.getX()),
 			(float)(vec.y - pos.getY()),

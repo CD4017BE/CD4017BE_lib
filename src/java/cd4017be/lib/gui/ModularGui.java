@@ -3,32 +3,33 @@ package cd4017be.lib.gui;
 import cd4017be.lib.Lib;
 import cd4017be.lib.network.GuiNetworkHandler;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import net.minecraft.client.gui.screen.inventory.ContainerScreen;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.texture.AtlasTexture;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.Tesselator;
+import com.mojang.blaze3d.vertex.VertexFormat.Mode;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.platform.GlStateManager;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.container.ClickType;
-import net.minecraft.inventory.container.Slot;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.Direction;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Matrix4f;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.world.IWorldReader;
+import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.BlockPos;
+import com.mojang.math.Matrix4f;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fluids.FluidAttributes;
 import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fml.client.gui.GuiUtils;
+import net.minecraftforge.fmlclient.gui.GuiUtils;
 import net.minecraftforge.items.ItemHandlerHelper;
 
 import static cd4017be.lib.gui.comp.IGuiComp.*;
@@ -44,12 +45,12 @@ import cd4017be.lib.container.slot.SlotHolo;
 import cd4017be.lib.gui.comp.GuiCompGroup;
 
 /**
- * ContainerScreen based component manager template.
+ * AbstractContainerScreen based component manager template.
  * @see GuiCompGroup
  * @author CD4017BE
  */
 @OnlyIn(Dist.CLIENT)
-public class ModularGui<T extends AdvancedContainer> extends ContainerScreen<T> {
+public class ModularGui<T extends AdvancedContainer> extends AbstractContainerScreen<T> {
 	
 	public static final ResourceLocation LIB_TEX = Lib.rl("textures/icons.png");
 
@@ -64,7 +65,7 @@ public class ModularGui<T extends AdvancedContainer> extends ContainerScreen<T> 
 	 * Note: the GuiFrame {@link #compGroup} is still null, it must be initialized before {@link #initGui()} is called!
 	 * @param container container providing the state from server
 	 */
-	public ModularGui(T container, PlayerInventory inv, ITextComponent name) {
+	public ModularGui(T container, Inventory inv, Component name) {
 		super(container, inv, name);
 		if (container.hasPlayerInv()) {
 			this.drawTitles |= 2;
@@ -101,14 +102,14 @@ public class ModularGui<T extends AdvancedContainer> extends ContainerScreen<T> 
 	}
 
 	@Override
-	public void render(MatrixStack matrixStack, int mx, int my, float partialTicks) {
+	public void render(PoseStack matrixStack, int mx, int my, float partialTicks) {
 		renderBackground(matrixStack);
 		super.render(matrixStack, mx, my, partialTicks);
 		renderTooltip(matrixStack, mx, my);
 	}
 
 	@Override
-	protected void renderTooltip(MatrixStack matrixStack, int x, int y) {
+	protected void renderTooltip(PoseStack matrixStack, int x, int y) {
 		super.renderTooltip(matrixStack, x, y);
 		if (hoveredSlot instanceof IFluidSlot) {
 			IFluidSlot fslot = ((IFluidSlot)hoveredSlot);
@@ -117,7 +118,7 @@ public class ModularGui<T extends AdvancedContainer> extends ContainerScreen<T> 
 			info.add(stack != null ? stack.getDisplayName().getString() : translate("cd4017be.tankEmpty"));
 			info.add(format("cd4017be.tankAmount", stack != null ? (double)stack.getAmount() / 1000D : 0D, (double)fslot.getCapacity() / 1000D));
 			GuiUtils.drawHoveringText(matrixStack, convertText(info), x, y, width, height, -1, font);
-		} else if (hoveredSlot != null && !(hoveredSlot.hasItem() && inventory.getCarried().isEmpty())) {
+		} else if (hoveredSlot != null && !(hoveredSlot.hasItem() && menu.getCarried().isEmpty())) {
 			String s = slotTooltips.get(hoveredSlot.index);
 			if (s != null)
 				GuiUtils.drawHoveringText(matrixStack, convertText(translate(s)), x, y, width, height, -1, font);
@@ -130,7 +131,7 @@ public class ModularGui<T extends AdvancedContainer> extends ContainerScreen<T> 
 	}
 
 	@Override
-	protected void renderLabels(MatrixStack matrixStack, int x, int y) {
+	protected void renderLabels(PoseStack matrixStack, int x, int y) {
 		for (Slot slot : menu.slots)
 			if (slot instanceof IFluidSlot) {
 				IFluidSlot fslot = ((IFluidSlot)slot);
@@ -141,37 +142,36 @@ public class ModularGui<T extends AdvancedContainer> extends ContainerScreen<T> 
 				else h *= 16F;
 				drawFluid(matrixStack, stack, slot.x, slot.y + 16 - h, 16, h);
 			}
-		color(-1);
 	}
 
-	protected void drawFluid(MatrixStack matrixStack, FluidStack stack, float x, float y, float w, float h) {
+	protected void drawFluid(PoseStack matrixStack, FluidStack stack, float x, float y, float w, float h) {
 		Matrix4f mat = matrixStack.last().pose();
 		FluidAttributes attr = stack.getFluid().getAttributes();
-		TextureAtlasSprite tex = minecraft.getTextureAtlas(AtlasTexture.LOCATION_BLOCKS)
+		TextureAtlasSprite tex = minecraft.getTextureAtlas(TextureAtlas.LOCATION_BLOCKS)
 			.apply(attr.getStillTexture(stack));
 		float u0 = tex.getU0(), v0 = tex.getV0(), u1 = tex.getU1(), v1 = tex.getV1();
-		color(attr.getColor(stack));
-		minecraft.textureManager.bind(AtlasTexture.LOCATION_BLOCKS);
-		Tessellator tessellator = Tessellator.getInstance();
+		int r = attr.getColor(stack), g = r >> 8 & 0xff, b = r >> 16 & 0xff, a = r >>> 24; r &= 0xff;
+		minecraft.textureManager.bindForSetup(TextureAtlas.LOCATION_BLOCKS);
+		Tesselator tessellator = Tesselator.getInstance();
 		BufferBuilder bufferbuilder = tessellator.getBuilder();
-		bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX);
-		bufferbuilder.vertex(mat, x, y + h, 0F).uv(u0, v1).endVertex();
-		bufferbuilder.vertex(mat, x + w, y + h, 0F).uv(u1, v1).endVertex();
-		bufferbuilder.vertex(mat, x + w, y, 0F).uv(u1, v0).endVertex();
-		bufferbuilder.vertex(mat, x, y, 0F).uv(u0, v0).endVertex();
+		bufferbuilder.begin(Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_TEX);
+		bufferbuilder.vertex(mat, x, y + h, 0F).color(r, g, b, a).uv(u0, v1).endVertex();
+		bufferbuilder.vertex(mat, x + w, y + h, 0F).color(r, g, b, a).uv(u1, v1).endVertex();
+		bufferbuilder.vertex(mat, x + w, y, 0F).color(r, g, b, a).uv(u1, v0).endVertex();
+		bufferbuilder.vertex(mat, x, y, 0F).color(r, g, b, a).uv(u0, v0).endVertex();
 		tessellator.end();
 	}
 
 	@Override
 	protected void renderBg(
-		MatrixStack matrixStack, float partialTicks, int mx, int my
+		PoseStack matrixStack, float partialTicks, int mx, int my
 	) {
 		compGroup.drawBackground(matrixStack, mx, my, partialTicks);
 		if ((drawTitles & 1) != 0) font.draw(
 				matrixStack, title, leftPos + titleLabelX, topPos + titleLabelY, 0x404040
 			);
 		if ((drawTitles & 2) != 0) font.draw(
-				matrixStack, inventory.getDisplayName(),
+				matrixStack, playerInventoryTitle,
 				leftPos + inventoryLabelX, topPos + inventoryLabelY, 0x404040
 			);
 	}
@@ -186,7 +186,7 @@ public class ModularGui<T extends AdvancedContainer> extends ContainerScreen<T> 
 	public boolean mouseDragged(double x, double y, int b, double dx, double dy) {
 		if (compGroup.mouseIn((int)x, (int)y, b, A_HOLD)) return true;
 		Slot slot = this.getSlotUnderMouse();
-		ItemStack itemstack = inventory.getCarried();
+		ItemStack itemstack = menu.getCarried();
 		if (slot instanceof SlotHolo && slot != lastClickSlot) {
 			ItemStack slotstack = slot.getItem();
 			if (itemstack.isEmpty() || slotstack.isEmpty() || ItemHandlerHelper.canItemStacksStack(itemstack, slotstack))
@@ -223,11 +223,11 @@ public class ModularGui<T extends AdvancedContainer> extends ContainerScreen<T> 
 			|| super.mouseScrolled(x, y, delta);
 	}
 
-	public void drawFormatInfo(MatrixStack stack, int x, int y, String key, Object... args) {
-		this.renderWrappedToolTip(stack, convertText(format(key, args)), x, y, font);
+	public void drawFormatInfo(PoseStack stack, int x, int y, String key, Object... args) {
+		this.renderComponentToolTip(stack, convertText(format(key, args)), x, y, font);
 	}
 
-	public void drawLocString(MatrixStack stack, int x, int y, int h, int c, String s, Object... args) {
+	public void drawLocString(PoseStack stack, int x, int y, int h, int c, String s, Object... args) {
 		String[] text = format(s, args).split("\n");
 		for (String l : text) {
 			this.font.draw(stack, l, x, y, c);
@@ -235,7 +235,7 @@ public class ModularGui<T extends AdvancedContainer> extends ContainerScreen<T> 
 		}
 	}
 
-	public void drawStringCentered(MatrixStack stack, String s, int x, int y, int c) {
+	public void drawStringCentered(PoseStack stack, String s, int x, int y, int c) {
 		this.font.draw(stack, s, x - this.font.width(s) / 2, y, c);
 	}
 
@@ -244,7 +244,7 @@ public class ModularGui<T extends AdvancedContainer> extends ContainerScreen<T> 
 	 * @param side face to highlight with an arrow
 	 * @param type arrow variant
 	 */
-	public void drawSideConfig(MatrixStack stack, Direction side, int type) {
+	public void drawSideConfig(PoseStack stack, Direction side, int type) {
 		/* TODO reimplement
 		GlStateManager.enableDepthTest();
 		GlStateManager.disableLighting();
@@ -261,10 +261,10 @@ public class ModularGui<T extends AdvancedContainer> extends ContainerScreen<T> 
 		GlStateManager.pushMatrix();
 		BlockPos pos = container.getPos();
 		GlStateManager.translatef(-pos.getX(), -pos.getY(), -pos.getZ());
-		BufferBuilder t = Tessellator.getInstance().getBuffer();
-		t.begin(GL11.GL_QUADS, DefaultVertexFormats.BLOCK);
+		BufferBuilder t = Tesselator.getInstance().getBuffer();
+		t.begin(GL11.GL_QUADS, DefaultVertexFormat.BLOCK);
 		renderBlock(player.world, pos, t);
-		Tessellator.getInstance().draw();
+		Tesselator.getInstance().draw();
 		GlStateManager.popMatrix();
 		
 		if (side == null) {
@@ -287,17 +287,17 @@ public class ModularGui<T extends AdvancedContainer> extends ContainerScreen<T> 
 		a = a.scale(1.5);
 		final float tx = (float)(144 + 16 * type) / 256F, dtx = 16F / 256F, ty = 24F / 256F, dty = 8F / 256F;
 		
-		t.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+		t.begin(GL11.GL_QUADS, DefaultVertexFormat.POSITION_TEX);
 		t.pos(p.x + b.x, p.y + b.y, p.z + b.z).tex(tx, ty + dty).endVertex();
 		t.pos(p.x + a.x + b.x, p.y + a.y + b.y, p.z + a.z + b.z).tex(tx + dtx, ty + dty).endVertex();
 		t.pos(p.x + a.x, p.y + a.y, p.z + a.z).tex(tx + dtx, ty).endVertex();
 		t.pos(p.x, p.y, p.z).tex(tx, ty).endVertex();
-		Tessellator.getInstance().draw();
+		Tesselator.getInstance().draw();
 		GlStateManager.popMatrix();
 		*/
 	}
 
-	protected void renderBlock(MatrixStack stack, IWorldReader world, BlockPos pos, BufferBuilder t) {
+	protected void renderBlock(PoseStack stack, Level world, BlockPos pos, BufferBuilder t) {
 		/* TODO reimplement
 		BlockRendererDispatcher render = minecraft.getBlockRendererDispatcher();
 		BlockState state = world.getBlockState(pos);
@@ -311,8 +311,6 @@ public class ModularGui<T extends AdvancedContainer> extends ContainerScreen<T> 
 
 	public void renderFloatingItem(ItemStack stack, int x, int y, String altText){
 		itemRenderer.blitOffset = 200.0F;
-		net.minecraft.client.gui.FontRenderer font = stack.getItem().getFontRenderer(stack);
-		if (font == null) font = this.font;
 		itemRenderer.renderAndDecorateItem(stack, x, y);
 		itemRenderer.renderGuiItemDecorations(font, stack, x, y, altText);
 		itemRenderer.blitOffset = 0.0F;
@@ -323,12 +321,7 @@ public class ModularGui<T extends AdvancedContainer> extends ContainerScreen<T> 
 	 * @param msg message to post
 	 */
 	public void sendChat(String msg) {
-		minecraft.player.sendMessage(new StringTextComponent(msg), null);
-	}
-
-	public static void color(int c) {
-		GlStateManager._enableBlend();
-		GlStateManager._color4f((float)(c >> 16 & 0xff) / 255F, (float)(c >> 8 & 0xff) / 255F, (float)(c & 0xff) / 255F, (float)(c >> 24 & 0xff) / 255F);
+		minecraft.player.sendMessage(new TextComponent(msg), null);
 	}
 
 	/**
@@ -337,7 +330,7 @@ public class ModularGui<T extends AdvancedContainer> extends ContainerScreen<T> 
 	 * @param c value to send
 	 */
 	public void sendCommand(int c) {
-		PacketBuffer buff = GuiNetworkHandler.preparePacket(menu);
+		FriendlyByteBuf buff = GuiNetworkHandler.preparePacket(menu);
 		buff.writeByte(c);
 		GuiNetworkHandler.GNH_INSTANCE.sendToServer(buff);
 	}
@@ -348,7 +341,7 @@ public class ModularGui<T extends AdvancedContainer> extends ContainerScreen<T> 
 	 * @param args data to send (supports: byte, short, int, long, float, double, String)
 	 */
 	public void sendPkt(Object... args) {
-		PacketBuffer buff = GuiNetworkHandler.preparePacket(menu);
+		FriendlyByteBuf buff = GuiNetworkHandler.preparePacket(menu);
 		for (Object arg : args) {
 			if (arg instanceof Byte) buff.writeByte((Byte)arg);
 			else if (arg instanceof Short) buff.writeShort((Short)arg);

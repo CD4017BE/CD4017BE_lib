@@ -9,19 +9,22 @@ import javax.annotation.Nullable;
 import cd4017be.lib.block.OrientedBlock;
 import cd4017be.lib.network.INBTSynchronized;
 import cd4017be.lib.util.Orientation;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.play.server.SUpdateTileEntityPacket;
-import net.minecraft.tileentity.*;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.*;
-import net.minecraft.world.World;
-import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.Chunk.CreateEntityType;
-import net.minecraft.world.chunk.ChunkStatus;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.LevelChunk.EntityCreationType;
+import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.capabilities.Capability;
@@ -29,35 +32,35 @@ import net.minecraftforge.common.util.LazyOptional;
 import static cd4017be.lib.network.Sync.*;
 
 /** @author CD4017BE */
-public class BaseTileEntity extends TileEntity implements INBTSynchronized {
+public class BaseTileEntity extends BlockEntity implements INBTSynchronized {
 
-	private Chunk chunk;
+	private LevelChunk chunk;
 	public boolean unloaded = true;
 	protected boolean redraw, sent;
 
-	public BaseTileEntity(TileEntityType<?> type) {
-		super(type);
+	public BaseTileEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
+		super(type, pos, state);
 	}
 
-	/** whether this TileEntity is currently not part of the loaded world and therefore shouldn't perform any actions */
+	/** whether this BlockEntity is currently not part of the loaded world and therefore shouldn't perform any actions */
 	public boolean unloaded() {
 		return unloaded;
 	}
 
-	public Chunk getChunk() {
+	public LevelChunk getChunk() {
 		if (chunk == null)
-			chunk = (Chunk)level.getChunk(worldPosition.getX() >> 4, worldPosition.getZ() >> 4, ChunkStatus.FULL, false);
+			chunk = (LevelChunk)level.getChunk(worldPosition.getX() >> 4, worldPosition.getZ() >> 4, ChunkStatus.FULL, false);
 		return chunk;
 	}
 
-	/** Tells the game that this TileEntity has changed state that needs saving to disk. */
+	/** Tells the game that this BlockEntity has changed state that needs saving to disk. */
 	public void saveDirty() {
 		if (unloaded) return;
-		Chunk c = getChunk();
+		LevelChunk c = getChunk();
 		if(c != null) c.markUnsaved();
 	}
 
-	/** Tells the game that this TileEntity has changed state that needs to be sent to clients.
+	/** Tells the game that this BlockEntity has changed state that needs to be sent to clients.
 	 * @param redraw whether client should do render update as well */
 	public void clientDirty(boolean redraw) {
 		if(unloaded) return;
@@ -72,43 +75,43 @@ public class BaseTileEntity extends TileEntity implements INBTSynchronized {
 	public static final int REDRAW = 16;
 
 	@Override
-	public CompoundNBT save(CompoundNBT nbt) {
+	public CompoundTag save(CompoundTag nbt) {
 		storeState(nbt, SAVE);
 		return super.save(nbt);
 	}
 
 	@Override
-	public void load(BlockState state, CompoundNBT nbt) {
-		super.load(state, nbt);
+	public void load(CompoundTag nbt) {
+		super.load(nbt);
 		loadState(nbt, SAVE);
 	}
 
 	@Override
-	public CompoundNBT getUpdateTag() {
-		CompoundNBT nbt = super.getUpdateTag();
+	public CompoundTag getUpdateTag() {
+		CompoundTag nbt = super.getUpdateTag();
 		storeState(nbt, CLIENT);
 		return nbt;
 	}
 
 	@Override
-	public void handleUpdateTag(BlockState state, CompoundNBT nbt) {
-		super.load(state, nbt);
+	public void handleUpdateTag(CompoundTag nbt) {
+		super.load(nbt);
 		loadState(nbt, CLIENT);
 	}
 
 	@Override
-	public SUpdateTileEntityPacket getUpdatePacket() {
-		CompoundNBT nbt = new CompoundNBT();
+	public ClientboundBlockEntityDataPacket getUpdatePacket() {
+		CompoundTag nbt = new CompoundTag();
 		int i = SYNC | (redraw ? REDRAW : 0);
 		storeState(nbt, i);
 		if(nbt.isEmpty()) return null;
 		sent = true;
-		return new SUpdateTileEntityPacket(worldPosition, i, nbt);
+		return new ClientboundBlockEntityDataPacket(worldPosition, i, nbt);
 	}
 
 	@Override
-	public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket pkt) {
-		CompoundNBT nbt = pkt.getTag();
+	public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt) {
+		CompoundTag nbt = pkt.getTag();
 		int i = pkt.getType();
 		loadState(nbt, SYNC | i);
 		if(redraw = (i & REDRAW) != 0) {
@@ -118,15 +121,15 @@ public class BaseTileEntity extends TileEntity implements INBTSynchronized {
 		}
 	}
 
+	protected void clearCache() {}
+
 	@Override
 	public void onLoad() {
-		if(level.isClientSide ? this instanceof ITickableServerOnly : this instanceof ITickableClientOnly)
-			level.tickableBlockEntities.remove(this);
 		if (!unloaded) clearCache();
 		unloaded = false;
 	}
 
-	/** Called when this TileEntity is removed from the world be it by breaking, replacement or chunk unloading. */
+	/** Called when this BlockEntity is removed from the world be it by breaking, replacement or chunk unloading. */
 	protected void onUnload() {}
 
 	@Override
@@ -146,14 +149,14 @@ public class BaseTileEntity extends TileEntity implements INBTSynchronized {
 	}
 
 	/**For {@link #getRenderBoundingBox()} to always fail the visibility check. */
-	public static final AxisAlignedBB DONT_RENDER
-	= new AxisAlignedBB(NaN, NaN, NaN, NaN, NaN, NaN);
+	public static final AABB DONT_RENDER
+	= new AABB(NaN, NaN, NaN, NaN, NaN, NaN);
 
 	@Override
 	@OnlyIn(Dist.CLIENT)
-	public AxisAlignedBB getRenderBoundingBox() {
+	public AABB getRenderBoundingBox() {
 		// just skip all the ugly hard-coding in superclass
-		return new AxisAlignedBB(worldPosition);
+		return new AABB(worldPosition);
 	}
 
 	public Orientation orientation() {
@@ -164,36 +167,36 @@ public class BaseTileEntity extends TileEntity implements INBTSynchronized {
 		return Orientation.S12;
 	}
 
-	public @Nullable Chunk getChunk(BlockPos pos, boolean loadChunks) {
+	public @Nullable LevelChunk getChunk(BlockPos pos, boolean loadChunks) {
 		int cx = pos.getX() >> 4, cz = pos.getZ() >> 4;
 		ChunkPos cp = getChunk().getPos();
 		return cx == cp.x && cz == cp.z ? chunk
-			: (Chunk)level.getChunk(cx, cz, ChunkStatus.FULL, loadChunks);
+			: (LevelChunk)level.getChunk(cx, cz, ChunkStatus.FULL, loadChunks);
 	}
 
-	/** This method has faster performance than {@link World#getBlockState(BlockPos)}
+	/** This method has faster performance than {@link Level#getBlockState(BlockPos)}
 	 * for <b>pos</b> within the same chunk.
 	 * @param pos
 	 * @param loadChunks whether to hot-load chunks if necessary
 	 * @return the BlockState at <b>pos</b> */
 	public BlockState getBlockState(BlockPos pos, boolean loadChunks) {
-		if(World.isOutsideBuildHeight(pos)) return Blocks.VOID_AIR.defaultBlockState();
-		Chunk c = getChunk(pos, loadChunks);
+		if(level.isOutsideBuildHeight(pos)) return Blocks.VOID_AIR.defaultBlockState();
+		LevelChunk c = getChunk(pos, loadChunks);
 		return c != null ? c.getBlockState(pos) : Blocks.VOID_AIR.defaultBlockState();
 	}
 
-	/** This method has faster performance than {@link World#getBlockState(BlockPos)}
+	/** This method has faster performance than {@link Level#getBlockState(BlockPos)}
 	 * for <b>pos</b> within the same chunk.
 	 * @param pos
 	 * @param loadChunks whether to hot-load chunks if necessary
-	 * @return the TileEntity at <b>pos</b> */
-	public @Nullable TileEntity getTileEntity(BlockPos pos, boolean loadChunks) {
-		if(World.isOutsideBuildHeight(pos)) return null;
-		Chunk c = getChunk(pos, loadChunks);
-		return c != null ? c.getBlockEntity(pos, CreateEntityType.IMMEDIATE) : null;
+	 * @return the BlockEntity at <b>pos</b> */
+	public @Nullable BlockEntity getTileEntity(BlockPos pos, boolean loadChunks) {
+		if(level.isOutsideBuildHeight(pos)) return null;
+		LevelChunk c = getChunk(pos, loadChunks);
+		return c != null ? c.getBlockEntity(pos, EntityCreationType.IMMEDIATE) : null;
 	}
 
-	public @Nullable TileEntity getNeighborTileEntity(Direction side, boolean loadChunks) {
+	public @Nullable BlockEntity getNeighborTileEntity(Direction side, boolean loadChunks) {
 		return getTileEntity(worldPosition.relative(side), loadChunks);
 	}
 
@@ -202,12 +205,12 @@ public class BaseTileEntity extends TileEntity implements INBTSynchronized {
 	 * @param cap the capability type
 	 * @return capability */
 	public <T> T getNeighborCapability(Direction side, Capability<T> cap, T empty) {
-		TileEntity te = getTileEntity(worldPosition.relative(side), false);
+		BlockEntity te = getTileEntity(worldPosition.relative(side), false);
 		return te != null ? te.getCapability(cap, side.getOpposite()).orElse(empty) : empty;
 	}
 
 	public <T> boolean updateNeighborCapability(Direction side, Capability<T> cap, Consumer<T> cache, T empty) {
-		TileEntity te = getTileEntity(worldPosition.relative(side), false);
+		BlockEntity te = getTileEntity(worldPosition.relative(side), false);
 		if (te == null) {
 			cache.accept(empty);
 			return false;
@@ -234,12 +237,12 @@ public class BaseTileEntity extends TileEntity implements INBTSynchronized {
 	}
 	
 	protected List<ItemStack> makeDefaultDrops() {
-		CompoundNBT nbt = new CompoundNBT();
+		CompoundTag nbt = new CompoundTag();
 		storeState(nbt, ITEM);
 		return makeDefaultDrops(nbt);
 	}
 	
-	protected List<ItemStack> makeDefaultDrops(CompoundNBT tag) {
+	protected List<ItemStack> makeDefaultDrops(CompoundTag tag) {
 		getBlockState();
 		ItemStack item = new ItemStack(blockType, 1, blockType.damageDropped(blockState));
 		item.setTag(tag);
@@ -258,13 +261,17 @@ public class BaseTileEntity extends TileEntity implements INBTSynchronized {
 	}
 	*/
 
-	/** Indicates that the implementing TileEntity should only receive server side update ticks.
+	/** Indicates that the implementing BlockEntity should receive server side update ticks.
 	 * @author CD4017BE */
-	public interface ITickableServerOnly extends ITickableTileEntity {}
+	public interface TickableServer {
+		void tickServer(Level world, BlockPos pos, BlockState state);
+	}
 
 
-	/** Indicates that the implementing TileEntity should only receive client side update ticks.
+	/** Indicates that the implementing BlockEntity should receive client side update ticks.
 	 * @author CD4017BE */
-	public interface ITickableClientOnly extends ITickableTileEntity {}
+	public interface TickableClient {
+		void tickClient(Level world, BlockPos pos, BlockState state);
+	}
 
 }

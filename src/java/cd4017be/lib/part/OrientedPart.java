@@ -3,17 +3,17 @@ package cd4017be.lib.part;
 import static cd4017be.lib.network.Sync.ALL;
 import static cd4017be.lib.network.Sync.Type.Enum;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 
 import cd4017be.api.grid.GridPart;
 import cd4017be.lib.network.Sync;
 import cd4017be.lib.render.GridModels;
 import cd4017be.lib.render.model.JitBakedModel;
 import cd4017be.lib.util.Orientation;
-import net.minecraft.client.renderer.model.ModelResourceLocation;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.Direction;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.resources.model.ModelResourceLocation;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -61,7 +61,7 @@ public abstract class OrientedPart extends GridPart {
 	}
 
 	@Override
-	public void loadState(CompoundNBT nbt, int mode) {
+	public void loadState(CompoundTag nbt, int mode) {
 		super.loadState(nbt, mode);
 		set(pos, orient);
 	}
@@ -78,7 +78,7 @@ public abstract class OrientedPart extends GridPart {
 	}
 
 	@OnlyIn(Dist.CLIENT)
-	protected void transform(MatrixStack ms) {
+	protected void transform(PoseStack ms) {
 		ms.last().pose().multiply(orient.mat4);
 		ms.last().normal().mul(orient.mat3);
 		ms.translate((pos & 3) * .25F, (pos >> 2 & 3) * .25F, (pos >> 4 & 3) * .25F);

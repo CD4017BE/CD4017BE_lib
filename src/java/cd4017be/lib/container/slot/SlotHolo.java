@@ -1,9 +1,9 @@
 package cd4017be.lib.container.slot;
 
 import cd4017be.lib.container.AdvancedContainer;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.container.ClickType;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.*;
 
 /**
@@ -23,7 +23,7 @@ public class SlotHolo extends SlotItemHandler implements ISpecialSlot {
 	}
 
 	@Override
-	public boolean mayPickup(PlayerEntity player) {
+	public boolean mayPickup(Player player) {
 		return !locked;
 	}
 
@@ -45,17 +45,17 @@ public class SlotHolo extends SlotItemHandler implements ISpecialSlot {
 	}
 
 	@Override
-	public ItemStack onClick(int b, ClickType ct, PlayerEntity player, AdvancedContainer container) {
+	public ItemStack onClick(int b, ClickType ct, Player player, AdvancedContainer container) {
 		ItemStack item = getItem();
 		if (ct == ClickType.CLONE) {
-			ISpecialSlot.quickSelect(player, item);
+			ISpecialSlot.quickSelect(player, item, container);
 			return ItemStack.EMPTY;
 		} else if (ct != ClickType.PICKUP && ct != ClickType.QUICK_MOVE)
 			return ItemStack.EMPTY;
 		if (player.level.isClientSide)
 			return ItemStack.EMPTY;
 		container.hardInvUpdate();
-		ItemStack curItem = player.inventory.getCarried();
+		ItemStack curItem = container.getCarried();
 		if (ct == ClickType.QUICK_MOVE) {
 			if (!locked) {
 				curItem = curItem.copy();

@@ -2,23 +2,23 @@ package cd4017be.lib.block;
 
 import cd4017be.lib.property.PropertyOrientation;
 import cd4017be.lib.util.Orientation;
-import net.minecraft.state.StateContainer.Builder;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.item.BlockItemUseContext;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Mirror;
-import net.minecraft.util.Rotation;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.shapes.ISelectionContext;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.world.*;
+import net.minecraft.world.level.block.state.StateDefinition.Builder;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.level.BlockGetter;
 
 /**
  * 
  * @author CD4017BE
  */
-public class OrientedBlock<T extends TileEntity> extends BlockTE<T> {
+public class OrientedBlock<T extends BlockEntity> extends BlockTE<T> {
 
 	private static PropertyOrientation TEMP;
 	public final PropertyOrientation orientProp;
@@ -44,13 +44,13 @@ public class OrientedBlock<T extends TileEntity> extends BlockTE<T> {
 	}
 
 	@Override
-	public BlockState getStateForPlacement(BlockItemUseContext context) {
+	public BlockState getStateForPlacement(BlockPlaceContext context) {
 		return defaultBlockState().setValue(orientProp, orientProp.getPlacementState(context));
 	}
 
 	@Override
 	public VoxelShape
-	getShape(BlockState state, IBlockReader world, BlockPos pos, ISelectionContext context) {
+	getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
 		return shapes != null ? shapes[state.getValue(orientProp).ordinal()]
 			: super.getShape(state, world, pos, context);
 	}
