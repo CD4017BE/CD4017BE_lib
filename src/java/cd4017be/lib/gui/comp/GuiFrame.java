@@ -5,7 +5,10 @@ import javax.annotation.Nonnull;
 import cd4017be.lib.gui.ModularGui;
 import cd4017be.lib.text.TooltipUtil;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.fmlclient.gui.GuiUtils;
 
@@ -90,8 +93,9 @@ public class GuiFrame extends GuiCompGroup {
 		if (parent != null) parent.drawNow();
 		if (bgTexture != null) {
 			bound = false;
+			RenderSystem.setShader(GameRenderer::getPositionTexShader);
+			ModularGui.color(-1);
 			bindTexture(bgTexture);
-			//GlStateManager._color4f(1F, 1F, 1F, 1F);
 			GuiUtils.drawTexturedModalRect(stack, x, y, bgX, bgY, w, h, zLevel);
 		}
 		if (title != null)

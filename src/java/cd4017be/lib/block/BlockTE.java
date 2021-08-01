@@ -71,6 +71,7 @@ public class BlockTE<T extends BlockEntity> extends BaseEntityBlock {
 
 	@Override
 	public <T1 extends BlockEntity> GameEventListener getListener(Level world, T1 te) {
+		te.onLoad();
 		return !world.isClientSide && te instanceof GameEventListener ? (GameEventListener)te : null;
 	}
 
@@ -310,6 +311,8 @@ public class BlockTE<T extends BlockEntity> extends BaseEntityBlock {
 		if(ITEShape.class.isAssignableFrom(c)) f |= H_SHAPE;
 		if(ITEPickItem.class.isAssignableFrom(c)) f |= H_ITEMDATA;
 		if(ITEPlace.class.isAssignableFrom(c)) f |= H_PLACE;
+		if(TickableClient.class.isAssignableFrom(c)) f |= H_TICKCLIENT;
+		if(TickableServer.class.isAssignableFrom(c)) f |= H_TICKSERVER;
 		return f;
 	}
 

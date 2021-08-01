@@ -8,12 +8,13 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 import cd4017be.lib.util.IndexedSet;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.GameRenderer;
+
 import com.mojang.blaze3d.vertex.BufferBuilder;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat.Mode;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
@@ -241,7 +242,7 @@ public class GuiCompGroup extends IndexedSet<IGuiComp> implements IGuiComp {
 		if (tex != mainTex) bound = false;
 		else if (bound) return;
 		else bound = true;
-		if (tex != null) Minecraft.getInstance().textureManager.bindForSetup(tex);
+		if (tex != null) RenderSystem.setShaderTexture(0, tex);
 	}
 
 	/**
@@ -268,8 +269,9 @@ public class GuiCompGroup extends IndexedSet<IGuiComp> implements IGuiComp {
 	public void drawNow() {
 		if (inheritRender) parent.drawNow();
 		else if (drawing) {
-			//GlStateManager._color4f(1F, 1F, 1F, 1F);
-			GlStateManager._enableBlend();
+			RenderSystem.setShader(GameRenderer::getPositionTexShader);
+			RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
+			RenderSystem.enableBlend();
 			bindTexture(mainTex);
 			tessellator.end();
 			drawing = false;

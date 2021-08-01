@@ -123,6 +123,8 @@ public class BaseTileEntity extends BlockEntity implements INBTSynchronized {
 
 	protected void clearCache() {}
 
+	/**{@inheritDoc}<br>
+	 * WARNING: only called server side! */
 	@Override
 	public void onLoad() {
 		if (!unloaded) clearCache();

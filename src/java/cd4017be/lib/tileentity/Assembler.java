@@ -65,6 +65,9 @@ implements TickableServer, IItemHandlerModifiable, IUnnamedContainerProvider, IT
 	public Assembler(BlockEntityType<?> type, BlockPos pos, BlockState state) {
 		super(type, pos, state);
 		Arrays.fill(inventory, ItemStack.EMPTY);
+		inv_main = LazyOptional.of(InvMain::new);
+		inv_out = LazyOptional.of(InvOut::new);
+		inv_top = LazyOptional.of(()-> new RangedWrapper(this, 1, 2));
 	}
 
 	@Override
@@ -362,14 +365,6 @@ implements TickableServer, IItemHandlerModifiable, IUnnamedContainerProvider, IT
 			ItemFluidUtil.dropStack(stack, level, worldPosition);
 		for (ItemStack stack : disassembly)
 			ItemFluidUtil.dropStack(stack, level, worldPosition);
-	}
-
-	@Override
-	public void onLoad() {
-		inv_top = LazyOptional.of(()-> new RangedWrapper(this, 1, 2));
-		inv_main = LazyOptional.of(InvMain::new);
-		inv_out = LazyOptional.of(InvOut::new);
-		super.onLoad();
 	}
 
 	@Override

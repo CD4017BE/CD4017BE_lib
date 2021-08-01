@@ -4,15 +4,14 @@ import cd4017be.lib.Lib;
 import cd4017be.lib.network.GuiNetworkHandler;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.Tesselator;
+
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.*;
 import com.mojang.blaze3d.vertex.VertexFormat.Mode;
 
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
@@ -123,15 +122,15 @@ public class ModularGui<T extends AdvancedContainer> extends AbstractContainerSc
 			if (s != null)
 				GuiUtils.drawHoveringText(matrixStack, convertText(translate(s)), x, y, width, height, -1, font);
 		}
-		//GlStateManager.color4f(1, 1, 1, 1);
-		//GlStateManager.disableDepthTest();
-		//GlStateManager.disableAlphaTest();
-		//GlStateManager.enableBlend();
+		RenderSystem.setShaderColor(1, 1, 1, 1);
+		RenderSystem.disableDepthTest();
+		RenderSystem.enableBlend();
 		compGroup.drawOverlay(matrixStack, x, y);
 	}
 
 	@Override
 	protected void renderLabels(PoseStack matrixStack, int x, int y) {
+		RenderSystem.setShader(GameRenderer::getPositionTexShader);
 		for (Slot slot : menu.slots)
 			if (slot instanceof IFluidSlot) {
 				IFluidSlot fslot = ((IFluidSlot)slot);
@@ -142,6 +141,7 @@ public class ModularGui<T extends AdvancedContainer> extends AbstractContainerSc
 				else h *= 16F;
 				drawFluid(matrixStack, stack, slot.x, slot.y + 16 - h, 16, h);
 			}
+		color(-1);
 	}
 
 	protected void drawFluid(PoseStack matrixStack, FluidStack stack, float x, float y, float w, float h) {
@@ -150,15 +150,15 @@ public class ModularGui<T extends AdvancedContainer> extends AbstractContainerSc
 		TextureAtlasSprite tex = minecraft.getTextureAtlas(TextureAtlas.LOCATION_BLOCKS)
 			.apply(attr.getStillTexture(stack));
 		float u0 = tex.getU0(), v0 = tex.getV0(), u1 = tex.getU1(), v1 = tex.getV1();
-		int r = attr.getColor(stack), g = r >> 8 & 0xff, b = r >> 16 & 0xff, a = r >>> 24; r &= 0xff;
-		minecraft.textureManager.bindForSetup(TextureAtlas.LOCATION_BLOCKS);
+		color(attr.getColor(stack));
+		RenderSystem.setShaderTexture(0, TextureAtlas.LOCATION_BLOCKS);
 		Tesselator tessellator = Tesselator.getInstance();
 		BufferBuilder bufferbuilder = tessellator.getBuilder();
-		bufferbuilder.begin(Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_TEX);
-		bufferbuilder.vertex(mat, x, y + h, 0F).color(r, g, b, a).uv(u0, v1).endVertex();
-		bufferbuilder.vertex(mat, x + w, y + h, 0F).color(r, g, b, a).uv(u1, v1).endVertex();
-		bufferbuilder.vertex(mat, x + w, y, 0F).color(r, g, b, a).uv(u1, v0).endVertex();
-		bufferbuilder.vertex(mat, x, y, 0F).color(r, g, b, a).uv(u0, v0).endVertex();
+		bufferbuilder.begin(Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+		bufferbuilder.vertex(mat, x, y + h, 0F).uv(u0, v1).endVertex();
+		bufferbuilder.vertex(mat, x + w, y + h, 0F).uv(u1, v1).endVertex();
+		bufferbuilder.vertex(mat, x + w, y, 0F).uv(u1, v0).endVertex();
+		bufferbuilder.vertex(mat, x, y, 0F).uv(u0, v0).endVertex();
 		tessellator.end();
 	}
 
@@ -353,6 +353,16 @@ public class ModularGui<T extends AdvancedContainer> extends AbstractContainerSc
 			else throw new IllegalArgumentException();
 		}
 		GuiNetworkHandler.GNH_INSTANCE.sendToServer(buff);
+	}
+
+	public static void color(int c) {
+		RenderSystem.enableBlend();
+		RenderSystem.setShaderFogColor(
+			(float)(c >> 16 & 0xff) / 255F,
+			(float)(c >> 8 & 0xff) / 255F,
+			(float)(c & 0xff) / 255F,
+			(float)(c >> 24 & 0xff) / 255F
+		);
 	}
 
 }
