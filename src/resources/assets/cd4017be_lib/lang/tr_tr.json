@@ -1,0 +1,14 @@
+{
+  "cd4017be_lib.info": "<bilgi için §aSHIFT§7>",
+  "cd4017be_lib.ext": "<daha fazlası için §aCTRL§7>",
+  "cd4017be.tankAmount": "%s.4u / %s.4u B",
+  "cd4017be.tankEmpty": "Boş",
+  "gui.cd4017be.shift0": "Alt",
+  "gui.cd4017be.shift1": "Üst",
+  "gui.cd4017be.shift2": "Kuzey",
+  "gui.cd4017be.shift3": "Güney",
+  "gui.cd4017be.shift4": "Batı",
+  "gui.cd4017be.shift5": "Doğu",
+  "gui.cd4017be.close": "Pencereyi Kapat",
+  "gui.cd4017be.move": "Pencereyi Hareket Ettir"
+}

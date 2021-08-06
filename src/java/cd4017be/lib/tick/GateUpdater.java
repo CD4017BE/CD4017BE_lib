@@ -8,9 +8,18 @@ import java.util.function.Consumer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
+
+import net.minecraft.command.CommandSource;
+import net.minecraft.command.Commands;
 import net.minecraft.profiler.IProfiler;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.TickEvent.Phase;
 import net.minecraftforge.event.TickEvent.ServerTickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -37,6 +46,8 @@ public final class GateUpdater implements Consumer<ServerTickEvent> {
 	private ISlowTickable[] slowTicks;
 	private int start, end, mask, slowCount;
 	private boolean evaluating;
+	/** -1: run, 0: paused, n>0: run n steps */
+	private int steps = -1;
 
 	public GateUpdater(MinecraftServer server) {
 		this.server = server;
@@ -67,12 +78,13 @@ public final class GateUpdater implements Consumer<ServerTickEvent> {
 		IProfiler profiler = server.getProfiler();
 		profiler.push("GateUpdater");
 		TICK++;
-		if (start != end) tickGates(profiler);
+		if (start != end && steps != 0) tickGates(profiler);
 		if ((TICK & 7) < slowCount) tickSlow(profiler);
 		profiler.pop();
 	}
 
 	private void tickGates(IProfiler profiler) {
+		if (steps > 0) steps--;
 		profiler.push("evaluate");
 		evaluating = true;
 		IGate[] queue = updateQueue;
@@ -138,6 +150,54 @@ public final class GateUpdater implements Consumer<ServerTickEvent> {
 		LOG.info("GATE_UPDATER shut down: had {} active gate updates and {} slow ticks",
 			GATE_UPDATER.count(), GATE_UPDATER.slowCount);
 		GATE_UPDATER = null;
+	}
+
+	// Commands:
+	private static final SimpleCommandExceptionType ERROR_NOT_PAUSED
+	= new SimpleCommandExceptionType(new TranslationTextComponent("command.cd4017be.not_paused"));
+
+	@SubscribeEvent
+	public static void registerCommands(RegisterCommandsEvent event) {
+		event.getDispatcher().register(
+			Commands.literal("gateUpdater").executes(GateUpdater::cmd_count)
+			.requires(src -> src.hasPermission(2))
+			.then(Commands.literal("pause").executes(GateUpdater::cmd_pause))
+			.then(Commands.literal("resume").executes(GateUpdater::cmd_resume))
+			.then(Commands.literal("step").executes(GateUpdater::cmd_step)
+				.then(Commands.argument("ticks", IntegerArgumentType.integer(1))
+					.executes(GateUpdater::cmd_step)
+				)
+			)
+		);
+	}
+
+	private static int cmd_count(CommandContext<CommandSource> cont) {
+		int n = GATE_UPDATER.count(), s = GATE_UPDATER.steps;
+		cont.getSource().sendSuccess(new TranslationTextComponent(
+			s < 0 ? "command.cd4017be.ticking" : "command.cd4017be.stepping", n, s
+		), true);
+		return s;
+	}
+
+	private static int cmd_pause(CommandContext<CommandSource> cont) {
+		GATE_UPDATER.steps = 0;
+		cont.getSource().sendSuccess(new TranslationTextComponent("command.cd4017be.paused"), true);
+		return 0;
+	}
+
+	private static int cmd_resume(CommandContext<CommandSource> cont) {
+		GATE_UPDATER.steps = -1;
+		cont.getSource().sendSuccess(new TranslationTextComponent("command.cd4017be.resumed"), true);
+		return 0;
+	}
+
+	private static int cmd_step(CommandContext<CommandSource> cont) throws CommandSyntaxException {
+		int s = GATE_UPDATER.steps;
+		if (s < 0) throw ERROR_NOT_PAUSED.create();
+		try {s = cont.getArgument("ticks", Integer.class);}
+		catch (IllegalArgumentException e) {s = 1;}
+		GATE_UPDATER.steps = s;
+		return cmd_count(cont);
 	}
 
 }

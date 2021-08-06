@@ -13,6 +13,7 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.fluid.Fluids;
 import net.minecraft.inventory.container.ClickType;
 import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ItemStack;
@@ -114,7 +115,7 @@ public class ModularGui<T extends AdvancedContainer> extends ContainerScreen<T> 
 			IFluidSlot fslot = ((IFluidSlot)hoveredSlot);
 			FluidStack stack = fslot.getFluid();
 			ArrayList<String> info = new ArrayList<String>();
-			info.add(stack != null ? stack.getDisplayName().getString() : translate("cd4017be.tankEmpty"));
+			info.add(stack.getRawFluid() != Fluids.EMPTY ? stack.getDisplayName().getString() : translate("cd4017be.tankEmpty"));
 			info.add(format("cd4017be.tankAmount", stack != null ? (double)stack.getAmount() / 1000D : 0D, (double)fslot.getCapacity() / 1000D));
 			GuiUtils.drawHoveringText(matrixStack, convertText(info), x, y, width, height, -1, font);
 		} else if (hoveredSlot != null && !(hoveredSlot.hasItem() && inventory.getCarried().isEmpty())) {

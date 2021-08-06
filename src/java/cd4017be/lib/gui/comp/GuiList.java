@@ -95,7 +95,7 @@ implements DoubleSupplier, DoubleConsumer {
 		int i = sel - scroll;
 		if(i >= 0 && i < n) {
 			y = this.y + i * dy;
-			GuiUtils.drawGradientRect(stack.last().pose(), x, y, x + w, y + dy, sc, i, i);
+			GuiUtils.drawGradientRect(stack.last().pose(), (int)parent.zLevel, x, y, x + w, y + dy, sc, sc);
 		}
 	}
 
