@@ -1,3 +1,48 @@
+
+v7.1.3:
+- add GateUpdater debug commands
+- fix GuiList selection highlights
+- fix missing lang entries
+- convert other old language files to json (Chinese & Turkish are still very incomplete)
+
+v7.1.2:
+- fix #24 NPE due to null player in BlockItemUseContext
+
+v7.1.1:
+- improve face & light occlusion for "sealed" Microblock Structures
+- reduce TER performance impact to zero for Microblock Structures with no dynamically rendered parts.
+- implement inventory capabilities for Microblock Workbench
+- add multi-line editing in text-fields
+- updated repository README and github workflow
+
+v7.1.0: (private build)
+- API change: GridParts can switch to different implementation for server side during load
+- Added ability to shift and rotate Microblock Structures
+
+v7.0.2: (private build)
+- add BlockSupplier to grid port API
+- improved/fixed FakePlayer
+- fix next link id persistence
+- fix cable connections
+- small Grid API additions
+- add Fluid Placement utilities
+- add placement event to BlockTE
+- add dynamic part rendering
+- fix HoloSlot stacking
+- add disassemble/replication handling for part contents
+
+v7.0.0: (private build)
+- port to MC 1.16.5
+- script models now using the new custom json loader system
+- added more convenient TileEntity models using the new ModelData system
+- implemented fluid slots using re-purposed fake item slots
+- entirely removed config script system
+- config values can be passed to Documented(Block)Item for use as arguments in extended tool-tips
+- removed other minor features not working anymore
+- added microblock API for RedstoneControl2
+
+################################# VERSIONS 1.12.2 #################################
+
 v6.6.3:
 - fix cover placements acting on client side
 
@@ -524,6 +569,8 @@ Changes:
 Dependencies:
 - for MC-1.12.2
 - forge-14.23.0.2512 (or newer)
+
+################################# VERSIONS 1.11.2 #################################
 
 v5.0.6
 Changes:
