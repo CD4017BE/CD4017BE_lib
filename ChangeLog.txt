@@ -1,12 +1,14 @@
 
 v7.1.3:
+- now microblocks return the aimed part for creative pick item instead of full structure
 - fix wire connections to inner ports
 - fix microblock parts deleting hollow blocks when placed inside
 - fix potential content duping through replicate in Microblock Workbench
 - add GateUpdater debug commands
 - fix GuiList selection highlights
 - fix missing lang entries
-- convert other old language files to json (Chinese & Turkish are still very incomplete)
+- convert other old language files to json (Turkish is still very incomplete)
+- add Chinese translation
 
 v7.1.2:
 - fix #24 NPE due to null player in BlockItemUseContext
