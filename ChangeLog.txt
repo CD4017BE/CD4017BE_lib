@@ -1,5 +1,8 @@
 
 v7.1.3:
+- fix wire connections to inner ports
+- fix microblock parts deleting hollow blocks when placed inside
+- fix potential content duping through replicate in Microblock Workbench
 - add GateUpdater debug commands
 - fix GuiList selection highlights
 - fix missing lang entries
