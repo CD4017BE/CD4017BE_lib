@@ -255,7 +255,8 @@ implements ITickableServerOnly, IItemHandlerModifiable, IUnnamedContainerProvide
 		if (!simulate) {
 			if (n > 0) stack0.grow(m);
 			else {
-				(inventory[slot] = stack.copy()).setCount(m);
+				(stack = stack.copy()).setCount(m);
+				inventory[slot] = stack;
 				canDA |= slot == 0;
 				if (slot == 1) startAssemble(stack);
 			}
