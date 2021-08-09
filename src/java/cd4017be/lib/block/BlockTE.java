@@ -27,6 +27,7 @@ import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
@@ -256,6 +257,19 @@ public class BlockTE<T extends TileEntity> extends Block {
 	}
 
 	@Override
+	public ItemStack getPickBlock(
+		BlockState state, RayTraceResult target,
+		IBlockReader world, BlockPos pos, PlayerEntity player
+	) {
+		if ((handlerFlags & H_ITEMDATA) != 0 && hasTileEntity(state)) {
+			TileEntity te = world.getBlockEntity(pos);
+			if (te instanceof ITEPickItem)
+				return ((ITEPickItem)te).getPickItem((BlockRayTraceResult)target, player);
+		}
+		return new ItemStack(this);
+	}
+
+	@Override
 	public ItemStack getCloneItemStack(IBlockReader world, BlockPos pos, BlockState state) {
 		ItemStack stack = new ItemStack(this);
 		if ((handlerFlags & H_ITEMDATA) != 0 && hasTileEntity(state)) {
@@ -395,6 +409,13 @@ public class BlockTE<T extends TileEntity> extends Block {
 
 		/**@return item for creative harvest and pick block. */
 		ItemStack getItem();
+
+		/**@param target
+		 * @param player
+		 * @return item for creative pick block */
+		default ItemStack getPickItem(BlockRayTraceResult target, PlayerEntity player) {
+			return getItem();
+		}
 	}
 
 	public interface ITEPlace {

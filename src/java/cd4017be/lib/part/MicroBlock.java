@@ -2,6 +2,7 @@ package cd4017be.lib.part;
 
 import static cd4017be.lib.Content.microblock;
 import cd4017be.api.grid.*;
+import cd4017be.lib.item.MicroBlockItem;
 import cd4017be.lib.network.Sync;
 import cd4017be.lib.render.MicroBlockFace;
 import cd4017be.lib.render.model.JitBakedModel;
@@ -9,7 +10,6 @@ import cd4017be.lib.util.ItemFluidUtil;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.*;
@@ -65,14 +65,22 @@ public class MicroBlock extends GridPart {
 	}
 
 	@Override
-	public Item item() {
+	public MicroBlockItem item() {
 		return microblock;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public ItemStack asItemStack() {
-		ItemStack stack = super.asItemStack();
-		stack.setTag(tag);
+		ItemStack stack;
+		if (!tag.isEmpty()) {
+			stack = super.asItemStack();
+			stack.setTag(tag);
+		} else stack = item().wrap(
+			block.getBlock().getCloneItemStack(
+				EmptyBlockReader.INSTANCE, BlockPos.ZERO, block
+			), block, 1
+		);
 		stack.setCount(Long.bitCount(bounds));
 		return stack;
 	}

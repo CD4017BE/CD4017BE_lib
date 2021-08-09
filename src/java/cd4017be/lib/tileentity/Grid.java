@@ -353,6 +353,14 @@ ITEBlockUpdate, ITENeighborChange, ITEPickItem, IGate {
 	}
 
 	@Override
+	public ItemStack getPickItem(BlockRayTraceResult target, PlayerEntity player) {
+		int pos = IGridHost.target(target, false);
+		GridPart part = getPart(pos, GridPart.L_OUTER);
+		if (part == null) part = getPart(pos, GridPart.L_INNER);
+		return part != null ? part.asItemStack() : getItem();
+	}
+
+	@Override
 	public long bounds() {
 		return opaque | inner;
 	}
