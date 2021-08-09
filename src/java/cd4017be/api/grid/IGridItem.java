@@ -35,7 +35,7 @@ public interface IGridItem {
 		World world = context.getLevel();
 		TileEntity te = world.getBlockEntity(pos);
 		if (!(te instanceof IGridHost)) {
-			if (!context.canPlace())
+			if (!world.getBlockState(pos).canBeReplaced(context))
 				return ActionResultType.FAIL;
 			if (!world.setBlock(pos, GridPart.GRID_HOST_BLOCK, 11))
 				return ActionResultType.FAIL;
