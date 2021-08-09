@@ -13,14 +13,14 @@ import net.minecraftforge.fluids.capability.IFluidHandler;
 public interface IFluidAccess extends ToIntFunction<FluidStack> {
 
 	/**@param inspector function called for each fluid tank
-	 * together with its capacity (don't modify given stack) */
+	 * together with its capacity (don't modify or keep given stack) */
 	default void getContent(ObjIntConsumer<FluidStack> inspector) {
 		getContent(inspector, Link.REC_FLUID);
 	}
 
 	/**@param inspector function called for each fluid tank
-	 * together with its capacity (don't modify given stack)
-	 * @param rec */
+	 * together with its capacity (don't modify or keep given stack)
+	 * @param rec recursion count-down */
 	void getContent(ObjIntConsumer<FluidStack> inspector, int rec);
 
 	/**Attempt to transfer fluids to another inventory
@@ -36,12 +36,12 @@ public interface IFluidAccess extends ToIntFunction<FluidStack> {
 	 * @param amount maximum amount to transfer
 	 * @param filter to restrict, what fluids to transfer
 	 * @param target destination inventory, see {@link #applyAsInt(FluidStack)}
-	 * @param rec
+	 * @param rec recursion count-down
 	 * @return amount actually transfered */
 	int transfer(int amount, Predicate<FluidStack> filter, ToIntFunction<FluidStack> target, int rec);
 
 	/**Attempt to insert the given stack.
-	 * @param stack fluid to insert (don't modify)
+	 * @param stack fluid to insert, neither modified nor kept
 	 * @return amount actually filled */
 	@Override
 	default int applyAsInt(FluidStack stack) {
@@ -49,8 +49,8 @@ public interface IFluidAccess extends ToIntFunction<FluidStack> {
 	}
 
 	/**Attempt to insert the given stack.
-	 * @param stack fluid to insert (don't modify)
-	 * @param rec
+	 * @param stack fluid to insert, neither modified nor kept
+	 * @param rec recursion count-down
 	 * @return amount actually filled */
 	int insert(FluidStack stack, int rec);
 

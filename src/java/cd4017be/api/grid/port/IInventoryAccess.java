@@ -14,13 +14,13 @@ import net.minecraftforge.items.ItemHandlerHelper;
 public interface IInventoryAccess extends ToIntFunction<ItemStack> {
 
 	/**@param inspector function called for each item
-	 * alongside its stack limit (don't modify given stack) */
+	 * alongside its stack limit (don't modify or keep given stack) */
 	default void getContent(ObjIntConsumer<ItemStack> inspector) {
 		getContent(inspector, Link.REC_ITEM);
 	}
 
 	/**@param inspector function called for each item
-	 * alongside its stack limit (don't modify given stack)
+	 * alongside its stack limit (don't modify or keep given stack)
 	 * @param rec */
 	void getContent(ObjIntConsumer<ItemStack> inspector, int rec);
 
@@ -42,7 +42,7 @@ public interface IInventoryAccess extends ToIntFunction<ItemStack> {
 	int transfer(int amount, Predicate<ItemStack> filter, ToIntFunction<ItemStack> target, int rec);
 
 	/**Attempt to insert the given stack.
-	 * @param stack item to insert, not to be modified (neither immediately nor in the future)
+	 * @param stack item to insert, neither modified nor kept
 	 * @return amount inserted */
 	@Override
 	default int applyAsInt(ItemStack stack) {
@@ -50,9 +50,9 @@ public interface IInventoryAccess extends ToIntFunction<ItemStack> {
 	}
 
 	/**Attempt to insert the given stack.
-	 * @param stack item to insert, not to be modified (neither immediately nor in the future)
+	 * @param stack item to insert, neither modified nor kept
 	 * @param rec recursion count-down
-	 * @return remainder that could not be inserted */
+	 * @return amount inserted */
 	int insert(ItemStack stack, int rec);
 
 	/** does nothing */

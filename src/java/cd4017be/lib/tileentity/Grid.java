@@ -107,9 +107,10 @@ ITEBlockUpdate, ITENeighborChange, ITEPickItem, IGate {
 	public void removePart(GridPart part) {
 		if (!parts.remove(part) || unloaded) return;
 		updateBounds();
+		boolean wire = part instanceof IWire;
 		for (int i = 0; i < part.ports.length; i++) {
 			short con = part.ports[i];
-			if (extPorts.remove(con)) continue;
+			if (extPorts.remove(con, wire)) continue;
 			if (part.isMaster(i)) part.setHandler(i, null);
 			else {
 				Port port = findPort(part, con);

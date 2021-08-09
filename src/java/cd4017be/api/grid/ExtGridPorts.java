@@ -34,18 +34,26 @@ public class ExtGridPorts implements INBTSerializable<LongArrayNBT> {
 		this.host = host;
 	}
 
+	/**@param port index
+	 * @return port descriptor (see {@link GridPart#ports}) */
 	public short getPort(int port) {
 		return (short)(ports[port] >> 32);
 	}
 
+	/**@param port index
+	 * @return whether given port has a connection to some other port */
 	public boolean isLinked(int port) {
 		return ports[port] << 1 < 0;
 	}
 
+	/**@param port index
+	 * @return whether given port behaves as master */
 	public boolean isMaster(int port) {
 		return ports[port] << 4 < 0;
 	}
 
+	/**Call during loading to perform port handshakes
+	 * for connections across blocks. */
 	public void onLoad() {
 		for (int i = 0; i < ports.length; i++) {
 			long x = ports[i];
@@ -54,6 +62,8 @@ public class ExtGridPorts implements INBTSerializable<LongArrayNBT> {
 		}
 	}
 
+	/**Call when unloading to perform port handler
+	 * invalidation for connections across blocks. */
 	public void onUnload() {
 		for (int i = 0; i < ports.length; i++) {
 			long x = ports[i];
@@ -62,11 +72,13 @@ public class ExtGridPorts implements INBTSerializable<LongArrayNBT> {
 		}
 	}
 
+	/**Call when removed to disconnect all ports. */
 	public void onRemove() {
 		for (int i = 0; i < ports.length; i++)
 			disconnect(i);
 	}
 
+	/**Disconnect and delete all ports. */
 	public void clear() {
 		for (int i = 0; i < ports.length; i++) {
 			disconnect(i);
@@ -90,7 +102,7 @@ public class ExtGridPorts implements INBTSerializable<LongArrayNBT> {
 			}
 	}
 
-	/**@param port to find
+	/**@param port descriptor to find
 	 * @param i initial guess for the index
 	 * @return index of port in extPorts or -1 if not found */
 	public int findPort(short port, int i) {
@@ -106,15 +118,25 @@ public class ExtGridPorts implements INBTSerializable<LongArrayNBT> {
 		return p >= 0 && (short)(p >> 32) == port;
 	}
 
+	/**@param port descriptor to disconnect and delete
+	 * @return whether the port existed and was removed */
 	public boolean remove(short port) {
+		return remove(port, true);
+	}
+
+	/**@param port descriptor to disconnect and delete
+	 * @param isWire whether the port is part of a wire
+	 * @return whether the port existed and was removed */
+	public boolean remove(short port, boolean isWire) {
 		int i = findPort(port, 0xff);
 		if (i < 0) return false;
 		disconnect(i);
-		ports[i] = 0;
+		if (isWire || ports[i] << 2 < 0) ports[i] = 0;
+		else ports[i] &= 0x0fff_ffff_ffff_ffffL;
 		return true;
 	}
 
-	/**@param port to create
+	/**@param port descriptor to create
 	 * @param flags master & 1 | type & 6 | linked & 8
 	 * @return index */
 	public int create(short port, int flags) {
@@ -131,11 +153,15 @@ public class ExtGridPorts implements INBTSerializable<LongArrayNBT> {
 		return i;
 	}
 
-	public boolean createPort(short con, boolean master, boolean doLink) {
+	/**@param port descriptor to create for an endpoint
+	 * @param master whether the endpoint behaves as master
+	 * @param doLink whether to connect the port immediately (host already loaded)
+	 * @return whether it was created */
+	public boolean createPort(short port, boolean master, boolean doLink) {
 		int i;
-		if (((con | con - 0x111) & 0x888) != 0)
-			i = create(con, master ? 7 : 6);
-		else if ((i = findPort(con, 0xff)) >= 0) {
+		if (((port | port - 0x111) & 0x888) != 0)
+			i = create(port, master ? 7 : 6);
+		else if ((i = findPort(port, 0xff)) >= 0) {
 			long p = ports[i];
 			if ((p >>> 60 & 3) == 1) return true;
 			ports[i] = p & 0x40ff_ffff_ffff_ffffL | (master ? 3L : 2L) << 59;
@@ -144,6 +170,9 @@ public class ExtGridPorts implements INBTSerializable<LongArrayNBT> {
 		return true;
 	}
 
+	/**@param part to add and connect ports for
+	 * @param doLink whether to connect ports immediately (host already loaded)
+	 * @return whether the part is a wire and its ports were added */
 	public boolean createWire(GridPart part, boolean doLink) {
 		if (!(part instanceof IWire)) return false;
 		short port0 = part.ports[0], port1 = part.ports[1];
@@ -178,6 +207,9 @@ public class ExtGridPorts implements INBTSerializable<LongArrayNBT> {
 		return (int)(ep >> 32) & 0xffff ^ 8 << (ax == 3 ? 0 : ax << 2);
 	}
 
+	/**Connect the given port across blocks if not already
+	 * done {@link #createPort()} or {@link #createWire()}.
+	 * @param extPort index */
 	public void connect(int extPort) {
 		long p = ports[extPort];
 		if (p < 0 || (p & 3L << 60) == 0) return;
@@ -196,6 +228,9 @@ public class ExtGridPorts implements INBTSerializable<LongArrayNBT> {
 		Link.load(  end.host,   end.channel, id);
 	}
 
+	/**Disconnect the given port.
+	 * @param extPort index
+	 * @see #onRemove() */
 	public void disconnect(int extPort) {
 		if ((ports[extPort] >> 62 & 3) != 1) return;
 		long[] ports;
