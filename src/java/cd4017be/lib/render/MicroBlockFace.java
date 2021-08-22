@@ -36,11 +36,13 @@ public class MicroBlockFace {
 		this.quad = quad;
 		this.ax = quad.getDirection().getAxis().ordinal();
 		int[] data = quad.getVertices();
+		//Normally stride = 8 but Optifine might append additional entries for shader data.
+		int stride = data.length >> 2;
 		float[][] mat = new float[3][5];
 		for (int i = 0; i < 3; i++) {
 			float[] row = mat[i];
-			intBitsToVec(3, row, 0, data, i * 8);
-			intBitsToVec(2, row, 3, data, i * 8 + 4);
+			intBitsToVec(3, row, 0, data, i * stride);
+			intBitsToVec(2, row, 3, data, i * stride + 4);
 			row[ax] = 1F;
 		}
 		solveGauss(mat, 3, 5);
@@ -99,7 +101,8 @@ public class MicroBlockFace {
 	public BakedQuad makeRect(float[] p0, float[] size) {
 		float[] vec = new float[3];
 		int[] data = quad.getVertices().clone();
-		for (int i = 0; i < 32; i+=8) {
+		int stride = data.length >> 2;
+		for (int j = 0, i = 0; j < 4; j++, i += stride) {
 			intBitsToVec(3, vec, 0, data, i);
 			mul(3, vec, size);
 			add(3, vec, p0);

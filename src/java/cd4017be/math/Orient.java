@@ -134,20 +134,20 @@ public class Orient {
 			int mirX = (o &   1) << 31, iX = o >> 1 & 3;
 			int mirY = (o &  16) << 27, iY = o >> 5 & 3;
 			int mirZ = (o & 256) << 23, iZ = o >> 9 & 3;
-			int inv = o >> 16 & 16;
-			for (int i = 0; i < 32; i+=8) { //re-orient vertices
-				int j = i ^ i << 1 & inv;
+			int inv = o >> 19 & 2, stride = old.length >> 2;
+			for (int k = 0; k < 4; k++) { //re-orient vertices
+				int j = (k ^ k << 1 & inv) * stride, i = k * stride;
 				data[j+iX] = floatToIntBits(intBitsToFloat(old[i  ]) + ofs[0]) ^ mirX;
 				data[j+iY] = floatToIntBits(intBitsToFloat(old[i+1]) + ofs[1]) ^ mirY;
 				data[j+iZ] = floatToIntBits(intBitsToFloat(old[i+2]) + ofs[2]) ^ mirZ;
 			}
 			int n = data[7] ^ o << 18 >> 31; //re-orient normals
-			data[7] = data[15] = data[23] = data[31]
-			= ((n       ^ mirX >> 31) & 0xff) << (iX << 3)
+			n = ((n     ^ mirX >> 31) & 0xff) << (iX << 3)
 			| ((n >>  8 ^ mirY >> 31) & 0xff) << (iY << 3)
 			| ((n >> 16 ^ mirZ >> 31) & 0xff) << (iZ << 3);
 			// bit-flipping isn't exactly negation but the
 			// < 1% error shouldn't be noticeable in normals.
+			for (int i = 7; i < data.length; i += stride) data[i] = n;
 		}
 		return new BakedQuad(
 			data, quad.getTintIndex(), orient(o, quad.getDirection()),

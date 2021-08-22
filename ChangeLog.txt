@@ -1,5 +1,6 @@
 
 v7.1.3:
+- fix messed up models by vertex format mismatch with optifine shaders
 - now microblocks return the aimed part for creative pick item instead of full structure
 - fix wire connections to inner ports
 - fix microblock parts deleting hollow blocks when placed inside
