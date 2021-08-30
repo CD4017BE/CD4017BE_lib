@@ -307,6 +307,11 @@ ITEBlockUpdate, ITENeighborChange, ITEPickItem, IGate {
 	}
 
 	@Override
+	public void saveDirty() {
+		if (TICK != tLoad) super.saveDirty();
+	}
+
+	@Override
 	public Port findPort(GridPart except, short port) {
 		long m = 0;
 		boolean noWire = except == null;
