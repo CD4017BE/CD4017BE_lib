@@ -232,7 +232,7 @@ public class Synchronizer<T> {
 		BitSet changes, int i0
 	) throws IOException {
 		int i1 = i0 + indices.length, p0 = rawState.position();
-		for (int i = i0, j; i < i1 && (j = changes.nextSetBit(i)) >= 0; i++) {
+		for (int i = i0, j; i < i1 && (j = changes.nextSetBit(i)) >= 0 && j < i1; i++) {
 			if ((i = changes.nextClearBit(j + 1)) >= i1) i = i1 - 1;
 			rawState.limit(p0 + indices[i - i0]);
 			rawState.position(p0 + indices[j - i0]);
@@ -242,6 +242,7 @@ public class Synchronizer<T> {
 		i1--;
 		for (int i = changes.nextSetBit(i1); i >= 0; i = changes.nextSetBit(i + 1)) {
 			int j = i - i1, k = j + j0;
+			if (j >= encoders.length) break;
 			objState[k] = encoders[j].decode(objState[k], pkt);
 		}
 	}
