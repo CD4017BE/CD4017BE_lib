@@ -68,6 +68,6 @@ public interface IFluidAccess extends ToIntFunction<FluidStack> {
 	int TYPE_ID = 3;
 
 	static IFluidAccess of(Object handler) {
-		return handler instanceof IFluidAccess ? (IFluidAccess)handler : null;
+		return handler instanceof IFluidAccess ? (IFluidAccess)handler : NOP;
 	}
 }
