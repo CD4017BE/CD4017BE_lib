@@ -1,4 +1,10 @@
 
+v7.2.0:
+- add support for translucent & cutout GridPart models
+- make GridPart opaqueness independent of placement layer
+- Block Bit foliage colors
+- make transparent Block Bits work #28
+
 v7.1.3:
 - fix NullPointerException from RedstoneControl2/#8
 - fix messed up models by vertex format mismatch with optifine shaders

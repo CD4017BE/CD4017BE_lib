@@ -61,7 +61,7 @@ public class GridModels {
 		orient(inv(o), vec);
 		origin(o, dadd(3, vec, .375F), 0.5F, 0.5F, 0.5F);
 		addOriented(
-			outer ? model.quads[orient(o, 3)] : model.inner(),
+			model.quads(outer ? orient(o, 3) : JitBakedModel.INNER),
 			MODELS.getModel(PORTS[port >> 11 & 14 | (master ? 1:0)]),
 			null, o, vec
 		);
@@ -76,7 +76,7 @@ public class GridModels {
 		for (int i = 0; i < 6; i++) {
 			int j = orient(orient, i);
 			ArrayList<BakedQuad> quads;
-			if ((b & GridPart.FACES[j]) != 0) quads = model.quads[j];
+			if ((b & GridPart.FACES[j]) != 0) quads = model.quads(j);
 			else {
 				int s = GridPart.step(j);
 				if ((((j & 1) != 0 ? b << s : b >>> s) & opaque) == 0) continue;

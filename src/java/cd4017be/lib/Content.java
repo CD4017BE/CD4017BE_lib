@@ -3,6 +3,9 @@ package cd4017be.lib;
 import static cd4017be.lib.Lib.CREATIVE_TAB;
 import static cd4017be.lib.Lib.rl;
 import static cd4017be.lib.block.BlockTE.flags;
+
+import com.google.common.base.Predicates;
+
 import cd4017be.api.grid.GridPart;
 import cd4017be.lib.block.BlockGrid;
 import cd4017be.lib.block.BlockTE;
@@ -19,6 +22,7 @@ import net.minecraft.block.SoundType;
 import net.minecraft.block.AbstractBlock.Properties;
 import net.minecraft.block.material.Material;
 import net.minecraft.client.gui.ScreenManager;
+import net.minecraft.client.renderer.RenderTypeLookup;
 import net.minecraft.inventory.container.ContainerType;
 import net.minecraft.item.Item;
 import net.minecraft.item.Rarity;
@@ -141,6 +145,7 @@ public class Content {
 		ScreenManager.register(gRID, ContainerGrid::setupGui);
 		ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.CONFIGGUIFACTORY, Lib.CFG_CLIENT);
 		ClientRegistry.bindTileEntityRenderer(GRID_TER, GridTER::new);
+		RenderTypeLookup.setRenderLayer(GRID, Predicates.alwaysTrue());
 	}
 
 	@SubscribeEvent

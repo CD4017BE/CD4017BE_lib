@@ -71,6 +71,11 @@ public abstract class GridPart implements IPortHolder, INBTSynchronized {
 		return L_FULL;
 	}
 
+	/**@return opaque voxels of this part */
+	public long opaque() {
+		return getLayer() >= 0 ? bounds : 0;
+	}
+
 	@Override
 	public void storeState(CompoundNBT nbt, int mode) {
 		INBTSynchronized.super.storeState(nbt, mode);

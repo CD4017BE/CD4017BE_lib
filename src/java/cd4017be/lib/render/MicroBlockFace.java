@@ -3,19 +3,26 @@ package cd4017be.lib.render;
 import static cd4017be.api.grid.GridPart.FACES;
 import static cd4017be.api.grid.GridPart.step;
 import static cd4017be.api.grid.GridPart.vec;
+import static cd4017be.lib.render.Util.RGBtoBGR;
+import static cd4017be.lib.render.model.JitBakedModel.INNER;
+import static cd4017be.lib.render.model.JitBakedModel.LAYERS;
 import static cd4017be.lib.render.model.WrappedBlockModel.MODELS;
 import static cd4017be.math.Linalg.*;
 import static cd4017be.math.MCConv.intBitsToVec;
 import static cd4017be.math.MCConv.vecToIntBits;
 import static java.lang.Float.floatToRawIntBits;
+import static net.minecraft.client.renderer.RenderTypeLookup.canRenderInLayer;
+import static net.minecraftforge.client.ForgeHooksClient.setRenderLayer;
+import static net.minecraftforge.client.MinecraftForgeClient.getRenderLayer;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 import cd4017be.lib.render.model.JitBakedModel;
 import cd4017be.lib.render.model.TileEntityModel;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.color.BlockColors;
 import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.util.Direction;
@@ -30,12 +37,14 @@ public class MicroBlockFace {
 
 	private final BakedQuad quad;
 	private final float[] u, v;
-	private final int ax;
+	private final int ax, rt, color;
 
-	public MicroBlockFace(BakedQuad quad) {
+	public MicroBlockFace(BakedQuad quad, int rt, int color) {
 		this.quad = quad;
 		this.ax = quad.getDirection().getAxis().ordinal();
+		this.rt = rt;
 		int[] data = quad.getVertices();
+		this.color = quad.isTinted() ? RGBtoBGR(color | 0xff000000) : data[3];
 		//Normally stride = 8 but Optifine might append additional entries for shader data.
 		int stride = data.length >> 2;
 		float[][] mat = new float[3][5];
@@ -53,7 +62,6 @@ public class MicroBlockFace {
 	public static void drawVoxels(JitBakedModel model, Object key, long b, long opaque) {
 		MicroBlockFace[] faces = facesOf(key);
 		opaque |= b;
-		List<BakedQuad> quads = model.inner();
 		for (int i = 0; i < 6; i++) {
 			MicroBlockFace face = faces[i];
 			if (face == null) continue;
@@ -61,15 +69,16 @@ public class MicroBlockFace {
 			long f = (i & 1) != 0 ? b & ~(opaque >>> s) : b >>> s & ~opaque;
 			long m = FACES[i & 6];
 			for (int j = 1; j < 4; j++, f >>>= s)
-				face.addFaces(quads, f & m, j - (i & 1));
+				face.addFaces(model, INNER, f & m, j - (i & 1));
 			if ((f = b & FACES[i]) != 0) {
 				if ((i & 1) != 0) f >>>= s * 3;
-				face.addFaces(model.quads[i], f, (i & 1) * 3);
+				face.addFaces(model, i, f, (i & 1) * 3);
 			}
 		}
 	}
 
-	public List<BakedQuad> addFaces(List<BakedQuad> quads, long mask, float layer) {
+	public void addFaces(JitBakedModel model, int side, long mask, float layer) {
+		ArrayList<BakedQuad> quads = model.quads(side | rt);
 		int su = ax == 0 ? 4 : 1, sv = ax == 2 ? 4 : 16, s;
 		while ((s = Long.numberOfTrailingZeros(mask)) < 64) {
 			int i = (s | sv - 1) + 1, e;
@@ -95,7 +104,6 @@ public class MicroBlockFace {
 			sca(3, size, .25F);
 			quads.add(makeRect(p0, size));
 		}
-		return quads;
 	}
 
 	public BakedQuad makeRect(float[] p0, float[] size) {
@@ -108,11 +116,12 @@ public class MicroBlockFace {
 			add(3, vec, p0);
 			vecToIntBits(3, vec, data, i);
 			vec[ax] = 1F;
+			data[i+3] = color;
 			data[i+4] = floatToRawIntBits(dot(3, vec, u));
 			data[i+5] = floatToRawIntBits(dot(3, vec, v));
 		}
 		return new BakedQuad(
-			data, quad.getTintIndex(), quad.getDirection(),
+			data, -1, quad.getDirection(),
 			quad.getSprite(), quad.isShade()
 		);
 	}
@@ -133,14 +142,28 @@ public class MicroBlockFace {
 		BlockState block = key instanceof BlockState ? (BlockState)key : null;
 		IBakedModel model = block != null ? MODELS.getBlockModel(block)
 			: MODELS.getModelManager().getModel((ResourceLocation)key);
-		MicroBlockFace[] faces = new MicroBlockFace[6];
-		for (Direction d : Direction.values()) {
-			rand.setSeed(42L);
-			List<BakedQuad> quads = model.getQuads(block, d, rand, EmptyModelData.INSTANCE);
-			if (quads.isEmpty()) continue;
-			faces[d.ordinal()] = new MicroBlockFace(quads.get(0));
+		BlockColors colors = Minecraft.getInstance().getBlockColors();
+		
+		RenderType old = getRenderLayer();
+		try {
+			MicroBlockFace[] faces = new MicroBlockFace[6];
+			for (Direction d : Direction.values())
+				for (int i = 0; i < LAYERS.length; i++) {
+					RenderType rt = LAYERS[i];
+					if (block != null && !canRenderInLayer(block, rt)) continue;
+					setRenderLayer(rt);
+					rand.setSeed(42L);
+					List<BakedQuad> quads = model.getQuads(block, d, rand, EmptyModelData.INSTANCE);
+					if (quads.isEmpty()) continue;
+					BakedQuad q = quads.get(0);
+					int c = block == null ? -1 : colors.getColor(block, null, null, q.getTintIndex());
+					faces[d.ordinal()] = new MicroBlockFace(q, i << 3, c);
+					break;
+				}
+			return faces;
+		} finally {
+			setRenderLayer(old);
 		}
-		return faces;
 	}
 
 }

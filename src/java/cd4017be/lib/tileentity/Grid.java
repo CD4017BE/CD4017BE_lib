@@ -50,7 +50,7 @@ ITEBlockUpdate, ITENeighborChange, ITEPickItem, IGate {
 
 	private final ExtGridPorts extPorts = new ExtGridPorts(this);
 	private final ArrayList<GridPart> parts = new ArrayList<>();
-	public long opaque, inner;
+	public long outer, inner, opaque;
 	public IDynamicPart[] dynamicParts;
 	private int tLoad;
 	private boolean occlude, updateOccl;
@@ -81,18 +81,22 @@ ITEBlockUpdate, ITENeighborChange, ITEPickItem, IGate {
 
 	@Override
 	public void updateBounds() {
-		long i = 0, o = 0;
+		long i = 0, o = 0, s = 0;
 		for (GridPart part : parts) {
 			byte l = part.getLayer();
 			if (l >= 0) o |= part.bounds;
 			if (l <= 0) i |= part.bounds;
+			s |= part.opaque();
 		}
-		inner = i;
-		if (opaque != (opaque = o) && !updateOccl) {
-			updateOccl = true;
-			if (level != null && !level.isClientSide)
-				GATE_UPDATER.add(this);
-		}
+		inner = i; outer = o;
+		setOpaque(s);
+	}
+
+	private void setOpaque(long o) {
+		if (opaque == (opaque = o) || updateOccl) return;
+		updateOccl = true;
+		if (level != null && !level.isClientSide)
+			GATE_UPDATER.add(this);
 	}
 
 	@Override
@@ -131,9 +135,10 @@ ITEBlockUpdate, ITENeighborChange, ITEPickItem, IGate {
 	public boolean addPart(GridPart part) {
 		if (part.host == this) return true;
 		byte l = part.getLayer();
-		if ((((l >= 0 ? opaque : 0) | (l <= 0 ? inner : 0)) & part.bounds) != 0) return false;
-		if (l >= 0) opaque |= part.bounds;
+		if ((((l >= 0 ? outer : 0) | (l <= 0 ? inner : 0)) & part.bounds) != 0) return false;
+		if (l >= 0) outer |= part.bounds;
 		if (l <= 0) inner |= part.bounds;
+		setOpaque(opaque | part.opaque());
 		parts.add(part = part.setHost(this));
 		connectPart(part);
 		updateRedstone(part);
@@ -243,7 +248,7 @@ ITEBlockUpdate, ITENeighborChange, ITEPickItem, IGate {
 	@OnlyIn(Dist.CLIENT)
 	public IModelData getModelData() {
 		ModelDataMap data = TileEntityModel.MODEL_DATA_BUILDER.build();
-		JitBakedModel model = JitBakedModel.make(data);
+		JitBakedModel model = JitBakedModel.make(data, JitBakedModel.LAYERED);
 		long o = opaque;
 		boolean open = (WALLS & ~o) != 0;
 		if (!open) o |= ~BOUNDARY;
@@ -367,14 +372,14 @@ ITEBlockUpdate, ITENeighborChange, ITEPickItem, IGate {
 
 	@Override
 	public long bounds() {
-		return opaque | inner;
+		return outer | inner;
 	}
 
 	/**Merge the other grid into this. Both TEs are usually unloaded when called.
 	 * @param other
 	 * @return can & did merge */
 	public boolean merge(Grid other) {
-		if ((inner & other.inner | opaque & other.opaque) != 0) return false;
+		if ((inner & other.inner | outer & other.outer) != 0) return false;
 		for (GridPart part : other.parts)
 			if (part.merge(this)) parts.add(part);
 		updateBounds();

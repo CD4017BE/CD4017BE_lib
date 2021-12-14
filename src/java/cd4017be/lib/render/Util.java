@@ -31,7 +31,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 @OnlyIn(Dist.CLIENT)
 public class Util {
 
-	public static final FloatBuffer[] matrices = new FloatBuffer[16];
+	public static final FloatBuffer[] matrices = new FloatBuffer[24];
 
 	static {
 		Vector3i x1, y1, z1;
@@ -50,6 +50,14 @@ public class Util {
 			buff.flip();
 			matrices[o.ordinal()] = buff;
 		}
+	}
+
+	/**
+	 * @param c color in 1: 0xAARRGGBB or 2: 0xAABBGGRR format
+	 * @return the given color converted from format 1 to 2 or vice versa.
+	 */
+	public static int RGBtoBGR(int c) {
+		return c & 0xff00ff00 | c << 16 & 0xff0000 | c >> 16 & 0xff;
 	}
 
 	public static void moveAndOrientToBlock(double x, double y, double z, Orientation o) {

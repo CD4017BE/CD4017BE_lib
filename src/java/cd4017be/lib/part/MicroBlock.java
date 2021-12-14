@@ -91,6 +91,11 @@ public class MicroBlock extends GridPart {
 	}
 
 	@Override
+	public long opaque() {
+		return block.canOcclude() ? bounds : 0;
+	}
+
+	@Override
 	public ActionResultType
 	onInteract(PlayerEntity player, Hand hand, BlockRayTraceResult hit, int pos) {
 		if (hand != null) return ActionResultType.PASS;
