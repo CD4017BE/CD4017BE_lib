@@ -480,7 +480,7 @@ public class Compiler {
 			char v = extraVars[i];
 			if (v == 0xffff) extraVars[i] = this.val;
 			else if (v != this.val) continue;
-			return (byte)i;
+			return (byte)(i - extraVars.length + params);
 		}
 		throw err("internal error");
 	}
