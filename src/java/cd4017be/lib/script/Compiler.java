@@ -53,9 +53,7 @@ public class Compiler {
 			else if (c == NUM) version = (int)number();
 			check(next(), SEP_CMD);
 		} else code.rewind();
-		functions.add(null);
 		compFunc(-1);
-		functions.set(0, functions.remove(functions.size() - 1));
 		Script script = new Script(fileName, functions.toArray(new Function[functions.size()]), names, globals);
 		script.version = version;
 		return script;
@@ -71,6 +69,8 @@ public class Compiler {
 		char maxStack = this.maxStack;
 		char[] extraVars = this.extraVars;
 		//init new frame
+		int funId = functions.size();
+		functions.add(null);
 		this.funStart = out.position();
 		if (param >= 0) {
 			this.extraVars = new char[param];
@@ -102,8 +102,7 @@ public class Compiler {
 		byte[] data = new byte[out.position() - this.funStart];
 		out.position(this.funStart).mark();
 		out.get(data).reset();
-		functions.add(new Function(param, this.maxStack, line, data, codeIndices, lineNumbers));
-		
+		functions.set(funId, new Function(param, this.maxStack, line, data, codeIndices, lineNumbers));
 		//restore old frame
 		this.funStart = funStart;
 		this.locOfs = locOfs;
