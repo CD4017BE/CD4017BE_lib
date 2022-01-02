@@ -78,10 +78,15 @@ public abstract class OrientedPart extends GridPart {
 	}
 
 	@OnlyIn(Dist.CLIENT)
-	protected void transform(MatrixStack ms) {
+	protected void transform(MatrixStack ms, float r, float u, float b) {
 		ms.last().pose().multiply(orient.mat4);
 		ms.last().normal().mul(orient.mat3);
-		ms.translate((pos & 3) * .25F, (pos >> 2 & 3) * .25F, (pos >> 4 & 3) * .25F);
+		ms.translate((pos & 3) * .25F + r, (pos >> 2 & 3) * .25F + u, (pos >> 4 & 3) * .25F + b);
+	}
+
+	@OnlyIn(Dist.CLIENT)
+	protected void transform(MatrixStack ms) {
+		transform(ms, 0, 0, 0);
 	}
 
 	@Override

@@ -72,17 +72,10 @@ public class GridModels {
 		float[] v = originOf(orient, ofs);
 		if ((b & ~opaque) != 0)
 			addOriented(model.inner(), faces, null, orient, v);
-		opaque = ~(opaque | b);
 		for (int i = 0; i < 6; i++) {
-			int j = orient(orient, i);
-			ArrayList<BakedQuad> quads;
-			if ((b & GridPart.FACES[j]) != 0) quads = model.quads(j);
-			else {
-				int s = GridPart.step(j);
-				if ((((j & 1) != 0 ? b << s : b >>> s) & opaque) == 0) continue;
-				quads = model.inner();
-			}
-			addOriented(quads, faces, Direction.from3DDataValue(i), orient, v);
+			int j = targetFace(i, opaque, b, orient);
+			if (j == JitBakedModel.NONE) continue;
+			addOriented(model.quads(j), faces, Direction.from3DDataValue(i), orient, v);
 		}
 	}
 
@@ -91,6 +84,17 @@ public class GridModels {
 	) {
 		for (BakedQuad quad : model.getQuads(null, face, RAND, EmptyModelData.INSTANCE))
 			dest.add(orient(o, quad, v));
+	}
+
+	public static int targetFace(int i, long opaque, long b, int orient) {
+		opaque = ~(opaque | b);
+		int j = orient(orient, i);
+		if ((b & GridPart.FACES[j]) != 0) return j;
+		else {
+			int s = GridPart.step(j);
+			if ((((j & 1) != 0 ? b << s : b >>> s) & opaque) == 0) return JitBakedModel.NONE;
+			return JitBakedModel.INNER;
+		}
 	}
 
 	private static float[] originOf(int orient, int ofs) {

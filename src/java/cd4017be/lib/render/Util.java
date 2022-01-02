@@ -11,6 +11,7 @@ import org.lwjgl.opengl.GL11;
 import cd4017be.lib.util.Orientation;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.model.ModelRotation;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.tileentity.TileEntity;
@@ -24,10 +25,8 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
-/**
- * 
- * @author CD4017BE
- */
+/**Helper functions for rendering.
+ * @author CD4017BE */
 @OnlyIn(Dist.CLIENT)
 public class Util {
 
@@ -52,14 +51,24 @@ public class Util {
 		}
 	}
 
-	/**
-	 * @param c color in 1: 0xAARRGGBB or 2: 0xAABBGGRR format
-	 * @return the given color converted from format 1 to 2 or vice versa.
-	 */
+	/**@param c color in 1: 0xAARRGGBB or 2: 0xAABBGGRR format
+	 * @return the given color converted from format 1 to 2 or vice versa. */
 	public static int RGBtoBGR(int c) {
 		return c & 0xff00ff00 | c << 16 & 0xff0000 | c >> 16 & 0xff;
 	}
 
+	/**@param quad to be colored (gets modified)
+	 * @param c 0xAABBGGRR color
+	 * @return quad
+	 * @see #RGBtoBGR(int) */
+	public static BakedQuad colorQuad(BakedQuad quad, int c) {
+		int[] vert = quad.getVertices();
+		int stride = vert.length >> 2;
+		for (int i = 3; i < vert.length; i += stride) vert[i] = c;
+		return quad;
+	}
+
+	@Deprecated
 	public static void moveAndOrientToBlock(double x, double y, double z, Orientation o) {
 		GL11.glTranslated(x + 0.5D, y + 0.5D, z + 0.5D);
 		FloatBuffer mat = matrices[o.ordinal()];
@@ -67,6 +76,7 @@ public class Util {
 		GL11.glMultMatrixf(mat);
 	}
 
+	@Deprecated
 	public static void rotateTo(Orientation o) {
 		FloatBuffer mat = matrices[o.ordinal()];
 		mat.rewind();

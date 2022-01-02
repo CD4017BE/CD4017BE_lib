@@ -12,6 +12,8 @@ import io.netty.buffer.ByteBuf;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.DyeColor;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.INBT;
 import net.minecraft.nbt.ByteNBT;
 import net.minecraft.nbt.ByteArrayNBT;
@@ -26,7 +28,7 @@ import net.minecraft.nbt.ShortNBT;
 import net.minecraft.nbt.StringNBT;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.Direction;
+import net.minecraft.util.*;
 import net.minecraft.util.Direction.Axis;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
@@ -283,6 +285,31 @@ public class Utils {
 			}
 		} else for (Direction f : Direction.VALUES)
 			notifyNeighborTile(te, f);*/
+	}
+
+	/**@param player
+	 * @param hand
+	 * @return color for held item */
+	public static @Nullable DyeColor heldColor(PlayerEntity player, @Nullable Hand hand) {
+		if (hand == null) return null;
+		ItemStack stack = player.getItemInHand(hand);
+		return stack.isEmpty() ? null : DyeColor.getColor(stack);
+	}
+
+	/**@param player
+	 * @param action to run only on server side
+	 * @return {@link ActionResultType#sidedSuccess(client)} */
+	public static ActionResultType serverAction(PlayerEntity player, Runnable action) {
+		return serverAction(player.level.isClientSide, action);
+	}
+
+	/**@param client
+	 * @param action to run only on server side
+	 * @return {@link ActionResultType#sidedSuccess(client)} */
+	public static ActionResultType serverAction(boolean client, Runnable action) {
+		if (client) return ActionResultType.SUCCESS;
+		action.run();
+		return ActionResultType.CONSUME;
 	}
 
 	/**

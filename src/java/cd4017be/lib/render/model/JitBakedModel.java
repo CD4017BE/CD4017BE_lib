@@ -25,7 +25,7 @@ import net.minecraftforge.client.model.data.ModelProperty;
 public class JitBakedModel implements IBakedModel {
 
 	public static final ModelProperty<IBakedModel> JIT_BAKED_MODEL = new ModelProperty<>();
-	public static final int INNER = 6, AOC = 1, GUI3D = 2, LIT = 3, LAYERED = 4;
+	public static final int INNER = 6, NONE = 7, AOC = 1, GUI3D = 2, LIT = 3, LAYERED = 4;
 	public static final int L_SOLID = 0, L_CUTOUT = 8, L_CUTMIP = 16, L_TRANSP = 24;
 	public static final RenderType[] LAYERS = {
 		RenderType.solid(), RenderType.cutout(),
